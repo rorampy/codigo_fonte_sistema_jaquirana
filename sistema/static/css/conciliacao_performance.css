@@ -1,0 +1,134 @@
+/* ========================================
+   OTIMIZAÇÕES ESPECÍFICAS PARA CONCILIAÇÃO BANCÁRIA
+   ======================================== */
+
+/* Forçar aceleração por hardware para elementos críticos */
+.modern-accordion-item,
+.summary-card,
+.table-responsive,
+.accordion-button {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Otimizar rendering de listas grandes */
+.suggestion-row,
+.busca-row {
+  contain: layout style paint;
+  /* Evitar reflow em elementos individuais */
+}
+
+/* Smooth scrolling otimizado */
+.table-responsive {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Reduzir repaints em hover states */
+.suggestion-row:hover,
+.busca-row:hover {
+  background-color: rgba(51, 91, 69, 0.05);
+  /* Evitar uso de box-shadow que causa repaints caros */
+}
+
+/* Otimizar checkboxes para seleção rápida */
+.suggestion-checkbox,
+.checkbox-busca {
+  transition: none; /* Remover transições desnecessárias */
+}
+
+/* Loading states otimizados */
+.loading-spinner {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Spinner otimizado para performance */
+@keyframes spinner-border-optimized {
+  to { transform: rotate(360deg) translateZ(0); }
+}
+
+.spinner-border {
+  animation: spinner-border-optimized 0.75s linear infinite;
+  transform: translateZ(0);
+}
+
+/* Otimizar badges de status */
+.badge {
+  transform: translateZ(0);
+  /* Evitar reflows desnecessários */
+}
+
+/* Buttons com hover otimizado */
+.btn:hover {
+  transform: translateY(-1px) translateZ(0);
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Modal otimizations */
+.modal {
+  transform: translateZ(0);
+}
+
+/* Filtros de busca otimizados */
+.form-control,
+.form-select {
+  transition: border-color 0.15s ease-in-out,
+              box-shadow 0.15s ease-in-out;
+  /* Transições específicas ao invés de 'all' */
+}
+
+/* Accordion collapse otimizado */
+.accordion-collapse {
+  transition: height 0.35s ease;
+  /* Usar apenas height para collapse, mais performático */
+}
+
+/* Tabelas com scroll virtual preparation */
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+  /* Preparar para scroll virtual se necessário */
+}
+
+/* Otimizar memoria para elementos grandes */
+.modern-accordion-body {
+  contain: layout;
+}
+
+/* Media queries otimizadas para mobile */
+@media (max-width: 768px) {
+  /* Reduzir complexidade visual em mobile */
+  .modern-accordion-item {
+    box-shadow: 0 1px 6px rgba(51, 91, 69, 0.1);
+  }
+  
+  .summary-card:hover {
+    transform: none; /* Desabilitar hover effects complexos em mobile */
+  }
+  
+  .table-responsive {
+    font-size: 0.875rem; /* Reduzir fonte para caber mais conteúdo */
+  }
+}
+
+/* Preparação para scroll virtual em listas grandes */
+.virtual-scroll-container {
+  height: 400px;
+  overflow-y: auto;
+  contain: strict;
+}
+
+/* Otimização para element queries futuras */
+.accordion-item {
+  container-type: inline-size;
+}
+
+/* Performance hints para browser */
+.performance-critical {
+  contain: layout style paint;
+  will-change: transform;
+}

@@ -1,0 +1,227 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            TRANSPORTADORAS
+          </div>
+          <h2 class="page-title">
+            Listagem
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('cadastrar_transportadora') }}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Cadastrar Transportadora
+            </a>
+            <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <div class="card">
+
+          <!-- Início Tabela -->
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: center;">Identificação</th>
+                  <th style="text-align: center;">Número Documento</th>
+                  <th style="text-align: center;">Telefone</th>
+                  <th style="text-align: center;">Ativo</th>
+                  <th class="w-1" style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for t in transportadoras %}
+                <tr>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ t.identificacao[:40] }}
+                    {% if t.identificacao | length > 40 %}
+                    ...
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary {%if t.tipo_cadastro == 1%}cpfMask{%else%}cnpjMask{%endif%}"
+                    style="text-align: center;">
+                    {{ t.numero_documento }}
+                  </td>
+                  <td class="text-secondary {% if t.telefone | length == 11%} celular {%else%}telefone{%endif%}"
+                    style="text-align: center;">
+                    {{ t.telefone }}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {%if t.ativo == 1%}<span class="badge badge-outline text-green">Sim</span>{%else%}<span
+                      class="badge badge-outline text-danger">Não</span>{%endif%}
+                  </td>
+                  <td>
+                    <div class="btn-list flex-nowrap">
+                      <a href="{{url_for('editar_transportadora', id=t.id)}}" class="btn btn-icon btn-outline-warning"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Editar transportadora">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                          <path d="M13.5 6.5l4 4" />
+                        </svg>
+                      </a>
+                      {%if t.ativo == 1%}
+                      <a href="#"
+                        class="btn btn-icon btn-outline-danger excluir {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%}"
+                        data-bs-toggle="modal" data-bs-target="#modal-desativar-{{t.id}}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-x">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M18 6l-12 12" />
+                          <path d="M6 6l12 12" />
+                        </svg>
+                      </a>
+                      <div class="modal modal-blur fade" id="modal-desativar-{{t.id}}" tabindex="-1" role="dialog"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                          <div class="modal-content">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-status bg-danger"></div>
+                            <div class="modal-body text-center py-4">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/alert-triangle -->
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
+                                <path d="M12 9v4" />
+                                <path
+                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                                <path d="M12 16h.01" />
+                              </svg>
+                              <div class="text-secondary">
+                                Você realmente deseja desativar esta
+                                transportadora?
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <div class="w-100">
+                                <div class="row">
+                                  <div class="col">
+                                    <a href="#" class="btn btn-3 w-100" data-bs-dismiss="modal">
+                                      Fechar
+                                    </a>
+                                  </div>
+                                  <div class="col">
+                                    <a href="{{url_for('desativar_transportadora', id=t.id)}}"
+                                      class="btn btn-danger btn-4 w-100">
+                                      Desativar
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {%else%}
+                      <a href="{{url_for('ativar_transportadora', id=t.id)}}"
+                        class="btn btn-icon btn-outline-success {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%} ativar"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Ativar transportadora">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M5 12l5 5l10 -10" />
+                        </svg>
+                      </a>
+                      {%endif%}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <form action="{{url_for('listar_transportadoras')}}" method="GET">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar transportadoras</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Identificação</label>
+                <input type="text" name="identificacao" class="form-control"
+                  value="{{ dados_corretos.get('identificacao', '') }}" placeholder="Nome ou razão social">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Número documento</label>
+                <input type="text" id="cpfCnpj" name="numeroDocumento" class="form-control"
+                  value="{{ dados_corretos.get('numeroDocumento', '') }}">
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Tefone</label>
+                <input type="text" name="telefone" class="form-control celular"
+                  value="{{ dados_corretos.get('telefone', '') }}" placeholder="Insira o telefone">
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <a href="{{ url_for('listar_transportadoras') }}" class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-2">
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

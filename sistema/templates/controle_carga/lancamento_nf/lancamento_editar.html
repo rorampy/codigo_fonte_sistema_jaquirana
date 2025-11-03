@@ -1,0 +1,344 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">NF LANÇADA</div>
+          <h2 class="page-title">Editar</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      {% if emissao %}
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card border-primary shadow-sm">
+            <div class="card-body">
+              <h3 class="card-title text-primary mb-3">Informações da Solicitação</h3>
+              <div class="row">
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Cliente</label>
+                  <input type="text" class="form-control" value="{{ emissao.solicitacao.cliente.identificacao }}"
+                    disabled>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Produto</label>
+                  <input type="text" class="form-control" value="{{ emissao.solicitacao.produto.nome }}" disabled>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Bitola</label>
+                  <input type="text" class="form-control" value="{{ emissao.solicitacao.bitola.bitola }}" disabled>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Motorista</label>
+                  <input type="text" class="form-control" value="{{ emissao.solicitacao.motorista.nome_completo }}"
+                    disabled>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Veículo</label>
+                  <input type="text" class="form-control" value="{{ emissao.solicitacao.veiculo.placa_veiculo }}"
+                    disabled>
+                </div>
+                {% if emissao.peso_ton_nf_excesso %}
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Peso Normal (Ton.)</label>
+                  <input type="text" class="form-control" value="{{ emissao.peso_ton_nf or '0' }}" disabled>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Peso Excesso (Ton.)</label>
+                  <input type="text" class="form-control" value="{{ emissao.peso_ton_nf_excesso or '0' }}" disabled>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Peso Total (Ton.)</label>
+                  <input type="text" class="form-control" value="{{ emissao.peso_nf_ton_com_excecao or '0' }}" disabled>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="col-12">
+        <form class="card" action="{{ url_for('editar_emissao', id=emissao.id) }}" method="POST"
+          enctype="multipart/form-data">
+          <div class="card-body">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="lancamentoFrf" id="lancamentoFrf"
+                    value="lancamentoFrf" {% if emissao.carga_frf %}checked{% endif %}>
+                  <span class="form-check-label">FRF</span>
+                </label>
+              </div>
+            </div>
+
+            <div id="camposFrf" class="{% if not emissao.carga_frf %}d-none{% endif %}">
+              <h3 class="text-primary">Informações Destinatário</h3>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label required">Destinatário</label>
+                  <input type="text" name="destinatarioFrf"
+                    class="form-control {% if 'destinatarioFrf' in campos_obrigatorios %}is-invalid{% endif %}"
+                    value="{{ emissao.destinatario_nome if emissao.carga_frf }}">
+                  <div class="invalid-feedback">{{ campos_obrigatorios.get('destinatarioFrf') or
+                    campos_erros.get('destinatarioFrf') }}</div>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label required">CPF/CNPJ</label>
+                  <input type="text" name="destinatarioNumeroDocumento"
+                    class="form-control cpfCnpj {% if 'destinatarioNumeroDocumento' in campos_obrigatorios or 'destinatarioNumeroDocumento' in campos_erros %}is-invalid{% endif %}"
+                    value="{{ emissao.destinatario_cnpj_cpf if emissao.carga_frf }}">
+                  <div class="invalid-feedback">{{ campos_obrigatorios.get('destinatarioNumeroDocumento') or
+                    campos_erros.get('destinatarioNumeroDocumento') }}</div>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label required">Data Lançamento</label>
+                  <input type="date" name="dataLancamentoFrf"
+                    class="form-control {% if 'dataLancamentoFrf' in campos_obrigatorios %}is-invalid{% endif %}"
+                    value="{{ emissao.destinatario_data_emissao.strftime('%Y-%m-%d') if emissao.carga_frf and emissao.destinatario_data_emissao }}">
+                  <div class="invalid-feedback">{{ campos_obrigatorios.get('dataLancamentoFrf') or
+                    campos_erros.get('dataLancamentoFrf') }}</div>
+                </div>
+              </div>
+
+              <h3 class="text-primary">Informações Transportadora</h3>
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label class="form-label required">Transportadora</label>
+                  <input type="text" name="transportadorFrf"
+                    class="form-control {% if 'transportadorFrf' in campos_obrigatorios %}is-invalid{% endif %}"
+                    value="{{ emissao.transportador_nome if emissao.carga_frf }}">
+                  <div class="invalid-feedback">{{ campos_obrigatorios.get('transportadorFrf') or
+                    campos_erros.get('transportadorFrf') }}</div>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label required">CPF/CNPJ</label>
+                  <input type="text" name="transportadoraNumeroDocumento"
+                    class="form-control cpfCnpj {% if 'transportadoraNumeroDocumento' in campos_obrigatorios or 'transportadoraNumeroDocumento' in campos_erros %}is-invalid{% endif %}"
+                    value="{{ emissao.transportador_cnpj_cpf if emissao.carga_frf }}">
+                  <div class="invalid-feedback">{{ campos_obrigatorios.get('transportadoraNumeroDocumento') or
+                    campos_erros.get('transportadoraNumeroDocumento') }}</div>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label required">Placa</label>
+                  <input type="text" name="placaFrf"
+                    class="form-control {% if 'placaFrf' in campos_obrigatorios %}is-invalid{% endif %}"
+                    value="{{ emissao.placa_nf if emissao.carga_frf }}">
+                  <div class="invalid-feedback">{{ campos_obrigatorios.get('placaFrf') or campos_erros.get('placaFrf')
+                    }}</div>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label required">Motorista</label>
+                  <input type="text" name="motoristaFrf"
+                    class="form-control {% if 'motoristaFrf' in campos_obrigatorios %}is-invalid{% endif %}"
+                    value="{{ emissao.motorista_nf if emissao.carga_frf }}">
+                  <div class="invalid-feedback">{{ campos_obrigatorios.get('motoristaFrf') or
+                    campos_erros.get('motoristaFrf') }}</div>
+                </div>
+              </div>
+
+              <h3 class="text-primary">Informações Carga</h3>
+              <div class="row">
+                <div class="col-md-2 mb-3">
+                  <label class="form-label required">Peso (Ton.)</label>
+                  <input type="text" name="pesoFrf"
+                    class="form-control campo-float {% if 'pesoFrf' in campos_obrigatorios %}is-invalid{% endif %}"
+                    value="{{ emissao.peso_ton_nf if emissao.carga_frf }}">
+                  <div class="invalid-feedback">{{ campos_obrigatorios.get('pesoFrf') or campos_erros.get('pesoFrf') }}
+                  </div>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label required">Valor Total (R$)</label>
+                  <input type="text" name="valorTotalFrf"
+                    class="form-control campo-moeda-brl {% if 'valorTotalFrf' in campos_obrigatorios %}is-invalid{% endif %}"
+                    value="{{ (emissao.valor_total_nota_100 / 100)|round(2) if emissao.carga_frf and emissao.valor_total_nota_100 }}">
+                  <div class="invalid-feedback">{{ campos_obrigatorios.get('valorTotalFrf') or
+                    campos_erros.get('valorTotalFrf') }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="camposOriginais" class="{% if emissao.carga_frf %}d-none{% endif %}">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label required">Nota Fiscal Principal</label>
+                  {% if emissao.arquivo_nota_id %}
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="opcaoNf" id="opcaoNfManter" value="manter"
+                      checked>
+                    <label class="form-check-label" for="opcaoNfManter">Manter atual</label>
+                  </div>
+                  {%endif%}
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="opcaoNf" id="opcaoNfNova" value="nova">
+                    <label class="form-check-label" for="opcaoNfNova">Enviar nova</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="opcaoNf" id="opcaoNfEstorno" value="estorno">
+                    <label class="form-check-label" for="opcaoNfEstorno">Estorno de NF</label>
+                  </div>
+                  {% if emissao.arquivo_nota_id %}
+                  <div>
+                    <a href="#" id="visualizar-nf" class="btn btn-outline-primary btn-visualizar-arquivo mb-2"
+                      data-url="{% if emissao.estorno_nf %}{{ url_for('diretorio_uploads_arquivo_estorno', filename=emissao.arquivo_nota_estorno.caminho.split('/')[-1]) }}{% else %}{{ url_for('diretorio_uploads_nota_fiscal', filename=emissao.arquivo_nota.caminho.split('/')[-1]) }}{% endif %}"
+                      data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="me-2">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path
+                          d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2">
+                        </path>
+                      </svg>
+                      Visualizar NF Atual
+                    </a>
+                  </div>
+                  {%endif%}
+                  <div id="inputUploadNova" class="d-none mb-3">
+                    <label class="form-label required">Arquivo NF Nova (PDF)</label>
+                    <input type="file" name="arquivoNfNova"
+                      class="form-control {% if 'arquivoNfNova' in campos_obrigatorios or 'arquivoNfNova' in campos_erros %}is-invalid{% endif %}"
+                      accept=".pdf">
+                    <div class="invalid-feedback">{{ campos_obrigatorios.get('arquivoNfNova') or
+                      campos_erros.get('arquivoNfNova') }}</div>
+                  </div>
+                  <div id="inputUploadEstorno" class="d-none mb-3">
+                    <label class="form-label required">Arquivo NF de Estorno (PDF)</label>
+                    <input type="file" name="arquivoNfEstorno"
+                      class="form-control {% if 'arquivoNfEstorno' in campos_obrigatorios or 'arquivoNfEstorno' in campos_erros %}is-invalid{% endif %}"
+                      accept=".pdf">
+                    <div class="invalid-feedback">{{ campos_obrigatorios.get('arquivoNfEstorno') or
+                      campos_erros.get('arquivoNfEstorno') }}</div>
+                    <small class="text-danger"><strong>Atenção:</strong> Esta NF de estorno substituirá a NF atual no
+                      sistema.</small>
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label class="form-label required">NFe de Excesso de Carga</label>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="opcaoExcesso" id="opcaoExcessoNao" value="nao" {%
+                      if not emissao.arquivo_nota_excesso_id %}checked{% endif %}>
+                    <label class="form-check-label" for="opcaoExcessoNao">Não possui</label>
+                  </div>
+                  {% if emissao.arquivo_nota_excesso_id %}
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="opcaoExcesso" id="opcaoExcessoManter"
+                      value="manter" checked>
+                    <label class="form-check-label" for="opcaoExcessoManter">Manter atual</label>
+                  </div>
+                  {% endif %}
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="opcaoExcesso" id="opcaoExcessoNovo" value="novo">
+                    <label class="form-check-label" for="opcaoExcessoNovo">Enviar novo</label>
+                  </div>
+                  {% if emissao.arquivo_nota_excesso_id %}
+                  <div>
+                    <a href="#" id="visualizar-nf-excesso" class="btn btn-outline-primary btn-visualizar-arquivo mb-2"
+                      data-url="{{ url_for('diretorio_uploads_nf_excessao', filename=emissao.arquivo_nota_excesso.caminho.split('/')[-1]) }}"
+                      data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="me-2">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path
+                          d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2">
+                        </path>
+                      </svg>
+                      Visualizar NFe Excesso
+                    </a>
+                  </div>
+                  {% endif %}
+                  <div id="inputUploadExcesso" class="d-none">
+                    <label class="form-label required">Arquivo NFe de Excesso (PDF)</label>
+                    <input type="file" name="arquivoNfExcesso"
+                      class="form-control {% if 'arquivoNfExcesso' in campos_obrigatorios or 'arquivoNfExcesso' in campos_erros %}is-invalid{% endif %}"
+                      accept=".pdf">
+                    <div class="invalid-feedback">{{ campos_obrigatorios.get('arquivoNfExcesso') or
+                      campos_erros.get('arquivoNfExcesso') }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer text-center text-md-end">
+            <a href="{{ url_for('detalhe_registro_operacional', id=emissao.id) }}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-refresh">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+              </svg>
+              Salvar Alterações
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const frfCheckbox = document.getElementById('lancamentoFrf');
+      const camposFrf = document.getElementById('camposFrf');
+      const camposOriginais = document.getElementById('camposOriginais');
+      frfCheckbox.addEventListener('change', () => {
+        camposFrf.classList.toggle('d-none', !frfCheckbox.checked);
+        camposOriginais.classList.toggle('d-none', frfCheckbox.checked);
+      });
+
+      const radioNf = [...document.querySelectorAll('input[name="opcaoNf"]')];
+      const inputNova = document.getElementById('inputUploadNova');
+      const inputEstorno = document.getElementById('inputUploadEstorno');
+      const linkNf = document.getElementById('visualizar-nf');
+      function toggleNf() {
+        const escolha = radioNf.find(r => r.checked)?.value;
+        inputNova.classList.toggle('d-none', escolha !== 'nova');
+        inputEstorno.classList.toggle('d-none', escolha !== 'estorno');
+        linkNf.classList.toggle('d-none', escolha !== 'manter');
+      }
+      radioNf.forEach(r => r.addEventListener('change', toggleNf));
+      toggleNf();
+
+      const radioEx = [...document.querySelectorAll('input[name="opcaoExcesso"]')];
+      const inputEx = document.getElementById('inputUploadExcesso');
+      const linkEx = document.getElementById('visualizar-nf-excesso');
+      function toggleEx() {
+        const escolha = radioEx.find(r => r.checked)?.value;
+        inputEx.classList.toggle('d-none', escolha !== 'novo');
+        if (linkEx) linkEx.classList.toggle('d-none', escolha !== 'manter');
+      }
+      radioEx.forEach(r => r.addEventListener('change', toggleEx));
+      toggleEx();
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

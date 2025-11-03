@@ -1,0 +1,229 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<link href="{{ url_for('static', filename='css/cadastro-veiculo.css') }}"
+  rel="stylesheet" />
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            VEÍCULO
+          </div>
+          <h2 class="page-title">
+            Cadastrar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="{{ url_for('cadastrar_veiculo') }}"
+          method="POST">
+          <div class="card-body">
+
+            <div class="row">
+              <div class="col-sm-12 col-md-12">
+                <div class="mb-3">
+                  <label class="form-label required">Transportadora</label>
+
+                  <div id="container-transportadoras">
+                    <div class="row mb-2 transportadora-item">
+                      <div class="col-md-3">
+                        <select name="transportadoras[]"
+                          class="form-select">
+                          <option value selected>Selecione...</option>
+                          {% for t in transportadoras %}
+                          <option value="{{ t.id }}">{{ t.identificacao
+                            }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="col-md-3 d-flex align-items-center gap-2">
+                        <button type="button"
+                          class="btn btn-danger btn-remover"
+                          disabled>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path
+                              stroke="none" d="M0 0h24v24H0z"
+                              fill="none" /><path d="M4 7l16 0" /><path
+                              d="M10 11l0 6" /><path d="M14 11l0 6" /><path
+                              d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path
+                              d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
+                        </button>
+                        <button type="button"
+                          class="btn btn-primary btn-adicionar">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-plus"><path
+                              stroke="none" d="M0 0h24v24H0z"
+                              fill="none" /><path d="M12 5l0 14" /><path
+                              d="M5 12l14 0" /></svg> </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Mensagem de erro -->
+                  <div class="invalid-feedback d-block">
+                    {% if 'transportadoraVeiculo' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['transportadoraVeiculo'] }}
+                    {% elif 'transportadoraVeiculo' in campos_erros %}
+                    {{ campos_erros['transportadoraVeiculo'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Placa do veículo -->
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Placa veículo</label>
+                  <input type="text" name="placaVeiculo"
+                    value="{{ dados_corretos['placaVeiculo'] }}"
+                    class="form-control placaVeiculo {% if 'placaVeiculo' in campos_obrigatorios or 'placaVeiculo' in campos_erros %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'placaVeiculo' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['placaVeiculo'] }}
+                    {% elif 'placaVeiculo' in campos_erros %}
+                    {{ campos_erros['placaVeiculo'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Capacidade -->
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Capacidade Carga
+                    (Ton.)</label>
+                  <input type="text" name="capacidadeVeiculo"
+                    value="{{ dados_corretos['capacidadeVeiculo'] }}"
+                    class="form-control campo-float capacidadeVeiculo {% if 'capacidadeVeiculo' in campos_obrigatorios or 'capacidadeVeiculo' in campos_erros %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'capacidadeVeiculo' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['capacidadeVeiculo'] }}
+                    {% elif 'capacidadeVeiculo' in campos_erros %}
+                    {{ campos_erros['capacidadeVeiculo'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="{{ url_for('listar_veiculos') }}"
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-arrow-left"
+                width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-plus"
+                width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        new TomSelect("#transportadoraSelect", {
+          create: false,
+          placeholder: "Selecione uma transportadora...",
+          maxItems: 1 
+        });
+      });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('container-transportadoras');
+  
+      // Função para clonar e adicionar um novo select sem transportadoras repetidas
+      function adicionarNovaTransportadora() {
+        const novoItem = container.querySelector('.transportadora-item').cloneNode(true);
+  
+        // Limpa o valor selecionado
+        const novoSelect = novoItem.querySelector('select');
+        novoSelect.selectedIndex = 0;
+  
+        // Ativa o botão de remover
+        novoItem.querySelector('.btn-remover').disabled = false;
+  
+        // Remove opções já selecionadas nos outros selects
+        const selectsExistentes = container.querySelectorAll('select[name="transportadoras[]"]');
+        const valoresSelecionados = Array.from(selectsExistentes)
+          .map(sel => sel.value)
+          .filter(val => val); // remove valores vazios
+  
+        const todasOpcoes = novoSelect.querySelectorAll('option');
+        todasOpcoes.forEach(opcao => {
+          if (valoresSelecionados.includes(opcao.value)) {
+            opcao.remove(); // remove do novo select se já foi escolhida
+          }
+        });
+  
+        container.appendChild(novoItem);
+      }
+  
+      // Evento de clique nos botões
+      container.addEventListener('click', function (event) {
+        if (event.target.closest('.btn-adicionar')) {
+          adicionarNovaTransportadora();
+        }
+  
+        if (event.target.closest('.btn-remover')) {
+          const item = event.target.closest('.transportadora-item');
+          if (container.querySelectorAll('.transportadora-item').length > 1) {
+            item.remove();
+          }
+        }
+      });
+    });
+  </script>
+  
+
+</div>
+
+{% endblock conteudo %}

@@ -1,0 +1,237 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle text-muted">Faturamento</div>
+          <h2 class="page-title fw-bold display-6">Confirmação de Faturamento em Massa</h2>
+          <p class="text-muted">{{ registros|length }} registro(s) selecionado(s) para faturamento</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="py-4">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <!-- Cards de resumo -->
+      <div class="row row-cards mb-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-success text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-currency-dollar">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                  <path d="M12 3v3m0 12v3" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Valor Total a Faturar</div>
+                <div class="fs-3 fw-bold text-success mt-1" id="valor-total-receber">
+                  {{ valor_total | default(0) | formatar_float_para_brl }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-blue text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-invoice">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                  <path d="M9 7l1 0" />
+                  <path d="M9 11l6 0" />
+                  <path d="M9 15l6 0" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">NFs de Serviço</div>
+                <div class="fs-3 fw-bold text-blue mt-1" id="qtd-registros">
+                  {{ registros|length }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-teal text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-trending-up">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M3 17l6 -6l4 4l8 -8" />
+                  <path d="M14 7l7 0l0 7" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Operação</div>
+                <div class="fs-3 fw-bold text-teal mt-1 text-capitalize">
+                  Faturamento em Massa
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulário de confirmação -->
+      <form action="{{ url_for('informar_faturamento_nf_servico_massa') }}" method="POST" enctype="multipart/form-data" id="form-faturamento">
+        <input type="hidden" name="ids_registros" value="{{ ids_selecionados }}">
+
+        <!-- Seção detalhada dos registros por cliente -->
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+          <div class="card-header bg-light fw-bold">
+            NFs de Serviço Selecionadas para Faturamento
+            <span class="badge bg-primary-lt ms-2">{{ registros|length }} NF(s)</span>
+          </div>
+          <div class="card-body">
+            {% for cliente_id, dados_cliente in clientes_dict.items() %}
+            <div class="mb-4 p-3 border rounded">
+              <div class="row align-items-center mb-3">
+                <div class="col">
+                  <h5 class="fw-bold text-primary mb-1">
+                    {% if dados_cliente.cliente %}
+                    {{ dados_cliente.cliente.identificacao }}
+                    {% else %}
+                    Cliente não identificado
+                    {% endif %}
+                  </h5>
+                  <span class="badge bg-blue-lt">{{ dados_cliente.registros|length }} NF(s) de serviço</span>
+                  <span class="badge bg-green-lt ms-2" id="total-cliente-{{ cliente_id }}">Total: {{
+                    dados_cliente.valor_total | formatar_float_para_brl }}</span>
+                </div>
+              </div>
+
+              {% for registro in dados_cliente.registros %}
+              <!-- Informações da NF de Serviço -->
+              <div class="card mb-3 border-light">                
+                <!-- Detalhes da NF de Serviço -->
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-sm table-borderless align-middle mb-0">
+                      <tbody>
+                        <tr>
+                          <td class="text-muted fw-semibold" style="width: 20%;">Prestador:</td>
+                          <td>{{ registro.registro_servico.prestador_identificacao_social | truncate(50, True, '...') if registro.registro_servico.prestador_identificacao_social else '-' }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-muted fw-semibold" style="width: 20%;">Número NFS-e:</td>
+                          <td>{{ registro.numero_nota_fiscal }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-muted fw-semibold">CNPJ/CPF:</td>
+                          <td>{{ registro.registro_servico.prestador_cnpj_cpf or '-' }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-muted fw-semibold">Tomador:</td>
+                          <td>{{ registro.registro_servico.tomador_razao_social | truncate(50, True, '...') if registro.registro_servico.tomador_razao_social else '-' }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-muted fw-semibold">Discriminação:</td>
+                          <td>
+                            {% if registro.registro_servico.discriminacao_servico %}
+                              {{ registro.registro_servico.discriminacao_servico | truncate(80, True, '...') }}
+                            {% else %}
+                              {{ registro.registro_servico.carregamento_discriminacao | truncate(80, True, '...') if registro.registro_servico.carregamento_discriminacao else '-' }}
+                            {% endif %}
+                          </td>
+                        </tr>
+                        {% if registro.registro_servico.periodo_inicio and registro.registro_servico.periodo_fim %}
+                        <tr>
+                          <td class="text-muted fw-semibold">Período:</td>
+                          <td>
+                            {{ registro.registro_servico.periodo_inicio | formatar_data_para_brl }} até 
+                            {{ registro.registro_servico.periodo_fim | formatar_data_para_brl }}
+                          </td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                          <td class="text-muted fw-semibold">Valor Serviços:</td>
+                          <td>{{ registro.registro_servico.total_servicos_100 | formatar_float_para_brl if registro.registro_servico.total_servicos_100 else 'R$ 0,00' }}</td>
+                        </tr>
+                        {% if registro.registro_servico.valor_iss_100 %}
+                        <tr>
+                          <td class="text-muted fw-semibold">ISS:</td>
+                          <td>{{ registro.registro_servico.valor_iss_100 | formatar_float_para_brl }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                          <td class="text-muted fw-semibold">Total Líquido:</td>
+                          <td>{{ registro.valor_total | formatar_float_para_brl }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-header bg-light fw-bold">Confirmação do Faturamento</div>
+          <div class="card-body">
+            <div class="text-end mt-4">
+              <a class="btn btn-outline-secondary" href="{{ url_for('faturamento_nf_servico') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l14 0" />
+                  <path d="M5 12l6 6" />
+                  <path d="M5 12l6 -6" />
+                </svg>
+                Voltar
+              </a>
+              <button type="submit" class="btn btn-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l5 5l10 -10" />
+                </svg>
+                Confirmar Faturamento em Massa (<span id="qtd-registros-botao">{{ registros|length }}</span> NFs de Serviço)
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      function formatarMoeda(valor) {
+        return (valor / 100).toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        });
+      }
+
+      console.log('NFs de Serviço carregadas para faturamento em massa');
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

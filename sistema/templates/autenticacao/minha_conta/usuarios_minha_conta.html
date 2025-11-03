@@ -1,0 +1,202 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            GERENCIAMENTO DE CONTA
+          </div>
+          <h2 class="page-title">
+            Meus Dados
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include  'estrutura/mensagens_flash.html' %}
+      <div class="card">
+        <div class="row g-0">
+
+          {% include 'autenticacao/minha_conta/menu_usuarios_minha_conta.html' %}
+
+          <div class="col-12 col-md-9 d-flex flex-column">
+            <form action="{{ url_for('usuario_minha_conta', id=usuario.id) }}" method="POST" enctype="multipart/form-data">
+              <div class="card-body">
+                <h2 class="mb-4">Minha Conta</h2>
+                <h3 class="card-title">Foto do Perfil</h3>
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    <span class="avatar avatar-xl" 
+                    style="background-image: url('{{ url_for('diretorio_uploads_usuarios', filename=current_user.foto_perfil.nome) }}')"
+                    >
+                    </span>
+                  </div>
+                  <div class="col-auto">
+                    <a href="#" class="btn" id="mostrarInput">
+                      Mudar foto de Perfil
+                    </a>
+                  </div>
+                  <div class="col-md">
+                    <input type="file" class="form-control" name="fotoPerfilUsuario" 
+                      id="inputFotoPerfil" style="display: none;"
+                    >
+                  </div>
+                </div>
+                <h3 class="card-title mt-4">Informações Pessoais</h3>
+                <div class="row g-3">
+                  <div class="col-md">
+                    <div class="form-label">Nome</div>
+                    <input type="text" name="nomeUsuario" value="{{ usuario.nome }}"
+                      class="form-control {% if 'nome' in campos_obrigatorios %}is-invalid{% endif %}"
+                    >
+                    <div class="invalid-feedback">  
+                      {% if 'nome' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['nome'] }}
+                      {% endif %}                        
+                    </div>
+                  </div>
+                  <div class="col-md">
+                    <div class="form-label">Sobrenome</div>
+                    <input type="text" name="sobrenomeUsuario" value="{{ usuario.sobrenome }}"
+                      class="form-control {% if 'sobrenome' in campos_obrigatorios %}is-invalid{% endif %}"
+                    >
+                    <div class="invalid-feedback">
+                      {% if 'sobrenome' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['sobrenome'] }}
+                      {% endif %}                                  
+                    </div>
+                  </div>
+                  <div class="col-md">
+                    <div class="form-label">CPF</div>
+                    <input type="text" class="form-control" value="{{ usuario.cpf }}" 
+                      data-mask="000.000.000-00" placeholder="xxx.xxx.xxx-xx" 
+                      data-mask-visible="true" autocomplete="off" disabled
+                    >
+                  </div>
+                  
+                </div>
+                <h3 class="card-title mt-4">Contato</h3>
+                <p class="card-subtitle">Para alterar o e-mail, entre em contato com o suporte.</p>
+                <div>
+                  <div class="row g-4">
+                    <div class="col-md">
+                      <div class="form-label">E-mail</div>
+                      <input type="text" class="form-control" value="{{ usuario.email }}" disabled>
+                    </div>
+                    <div class="col-md">
+                      <div class="form-label">Telefone</div>
+                      <input type="text" name="telefoneUsuario" value="{{ usuario.telefone }}"
+                        data-mask="(00) 0 0000-0000" placeholder="(xx) x xxxx-xxx"
+                        class="form-control {% if 'telefone' in campos_obrigatorios %}is-invalid{% endif %}" 
+                        data-mask-visible="true" autocomplete="off"
+                      >
+                      <div class="invalid-feedback">
+                        {% if 'telefone' in campos_obrigatorios %}
+                          {{ campos_obrigatorios['telefone'] }}
+                        {% endif %}                                  
+                      </div>
+                    </div>
+                </div>
+                <h3 class="card-title mt-4">Senha</h3>
+                <p class="card-subtitle">Deixe em branco caso não deseje alterar a senha.</p>
+                <div>
+                  <div class="row g-4">
+                    <div class="col-md">
+                      <div class="form-label">Senha Atual</div>
+                      <input type="password" name="senhaAtualUsuario" value="{{ dados_informados['senhaAtualUsuario'] }}"
+                        class="form-control {% if 'senha_atual' in campos_erros %}is-invalid{% endif %}"
+                      >
+                      <div class="invalid-feedback">
+                        {% if 'senha_atual' in campos_erros %}
+                          {{ campos_erros['senha_atual'] }}
+                        {% endif %}                                  
+                      </div>
+                    </div>
+                    <div class="col-md">
+                      <div class="form-label">Nova Senha</div>
+                      <input type="password" name="novaSenhaUsuario" value="{{ dados_informados['novaSenhaUsuario'] }}"
+                        class="form-control {% if 'nova_senha' in campos_erros %}is-invalid{% endif %}"
+                      >
+                      <div class="invalid-feedback">
+                        {% if 'nova_senha' in campos_erros %}
+                          {{ campos_erros['nova_senha'] }}
+                        {% endif %}                                  
+                      </div>
+                    </div>
+                    <div class="col-md">
+                      <div class="form-label">Repetir Nova Senha</div>
+                      <input type="password" name="repetirNovaSenhaUsuario" value="{{ dados_informados['repetirNovaSenhaUsuario'] }}"
+                        class="form-control {% if 'repetir_nova_senha' in campos_erros %}is-invalid{% endif %}"
+                      >
+                      <div class="invalid-feedback">
+                        {% if 'repetir_nova_senha' in campos_erros %}
+                          {{ campos_erros['repetir_nova_senha'] }}
+                        {% endif %}                                  
+                      </div>
+                    </div>
+                </div>
+                <br>
+              </div>
+              <div class="card-footer text-end">
+                <a href="{{ url_for('principal') }}" class="btn">
+                  Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">Alterar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Contador de caracteres do textarea - Adaptado para Edição -->
+  <script>
+    const textarea = document.getElementById('autorTextArea');
+    const charCount = document.getElementById('caracteresRestantes');
+    
+    textarea.addEventListener('input', function() {
+      updateCharCount(); // Chama a função para atualizar o contador
+    });
+  
+    // Função para atualizar o contador e a cor do texto
+    function updateCharCount() {
+      const remainingChars = 150 - textarea.value.length;
+      charCount.textContent = `${remainingChars} caracteres restantes`;
+  
+      // Alterando a cor do texto quando chega próximo do mínimo
+      if (remainingChars < 10) {
+        charCount.style.color = '#FF6961'; // Cor vermelha
+      } else {
+        charCount.style.color = 'black'; // Cor preta
+      }
+    }
+  
+    // Chame a função para configurar o contador ao carregar a página
+    updateCharCount();
+  </script>
+
+  <!-- Exibe Campo de upload de Foto de Perfil -->
+  <script>
+    const botaoMostrar = document.getElementById('mostrarInput');
+    const meuInput = document.getElementById('inputFotoPerfil');
+
+    botaoMostrar.addEventListener('click', () => {
+      meuInput.style.display = 'block'; // Define o estilo para "block" para exibir o input
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+
+</div>
+
+{% endblock conteudo %}

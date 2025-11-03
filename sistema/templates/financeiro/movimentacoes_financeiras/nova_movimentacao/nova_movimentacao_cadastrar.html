@@ -1,0 +1,451 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            NOVA MOVIMENTAÇÃO CADASTRAR
+          </div>
+          <h2 class="page-title">
+            Cadastrar Movimentação
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if tem_diferenca %}
+  {% include 'financeiro/importar_ofx/dados_com_diferenca_component.html' %}
+  {% elif conciliar_transacao_id %}
+  {% if dados_conciliacao and dados_conciliacao.get('tipo_conciliacao') == 'outros_recebimentos' %}
+  {% set titulo_pagina = "outros recebimentos" %}
+  {% else %}
+  {% set titulo_pagina = "outros pagamentos" %}
+  {% endif %}
+  {% include 'financeiro/importar_ofx/dados_conciliacao_component.html' %}
+  {% endif %}
+
+
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="{{url_for('nova_movimentacao_financeira')}}" method="POST">
+          <div class="card-body">
+            <div class="row">
+              {% if dados_conciliacao and dados_conciliacao.get('tipo_movimentacao_predefinido') %}
+              {% set tipo_sel = dados_conciliacao.get('tipo_movimentacao_predefinido') %}
+              {% else %}
+              {% set tipo_sel = dados_corretos['tipoMovimentacao'] if dados_corretos['tipoMovimentacao'] else 'receita'
+              %}
+              {% endif %}
+
+              <!-- Tipo de Movimentação -->
+              <div class="col-12">
+                <div class="mb-3">
+                  <div class="form-label required">Tipo de Movimentação</div>
+                  <div>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="tipoMovimentacao" value="receita" {% if
+                        tipo_sel=='receita' %}checked{% endif %} {% if dados_conciliacao and
+                        dados_conciliacao.get('tipo_movimentacao_predefinido')=='despesa' %}disabled{% endif %}
+                        onchange="alterarCampos()">
+                      <span class="form-check-label">Receita</span>
+                    </label>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="tipoMovimentacao" value="despesa" {% if
+                        tipo_sel=='despesa' %}checked{% endif %} onchange="alterarCampos()">
+                      <span class="form-check-label">Despesa</span>
+                    </label>
+                  </div>
+                  {% if 'tipoMovimentacao' in campos_obrigatorios or 'tipoMovimentacao' in campos_erros %}
+                  <div class="invalid-feedback d-block">
+                    {% if 'tipoMovimentacao' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['tipoMovimentacao'] }}
+                    {% else %}
+                    {{ campos_erros['tipoMovimentacao'] }}
+                    {% endif %}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Vencimento -->
+              <div class="col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Vencimento</label>
+                  <input type="date" name="vencimento" id="vencimento" value="{{ dados_corretos['vencimento'] }}" class="form-control {% if 'vencimento' in campos_obrigatorios or 'vencimento' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'vencimento' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['vencimento'] }}
+                    {% elif 'vencimento' in campos_erros %}
+                    {{ campos_erros['vencimento'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Descrição -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label required">Descrição</label>
+                  <input type="text" name="descricao" value="{{ dados_corretos['descricao'] }}" class="form-control {% if 'descricao' in campos_obrigatorios or 'descricao' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'descricao' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['descricao'] }}
+                    {% elif 'descricao' in campos_erros %}
+                    {{ campos_erros['descricao'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mês/Ano -->
+              <div class="col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required" id="labelMesAno">Mês/Ano Referência</label>
+                  <input type="text" name="mesAno" placeholder="Ex: 06/2025" value="{{ dados_corretos['mesAno'] }}"
+                    class="form-control mesAno {% if 'mesAno' in campos_obrigatorios or 'mesAno' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'mesAno' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['mesAno'] }}
+                    {% elif 'mesAno' in campos_erros %}
+                    {{ campos_erros['mesAno'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Valor -->
+              <div class="col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Valor</label>
+                  <div class="input-group">
+                    {% if tem_diferenca and valor_diferenca %}
+                    {% set valor_exibir = valor_diferenca %}
+                    {% elif dados_conciliacao and dados_conciliacao.get('valor_sem_formatacao') %}
+                    {% set valor_exibir = dados_conciliacao.get('valor_sem_formatacao') %}
+                    {% else %}
+                    {% set valor_exibir = dados_corretos['valor'] %}
+                    {% endif %}
+
+                    <input type="text" name="valor" value="{{ valor_exibir }}"
+                      class="form-control campo-moeda-brl {% if 'valor' in campos_obrigatorios or 'valor' in campos_erros %}is-invalid{% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'valor' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['valor'] }}
+                      {% elif 'valor' in campos_erros %}
+                      {{ campos_erros['valor'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Plano de Contas -->
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Plano de Contas</label>
+                  <select name="planoContas" id="planoContas" class="form-select {% if 'planoContas' in campos_obrigatorios or 'planoContas' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                    <option value>Selecione...</option>
+                  </select>
+                  <div class="invalid-feedback">
+                    {% if 'planoContas' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['planoContas'] }}
+                    {% elif 'planoContas' in campos_erros %}
+                    {{ campos_erros['planoContas'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Categoria Fiscal -->
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Categoria Fiscal</label>
+                  <select name="categoriaFiscal"
+                    class="form-select {% if 'categoriaFiscal' in campos_obrigatorios or 'categoriaFiscal' in campos_erros %}is-invalid{% endif %}">
+                    <option value disabled selected>Selecione...</option>
+
+                    {% for cat in estrutura_fiscal %}
+                    {# Nível 1 – desabilitado #}
+                    <option value="{{ cat.codigo }}" disabled>
+                      {{ cat.codigo }} – {{ cat.nome }}
+                    </option>
+
+                    {# Nível 2 – selecionável #}
+                    {% for sub in cat.children %}
+                    <option value="{{ sub.codigo }}">
+                      &nbsp;&nbsp;{{ sub.codigo }} – {{ sub.nome }}
+                    </option>
+
+                    {# Nível 3 – selecionável #}
+                    {% for sub2 in sub.children %}
+                    <option value="{{ sub2.codigo }}">
+                      &nbsp;&nbsp;&nbsp;&nbsp;{{ sub2.codigo }} – {{ sub2.nome
+                      }}
+                    </option>
+                    {% endfor %}
+                    {% endfor %}
+                    {% endfor %}
+
+                  </select>
+                  <div class="invalid-feedback">
+                    {% if 'categoriaFiscal' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['categoriaFiscal'] }}
+                    {% else %}
+                    {{ campos_erros['categoriaFiscal'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Conta Bancária -->
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Conta Bancária</label>
+                  <select name="contaBancaria" class="form-select {% if 'contaBancaria' in campos_obrigatorios or 'contaBancaria' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                    <option value>Selecione...</option>
+                    {% for conta in contas_bancarias %}
+                    <option value="{{ conta.id }}" {% if dados_corretos['contaBancaria']==conta.id|string %}selected{%
+                      endif %}>
+                      {{ conta.identificacao }} - {{ conta.nome_banco }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {% if 'contaBancaria' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['contaBancaria'] }}
+                    {% elif 'contaBancaria' in campos_erros %}
+                    {{ campos_erros['contaBancaria'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Centro de Custo (apenas para despesas) -->
+              <div class="col-md-3" id="campoCentroCusto" style="display: none;">
+                <div class="mb-3">
+                  <label class="form-label required">Centro de Custo</label>
+                  <select name="centroCusto" class="form-select {% if 'centroCusto' in campos_obrigatorios or 'centroCusto' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                    <option value>Selecione...</option>
+                    {% for centro in centros_custo %}
+                    <option value="{{ centro.id }}" {% if dados_corretos['centroCusto']==centro.id|string %}selected{%
+                      endif %}>{{ centro.nome }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {% if 'centroCusto' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['centroCusto'] }}
+                    {% elif 'centroCusto' in campos_erros %}
+                    {{ campos_erros['centroCusto'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer text-center text-md-end">
+            <a href="{{url_for('movimentacoes_financeiras')}}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary" id="btnSubmit">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+<!-- Dados para JavaScript -->
+<script type="application/json" id="estrutura-plano-data">
+  {{ estrutura_plano | tojson }}
+</script>
+
+<script>
+  // Carregar dados da estrutura do plano de contas
+  const estruturaPlano = JSON.parse(document.getElementById('estrutura-plano-data').textContent);
+  const valorPlanoContasSelecionado = "{{ dados_corretos['planoContas'] if dados_corretos['planoContas'] else '' }}";
+
+  function alterarCampos() {
+    const tipo = document.querySelector('input[name="tipoMovimentacao"]:checked')?.value;
+    const campoCentroCusto = document.getElementById('campoCentroCusto');
+    const planoContas = document.getElementById('planoContas');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const vencimento = document.getElementById('vencimento');
+    const labelMesAno = document.getElementById('labelMesAno');
+
+    // Esconde centro de custo
+    campoCentroCusto.style.display = 'none';
+
+    // Define data de hoje se o campo estiver vazio
+    if (!vencimento.value) {
+      vencimento.value = new Date().toISOString().slice(0, 10);
+    }
+
+    // Filtrar plano de contas baseado no tipo
+    filtrarPlanoContas(tipo);
+
+    if (tipo === 'receita') {
+      labelMesAno.textContent = 'Mês/Ano Referência';
+      btnSubmit.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg"
+          class="icon icon-tabler icon-tabler-plus"
+          width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor" fill="none"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+          <path d="M12 5l0 14"></path>
+          <path d="M5 12l14 0"></path>
+        </svg>
+        Cadastrar Receita
+      `;
+      if (!vencimento.value) {
+        vencimento.value = new Date().toISOString().slice(0, 10);
+      }
+    }
+    else if (tipo === 'despesa') {
+      campoCentroCusto.style.display = 'block';
+      btnSubmit.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg"
+          class="icon icon-tabler icon-tabler-plus"
+          width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor" fill="none"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+          <path d="M12 5l0 14"></path>
+          <path d="M5 12l14 0"></path>
+        </svg>
+        Cadastrar Despesa
+      `;
+      if (!vencimento.value) {
+        vencimento.value = '';
+      }
+    }
+    else {
+      btnSubmit.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg"
+          class="icon icon-tabler icon-tabler-plus"
+          width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor" fill="none"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+          <path d="M12 5l0 14"></path>
+          <path d="M5 12l14 0"></path>
+        </svg>
+        Cadastrar
+      `;
+    }
+  }
+
+  function filtrarPlanoContas(tipoMovimentacao) {
+    const selectPlano = document.getElementById('planoContas');
+    const valorSelecionadoAnterior = selectPlano.value;
+
+    // Limpar todas as opções exceto a primeira
+    selectPlano.innerHTML = '<option value="">Selecione...</option>';
+
+    // Determinar quais tipos mostrar
+    let tiposPermitidos = [];
+    if (tipoMovimentacao === 'receita') {
+      tiposPermitidos = [1, 3]; // Receita e Movimentação
+    } else if (tipoMovimentacao === 'despesa') {
+      tiposPermitidos = [2, 3]; // Despesa e Movimentação
+    } else {
+      tiposPermitidos = [1, 2, 3]; // Todos
+    }
+
+    // Filtrar e adicionar opções
+    estruturaPlano.forEach(categoria => {
+      if (tiposPermitidos.includes(categoria.tipo)) {
+        // Nível 1 - desabilitado
+        const option1 = document.createElement('option');
+        option1.value = categoria.codigo;
+        option1.disabled = true;
+        option1.textContent = `${categoria.codigo} – ${categoria.nome}`;
+        selectPlano.appendChild(option1);
+
+        // Nível 2 - selecionável
+        if (categoria.children) {
+          categoria.children.forEach(subcategoria => {
+            const option2 = document.createElement('option');
+            option2.value = subcategoria.codigo;
+            option2.textContent = `  ${subcategoria.codigo} – ${subcategoria.nome}`;
+
+            // Manter seleção se era o valor anterior
+            if (subcategoria.codigo === valorSelecionadoAnterior || subcategoria.codigo === valorPlanoContasSelecionado) {
+              option2.selected = true;
+            }
+
+            selectPlano.appendChild(option2);
+
+            // Nível 3 - selecionável
+            if (subcategoria.children) {
+              subcategoria.children.forEach(subsubcategoria => {
+                const option3 = document.createElement('option');
+                option3.value = subsubcategoria.codigo;
+                option3.textContent = `    ${subsubcategoria.codigo} – ${subsubcategoria.nome}`;
+
+                // Manter seleção se era o valor anterior
+                if (subsubcategoria.codigo === valorSelecionadoAnterior || subsubcategoria.codigo === valorPlanoContasSelecionado) {
+                  option3.selected = true;
+                }
+
+                selectPlano.appendChild(option3);
+              });
+            }
+          });
+        }
+      }
+    });
+  }
+
+  // Event listeners
+  document.querySelectorAll('input[name="tipoMovimentacao"]')
+    .forEach(r => r.addEventListener('change', alterarCampos));
+
+  // Executa ao carregar
+  document.addEventListener('DOMContentLoaded', alterarCampos);
+</script>
+{% endblock conteudo %}

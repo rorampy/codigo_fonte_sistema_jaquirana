@@ -1,0 +1,176 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">NF LANÇADA</div>
+          <h2 class="page-title">Detalhes</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      {% if emissao %}
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="card border border-primary shadow-sm">
+            <div class="card-body">
+              <h3 class="card-title mb-3 text-primary">Dados da Nota Fiscal</h3>
+              <div class="row">
+
+                <div class="col-sm-12 col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">Emissor</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.razao_social_emissor }}" disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Número NF</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.numero_nota_fiscal }}" disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-1">
+                  <div class="mb-3">
+                    <label class="form-label">Série</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.serie_nota }}" disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-5">
+                  <div class="mb-3">
+                    <label class="form-label">Chave de Acesso</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.chave_acesso }}" disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">Destinatário</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.destinatario_nome }}" disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">CNPJ/CPF Dest.</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.destinatario_cnpj_cpf }}" disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Insc. Estadual</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.destinatario_insc_estadual }}" disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Data Emissão</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.destinatario_data_emissao.strftime('%d/%m/%Y') if emissao.destinatario_data_emissao else '' }}"
+                      disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Valor Total</label>
+                    <input type="text" class="form-control campo-moeda-brl"
+                      value="{{ emissao.valor_total_nota_100 }}"
+                      disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">Transportador</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.transportador_nome }}" disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">CPF/CNPJ Transportador</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.transportador_cnpj_cpf }}" disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Insc. Estadual
+                      Transportador</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.transportador_insc_estadual }}"
+                      disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Placa</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.placa }}" disabled>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Motorista</label>
+                    <input type="text" class="form-control"
+                      value="{{ emissao.motorista }}" disabled>
+                  </div>
+                </div>
+              </div>
+              {% if emissao.arquivo_nota_id %}
+              <div class="mt-4">
+                <a href="#" class="btn btn-grey btn-visualizar-arquivo"
+                  data-url="{{ url_for('diretorio_uploads_nota_fiscal', filename=emissao.arquivo_nota.caminho.split('/')[-1]) }}"
+                  data-bs-toggle="modal"
+                  data-bs-target="#modal-visualizar-arquivo">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-receipt">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path
+                      d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" />
+                  </svg>
+                  Visualizar Arquivo NF
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="text-end">
+        <a href="{{ url_for('listar_emissoes') }}" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg"
+            class="icon icon-tabler icon-tabler-arrow-left"
+            width="24"
+            height="24" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor" fill="none"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z"
+              fill="none"></path>
+            <path d="M5 12l14 0"></path>
+            <path d="M5 12l6 6"></path>
+            <path d="M5 12l6 -6"></path>
+          </svg>Voltar</a>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

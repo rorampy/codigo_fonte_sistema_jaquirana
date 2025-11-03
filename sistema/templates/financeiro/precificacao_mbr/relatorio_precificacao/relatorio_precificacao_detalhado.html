@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório de Precificação - MBR Extração</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      margin: 20px;
+      color: #333;
+    }
+
+    .header {
+      border-bottom: 2px solid #1e5631;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+
+    .header table {
+      width: 100%;
+      border: none;
+    }
+
+    .header img {
+      width: 120px;
+    }
+
+    .system-info {
+      text-align: right;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .relatorio-title {
+      text-align: center;
+      font-size: 18px;
+      color: #1e5631;
+      font-weight: bold;
+      margin: 20px 0;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      color: #1e5631;
+      font-weight: bold;
+      font-size: 14px;
+      margin: 20px 0 10px 0;
+      padding: 8px 10px;
+      background-color: #f0f8f0;
+      border-left: 4px solid #1e5631;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #1e5631;
+      color: white;
+      padding: 10px 8px;
+      text-align: left;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+      border-right: 1px solid #ddd;
+      font-size: 11px;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .highlight {
+      background-color: #e8f5e8 !important;
+      font-weight: bold;
+    }
+
+    .status-sim {
+      background-color: #d4edda;
+      color: #155724;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .status-nao {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .valor-destaque {
+      color: #1e5631;
+      font-weight: bold;
+    }
+
+    .conclusao {
+      background-color: #f0f8f0;
+      border: 1px solid #c3e6c3;
+      padding: 15px;
+      margin: 20px 0;
+    }
+
+    .conclusao h4 {
+      color: #1e5631;
+      margin: 0 0 10px 0;
+      font-size: 12px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 10px;
+      color: #777;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .na-text {
+      color: #777;
+      font-style: italic;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <table>
+      <tr>
+        <td style="width: 200px;">
+          <img src="{{logo_path}}" alt="Logo MBR Extração" />
+        </td>
+        <td class="system-info">
+          <div><strong>Sistema de Gestão MBR</strong></div>
+          <div><strong>Versão</strong> {{changelog.versao}}</div>
+          <div><strong>Data última atualização:</strong> {{changelog.data_lancamento if changelog else '22/08/2025'}}
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="relatorio-title">Relatório de Precificação de Madeira</div>
+
+  <!-- Dados do Produto -->
+  <div class="section-title">DADOS DO PRODUTO</div>
+  <table style="page-break-inside: avoid;">
+    <thead>
+      <tr>
+        <th>Produto</th>
+        <th>Bitola</th>
+        <th>Valor Unitário</th>
+        <th>Quantidade</th>
+        <th>Madeira Posta</th>
+        <th>Total Bruto</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ dados.produto or '-' }}</td>
+        <td>{{ dados.bitola or '-' }}</td>
+        <td class="valor-destaque">{{ dados.valor_unitario | formatar_float_para_brl }}</td>
+        <td>{{ dados.quantidade }} Ton</td>
+        <td>
+          {% if dados.madeira_posta == 'sim' %}
+          <span class="status-sim">Sim</span>
+          {% else %}
+          <span class="status-nao">Não</span>
+          {% endif %}
+        </td>
+        <td class="valor-destaque">{{ calculo.receita_bruta | formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Compra de Mercadoria -->
+  <div class="section-title">COMPRA DE MERCADORIA</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Emite Nota</th>
+        <th>FUNRURAL/SENAR</th>
+        <th>Estado Origem</th>
+        <th>Estado Destino</th>
+        <th>Classificação Fiscal</th>
+        <th>Valor/Ton</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          {% if dados.compra.emite_nota == 'sim' %}
+          <span class="status-sim">Sim</span>
+          {% else %}
+          <span class="status-nao">Não</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if dados.compra.funrural_senar == 'sim' %}
+          <span class="status-sim">Sim</span>
+          {% else %}
+          <span class="status-nao">Não</span>
+          {% endif %}
+        </td>
+        <td>{{ dados.compra.estado_origem or '-' }}</td>
+        <td>{{ dados.compra.estado_destino or '-' }}</td>
+        <td>
+          {% set class_fiscal = dados.compra.classificacao_fiscal %}
+          {% if class_fiscal == 'PR_PF' %}Produtor Rural PF
+          {% elif class_fiscal == 'PR_PJ_SIMPLES' %}Produtor Rural PJ Simples
+          {% elif class_fiscal == 'PR_PJ_REAL' %}Produtor Rural PJ Real
+          {% elif class_fiscal == 'PJ_SIMPLES' %}Empresa PJ Simples
+          {% elif class_fiscal == 'PJ_REAL' %}Empresa PJ Real
+          {% else %}{{ class_fiscal or '-' }}
+          {% endif %}
+        </td>
+        <td class="valor-destaque">{{ dados.compra.valor_ton | formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Impostos Compra -->
+  <table>
+    <thead>
+      <tr>
+        <th>ICMS</th>
+        <th>PIS</th>
+        <th>COFINS</th>
+        <th>Acréscimos</th>
+        <th>Total Compra</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ calculo.operacoes.compra.icms | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.compra.pis | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.compra.cofins | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.compra.acrescimos | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ calculo.operacoes.compra.total | formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Frete -->
+  <div class="section-title">FRETE</div>
+  {% if dados.madeira_posta == 'sim' %}
+  <table>
+    <tbody>
+      <tr>
+        <td class="text-center na-text">Não aplicável - Madeira Posta</td>
+      </tr>
+    </tbody>
+  </table>
+  {% else %}
+  <table>
+    <thead>
+      <tr>
+        <th>Emite Nota</th>
+        <th>Origem</th>
+        <th>Destino</th>
+        <th>Prestador</th>
+        <th>Tipo Nota</th>
+        <th>Valor/Ton</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          {% if dados.frete.emite_nota == 'sim' %}
+          <span class="status-sim">Sim</span>
+          {% else %}
+          <span class="status-nao">Não</span>
+          {% endif %}
+        </td>
+        <td>{{ dados.frete.origem or '-' }}</td>
+        <td>{{ dados.frete.destino or '-' }}</td>
+        <td>
+          {% if dados.frete.prestador == 'PJ_SIMPLES' %}PJ Simples Nacional
+          {% elif dados.frete.prestador == 'PJ_REAL' %}PJ Real/Presumido
+          {% else %}{{ dados.frete.prestador or '-' }}
+          {% endif %}
+        </td>
+        <td>{{ dados.frete.tipo_nota or '-' }}</td>
+        <td class="valor-destaque">{{ dados.frete.valor_ton | formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Impostos Frete -->
+  <table>
+    <thead>
+      <tr>
+        <th>ICMS</th>
+        <th>PIS</th>
+        <th>COFINS</th>
+        <th>Acréscimos</th>
+        <th>Total Frete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ calculo.operacoes.frete.icms | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.frete.pis | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.frete.cofins | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.frete.acrescimos | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ calculo.operacoes.frete.total | formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+  {% endif %}
+
+  <!-- Extração -->
+  <div class="section-title">SERVIÇO DE EXTRAÇÃO</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Emite Nota</th>
+        <th>Tipo de Prestador</th>
+        <th>Valor/Ton</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          {% if dados.extracao.emite_nota == 'sim' %}
+          <span class="status-sim">Sim</span>
+          {% else %}
+          <span class="status-nao">Não</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if dados.extracao.prestador == 'PJ_SIMPLES' %}PJ Simples Nacional
+          {% elif dados.extracao.prestador == 'PJ_REAL' %}PJ Real/Presumido
+          {% else %}{{ dados.extracao.prestador or '-' }}
+          {% endif %}
+        </td>
+        <td class="valor-destaque">{{ dados.extracao.valor_ton | formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Impostos Extração -->
+  <table>
+    <thead>
+      <tr>
+        <th>ICMS</th>
+        <th>PIS</th>
+        <th>COFINS</th>
+        <th>Acréscimos</th>
+        <th>Total Extração</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ calculo.operacoes.extracao.icms | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.extracao.pis | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.extracao.cofins | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.extracao.acrescimos | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ calculo.operacoes.extracao.total | formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Comissão -->
+  <div class="section-title">COMISSÃO DE VENDA</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Emite Nota</th>
+        <th>Valor/Ton</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          {% if dados.comissao.emite_nota == 'sim' %}
+          <span class="status-sim">Sim</span>
+          {% else %}
+          <span class="status-nao">Não</span>
+          {% endif %}
+        </td>
+        <td class="valor-destaque">{{ dados.comissao.valor_ton | formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Impostos Comissão -->
+  <table>
+    <thead>
+      <tr>
+        <th>ICMS</th>
+        <th>PIS</th>
+        <th>COFINS</th>
+        <th>Acréscimos</th>
+        <th>Total Comissão</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ calculo.operacoes.comissao.icms | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.comissao.pis | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.comissao.cofins | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.comissao.acrescimos | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ calculo.operacoes.comissao.total | formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Resumo Financeiro -->
+  <div class="section-title">RESUMO FINANCEIRO COMPLETO</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Descrição</th>
+        <th>Valor</th>
+        <th>Observação</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Receita Bruta</strong></td>
+        <td class="valor-destaque">{{ calculo.receita_bruta | formatar_float_para_brl }}</td>
+        <td>Faturamento total</td>
+      </tr>
+      <tr>
+        <td>ICMS sobre Venda (12%)</td>
+        <td>{{ calculo.impostos_venda.icms | formatar_float_para_brl }}</td>
+        <td>Imposto sobre receita</td>
+      </tr>
+      <tr>
+        <td>PIS sobre Venda (1,65%)</td>
+        <td>{{ calculo.impostos_venda.pis | formatar_float_para_brl }}</td>
+        <td>Imposto sobre receita</td>
+      </tr>
+      <tr>
+        <td>COFINS sobre Venda (7,6%)</td>
+        <td>{{ calculo.impostos_venda.cofins | formatar_float_para_brl }}</td>
+        <td>Imposto sobre receita</td>
+      </tr>
+      <tr class="highlight">
+        <td><strong>Receita Líquida</strong></td>
+        <td class="valor-destaque">{{ calculo.receita_liquida | formatar_float_para_brl }}</td>
+        <td>Após deduções fiscais</td>
+      </tr>
+      <tr>
+        <td>CMV</td>
+        <td>{{ calculo.cmv | formatar_float_para_brl }}</td>
+        <td>Custo da Mercadoria Vendida</td>
+      </tr>
+      <tr>
+        <td>Lucro Bruto</td>
+        <td class="valor-destaque">{{ calculo.lucro_bruto | formatar_float_para_brl }}</td>
+        <td>Receita Líquida - CMV</td>
+      </tr>
+      <tr class="highlight">
+        <td><strong>Lucro Líquido</strong></td>
+        <td class="valor-destaque">{{ calculo.lucro_liquido | formatar_float_para_brl }}</td>
+        <td>Após IRPJ e CSLL</td>
+      </tr>
+      <tr class="highlight">
+        <td><strong>Margem Líquida</strong></td>
+        <td class="valor-destaque campo-float">{{ '%.2f'|format(calculo.margem_liquida) }}%</td>
+        <td>Lucro final sobre receita</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Resumo de Impostos por Operação -->
+  <div class="section-title">RESUMO DE IMPOSTOS POR OPERAÇÃO</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Operação</th>
+        <th>ICMS</th>
+        <th>PIS</th>
+        <th>COFINS</th>
+        <th>Acréscimos</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Compra de Mercadoria</strong></td>
+        <td>{{ calculo.operacoes.compra.icms | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.compra.pis | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.compra.cofins | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.compra.acrescimos | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ (calculo.operacoes.compra.icms + calculo.operacoes.compra.pis +
+          calculo.operacoes.compra.cofins + calculo.operacoes.compra.acrescimos) | formatar_float_para_brl }}</td>
+      </tr>
+      <tr>
+        <td><strong>Frete</strong></td>
+        <td>{{ calculo.operacoes.frete.icms | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.frete.pis | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.frete.cofins | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.frete.acrescimos | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ (calculo.operacoes.frete.icms + calculo.operacoes.frete.pis +
+          calculo.operacoes.frete.cofins + calculo.operacoes.frete.acrescimos) | formatar_float_para_brl }}</td>
+      </tr>
+      <tr>
+        <td><strong>Extração</strong></td>
+        <td>{{ calculo.operacoes.extracao.icms | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.extracao.pis | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.extracao.cofins | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.extracao.acrescimos | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ (calculo.operacoes.extracao.icms + calculo.operacoes.extracao.pis +
+          calculo.operacoes.extracao.cofins + calculo.operacoes.extracao.acrescimos) | formatar_float_para_brl }}</td>
+      </tr>
+      <tr>
+        <td><strong>Comissão</strong></td>
+        <td>{{ calculo.operacoes.comissao.icms | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.comissao.pis | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.comissao.cofins | formatar_float_para_brl }}</td>
+        <td>{{ calculo.operacoes.comissao.acrescimos | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ (calculo.operacoes.comissao.icms + calculo.operacoes.comissao.pis +
+          calculo.operacoes.comissao.cofins + calculo.operacoes.comissao.acrescimos) | formatar_float_para_brl }}</td>
+      </tr>
+      <tr class="highlight">
+        {% set total_icms = calculo.operacoes.compra.icms + calculo.operacoes.frete.icms +
+        calculo.operacoes.extracao.icms + calculo.operacoes.comissao.icms %}
+        {% set total_pis = calculo.operacoes.compra.pis + calculo.operacoes.frete.pis + calculo.operacoes.extracao.pis +
+        calculo.operacoes.comissao.pis %}
+        {% set total_cofins = calculo.operacoes.compra.cofins + calculo.operacoes.frete.cofins +
+        calculo.operacoes.extracao.cofins + calculo.operacoes.comissao.cofins %}
+        {% set total_acrescimos = calculo.operacoes.compra.acrescimos + calculo.operacoes.frete.acrescimos +
+        calculo.operacoes.extracao.acrescimos + calculo.operacoes.comissao.acrescimos %}
+        <td><strong>TOTAL GERAL</strong></td>
+        <td class="valor-destaque">{{ total_icms | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ total_pis | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ total_cofins | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ total_acrescimos | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ (total_icms + total_pis + total_cofins + total_acrescimos) |
+          formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Conclusões -->
+  <div class="conclusao" style="page-break-before: always; margin-top: 2rem;">
+    <h4>CONCLUSÕES DA ANÁLISE</h4>
+
+    <p><strong>Resumo Financeiro:</strong></p>
+    <ul>
+      <li>Receita bruta total: <strong>{{ calculo.receita_bruta | formatar_float_para_brl }}</strong></li>
+      <li>Total de custos e impostos: <strong>{{ (calculo.receita_bruta - calculo.lucro_liquido) |
+          formatar_float_para_brl }}</strong></li>
+      <li>Lucro líquido: <strong>{{ calculo.lucro_liquido | formatar_float_para_brl }}</strong></li>
+      <li>Margem de lucro líquida: <strong>{{ "%.2f" | format(calculo.margem_liquida) }}%</strong></li>
+    </ul>
+
+    {% set percentual_compra = (calculo.operacoes.compra.total / calculo.total_despesas * 100) if calculo.total_despesas
+    > 0 else 0 %}
+    {% set percentual_frete = (calculo.operacoes.frete.total / calculo.total_despesas * 100) if calculo.total_despesas >
+    0 else 0 %}
+    {% set percentual_impostos_venda = (calculo.impostos_venda.total / calculo.receita_bruta * 100) if
+    calculo.receita_bruta > 0 else 0 %}
+  </div>
+
+  <!-- SEÇÃO DE GRÁFICOS NO RELATÓRIO -->
+  <div>
+    <h2
+      style="color: #355F48; border-bottom: 3px solid #355F48; padding-bottom: 0.5rem; margin-bottom: 2rem; text-align: center; font-size: 22px;">
+      📊 ANÁLISE VISUAL DA PRECIFICAÇÃO
+    </h2>
+    <table style="width: 100%; border-collapse: separate; border-spacing: 20px 0; margin-bottom: 2rem;">
+      <tr>
+        <td style="width: 33%; vertical-align: top; text-align: center; padding: 1rem;">
+          <h3
+            style="color: #355F48; margin-bottom: 1rem; font-size: 15px; text-transform: uppercase; font-weight: bold;">
+            Composição de Custos</h3>
+          <img src="data:image/png;base64,{{ graficos.composicao }}"
+            style="width: 400px; height:380px; border: 2px solid #ddd; border-radius: 12px; margin-bottom: 1rem;"
+            alt="Composição de Custos">
+          <div style="font-size: 12px; color: #333; margin-top: 0.5rem;">
+            <strong>Mercadoria:</strong> {{ calculo.operacoes.compra.total | formatar_float_para_brl }}<br>
+            <strong>Frete:</strong> {{ calculo.operacoes.frete.total | formatar_float_para_brl }}<br>
+            <strong>Extração:</strong> {{ calculo.operacoes.extracao.total | formatar_float_para_brl }}<br>
+            <strong>Comissão:</strong> {{ calculo.operacoes.comissao.total | formatar_float_para_brl }}<br>
+            <span style="color: #355F48; font-size: 11px;">Participação de cada componente no custo total.</span>
+          </div>
+        </td>
+        <td style="width: 33%; vertical-align: top; text-align: center; padding: 1rem;">
+          <h3
+            style="color: #355F48; margin-bottom: 1rem; font-size: 15px; text-transform: uppercase; font-weight: bold;">
+            Margem Líquida sobre Receita
+          </h3>
+          <img src="data:image/png;base64,{{ graficos.margem }}"
+            style="width: 450px; height:380px; border: 2px solid #ddd; border-radius: 12px; margin-bottom: 1rem;"
+            alt="Margem Líquida sobre Receita">
+          <div style="font-size: 12px; color: #333; margin-top: 0.5rem;">
+            <strong>Lucro Líquido:</strong> {{ calculo.lucro_liquido | formatar_float_para_brl }}<br>
+            <strong>Receita Líquida:</strong> {{ calculo.receita_liquida | formatar_float_para_brl }}<br>
+            <strong>Margem (%):</strong> {{ '%.2f'|format((calculo.lucro_liquido / calculo.receita_liquida * 100) if
+            calculo.receita_liquida > 0 else 0) }}%<br>
+            <span style="color: #355F48; font-size: 11px;">Quanto da receita líquida corresponde ao lucro final após
+              impostos.</span>
+          </div>
+        </td>
+        <td style="width: 33%; vertical-align: top; text-align: center; padding: 1rem;">
+          <h3
+            style="color: #355F48; margin-bottom: 1rem; font-size: 15px; text-transform: uppercase; font-weight: bold;">
+            Créditos Fiscais vs Custos</h3>
+          <img src="data:image/png;base64,{{ graficos.creditos }}"
+            style="width: 400px; height:380px; border: 2px solid #ddd; border-radius: 12px; margin-bottom: 1rem;"
+            alt="Créditos Fiscais vs Custos">
+          <div style="font-size: 12px; color: #333; margin-top: 0.5rem;">
+            {% set total_creditos_fiscais = calculo.total_impostos_compra %}
+            {% set porcentagem_credito = (total_creditos_fiscais / calculo.cmv * 100) if calculo.cmv > 0 else 0 %}
+            <strong>Total de Custos (CMV):</strong> {{ calculo.cmv | formatar_float_para_brl }}<br>
+            <strong>Crédito Fiscal ({{ '%.1f'|format(porcentagem_credito) }}%):</strong> {{ total_creditos_fiscais | formatar_float_para_brl }}<br>
+            <strong>Custo Líquido:</strong> {{ (calculo.cmv - total_creditos_fiscais) | formatar_float_para_brl }}<br>
+            <span style="color: #355F48; font-size: 11px;">Crédito fiscal real calculado sobre os custos totais conforme operações.</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="footer">
+    <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão MBR - Módulo de Precificação</strong></p>
+    <p>Relatório gerado automaticamente pelo Sistema de Gestão MBR</p>
+  </div>
+</body>
+
+</html>

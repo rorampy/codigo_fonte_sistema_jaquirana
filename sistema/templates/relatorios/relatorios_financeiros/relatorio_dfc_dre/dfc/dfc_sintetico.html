@@ -1,0 +1,749 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<style>
+  .ps-5 {
+    padding-left: 2.5rem !important;
+  }
+
+  .ps-6 {
+    padding-left: 3.5rem !important;
+  }
+
+  .ps-7 {
+    padding-left: 4.5rem !important;
+  }
+
+  .table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+    transition: background-color 0.15s ease-in-out;
+  }
+
+  .border-3 {
+    border-width: 3px !important;
+  }
+
+  .border-4 {
+    border-width: 4px !important;
+  }
+
+  .fs-7 {
+    font-size: 0.875rem;
+  }
+
+  .badge.rounded-pill {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .card {
+    border-radius: 12px !important;
+    overflow: hidden;
+  }
+
+  .table-borderless td {
+    border: none !important;
+  }
+
+  .bg-success-subtle {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+  }
+
+  .bg-danger-subtle {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+  }
+
+  .bg-warning-subtle {
+    background-color: rgba(255, 193, 7, 0.15) !important;
+  }
+
+  .text-success-emphasis {
+    color: #0a3622 !important;
+  }
+
+  .text-danger-emphasis {
+    color: #58151c !important;
+  }
+
+  .text-warning-emphasis {
+    color: #664d03 !important;
+  }
+
+  .shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+  }
+
+  /* Paleta Unificada Elegante - Tons Azul-Acinzentados com Variações Sutis */
+
+  /* Receitas - Azul Ardósia Elegante (tom harmonioso) */
+  .bg-green-lt {
+    background-color: #f1f5f9 !important;
+    /* Azul ardósia muito claro */
+  }
+
+  .text-green {
+    color: #334155 !important;
+    /* Azul ardósia elegante */
+  }
+
+  .bg-green {
+    background-color: #475569 !important;
+  }
+
+  .border-green {
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  /* 🔹 Custos - Azul Médio Neutro (tom intermediário para diferenciação) */
+  .bg-red-lt {
+    background-color: #f1f5f9 !important;
+    /* Azul ardósia muito claro */
+  }
+
+  .text-red {
+    color: #334155 !important;
+    /* Azul ardósia médio */
+  }
+
+  .bg-red {
+    background-color: #475569 !important;
+  }
+
+  .border-red {
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  /* Despesas - Azul Acinzentado (tom neutro sofisticado) */
+  .bg-orange-lt {
+    background-color: #f8fafc !important;
+    /* Cinza azulado muito claro */
+  }
+
+  .text-orange {
+    color: #475569 !important;
+    /* Cinza azulado médio */
+  }
+
+  .bg-orange {
+    background-color: #64748b !important;
+  }
+
+  .border-orange {
+    background-color: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  /* 🔷 Resultado Operacional - Azul Safira (destaque especial) */
+  .bg-blue {
+    background-color: #1e40af !important;
+    /* Azul safira */
+  }
+
+  .border-blue {
+    border-color: #93c5fd !important;
+    /* Borda azul suave */
+  }
+
+  /* 🌟 Elementos Neutros - Azul Pérola (muito sutil) */
+  .bg-elegant-gray {
+    background-color: #f8fafc !important;
+    /* Azul pérola */
+  }
+
+  .text-elegant-gray {
+    color: #64748b !important;
+    /* Azul acinzentado suave */
+  }
+
+  /* 💼 Financiamento - Azul Lunar (tom frio e elegante) */
+  .bg-gray-lt {
+    background-color: #f1f5f9 !important;
+    /* Azul lunar claro */
+  }
+
+  .text-gray {
+    color: #475569 !important;
+    /* Azul lunar médio */
+  }
+
+  .bg-gray {
+    background-color: #64748b !important;
+  }
+
+  .border-gray {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  /* 🌊 Investimento - Azul Ardósia Harmonioso */
+  .bg-orange-light {
+    background-color: #f1f5f9 !important;
+    /* Azul ardósia muito claro */
+  }
+
+  .text-orange-light {
+    color: #334155 !important;
+    /* Azul ardósia médio */
+  }
+
+  .bg-orange-light-solid {
+    background-color: #cbd5e1 !important;
+    /* Azul ardósia sólido suave */
+  }
+
+  .border-orange-light {
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1 !important;
+  }
+</style>
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">RELATÓRIO FINANCEIRO</div>
+          <h2 class="page-title">DFC Sintético - Demonstrativo de Fluxo de Caixa</h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            {% if dfc_dados %}
+            <form action="{{ url_for('dfc_sintetico') }}" method="POST" class="d-inline" target="_blank">
+              <input type="hidden" name="data_inicio" value="{{ dados_form.data_inicio }}">
+              <input type="hidden" name="data_fim" value="{{ dados_form.data_fim }}">
+              <input type="hidden" name="exportar_pdf" value="1">
+              <button type="submit" class="btn btn-outline-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icon-tabler-file-type-pdf">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
+                  <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
+                  <path d="M17 18h2" />
+                  <path d="M20 15h-3v6" />
+                  <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" />
+                </svg>
+                Exportar PDF
+              </button>
+            </form>
+            {% endif %}
+
+            <a href="{{ url_for('dfc_analitico') }}" class="btn btn-outline-dark">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-chart-bar">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <rect x="3" y="12" width="6" height="8" rx="1" />
+                <rect x="9" y="8" width="6" height="12" rx="1" />
+                <rect x="15" y="4" width="6" height="16" rx="1" />
+              </svg>
+              DFC Analítico
+            </a>
+
+            <a href="{{ url_for('dfc_sintetico') }}" class="btn btn-outline-primary active">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-chart-bar">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <rect x="3" y="12" width="6" height="8" rx="1" />
+                <rect x="9" y="8" width="6" height="12" rx="1" />
+                <rect x="15" y="4" width="6" height="16" rx="1" />
+              </svg>
+              DFC Sintético
+            </a>
+
+            <a href="#" class="btn btn" data-bs-toggle="modal" data-bs-target="#modal-filtros">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter me-1">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtros
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      {% if dfc_dados %}
+      <div class="card">
+        <div class="card-header bg-light border-0 py-4">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="card-title mb-1 text-dark fw-bold fs-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                  stroke="#6c757d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icon-tabler-chart-bar me-2">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <rect x="3" y="12" width="6" height="8" rx="1" />
+                  <rect x="9" y="8" width="6" height="12" rx="1" />
+                  <rect x="15" y="4" width="6" height="16" rx="1" />
+                </svg>
+                DFC Sintético
+              </h3>
+              <p class="text-muted mb-0 fs-6">Demonstrativo de Resultado do Exercício</p>
+              <div class="mt-3">
+                <div class="col-auto">
+                  <div class="badge bg-dark-lt">
+                    Filtro por data vencimento: {{ dados_form.data_inicio | formatar_data_filtro_para_brl }} a {{ dados_form.data_fim |
+                    formatar_data_filtro_para_brl }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+
+          <!-- RECEITAS OPERACIONAIS -->
+          <div class="mb-4">
+            <div class="d-flex align-items-center mb-3 px-3">
+              <div class="badge bg-green-lt text-green me-2 rounded-pill px-3 py-2 border border-green"
+                style="font-weight: 500;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="me-1 opacity-75">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+                RECEITAS OPERACIONAIS
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-borderless mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="text-start fw-semibold text-dark border-0 py-3">Descrição</th>
+                    <th class="text-end fw-semibold text-dark border-0 py-3" style="width: 200px;">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="bg-green-lt">
+                    <td class="fw-semibold ps-3 py-3 text-green border-0">Receitas Operacionais</td>
+                    <td class="text-end fw-semibold py-3 text-green border-0">
+                      {{ dfc_dados['receitas_operacionais'] | formatar_float_para_brl }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CUSTOS OPERACIONAIS -->
+          <div class="mb-4">
+            <div class="d-flex align-items-center mb-3 px-3">
+              <div class="badge bg-red-lt text-red me-2 rounded-pill px-3 py-2 border border-red"
+                style="font-weight: 500;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="me-1 opacity-75">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                </svg>
+                CUSTOS OPERACIONAIS
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-borderless mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="text-start fw-semibold text-dark border-0 py-3">Descrição</th>
+                    <th class="text-end fw-semibold text-dark border-0 py-3" style="width: 200px;">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="bg-red-lt">
+                    <td class="ps-3 fw-medium py-2 text-red border-0">Custos Operacionais</td>
+                    <td class="text-end fw-medium py-2 text-red border-0">
+                      -{{ dfc_dados['custos_operacionais'] | formatar_float_para_brl }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- MARGEM BRUTA -->
+          <div class="mb-4">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+              <div class="card-body text-center py-4 px-4">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center">
+                    <div class="badge me-3 rounded-circle p-2" style="background: #64748b; color: white;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                      </svg>
+                    </div>
+                    <div class="text-start">
+                      <h5 class="mb-0 fw-medium" style="color: #475569; letter-spacing: 0.3px;">MARGEM BRUTA</h5>
+                      {% set margem_bruta = dfc_dados['resultado_bruto'] %}
+                      <small class="text-muted" style="font-size: 0.8rem;">
+                        {% if dfc_dados['total_receitas'] != 0 %}
+                        {{ "%.0f"|format((margem_bruta / dfc_dados['total_receitas']) * 100) }}%
+                        {% else %}
+                        0%
+                        {% endif %}
+                      </small>
+                    </div>
+                  </div>
+                  <h4 class="mb-0 fw-bold"
+                    style="color: {% if margem_bruta >= 0 %}#334155{% else %}#dc2626{% endif %}; font-size: 1.4rem;">
+                    {{ margem_bruta | formatar_float_para_brl }}
+                  </h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- DESPESAS OPERACIONAIS -->
+        {% if dfc_dados['despesas_operacionais'] > 0 %}
+        <div class="mb-4">
+          <div class="d-flex align-items-center mb-3 px-3">
+            <div class="badge bg-orange-lt text-orange me-2 rounded-pill px-3 py-2 border border-orange"
+              style="font-weight: 500;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                class="me-1 opacity-75">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                <polyline points="14,2 14,8 20,8" />
+              </svg>
+              DESPESAS OPERACIONAIS
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-borderless mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="text-start fw-semibold text-dark border-0 py-3">Descrição</th>
+                  <th class="text-end fw-semibold text-dark border-0 py-3" style="width: 200px;">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="bg-orange-lt">
+                  <td class="ps-3 fw-medium py-2 text-orange border-0">Despesas Operacionais</td>
+                  <td class="text-end fw-medium py-2 text-orange border-0">
+                    -{{ dfc_dados['despesas_operacionais'] | formatar_float_para_brl }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+
+
+        <!-- RESULTADO OPERACIONAL -->
+        <div class="mb-4">
+          <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
+            <div class="card-body text-center py-4 px-4">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <div class="badge me-3 rounded-circle p-2" style="background: #334155; color: white;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 3v18h18" />
+                      <path d="m19 9-5 5-4-4-3 3" />
+                    </svg>
+                  </div>
+                  <h5 class="mb-0 fw-medium" style="color: #334155; letter-spacing: 0.3px;">RESULTADO OPERACIONAL</h5>
+                </div>
+                {% set resultado_operacional_filtrado = dfc_dados['resultado_operacional'] %}
+                <h4 class="mb-0 fw-bold"
+                  style="color: {% if resultado_operacional_filtrado >= 0 %}#334155{% else %}#dc2626{% endif %}; font-size: 1.4rem;">
+                  {{ resultado_operacional_filtrado | formatar_float_para_brl }}
+                </h4>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ATIVIDADES DE FINANCIAMENTO -->
+        {% if dfc_dados['receitas_aplicacoes_financeiras'] > 0 %}
+        <div class="mb-4">
+          <div class="d-flex align-items-center mb-3 px-3">
+            <div class="badge bg-gray-lt text-gray me-2 rounded-pill px-3 py-2 border border-gray"
+              style="font-weight: 500;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                class="me-1 opacity-75">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+              ATIVIDADES DE FINANCIAMENTO
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-borderless mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="text-start fw-semibold text-dark border-0 py-3">Descrição</th>
+                  <th class="text-end fw-semibold text-dark border-0 py-3" style="width: 200px;">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="bg-gray-lt">
+                  <td class="ps-3 fw-medium py-2 text-gray border-0">Aplicações Financeiras</td>
+                  <td class="text-end fw-medium py-2 text-gray border-0">
+                    {{ dfc_dados['receitas_aplicacoes_financeiras'] | formatar_float_para_brl }}
+                  </td>
+                </tr>
+
+                <!-- Total Atividades de Financiamento -->
+                <tr class="border-top border-1" style="border-color: #cbd5e1 !important;">
+                  <td class="fw-medium ps-3 py-3"
+                    style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">TOTAL ATIVIDADES DE
+                    FINANCIAMENTO</td>
+                  <td class="text-end fw-medium py-3"
+                    style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">{{
+                    dfc_dados['receitas_aplicacoes_financeiras'] | formatar_float_para_brl }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- ATIVIDADES DE INVESTIMENTO -->
+        {% if dfc_dados['despesas_compra_floresta'] > 0 or dfc_dados['despesas_retirada_capital'] > 0 %}
+        <div class="mb-4">
+          <div class="d-flex align-items-center mb-3 px-3">
+            <div class="badge bg-orange-light text-orange-light me-2 rounded-pill px-3 py-2 border border-orange-light"
+              style="font-weight: 500;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                class="me-1 opacity-75">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12,6 12,12 16,14" />
+              </svg>
+              ATIVIDADES DE INVESTIMENTO
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-borderless mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="text-start fw-semibold text-dark border-0 py-3">Descrição</th>
+                  <th class="text-end fw-semibold text-dark border-0 py-3" style="width: 200px;">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if dfc_dados['despesas_compra_floresta'] > 0 %}
+                <tr class="bg-orange-light">
+                  <td class="ps-3 fw-medium py-2 text-orange border-0">Compra de Floresta</td>
+                  <td class="text-end fw-medium py-2 text-orange border-0">
+                    -{{ dfc_dados['despesas_compra_floresta'] | formatar_float_para_brl }}
+                  </td>
+                </tr>
+                {% endif %}
+
+                {% if dfc_dados['despesas_retirada_capital'] > 0 %}
+                <tr class="bg-orange-light">
+                  <td class="ps-3 fw-medium py-2 text-orange border-0">Retirada de Capital</td>
+                  <td class="text-end fw-medium py-2 text-orange border-0">
+                    -{{ dfc_dados['despesas_retirada_capital'] | formatar_float_para_brl }}
+                  </td>
+                </tr>
+                {% endif %}
+
+                <!-- Total Atividades de Investimento -->
+                {% set total_investimento = (dfc_dados['despesas_compra_floresta'] +
+                dfc_dados['despesas_retirada_capital']) * -1 %}
+                <tr class="border-top border-1" style="border-color: #cbd5e1 !important;">
+                  <td class="fw-medium ps-3 py-3"
+                    style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">TOTAL ATIVIDADES DE
+                    INVESTIMENTO</td>
+                  <td class="text-end fw-medium py-3"
+                    style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">{{ total_investimento |
+                    formatar_float_para_brl }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- VARIAÇÃO DE CAIXA -->
+        {% if dfc_dados['variacao_caixa'] is defined %}
+        <div class="mb-4">
+          <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
+            <div class="card-body text-center py-4 px-4">
+              <div class="d-flex align-items-center justify-content-center">
+                <div class="text-center">
+                  <div class="text-muted fs-6 mb-1">Variação de Caixa</div>
+                  <div class="fw-bold text-dark" style="font-size: 1.5rem;">
+                    {{ dfc_dados['variacao_caixa'] | formatar_float_para_brl }}
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3 pt-3 border-top" style="border-color: #cbd5e1 !important;">
+                <small class="text-muted">
+                  Resultado Operacional + Atividades de Investimento + Atividades de Financiamento
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+
+      </div>
+    </div>
+
+    {% else %}
+    <!-- Estado vazio -->
+    <div class="card">
+      <div class="card-body text-center p-5">
+        <div class="mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none"
+            stroke="#6c757d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+            class="icon icon-tabler icon-tabler-chart-bar">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <rect x="3" y="12" width="6" height="8" rx="1" />
+            <rect x="9" y="8" width="6" height="12" rx="1" />
+            <rect x="15" y="4" width="6" height="16" rx="1" />
+          </svg>
+        </div>
+        <h3 class="text-muted mb-3">Nenhum dado encontrado</h3>
+        <p class="text-muted mb-4">
+          Não foram encontrados lançamentos financeiros para o período selecionado.<br>
+          Tente ajustar os filtros de data ou verificar se existem lançamentos categorizados no sistema.
+        </p>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-filtros">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="icon icon-tabler icon-tabler-filter me-2">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path
+              d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+          </svg>
+          Ajustar Período
+        </button>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal de Filtros -->
+<div class="modal modal-blur fade" id="modal-filtros" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
+    <form action="{{ url_for('dfc_sintetico') }}" method="POST">
+      <div class="modal-content">
+        <div class="modal-header bg-light border-0">
+          <h5 class="modal-title text-dark fw-semibold">Filtros - DFC Sintético</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Opção de Filtro por Exercício -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Filtrar por Exercício</label>
+            <div class="row">
+              <div class="col-md-12">
+                <select name="exercicio" class="form-select" onchange="limparDatasPersonalizadas()">
+                  <option value="">Selecione um exercício ou use período personalizado</option>
+                  {% for exercicio in exercicios_disponiveis %}
+                  <option value="{{ exercicio.valor }}" {% if dados_form.exercicio==exercicio.valor %}selected{% endif
+                    %}>
+                    {{ exercicio.texto }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Período Personalizado -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Selecione um período personalizado:</label>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Data Início</label>
+              <input type="date" name="data_inicio" class="form-control" value="{{ dados_form.data_inicio }}">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Data Fim</label>
+              <input type="date" name="data_fim" class="form-control" value="{{ dados_form.data_fim }}">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <a href="{{ url_for('dfc_sintetico') }}" class="btn btn-link link-secondary">
+            Limpar Filtros
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icon-tabler-search me-2">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            Gerar Relatório
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% include 'estrutura/footer.html' %}
+</div>
+
+<script>
+  document.querySelectorAll('select.form-select').forEach(function (select) {
+    new TomSelect(select, {
+      create: false,
+      allowEmptyOption: false,
+    });
+  });
+  function limparDatasPersonalizadas() {
+    const exercicio = document.querySelector('select[name="exercicio"]');
+    if (exercicio.value) {
+      document.querySelector('input[name="data_inicio"]').value = '';
+      document.querySelector('input[name="data_fim"]').value = '';
+    }
+  }
+
+  // Limpar exercício quando selecionar datas personalizadas
+  document.addEventListener('DOMContentLoaded', function () {
+    const dataInicio = document.querySelector('input[name="data_inicio"]');
+    const dataFim = document.querySelector('input[name="data_fim"]');
+    const exercicio = document.querySelector('select[name="exercicio"]');
+
+    if (dataInicio && dataFim && exercicio) {
+      dataInicio.addEventListener('change', function () {
+        if (this.value) {
+          exercicio.value = '';
+        }
+      });
+
+      dataFim.addEventListener('change', function () {
+        if (this.value) {
+          exercicio.value = '';
+        }
+      });
+    }
+  });
+</script>
+
+{% endblock conteudo %}

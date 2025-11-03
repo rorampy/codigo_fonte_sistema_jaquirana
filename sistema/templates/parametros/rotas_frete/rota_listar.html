@@ -1,0 +1,210 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<link href="{{ url_for('static', filename='css/relatorio-cargas.css') }}"
+  rel="stylesheet">
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">Listagem</div>
+          <h2 class="page-title">Rotas por Cliente</h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex">
+            <a href="{{ url_for('cadastrar_rota') }}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24"
+                height="24" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Cadastrar Rota
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="card">
+        <div class="card-body p-0">
+          {% if registros %}
+          <div class="accordion" id="accordion-rotas-clientes">
+            {% for grupo in registros %}
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="heading-{{ loop.index }}">
+                <button class="accordion-button" type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapse-{{ loop.index }}"
+                  aria-expanded="true">
+                  {{ grupo.cliente.identificacao }} - {{ grupo.rotas|length }}
+                  {%if grupo.rotas|length > 1%}rotas{%else%}rota{%endif%}
+                </button>
+              </h2>
+              <div id="collapse-{{ loop.index }}"
+                class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                data-bs-parent="#accordion-rotas-clientes">
+                <div class="accordion-body">
+                  <div class="table-responsive">
+                    <table
+                      class="table table-vcenter table-hover table-striped">
+                      <thead class="bg-light">
+                        <tr>
+                          <th style="text-align: center;"
+                            class="text-primary">Floresta origem</th>
+                          <th style="text-align: center;">Fornecedor origem</th>
+                          <th style="text-align: center;">Cliente destino</th>
+                          <th style="text-align: center;">Transportadora</th>
+                          <th style="text-align: center;">Ativa</th>
+                          <th style="text-align: center;">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for r in grupo.rotas %}
+                        {% set verde = (
+                          r.euca_preco_custo_frete_bitola_1_100 or r.euca_preco_custo_frete_bitola_2_100 or
+                          r.euca_preco_custo_frete_bitola_3_100 or r.euca_preco_custo_frete_bitola_4_100 or
+                          r.pinus_preco_custo_frete_bitola_1_100 or r.pinus_preco_custo_frete_bitola_2_100 or
+                          r.pinus_preco_custo_frete_bitola_3_100 or r.pinus_preco_custo_frete_bitola_4_100) %}
+                      
+                        <tr>
+                          <td class="{%if verde%}text-success{%else%}text-primary{%endif%}" style="text-align: center;">
+                            {{ r.floresta.identificacao[:40] if r.floresta else
+                            '-' }}
+                            {% if r.floresta and r.floresta.identificacao|length
+                            > 40 %}...{% endif %}
+                          </td>
+                          <td class="{%if verde%}text-success{%else%}text-secondary{%endif%}"
+                            style="text-align: center;">
+                            {{ r.fornecedor.identificacao[:40] if r.fornecedor
+                            else '-' }}
+                            {% if r.fornecedor and
+                            r.fornecedor.identificacao|length > 40 %}...{% endif
+                            %}
+                          </td>
+                          <td class="{%if verde%}text-success{%else%}text-secondary{%endif%}"
+                            style="text-align: center;">
+                            {{ r.cliente.identificacao[:40] }}
+                            {% if r.cliente.identificacao|length > 40 %}...{%
+                            endif %}
+                          </td>
+                          <td class="{%if verde%}text-success{%else%}text-secondary{%endif%}"
+                            style="text-align: center;">
+                            {{ r.transportadora.identificacao[:40] }}
+                            {% if r.transportadora.identificacao|length > 40
+                            %}...{% endif %}
+                          </td>
+                          <td class="{%if verde%}text-success{%else%}text-secondary{%endif%}"
+                            style="text-align: center;">
+                            {% if r.ativo %}<span
+                              class="badge badge-outline text-green">Sim</span>
+                            {% else %}<span
+                              class="badge badge-outline text-danger">Não</span>{%
+                            endif %}
+                          </td>
+                          <td>
+                            <div class="btn-list flex-nowrap"
+                              style="justify-content: center;">
+                              <a href="{{ url_for('editar_rota', id=r.id) }}"
+                                class="btn btn-icon btn-outline-warning"
+                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                title="Editar rota">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                  class="icon icon-tabler icon-tabler-pencil"
+                                  width="24"
+                                  height="24" viewBox="0 0 24 24"
+                                  stroke-width="2" stroke="currentColor"
+                                  fill="none"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round">
+                                  <path stroke="none" d="M0 0h24v24H0z"
+                                    fill="none" />
+                                  <path
+                                    d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                                  <path d="M13.5 6.5l4 4" />
+                                </svg>
+                              </a>
+                              {% if r.ativo %}
+                              <a href="{{ url_for('desativar_rota', id=r.id) }}"
+                                class="btn btn-icon btn-outline-danger  {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%} excluir"
+                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                title="Desativar rota">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                  class="icon icon-tabler icon-tabler-x"
+                                  width="24"
+                                  height="24" viewBox="0 0 24 24"
+                                  stroke-width="2" stroke="currentColor"
+                                  fill="none"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round">
+                                  <path stroke="none" d="M0 0h24v24H0z"
+                                    fill="none" />
+                                  <path d="M18 6l-12 12" />
+                                  <path d="M6 6l12 12" />
+                                </svg>
+                              </a>
+                              {% else %}
+                              <a href="{{ url_for('ativar_rota', id=r.id) }}"
+                                class="btn btn-icon btn-outline-success {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%} ativar"
+                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                title="Ativar rota">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                  class="icon icon-tabler icon-tabler-check"
+                                  width="24"
+                                  height="24" viewBox="0 0 24 24"
+                                  stroke-width="2" stroke="currentColor"
+                                  fill="none"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round">
+                                  <path stroke="none" d="M0 0h24v24H0z"
+                                    fill="none" />
+                                  <path d="M5 12l5 5l10 -10" />
+                                </svg>
+                              </a>
+                              {% endif %}
+                            </div>
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="area-info-card" style="
+                    padding: 30px;
+                    border-radius: 10px;
+                    text-align: center;
+                    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+                    background-color: white;
+                  ">
+            <div class="icon-extrato"
+              style="font-size: 70px; color: #fc7801; margin-bottom: 15px">
+              ❌
+            </div>
+            <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">
+              Nenhuma rota disponível
+            </h2>
+            <p style="color: #777;">
+              No momento não há rotas disponíveis para exibir.
+            </p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% include 'estrutura/footer.html' %}
+{% endblock conteudo %}

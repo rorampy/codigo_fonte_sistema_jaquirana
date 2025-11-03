@@ -1,0 +1,445 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            TICKET
+          </div>
+          <h2 class="page-title">
+            Cadastrar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      {% if ticket %}
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="card border border-primary shadow-sm">
+            <div class="card-body">
+              <h3 class="card-title mb-3 text-primary">Informações da
+                Solicitação</h3>
+              <div class="row">
+                {%if registro.solicitacao.floresta_id%}
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Floresta</label>
+                    <input type="text" class="form-control"
+                      value="{{ registro.solicitacao.floresta.identificacao }}"
+                      disabled>
+                  </div>
+                </div>
+                {%else%}
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Fornecedor</label>
+                    <input type="text" class="form-control"
+                      value="{{ registro.solicitacao.fornecedor.identificacao }}"
+                      disabled>
+                  </div>
+                </div>
+                {%endif%}
+
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Cliente</label>
+                    <input type="text" class="form-control"
+                      value="{{ registro.solicitacao.cliente.identificacao }}"
+                      disabled>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Bitola</label>
+                    <input type="text" class="form-control"
+                      value="{{ registro.solicitacao.bitola.bitola }}" disabled>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Veículo</label>
+                    <input type="text" class="form-control"
+                      value="{{ registro.solicitacao.veiculo.placa_veiculo }}"
+                      disabled>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="col-12">
+        <form class="card"
+          action="{{ url_for('editar_ticket', id=registro.id) }}"
+          method="POST" enctype="multipart/form-data">
+          <div class="card-body">
+            <div class="row">
+              {%if registro.arquivo_ticket_id != none%}
+              <div class="col-sm-6 col-md-6">
+                <div class="mb-3">
+                  {% if registro.arquivo_ticket_id %}
+                  <div class="d-flex gap-4 mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio"
+                        name="opcaoTicket"
+                        value="manter"
+                        id="opcaoTicketManterTicket" checked>
+                      <label class="form-check-label"
+                        for="opcaoTicketManter">
+                        Manter atual
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio"
+                        name="opcaoTicket"
+                        value="alterar"
+                        id="opcaoTicketAlterarTicket">
+                      <label class="form-check-label"
+                        for="opcaoTicketAlterar">
+                        Enviar novo
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Botão Visualizar -->
+                  <a href="#" id="visualizar-ticket"
+                    class="btn btn-visualizar-arquivo mb-3"
+                    data-url="{{ url_for('diretorio_uploads_tickets', filename=registro.arquivo_ticket.caminho.split('/')[-1]) }}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modal-visualizar-arquivo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                      height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round"
+                      class="icon icon-tabler icons-tabler-outline icon-tabler-receipt">
+                      <path stroke="none" d="M0 0h24v24H0z"
+                        fill="none"></path>
+                      <path
+                        d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2"></path>
+                    </svg>
+                    Visualizar Ticket Atual
+                  </a>
+
+                  <!-- Input de upload (oculto inicialmente) -->
+                  <div id="inputUploadTicket" class="d-none">
+                    <input type="file" name="arquivoTicket"
+                      class="form-control arquivoTicket {% if 'arquivoTicket' in campos_obrigatorios or 'arquivoTicket' in campos_erros %}
+                            is-invalid
+                          {% endif %}" accept=".jpg, .jpeg, .png">
+                    <div class="invalid-feedback">
+                      {% if 'arquivoTicket' in
+                      campos_obrigatorios %}
+                      {{ campos_obrigatorios['arquivoTicket']
+                      }}
+                      {% elif 'arquivoTicket' in campos_erros
+                      %}
+                      {{ campos_erros['arquivoTicket'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              {%endif%}
+            </div>
+            <div class="row">
+              <div class="col-sm-6 col-md-6">
+                <div class="mb-3">
+                  <div class="form-label required">Tipo de
+                    origem</div>
+                  <div>
+                    <label
+                      class="form-check form-check-inline">
+                      <input class="form-check-input"
+                        type="radio" name="tipoOrigem"
+                        value="floresta" {% if
+                        dados_corretos['tipoOrigem'] =='floresta'
+                        or not
+                        dados_corretos['tipoOrigem']
+                        %}checked{% endif
+                        %}>
+                      <span
+                        class="form-check-label">Floresta</span>
+                    </label>
+                    <label
+                      class="form-check form-check-inline">
+                      <input class="form-check-input"
+                        type="radio" name="tipoOrigem"
+                        value="fornecedor" {% if
+                        dados_corretos['tipoOrigem']=='fornecedor'
+                        %}checked{% endif %}>
+                      <span
+                        class="form-check-label">Fornecedor</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-3 col-md-3 grupoFloresta">
+                <div class="mb-3">
+                  <label class="form-label">Floresta <small>(descontinuada)</small></label>
+                    <input type="text" class="form-control" value="{{ dados_corretos['florestaIdentificacao'] }}" readonly disabled>
+                </div>
+              </div>
+
+              <div class="col-sm-3 col-md-3 grupoFornecedor">
+                <div class="mb-3">
+                  <label class="form-label required">Fornecedor/Floresta</label>
+                  <select type="text"
+                    name="fornecedorIdentificacao"
+                    id="fornecedorIdentificacao"
+                    value="{{ dados_corretos['fornecedorIdentificacao'] }}"
+                    class="form-select {% if 'fornecedorIdentificacao' in campos_obrigatorios or 'fornecedorIdentificacao' in campos_erros %}
+                                                is-invalid
+                                            {% endif %}">
+                    {%if registro.solicitacao.floresta_id == none and
+                    registro.solicitacao.fornecedor_id == none%}
+                    <option value="0" selected>NÃO IDENTIFICADA</option>
+                    {%else%}
+                    <option value selected>Selecione...</option>
+                    {%endif%}
+                    {% for f in fornecedores %}
+                    <option value="{{ f.id }}" {% if
+                      dados_corretos['fornecedorIdentificacao'] == f.id
+                      %}selected{% endif %}>{{ f.identificacao }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {% if 'fornecedorIdentificacao' in
+                    campos_obrigatorios %}
+                    {{
+                    campos_obrigatorios['fornecedorIdentificacao']
+                    }}
+                    {% elif 'fornecedorIdentificacao' in
+                    campos_erros
+                    %}
+                    {{ campos_erros['fornecedorIdentificacao']
+                    }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Número NF</label>
+                  <input type="text" name="numeroNf"
+                    value="{{ dados_corretos['numeroNf'] }}"
+                    class="form-control {% if 'numeroNf' in campos_obrigatorios %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'numeroNf' in
+                    campos_obrigatorios
+                    %}
+                    {{ campos_obrigatorios['numeroNf'] }}
+                    {% elif 'numeroNf' in campos_erros %}
+                    {{ campos_erros['numeroNf'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Peso líquido (Ton.)</label>
+                  <input type="text" name="pesoLiquido"
+                    value="{{ dados_corretos['pesoLiquido'] }}"
+                    class="form-control campo-float {% if 'pesoLiquido' in campos_obrigatorios %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'pesoLiquido' in
+                    campos_obrigatorios
+                    %}
+                    {{ campos_obrigatorios['pesoLiquido'] }}
+                    {% elif 'pesoLiquido' in campos_erros %}
+                    {{ campos_erros['pesoLiquido'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Placa</label>
+                  <input type="text" name="placaVeiculo"
+                    value="{{ dados_corretos['placaVeiculo'] }}"
+                    class="form-control {% if 'placaVeiculo' in campos_obrigatorios %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'placaVeiculo' in
+                    campos_obrigatorios
+                    %}
+                    {{ campos_obrigatorios['placaVeiculo'] }}
+                    {% elif 'placaVeiculo' in campos_erros %}
+                    {{ campos_erros['placaVeiculo'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Motorista</label>
+                  <input type="text" name="motoristaTicket"
+                    value="{{ dados_corretos['motoristaTicket'] }}"
+                    class="form-control {% if 'motoristaTicket' in campos_obrigatorios %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'motoristaTicket' in
+                    campos_obrigatorios
+                    %}
+                    {{ campos_obrigatorios['motoristaTicket'] }}
+                    {% elif 'motoristaTicket' in campos_erros %}
+                    {{ campos_erros['motoristaTicket'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Data entrega</label>
+                  <input type="date" name="dataEntregaTicket"
+                    value="{{ dados_corretos['dataEntregaTicket'] }}"
+                    class="form-control {% if 'dataEntregaTicket' in campos_obrigatorios %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'dataEntregaTicket' in
+                    campos_obrigatorios
+                    %}
+                    {{ campos_obrigatorios['dataEntregaTicket'] }}
+                    {% elif 'dataEntregaTicket' in campos_erros %}
+                    {{ campos_erros['dataEntregaTicket'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer text-center text-md-end">
+              <a href="{{ url_for('listagem_registros_operacionais') }}"
+                class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                  class="icon icon-tabler icon-tabler-arrow-left"
+                  width="24"
+                  height="24" viewBox="0 0 24 24" stroke-width="2"
+                  stroke="currentColor" fill="none"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z"
+                    fill="none"></path>
+                  <path d="M5 12l14 0"></path>
+                  <path d="M5 12l6 6"></path>
+                  <path d="M5 12l6 -6"></path>
+                </svg>
+                Voltar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                  class="icon icon-tabler icon-tabler-plus"
+                  width="24" height="24"
+                  viewBox="0 0 24 24" stroke-width="2"
+                  stroke="currentColor" fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z"
+                    fill="none"></path>
+                  <path d="M12 5l0 14"></path>
+                  <path d="M5 12l14 0"></path>
+                </svg>
+                Editar
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+      document.addEventListener('DOMContentLoaded', function () {    
+        // === Ticket ===
+        const radioManterFloresta = document.getElementById("opcaoTicketManterTicket");
+        const radioAlterarFloresta = document.getElementById("opcaoTicketAlterarTicket");
+        const inputUploadFloresta = document.getElementById("inputUploadTicket");
+        const linkVisualizarFloresta = document.getElementById("visualizar-ticket");
+    
+        if (radioManterFloresta && radioAlterarFloresta && inputUploadFloresta && linkVisualizarFloresta) {
+          function atualizarUploadTicket() {
+            if (radioAlterarFloresta.checked) {
+              inputUploadFloresta.classList.remove("d-none");
+              linkVisualizarFloresta.classList.add("d-none");
+            } else {
+              inputUploadFloresta.classList.add("d-none");
+              linkVisualizarFloresta.classList.remove("d-none");
+            }
+          }
+    
+          radioManterFloresta.addEventListener("change", atualizarUploadTicket);
+          radioAlterarFloresta.addEventListener("change", atualizarUploadTicket);
+    
+          atualizarUploadTicket();
+        }
+      });
+
+       // Funções para alternar exibição entre floresta e fornecedor
+       function limparCampos(grupoClasse) {
+        document.querySelectorAll('.' + grupoClasse + ' select').forEach(function (input) {
+          input.value = '';
+        });
+      }
+    
+      function alternarCampos() {
+        var radioFloresta = document.querySelector('input[name="tipoOrigem"][value="floresta"]');
+    
+        var grupoFloresta = document.querySelectorAll('.grupoFloresta');
+        var grupoFornecedor = document.querySelectorAll('.grupoFornecedor');
+    
+        if (radioFloresta.checked) {
+          grupoFloresta.forEach(el => el.style.display = 'block');
+          grupoFornecedor.forEach(el => el.style.display = 'none');
+          limparCampos('grupoFornecedor');
+        } else {
+          grupoFloresta.forEach(el => el.style.display = 'none');
+          grupoFornecedor.forEach(el => el.style.display = 'block');
+          limparCampos('grupoFloresta');
+        }
+      }
+    
+      document.querySelectorAll('input[name="tipoOrigem"]').forEach(radio => {
+        radio.addEventListener('change', alternarCampos);
+      });
+    
+      // Aplica estado inicial correto nos campos
+      alternarCampos();
+    </script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const fornecedorSelect = document.querySelector('#fornecedorIdentificacao');
+        if (fornecedorSelect) {
+          new TomSelect(fornecedorSelect, {
+            create: false,
+            allowEmptyOption: false,
+            sortField: {
+              field: "text",
+              direction: "asc"
+            }
+          });
+        }
+      });
+    </script>
+
+  {% include 'estrutura/footer.html' %}
+
+</div>
+
+{% endblock conteudo %}

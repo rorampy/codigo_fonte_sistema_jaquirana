@@ -1,0 +1,204 @@
+{% include 'relatorios/estrutura/style.html' %}
+<div class="page-wrapper">
+  <div class="page body">
+    <div class="container">
+      <div class="watermark">
+        <img src="{{logo_path}}" alt="MBR Extração Watermark" />
+      </div>
+
+      <div class="content">
+        <div class="header no-break">
+          <img src="{{logo_path}}" alt="Logo MBR Extração" />
+          <div class="system-info">
+            <div><strong>Sistema de Gestão MBR</strong></div>
+            <div><strong>Versão</strong> {{changelog.versao}}</div>
+            <div><strong>Data:</strong>
+              {{changelog.data_lancamento}}</div>
+          </div>
+        </div>
+
+        <div class="relatorio-title">Relatório Unificado de Cargas</div>
+
+        <!-- Filtros aplicados se existirem -->
+        {% if dados_corretos %}
+        <div class="dados-registro no-break">
+          <div class="filtros-title">Filtros Aplicados</div>
+          <div
+            style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Semana Selecionada:</strong></span>
+                {% for semana in semanas_disponiveis %}
+                {% if semana.valor == dados_corretos.get('semanaSelecionada') %}
+                {{ semana.texto }}
+                {% if semana.is_atual %} (Atual){% endif %}
+                {% endif %}
+                {% endfor %}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Placa:</strong></span>
+                {{ dados_corretos.get('placa', '-') or '-' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Motorista:</strong></span>
+                {{ dados_corretos.get('motorista', '-') or '-' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Transportadora:</strong></span>
+                {{ dados_corretos.get('transportadora', '-') or '-' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Fornecedor:</strong></span>
+                {{ dados_corretos.get('fornecedor', '-') or '-' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Cliente:</strong></span>
+                {{ dados_corretos.get('cliente', '-') or '-' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Número NF:</strong></span>
+                {{ dados_corretos.get('numeroNf', '-') or '-' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Produto:</strong></span>
+                {{ dados_corretos.get('produto', '-') or '-' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Bitola:</strong></span>
+                {{ dados_corretos.get('bitola', '-') or '-' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {% endif %}
+
+        {% if registros %}
+        {% for origem_group in registros|groupby('origem') %}
+        {% set origem = origem_group.grouper %}
+        {% set registros_origem = origem_group.list %}
+        <!-- Seção da Origem (Fornecedor/Floresta) -->
+        <div class="no-break" style="margin-top: 20px;">
+          <div class="filtros-title">Origem: {{ origem }}</div>
+          <div style="font-size: 12px; color: #666; margin-top: 5px;">
+            Total de cargas: {{ registros_origem|length }}
+          </div>
+        </div>
+
+        <!-- Tabela de cargas para esta origem -->
+        <table>
+          <thead>
+            <tr>
+              <th class="text-center">Data Entrega</th>
+              <th class="text-center">Placa</th>
+              <th class="text-center">Origem</th>
+              <th class="text-center">Cliente</th>
+              <th class="text-center">Produto/Bitola</th>
+              <th class="text-center">NF</th>
+              <th class="text-center">Peso Líquido (Ton)</th>
+              <th class="text-center">Valor/Ton </th>
+              <th class="text-center">Total Fornecedor</th>
+              <th class="text-center">Frete/Ton </th>
+              <th class="text-center">Total Frete</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in registros_origem %}
+            <tr>
+              <td class="text-center text-secondary">
+                {% if item.registro.data_entrega_ticket %}
+                {{ item.registro.data_entrega_ticket |
+                formatar_data_para_brl }}
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if item.placa %}
+                <span class="badge bg-azure-lt">{{ item.placa }}</span>
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {{ item.origem[:15] }}
+                {% if item.origem|length > 15 %}...{% endif %}
+              </td>
+              <td class="text-center text-secondary">
+                <span title="{{ item.cliente }}">
+                  {{ item.cliente[:10] }}
+                  {% if item.cliente|length > 10 %}...{% endif %}
+                </span>
+              </td>
+              <td class="text-center text-secondary">
+                <span title="{{ item.produto }}">
+                  {{ item.produto[:12] }}
+                  {% if item.produto|length > 12 %}...{% endif %} |
+                  {% if item.bitola %}
+                  {{ item.bitola }}
+                  {% else %}
+                  -
+                  {% endif %}
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-lime-lt">
+                  {% if item.registro.estorno_nf%}
+                  {{ item.registro.numero_nota_fiscal_estorno }} *
+                  {% elif item.registro.numero_nota_fiscal %}
+                  {{ item.registro.numero_nota_fiscal }}
+                  {%else%}
+                  -
+                  {% endif %}
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-teal-lt">
+                  {{ item.registro.peso_liquido_ticket or 0 }}
+                </span>
+              </td>
+              <td class="text-center">
+                {{ item.valor_por_ton|formatar_float_para_brl }}
+              </td>
+              <td class="text-center">
+                {{ item.custo_fornecedor|formatar_float_para_brl }}
+              </td>
+              <td class="text-center">
+                {{ item.valor_frete_ton|formatar_float_para_brl }}
+              </td>
+              <td class="text-center">
+                {{ item.custo_frete|formatar_float_para_brl }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+
+        </table>
+
+        {% endfor %}
+
+        {% else %}
+        <!-- Estado vazio -->
+        <div style="text-align: center; padding: 50px 0;">
+          <h3 style="color: #666;">Nenhum registro encontrado</h3>
+          <p style="color: #999;">Não há registros de cargas
+            disponíveis para os filtros selecionados.</p>
+        </div>
+        {% endif %}
+
+        <div class="footer">
+          <p><strong>MBR Extração &copy; 2025</strong> - Todos os
+            direitos reservados</p>
+          <p><strong>Sistema de Gestão MBR</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

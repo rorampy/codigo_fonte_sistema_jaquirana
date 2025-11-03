@@ -1,0 +1,112 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            BITOLA
+          </div>
+          <h2 class="page-title">
+            Cadastrar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="{{ url_for('cadastrar_bitola') }}"
+          method="POST">
+          <div class="card-body">
+
+            <div class="row">
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">Bitola</label>
+                  <input type="text" name="bitolaParametro"
+                    value="{{ dados_corretos['bitolaParametro'] }}"
+                    class="form-control bitolaParametro {% if 'bitolaParametro' in campos_obrigatorios or 'bitolaParametro' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'bitolaParametro' in
+                    campos_obrigatorios %}
+                    {{
+                    campos_obrigatorios['bitolaParametro']
+                    }}
+                    {% elif 'bitolaParametro' in
+                    campos_erros
+                    %}
+                    {{ campos_erros['bitolaParametro'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="{{ url_for('listar_bitolas') }}"
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-arrow-left"
+                width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-plus"
+                width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        new TomSelect("#transportadoraSelect", {
+          create: false,
+          placeholder: "Selecione uma transportadora...",
+          maxItems: 1 
+        });
+      });
+  </script>
+
+</div>
+
+{% endblock conteudo %}

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>DFC Sintético - {{ data_inicio.strftime('%d/%m/%Y') }} a {{ data_fim.strftime('%d/%m/%Y') }}</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 15mm;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      margin: 0;
+      color: #333;
+      line-height: 1.3;
+      background-color: #ffffff;
+    }
+
+    .header {
+      border-bottom: 2px solid #334155;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+
+    .header table {
+      width: 100%;
+      border: none;
+    }
+
+    .header img {
+      width: 100px;
+    }
+
+    .system-info {
+      text-align: right;
+      font-size: 10px;
+      color: #666;
+    }
+
+    .relatorio-title {
+      text-align: center;
+      font-size: 16px;
+      color: #334155;
+      font-weight: bold;
+      margin: 15px 0;
+      text-transform: uppercase;
+    }
+
+    .period-badge {
+      text-align: center;
+      margin: 10px 0 20px 0;
+    }
+
+    .period-badge .badge {
+      background-color: #f8f9fa;
+      color: #495057;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 10px;
+      border: 1px solid #dee2e6;
+    }
+
+    .section-badge {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      margin: 15px 0 8px 0;
+      border: 1px solid;
+    }
+
+    /* Seções com cores elegantes uniformes */
+    .section-receitas {
+      background-color: #f1f5f9;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+
+    .section-custos {
+      background-color: #f1f5f9;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+
+    .section-despesas {
+      background-color: #f8fafc;
+      color: #475569;
+      border-color: #e2e8f0;
+    }
+
+    .section-investimento {
+      background-color: #f1f5f9;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+
+    .section-financiamento {
+      background-color: #f1f5f9;
+      color: #475569;
+      border-color: #cbd5e1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 5px 0 15px 0;
+      border: none;
+    }
+
+    .table-borderless {
+      border: none !important;
+    }
+
+    .table-borderless td {
+      border: none !important;
+      padding: 8px 12px;
+      font-size: 11px;
+    }
+
+    .table-borderless td:first-child {
+      text-align: left;
+      font-weight: normal;
+    }
+
+    .table-borderless td:last-child {
+      text-align: right;
+      font-weight: bold;
+    }
+
+    /* Total de seção - seguindo estilo web elegante */
+    .bg-section-total {
+      background-color: #f1f5f9 !important;
+      color: #334155 !important;
+      font-weight: bold;
+      border: 1px solid #cbd5e1;
+    }
+
+    .valor-positivo {
+      color: #334155;
+      font-weight: bold;
+    }
+
+    .valor-negativo {
+      color: #334155;
+      font-weight: bold;
+    }
+
+    /* Cards para indicadores principais - estilo elegante do web */
+    .highlight-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 15px 0;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .highlight-card .title {
+      font-size: 12px;
+      font-weight: bold;
+      color: #334155;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .highlight-card .value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #334155;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 10px;
+      color: #777;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+
+    /* Espaçamento entre seções */
+    .section-spacing {
+      height: 15px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <table>
+      <tr>
+        <td style="width: 200px;">
+          <img src="{{ logo_path }}" alt="Logo MBR Extração" />
+        </td>
+        <td class="system-info">
+          <div><strong>Sistema de Gestão MBR</strong></div>
+          <div><strong>Relatório gerado em:</strong> {{ dataHoje.strftime('%d/%m/%Y às %H:%M') }}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="relatorio-title">Demonstrativo de Fluxo de Caixa - Sintético</div>
+
+  <!-- Período do Relatório -->
+  <div class="period-badge">
+    <span class="badge">Período: {{ data_inicio.strftime('%d/%m/%Y') }} a {{ data_fim.strftime('%d/%m/%Y') }}</span>
+  </div>
+
+  <!-- RECEITAS OPERACIONAIS -->
+  <div class="section-badge section-receitas">RECEITAS OPERACIONAIS</div>
+  
+  <table class="table-borderless">
+    <tbody>
+      <tr>
+        <td>Receitas Operacionais</td>
+        <td class="valor-positivo">{{ dfc_dados.receitas_operacionais | formatar_float_para_brl }}</td>
+      </tr>
+      
+      <tr class="bg-section-total">
+        <td><strong>TOTAL RECEITAS OPERACIONAIS</strong></td>
+        <td><strong>{{ dfc_dados.receitas_operacionais | formatar_float_para_brl }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-spacing"></div>
+
+  <!-- CUSTOS OPERACIONAIS -->
+  <div class="section-badge section-custos">CUSTOS OPERACIONAIS</div>
+  
+  <table class="table-borderless">
+    <tbody>
+      <tr>
+        <td>Custos Operacionais</td>
+        <td class="valor-negativo">-{{ dfc_dados.custos_operacionais | formatar_float_para_brl }}</td>
+      </tr>
+      
+      <tr class="bg-section-total">
+        <td><strong>TOTAL DE CUSTOS</strong></td>
+        <td class="valor-negativo"><strong>-{{ dfc_dados.custos_operacionais | formatar_float_para_brl }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- MARGEM BRUTA -->
+  <div class="highlight-card">
+    <div class="title">MARGEM BRUTA</div>
+    <div class="value">{{ dfc_dados.resultado_bruto | formatar_float_para_brl }}</div>
+  </div>
+
+  <!-- DESPESAS OPERACIONAIS -->
+  {% if dfc_dados.despesas_operacionais > 0 %}
+  <div class="section-badge section-despesas">DESPESAS OPERACIONAIS</div>
+  
+  <table class="table-borderless">
+    <tbody>
+      <tr>
+        <td>Despesas Operacionais</td>
+        <td class="valor-negativo">-{{ dfc_dados.despesas_operacionais | formatar_float_para_brl }}</td>
+      </tr>
+      
+      <tr class="bg-section-total">
+        <td><strong>TOTAL DE DESPESAS</strong></td>
+        <td class="valor-negativo"><strong>-{{ dfc_dados.despesas_operacionais | formatar_float_para_brl }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  {% endif %}
+
+  <!-- RESULTADO OPERACIONAL -->
+  <div class="highlight-card">
+    <div class="title">RESULTADO OPERACIONAL</div>
+    <div class="value">{{ dfc_dados.resultado_operacional | formatar_float_para_brl }}</div>
+  </div>
+
+  <!-- ATIVIDADES DE FINANCIAMENTO -->
+  {% if dfc_dados.receitas_aplicacoes_financeiras > 0 %}
+  <div class="section-badge section-financiamento">ATIVIDADES DE FINANCIAMENTO</div>
+  
+  <table class="table-borderless">
+    <tbody>
+      <tr>
+        <td>Aplicações Financeiras</td>
+        <td class="valor-positivo">{{ dfc_dados.receitas_aplicacoes_financeiras | formatar_float_para_brl }}</td>
+      </tr>
+      
+      <tr class="bg-section-total">
+        <td><strong>TOTAL ATIVIDADES DE FINANCIAMENTO</strong></td>
+        <td class="valor-positivo"><strong>{{ dfc_dados.receitas_aplicacoes_financeiras | formatar_float_para_brl }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  {% endif %}
+
+  <!-- ATIVIDADES DE INVESTIMENTO -->
+  {% if dfc_dados.despesas_compra_floresta > 0 or dfc_dados.despesas_retirada_capital > 0 %}
+  <div class="section-badge section-investimento">ATIVIDADES DE INVESTIMENTO</div>
+  
+  <table class="table-borderless">
+    <tbody>
+      {% if dfc_dados.despesas_compra_floresta > 0 %}
+      <tr>
+        <td>Compra de Floresta</td>
+        <td class="valor-negativo">-{{ dfc_dados.despesas_compra_floresta | formatar_float_para_brl }}</td>
+      </tr>
+      {% endif %}
+      
+      {% if dfc_dados.despesas_retirada_capital > 0 %}
+      <tr>
+        <td>Retirada de Capital</td>
+        <td class="valor-negativo">-{{ dfc_dados.despesas_retirada_capital | formatar_float_para_brl }}</td>
+      </tr>
+      {% endif %}
+      
+      {% set total_investimento = (dfc_dados.despesas_compra_floresta + dfc_dados.despesas_retirada_capital) * -1 %}
+      <tr class="bg-section-total">
+        <td><strong>TOTAL ATIVIDADES DE INVESTIMENTO</strong></td>
+        <td class="valor-negativo"><strong>{{ total_investimento | formatar_float_para_brl }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  {% endif %}
+
+  <!-- RESULTADO LÍQUIDO -->
+  {% if dfc_dados.variacao_caixa is defined %}
+  <div class="highlight-card">
+    <div class="title">RESULTADO LÍQUIDO</div>
+    <div class="value">{{ dfc_dados.variacao_caixa | formatar_float_para_brl }}</div>
+    <div style="margin-top: 8px; font-size: 9px; color: #666;">
+      Resultado Operacional + Atividades de Investimento + Atividades de Financiamento
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="footer">
+    <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão MBR - Módulo Financeiro</strong></p>
+    <p>Demonstrativo de Resultado do Exercício gerado automaticamente pelo Sistema de Gestão MBR</p>
+  </div>
+</body>
+
+</html>

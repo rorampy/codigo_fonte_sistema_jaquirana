@@ -1,0 +1,122 @@
+<div class="container-xl mt-3">
+  <div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid #0054A6 !important;">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle"
+              style="width: 48px; height: 48px; background-color: rgba(0, 84, 166, 0.1)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-alert-square-rounded">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" />
+                <path d="M12 8v4" />
+                <path d="M12 16h.01" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <h4 class="mb-1 fw-bold" style="color: #0054A6;">Lançamento de Diferença de Conciliação</h4>
+            <p class="text-muted mb-0 fs-6">
+              Foi detectada uma diferença na conciliação que precisa ser lançada
+            </p>
+          </div>
+        </div>
+        <div>
+          <a href="{{ url_for('listagem_ofx') }}" class="btn btn-outline-primary btn-md px-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+              <path d="M19 12H5m7-7-7 7 7 7" />
+            </svg>
+            Voltar ao OFX
+          </a>
+          <a href="{{ url_for('cancelar_conciliacao') }}" class="btn btn-outline-danger btn-md px-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+              <path d="M18 6l-12 12" />
+              <path d="M6 6l12 12" />
+            </svg>
+            Cancelar
+          </a>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-12 col-md-3">
+          <div class="p-3 rounded-3" style="background-color: #FFFFFF; border: 1px solid #DADFE5;">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <div class="d-flex align-items-center justify-content-center rounded-circle"
+                  style="width: 36px; height: 36px; background-color: rgba(0, 84, 166, 0.1);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="#0054A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                    <path d="M12 3v3m0 12v3" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <div class="fs-7 text-muted mb-1">VALOR DA DIFERENÇA</div>
+                <div class="fw-bold fs-5" style="color: #0054A6;">
+                  {{ valor_diferenca | formatar_float_para_brl }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-3">
+          <div class="p-3 rounded-3" style="background-color: #FFFFFF; border: 1px solid #DADFE5;">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <div class="d-flex align-items-center justify-content-center rounded-circle"
+                  style="width: 36px; height: 36px; background-color: rgba(0, 84, 166, 0.1);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="#0054A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 12l2 2 4-4" />
+                    <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <div class="fs-7 text-muted mb-1">TIPO</div>
+                <div class="fw-semibold">
+                  {% if tipo_diferenca == 'receita' %}
+                  <span class="badge badge-outline text-green">Receita</span>
+                  {% else %}
+                  <span class="badge badge-outline text-danger">Despesa</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <div class="p-3 rounded-3" style="background-color: #FFFFFF; border: 1px solid #DADFE5;">
+            <div class="d-flex align-items-start">
+              <div class="me-3">
+                <div class="d-flex align-items-center justify-content-center rounded-circle"
+                  style="width: 36px; height: 36px; background-color: rgba(0, 84, 166, 0.1);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="#0054A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                    <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                    <path d="M9 9l1 0" />
+                    <path d="M9 13l6 0" />
+                    <path d="M9 17l6 0" />
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-fill">
+                <div class="fs-7 text-muted mb-1">MOTIVO</div>
+                <div class="fw-medium">Diferença detectada durante a conciliação de transação OFX</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

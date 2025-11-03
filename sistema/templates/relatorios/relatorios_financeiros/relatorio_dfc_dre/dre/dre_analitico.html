@@ -1,0 +1,1103 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<style>
+  .ps-5 {
+    padding-left: 2.5rem !important;
+  }
+
+  .ps-6 {
+    padding-left: 3.5rem !important;
+  }
+
+  .ps-7 {
+    padding-left: 4.5rem !important;
+  }
+
+  .table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+    transition: background-color 0.15s ease-in-out;
+  }
+
+  .border-3 {
+    border-width: 3px !important;
+  }
+
+  .border-4 {
+    border-width: 4px !important;
+  }
+
+  .fs-7 {
+    font-size: 0.875rem;
+  }
+
+  .badge.rounded-pill {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .card {
+    border-radius: 12px !important;
+    overflow: hidden;
+  }
+
+  .table-borderless td {
+    border: none !important;
+  }
+
+  .bg-success-subtle {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+  }
+
+  .bg-danger-subtle {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+  }
+
+  .bg-warning-subtle {
+    background-color: rgba(255, 193, 7, 0.15) !important;
+  }
+
+  .text-success-emphasis {
+    color: #0a3622 !important;
+  }
+
+  .text-danger-emphasis {
+    color: #58151c !important;
+  }
+
+  .text-warning-emphasis {
+    color: #664d03 !important;
+  }
+
+  .shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+  }
+
+  /* Paleta Unificada Elegante - Tons Azul-Acinzentados com Variações Sutis */
+
+  /* Receitas - Azul Ardósia Elegante (tom harmonioso) */
+  .bg-green-lt {
+    background-color: #f1f5f9 !important;
+    /* Azul ardósia muito claro */
+  }
+
+  .text-green {
+    color: #334155 !important;
+    /* Azul ardósia elegante */
+  }
+
+  .bg-green {
+    background-color: #475569 !important;
+  }
+
+  .border-green {
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  /* 🔹 Custos - Azul Médio Neutro (tom intermediário para diferenciação) */
+  .bg-red-lt {
+    background-color: #f1f5f9 !important;
+    /* Azul ardósia muito claro */
+  }
+
+  .text-red {
+    color: #334155 !important;
+    /* Azul ardósia médio */
+  }
+
+  .bg-red {
+    background-color: #475569 !important;
+  }
+
+  .border-red {
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  /* � Despesas - Azul Acinzentado (tom neutro sofisticado) */
+  .bg-orange-lt {
+    background-color: #f8fafc !important;
+    /* Cinza azulado muito claro */
+  }
+
+  .text-orange {
+    color: #475569 !important;
+    /* Cinza azulado médio */
+  }
+
+  .bg-orange {
+    background-color: #64748b !important;
+  }
+
+  .border-orange {
+    background-color: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  /* � Resultado Operacional - Azul Safira (destaque especial) */
+  .bg-blue {
+    background-color: #1e40af !important;
+    /* Azul safira */
+  }
+
+  .border-blue {
+    border-color: #93c5fd !important;
+    /* Borda azul suave */
+  }
+
+  /* 🌟 Elementos Neutros - Azul Pérola (muito sutil) */
+  .bg-elegant-gray {
+    background-color: #f8fafc !important;
+    /* Azul pérola */
+  }
+
+  .text-elegant-gray {
+    color: #64748b !important;
+    /* Azul acinzentado suave */
+  }
+
+  /* � Financiamento - Azul Lunar (tom frio e elegante) */
+  .bg-gray-lt {
+    background-color: #f1f5f9 !important;
+    /* Azul lunar claro */
+  }
+
+  .text-gray {
+    color: #475569 !important;
+    /* Azul lunar médio */
+  }
+
+  .bg-gray {
+    background-color: #64748b !important;
+  }
+
+  .border-gray {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  /* 🌊 Investimento - Azul Ardósia Harmonioso */
+  .bg-orange-light {
+    background-color: #f1f5f9 !important;
+    /* Azul ardósia muito claro */
+  }
+
+  .text-orange-light {
+    color: #334155 !important;
+    /* Azul ardósia médio */
+  }
+
+  .bg-orange-light-solid {
+    background-color: #cbd5e1 !important;
+    /* Azul ardósia sólido suave */
+  }
+
+  .border-orange-light {
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1 !important;
+  }
+</style>
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">RELATÓRIO FINANCEIRO</div>
+          <h2 class="page-title">DRE Analítico - Demonstrativo de Resultado do Exercício</h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            {% if dre_dados %}
+            <form action="{{ url_for('dre_analitico') }}" method="POST" class="d-inline" target="_blank">
+              <input type="hidden" name="data_inicio" value="{{ dados_form.data_inicio }}">
+              <input type="hidden" name="data_fim" value="{{ dados_form.data_fim }}">
+              <input type="hidden" name="exportar_pdf" value="1">
+              <button type="submit" class="btn btn-outline-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icon-tabler-file-type-pdf">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
+                  <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
+                  <path d="M17 18h2" />
+                  <path d="M20 15h-3v6" />
+                  <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" />
+                </svg>
+                Exportar PDF
+              </button>
+            </form>
+            {% endif %}
+
+            <a href="{{ url_for('dre_analitico') }}" class="btn btn-dark active">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-chart-bar">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <rect x="3" y="12" width="6" height="8" rx="1" />
+                <rect x="9" y="8" width="6" height="12" rx="1" />
+                <rect x="15" y="4" width="6" height="16" rx="1" />
+              </svg>
+              DRE Analítico
+            </a>
+
+            <a href="{{ url_for('dre_sintetico') }}" class="btn btn-outline-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-chart-bar">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <rect x="3" y="12" width="6" height="8" rx="1" />
+                <rect x="9" y="8" width="6" height="12" rx="1" />
+                <rect x="15" y="4" width="6" height="16" rx="1" />
+              </svg>
+              DRE Sintético
+            </a>
+
+            <a href="#" class="btn btn" data-bs-toggle="modal" data-bs-target="#modal-filtros">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter me-1">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtros
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      {% if dre_dados %}
+      <div class="card">
+        <div class="card-header bg-light border-0 py-4">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="card-title mb-1 text-dark fw-bold fs-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                  stroke="#6c757d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icon-tabler-report-money me-2">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+                  <rect x="9" y="3" width="6" height="4" rx="2" />
+                  <path d="M14 11h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5" />
+                  <path d="M12 17v1m0 -8v1" />
+                </svg>
+                DRE Analítico
+              </h3>
+              <p class="text-muted mb-0 fs-6">Demonstrativo de Resultado do Exercício</p>
+              <div class="mt-3">
+                <div class="col-auto">
+                  <div class="badge bg-dark-lt">
+                    Filtro por competência: {{ dados_form.data_inicio | formatar_data_filtro_para_brl }} a {{ dados_form.data_fim |
+                    formatar_data_filtro_para_brl }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+
+          <!-- RECEITAS -->
+          <div class="mb-4">
+            <div class="d-flex align-items-center mb-3 px-3">
+              <div class="badge bg-green-lt text-green me-2 rounded-pill px-3 py-2 border border-green"
+                style="font-weight: 500;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="me-1 opacity-75">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+                RECEITAS
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-borderless mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="text-start fw-semibold text-dark border-0 py-3">Descrição</th>
+                    <th class="text-end fw-semibold text-dark border-0 py-3" style="width: 200px;">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% set categorias_agrupadas = {} %}
+                  {% for item in dre_dados.receitas.operacionais.detalhes %}
+                  {% if item.valor != 0 %}
+                  {% set partes_hierarquia = item.hierarquia_completa.split(' > ') %}
+                  <!-- Pegar a categoria pai mais específica (penúltima no caminho) -->
+                  {% set categoria_principal = partes_hierarquia[-2] if partes_hierarquia|length > 1 else
+                  partes_hierarquia[0] %}
+                  {% if categoria_principal not in categorias_agrupadas %}
+                  {% set _ = categorias_agrupadas.update({categoria_principal: []}) %}
+                  {% endif %}
+                  {% set _ = categorias_agrupadas[categoria_principal].append(item) %}
+                  {% endif %}
+                  {% endfor %}
+
+                  <!-- Ordenar grupos por código do primeiro item de cada grupo -->
+                  {% set grupos_ordenados = [] %}
+                  {% for categoria_principal, itens in categorias_agrupadas.items() %}
+                  {% set _ = grupos_ordenados.append((itens[0].codigo[:7], categoria_principal, itens)) %}
+                  {% endfor %}
+                  {% set _ = grupos_ordenados.sort() %}
+
+                  <!-- Se há mais de um grupo ou se há itens detalhados, mostrar título geral -->
+                  {% if grupos_ordenados|length > 1 or (grupos_ordenados|length == 1 and grupos_ordenados[0][2]|length >
+                  1) %}
+                  <tr class="bg-green-lt">
+                    <td class="fw-semibold ps-3 py-3 text-green border-0">Receitas Operacionais</td>
+                    <td class="text-end fw-semibold py-3 text-green border-0">
+                      {{ dre_dados.receitas.operacionais.total | formatar_float_para_brl }}
+                    </td>
+                  </tr>
+                  {% endif %}
+
+                  {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados %}
+                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  {% if grupos_ordenados|length > 1 or itens|length > 1 %}
+                  <tr class="bg-green-lt">
+                    <td class="ps-3 fw-medium py-2 text-green border-0">
+                      {{ categoria_principal }}
+                    </td>
+                    <td class="text-end fw-medium py-2 text-green border-0">
+                      {{ (itens | sum(attribute='valor') ) | formatar_float_para_brl }}
+                    </td>
+                  </tr>
+                  {% endif %}
+
+                  <!-- Sub-itens ordenados por código -->
+                  {% for item in itens | sort(attribute='codigo') %}
+                  <tr class="border-0">
+                    <td
+                      class="{% if grupos_ordenados|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-green{% endif %} py-2 border-0">
+                      
+                      <span class="text-dark">{{ item.nome }}</span>
+                    </td>
+                    <td
+                      class="text-end py-2 border-0 {% if not (grupos_ordenados|length > 1 or itens|length > 1) %}fw-medium text-green{% else %}text-dark{% endif %}">
+                      {{ (item.valor ) | formatar_float_para_brl }}</td>
+                  </tr>
+                  {% endfor %}
+                  {% endfor %}
+
+                  {% set categorias_agrupadas_nao_op = {} %}
+                  {% for item in dre_dados.receitas.nao_operacionais.detalhes %}
+                  {% if item.valor != 0 and not item.codigo.startswith('1.02.01') %}
+                  {% set partes_hierarquia = item.hierarquia_completa.split(' > ') %}
+                  {% set categoria_principal = partes_hierarquia[-2] if partes_hierarquia|length > 1 else
+                  partes_hierarquia[0] %}
+                  {% if categoria_principal not in categorias_agrupadas_nao_op %}
+                  {% set _ = categorias_agrupadas_nao_op.update({categoria_principal: []}) %}
+                  {% endif %}
+                  {% set _ = categorias_agrupadas_nao_op[categoria_principal].append(item) %}
+                  {% endif %}
+                  {% endfor %}
+
+                  {% set grupos_ordenados_nao_op = [] %}
+                  {% for categoria_principal, itens in categorias_agrupadas_nao_op.items() %}
+                  {% set _ = grupos_ordenados_nao_op.append((itens[0].codigo[:7], categoria_principal, itens)) %}
+                  {% endfor %}
+                  {% set _ = grupos_ordenados_nao_op.sort() %}
+
+                  <!-- Se há receitas não-operacionais, mostrar título -->
+                  {% if grupos_ordenados_nao_op|length > 0 %}
+                  <!-- Receitas Não-Operacionais -->
+                  {% set total_nao_op_sem_aplicacoes = [] %}
+                  {% for item in dre_dados.receitas.nao_operacionais.detalhes %}
+                  {% if not item.codigo.startswith('1.02.01') %}
+                  {% set _ = total_nao_op_sem_aplicacoes.append(item) %}
+                  {% endif %}
+                  {% endfor %}
+                  <tr class="bg-green-lt">
+                    <td class="fw-semibold ps-3 py-3 text-green border-0">Receitas Não-Operacionais</td>
+                    <td class="text-end fw-semibold py-3 text-green border-0">
+                      {{ (total_nao_op_sem_aplicacoes | sum(attribute='valor')) | formatar_float_para_brl }}
+                    </td>
+                  </tr>
+
+                  {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_nao_op %}
+                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  {% if grupos_ordenados_nao_op|length > 1 or itens|length > 1 %}
+                  <tr class="bg-green-lt">
+                    <td class="ps-3 fw-medium py-2 text-green border-0">
+                      {{ categoria_principal }}
+                    </td>
+                    <td class="text-end fw-medium py-2 text-green border-0">
+                      {{ (itens | sum(attribute='valor') ) | formatar_float_para_brl }}
+                    </td>
+                  </tr>
+                  {% endif %}
+
+                  <!-- Sub-itens ordenados por código -->
+                  {% for item in itens | sort(attribute='codigo') %}
+                  <tr>
+                    <td
+                      class="{% if grupos_ordenados_nao_op|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-green{% endif %} py-2 border-0">
+                      
+                      <span class="text-dark">{{ item.nome }}</span>
+                    </td>
+                    <td
+                      class="text-end py-2 border-0 {% if not (grupos_ordenados_nao_op|length > 1 or itens|length > 1) %}fw-medium text-green{% else %}text-dark{% endif %}">
+                      {{ (item.valor ) | formatar_float_para_brl }}</td>
+                  </tr>
+                  {% endfor %}
+                  {% endfor %}
+                  {% endif %}
+
+                  <!-- Total Receitas -->
+                  {% set total_receitas_sem_aplicacoes = dre_dados.receitas.operacionais.total +
+                  (total_nao_op_sem_aplicacoes | sum(attribute='valor')) %}
+                  <tr class="border-top border-1" style="border-color: #cbd5e1 !important;">
+                    <td class="fw-medium ps-3 py-3"
+                      style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">TOTAL DE RECEITAS</td>
+                    <td class="text-end fw-medium py-3"
+                      style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">{{
+                      total_receitas_sem_aplicacoes | formatar_float_para_brl }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CUSTOS -->
+          <div class="mb-4">
+            <div class="d-flex align-items-center mb-3 px-3">
+              <div class="badge bg-red-lt text-red me-2 rounded-pill px-3 py-2 border border-red"
+                style="font-weight: 500;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="me-1 opacity-75">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                </svg>
+                CUSTOS OPERACIONAIS
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-borderless mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="text-start fw-semibold text-dark border-0 py-3">Descrição</th>
+                    <th class="text-end fw-semibold text-dark border-0 py-3" style="width: 200px;">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% set categorias_agrupadas_custos = {} %}
+                  {% for item in dre_dados.custos.operacionais.detalhes %}
+                  {% if item.valor != 0 and not item.codigo.startswith('2.01.11') and not item.codigo.startswith('2.02.05') %}
+                  {% set partes_hierarquia = item.hierarquia_completa.split(' > ') %}
+                  {% set categoria_principal = partes_hierarquia[-2] if partes_hierarquia|length > 1 else
+                  partes_hierarquia[0] %}
+                  {% if categoria_principal not in categorias_agrupadas_custos %}
+                  {% set _ = categorias_agrupadas_custos.update({categoria_principal: []}) %}
+                  {% endif %}
+                  {% set _ = categorias_agrupadas_custos[categoria_principal].append(item) %}
+                  {% endif %}
+                  {% endfor %}
+
+                  {% set grupos_ordenados_custos = [] %}
+                  {% for categoria_principal, itens in categorias_agrupadas_custos.items() %}
+                  {% set _ = grupos_ordenados_custos.append((itens[0].codigo[:7], categoria_principal, itens)) %}
+                  {% endfor %}
+                  {% set _ = grupos_ordenados_custos.sort() %}
+
+                  {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_custos %}
+                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  {% if grupos_ordenados_custos|length > 1 or itens|length > 1 %}
+                  <tr class="bg-red-lt">
+                    <td class="ps-3 fw-medium py-2 text-red border-0">
+                      {{ categoria_principal }}
+                    </td>
+                    <td class="text-end fw-medium py-2 text-red border-0">
+                      -{{ (itens | sum(attribute='valor') ) | formatar_float_para_brl }}
+                    </td>
+                  </tr>
+                  {% endif %}
+
+                  <!-- Sub-itens ordenados por código -->
+                  {% for item in itens | sort(attribute='codigo') %}
+                  <tr class="border-0">
+                    <td
+                      class="{% if grupos_ordenados_custos|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-red{% endif %} py-2 border-0">
+                      
+                      <span class="text-dark">{{ item.nome }}</span>
+                    </td>
+                    <td
+                      class="text-end py-2 border-0 {% if not (grupos_ordenados_custos|length > 1 or itens|length > 1) %}fw-medium text-red{% else %}text-dark{% endif %}">
+                      -{{ (item.valor ) | formatar_float_para_brl }}</td>
+                  </tr>
+                  {% endfor %}
+                  {% endfor %}
+
+                  <!-- Total Custos -->
+                  {% set total_custos_sem_exclusoes = [] %}
+                  {% for item in dre_dados.custos.operacionais.detalhes %}
+                  {% if not item.codigo.startswith('2.01.11') and not item.codigo.startswith('2.02.05') %}
+                  {% set _ = total_custos_sem_exclusoes.append(item) %}
+                  {% endif %}
+                  {% endfor %}
+                  <tr class="border-top border-1" style="border-color: #cbd5e1 !important;">
+                    <td class="fw-medium ps-3 py-3"
+                      style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">TOTAL DE CUSTOS</td>
+                    <td class="text-end fw-medium py-3"
+                      style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">-{{
+                      (total_custos_sem_exclusoes | sum(attribute='valor')) | formatar_float_para_brl }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- MARGEM DE CONTRIBUIÇÃO -->
+          {% set margem_contribuicao_filtrada = total_receitas_sem_aplicacoes - (total_custos_sem_exclusoes | sum(attribute='valor')) %}
+          {% set margem_percentual_filtrada = (margem_contribuicao_filtrada / total_receitas_sem_aplicacoes * 100) if total_receitas_sem_aplicacoes != 0 else 0 %}
+          <div class="mb-4">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+              <div class="card-body text-center py-4 px-4">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center">
+                    <div class="badge me-3 rounded-circle p-2" style="background: #64748b; color: white;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                      </svg>
+                    </div>
+                    <div class="text-start">
+                      <h5 class="mb-0 fw-medium" style="color: #475569; letter-spacing: 0.3px;">MARGEM DE CONTRIBUIÇÃO
+                        (A+B)</h5>
+                      <small class="text-muted" style="font-size: 0.8rem;">{{
+                        "%.0f"|format(margem_percentual_filtrada) }}%</small>
+                    </div>
+                  </div>
+                  <h4 class="mb-0 fw-bold"
+                    style="color: {% if margem_contribuicao_filtrada >= 0 %}#334155{% else %}#dc2626{% endif %}; font-size: 1.4rem;">
+                    {{ margem_contribuicao_filtrada | formatar_float_para_brl }}
+                  </h4>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DESPESAS - só mostra se há despesas -->
+          {% if dre_dados.despesas.total > 0 %}
+          <div class="mb-4">
+            <div class="d-flex align-items-center mb-3 px-3">
+              <div class="badge bg-orange-lt text-orange me-2 rounded-pill px-3 py-2 border border-orange"
+                style="font-weight: 500;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="me-1 opacity-75">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                  <polyline points="14,2 14,8 20,8" />
+                </svg>
+                DESPESAS OPERACIONAIS
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-borderless mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="text-start fw-semibold text-dark border-0 py-3">Descrição</th>
+                    <th class="text-end fw-semibold text-dark border-0 py-3" style="width: 200px;">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% set categorias_agrupadas_despesas = {} %}
+                  {% for item in dre_dados.despesas.operacionais.detalhes %}
+                  {% if item.valor != 0 %}
+                  {% set partes_hierarquia = item.hierarquia_completa.split(' > ') %}
+                  {% set categoria_principal = partes_hierarquia[-2] if partes_hierarquia|length > 1 else
+                  partes_hierarquia[0] %}
+                  {% if categoria_principal not in categorias_agrupadas_despesas %}
+                  {% set _ = categorias_agrupadas_despesas.update({categoria_principal: []}) %}
+                  {% endif %}
+                  {% set _ = categorias_agrupadas_despesas[categoria_principal].append(item) %}
+                  {% endif %}
+                  {% endfor %}
+
+                  {% set grupos_ordenados_despesas = [] %}
+                  {% for categoria_principal, itens in categorias_agrupadas_despesas.items() %}
+                  {% set _ = grupos_ordenados_despesas.append((itens[0].codigo[:7], categoria_principal, itens)) %}
+                  {% endfor %}
+                  {% set _ = grupos_ordenados_despesas.sort() %}
+
+                  {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_despesas %}
+                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  {% if grupos_ordenados_despesas|length > 1 or itens|length > 1 %}
+                  <tr class="bg-orange-lt">
+                    <td class="ps-3 fw-medium py-2 text-orange border-0">
+                      {{ categoria_principal }}
+                    </td>
+                    <td class="text-end fw-medium py-2 text-orange border-0">
+                      -{{ (itens | sum(attribute='valor') ) | formatar_float_para_brl }}
+                    </td>
+                  </tr>
+                  {% endif %}
+
+                  <!-- Sub-itens ordenados por código -->
+                  {% for item in itens | sort(attribute='codigo') %}
+                  <tr class="border-0">
+                    <td
+                      class="{% if grupos_ordenados_despesas|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-orange{% endif %} py-2 border-0">
+                      
+                      <span class="text-dark">{{ item.nome }}</span>
+                    </td>
+                    <td
+                      class="text-end py-2 border-0 {% if not (grupos_ordenados_despesas|length > 1 or itens|length > 1) %}fw-medium text-orange{% else %}text-dark{% endif %}">
+                      -{{ (item.valor ) | formatar_float_para_brl }}</td>
+                  </tr>
+                  {% endfor %}
+                  {% endfor %}
+
+                  <!-- Total Despesas -->
+                  <tr class="border-top border-1" style="border-color: #e2e8f0 !important;">
+                    <td class="fw-medium ps-3 py-3"
+                      style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;">TOTAL DE DESPESAS</td>
+                    <td class="text-end fw-medium py-3"
+                      style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;">-{{ dre_dados.despesas.operacionais.total | formatar_float_para_brl }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- RESULTADO OPERACIONAL -->
+          {% if dre_dados.resultado.operacional is defined %}
+          <div class="mb-4">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
+              <div class="card-body text-center py-4 px-4">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center">
+                    <div class="badge me-3 rounded-circle p-2" style="background: #334155; color: white;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 3v18h18" />
+                        <path d="m19 9-5 5-4-4-3 3" />
+                      </svg>
+                    </div>
+                    <h5 class="mb-0 fw-medium" style="color: #334155; letter-spacing: 0.3px;">RESULTADO OPERACIONAL</h5>
+                  </div>
+                  {% set resultado_operacional_filtrado = margem_contribuicao_filtrada - dre_dados.despesas.operacionais.total %}
+                  <h4 class="mb-0 fw-bold"
+                    style="color: {% if resultado_operacional_filtrado >= 0 %}#334155{% else %}#dc2626{% endif %}; font-size: 1.4rem;">
+                    {{ resultado_operacional_filtrado | formatar_float_para_brl }}
+                  </h4>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- ATIVIDADES DE INVESTIMENTO - só mostra se há valores -->
+          {% set compra_floresta = [] %}
+          {% for item in dre_dados.custos.operacionais.detalhes %}
+          {% if item.codigo.startswith('2.01.11') and item.valor != 0 %}
+          {% set _ = compra_floresta.append(item) %}
+          {% endif %}
+          {% endfor %}
+
+          {% if compra_floresta|length > 0 %}
+          <div class="mb-4">
+            <div class="d-flex align-items-center mb-3 px-3">
+              <div
+                class="badge bg-orange-light text-orange-light me-2 rounded-pill px-3 py-2 border border-orange-light"
+                style="font-weight: 500;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="me-1 opacity-75">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12,6 12,12 16,14" />
+                </svg>
+                ATIVIDADES DE INVESTIMENTO
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-borderless mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="text-start fw-semibold text-dark border-0 py-3">Descrição</th>
+                    <th class="text-end fw-semibold text-dark border-0 py-3" style="width: 200px;">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% set categorias_agrupadas_inv = {} %}
+                  {% for item in compra_floresta %}
+                  {% set partes_hierarquia = item.hierarquia_completa.split(' > ') %}
+                  {% set categoria_principal = partes_hierarquia[-2] if partes_hierarquia|length > 1 else
+                  partes_hierarquia[0] %}
+                  {% if categoria_principal not in categorias_agrupadas_inv %}
+                  {% set _ = categorias_agrupadas_inv.update({categoria_principal: []}) %}
+                  {% endif %}
+                  {% set _ = categorias_agrupadas_inv[categoria_principal].append(item) %}
+                  {% endfor %}
+
+                  {% set grupos_ordenados_inv = [] %}
+                  {% for categoria_principal, itens in categorias_agrupadas_inv.items() %}
+                  {% set _ = grupos_ordenados_inv.append((itens[0].codigo[:7], categoria_principal, itens)) %}
+                  {% endfor %}
+                  {% set _ = grupos_ordenados_inv.sort() %}
+
+                  {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_inv %}
+                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  {% if grupos_ordenados_inv|length > 1 or itens|length > 1 %}
+                  <tr class="bg-orange-light">
+                    <td class="ps-3 fw-medium py-2 text-orange border-0">
+                      {{ categoria_principal }}
+                    </td>
+                    <td class="text-end fw-medium py-2 text-orange border-0">
+                      -{{ (itens | sum(attribute='valor') ) | formatar_float_para_brl }}
+                    </td>
+                  </tr>
+                  {% endif %}
+
+                  <!-- Sub-itens ordenados por código -->
+                  {% for item in itens | sort(attribute='codigo') %}
+                  <tr class="border-0">
+                    <td
+                      class="{% if grupos_ordenados_inv|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-orange{% endif %} py-2 border-0">
+                      
+                      <span class="text-dark">{{ item.nome }}</span>
+                    </td>
+                    <td
+                      class="text-end py-2 border-0 {% if not (grupos_ordenados_inv|length > 1 or itens|length > 1) %}fw-medium text-orange{% else %}text-dark{% endif %}">
+                      -{{ (item.valor ) | formatar_float_para_brl }}</td>
+                  </tr>
+                  {% endfor %}
+                  {% endfor %}
+
+                  <!-- Total Atividades de Investimento -->
+                  <tr class="border-top border-1" style="border-color: #cbd5e1 !important;">
+                    <td class="fw-medium ps-3 py-3"
+                      style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">TOTAL ATIVIDADES DE
+                      INVESTIMENTO</td>
+                    <td class="text-end fw-medium py-3"
+                      style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">-{{ (compra_floresta |
+                      sum(attribute='valor')) | formatar_float_para_brl }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- ATIVIDADES DE FINANCIAMENTO - só mostra se há valores -->
+          {% set aplicacoes_financeiras = [] %}
+          {% set retirada_capital = [] %}
+
+          <!-- Buscar Aplicações Financeiras nas receitas não-operacionais -->
+          {% for item in dre_dados.receitas.nao_operacionais.detalhes %}
+          {% if item.codigo.startswith('1.02.01') and item.valor != 0 %}
+          {% set _ = aplicacoes_financeiras.append(item) %}
+          {% endif %}
+          {% endfor %}
+
+          <!-- Buscar Retirada de Capital nos custos operacionais -->
+          {% for item in dre_dados.custos.operacionais.detalhes %}
+          {% if item.codigo.startswith('2.02.05') and item.valor != 0 %}
+          {% set _ = retirada_capital.append(item) %}
+          {% endif %}
+          {% endfor %}
+
+          {% if aplicacoes_financeiras|length > 0 or retirada_capital|length > 0 %}
+          <div class="mb-4">
+            <div class="d-flex align-items-center mb-3 px-3">
+              <div class="badge bg-gray-lt text-gray me-2 rounded-pill px-3 py-2 border border-gray"
+                style="font-weight: 500;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="me-1 opacity-75">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+                ATIVIDADES DE FINANCIAMENTO
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-borderless mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="text-start fw-semibold text-dark border-0 py-3">Descrição</th>
+                    <th class="text-end fw-semibold text-dark border-0 py-3" style="width: 200px;">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Agrupamento das Aplicações Financeiras por categoria pai -->
+                  {% set categorias_agrupadas_fin = {} %}
+                  {% for item in aplicacoes_financeiras %}
+                  {% set partes_hierarquia = item.hierarquia_completa.split(' > ') %}
+                  {% set categoria_principal = partes_hierarquia[-2] if partes_hierarquia|length > 1 else
+                  partes_hierarquia[0] %}
+                  {% if categoria_principal not in categorias_agrupadas_fin %}
+                  {% set _ = categorias_agrupadas_fin.update({categoria_principal: []}) %}
+                  {% endif %}
+                  {% set _ = categorias_agrupadas_fin[categoria_principal].append(item) %}
+                  {% endfor %}
+
+                  <!-- Agrupamento da Retirada de Capital por categoria pai -->
+                  {% for item in retirada_capital %}
+                  {% set partes_hierarquia = item.hierarquia_completa.split(' > ') %}
+                  {% set categoria_principal = partes_hierarquia[-2] if partes_hierarquia|length > 1 else
+                  partes_hierarquia[0] %}
+                  {% if categoria_principal not in categorias_agrupadas_fin %}
+                  {% set _ = categorias_agrupadas_fin.update({categoria_principal: []}) %}
+                  {% endif %}
+                  {% set _ = categorias_agrupadas_fin[categoria_principal].append(item) %}
+                  {% endfor %}
+
+                  {% set grupos_ordenados_fin = [] %}
+                  {% for categoria_principal, itens in categorias_agrupadas_fin.items() %}
+                  {% set _ = grupos_ordenados_fin.append((itens[0].codigo[:7], categoria_principal, itens)) %}
+                  {% endfor %}
+                  {% set _ = grupos_ordenados_fin.sort() %}
+
+                  {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_fin %}
+                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  {% if grupos_ordenados_fin|length > 1 or itens|length > 1 %}
+                  <tr class="bg-gray-lt">
+                    <td class="ps-3 fw-medium py-2 text-gray border-0">
+                      {{ categoria_principal }}
+                    </td>
+                    <td class="text-end fw-medium py-2 text-gray border-0">
+                      {% set total_categoria = 0 %}
+                      {% for item in itens %}
+                      {% if item.codigo.startswith('1.02') %}
+                      {% set total_categoria = total_categoria + item.valor %}
+                      {% else %}
+                      {% set total_categoria = total_categoria - item.valor %}
+                      {% endif %}
+                      {% endfor %}
+                      {{ total_categoria | formatar_float_para_brl }}
+                    </td>
+                  </tr>
+                  {% endif %}
+
+                  <!-- Sub-itens ordenados por código -->
+                  {% for item in itens | sort(attribute='codigo') %}
+                  <tr class="border-0">
+                    <td
+                      class="{% if grupos_ordenados_fin|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-gray{% endif %} py-2 border-0">
+                      
+                      <span class="text-dark">{{ item.nome }}</span>
+                    </td>
+                    <td
+                      class="text-end py-2 border-0 {% if not (grupos_ordenados_fin|length > 1 or itens|length > 1) %}fw-medium text-gray{% else %}text-dark{% endif %}">
+                      {% if item.codigo.startswith('1.02') %}
+                      {{ item.valor | formatar_float_para_brl }}
+                      {% else %}
+                      -{{ item.valor | formatar_float_para_brl }}
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                  {% endfor %}
+
+                  <!-- Total Atividades de Financiamento -->
+                  {% set total_financiamento = (aplicacoes_financeiras | sum(attribute='valor')) - (retirada_capital |
+                  sum(attribute='valor')) %}
+                  <tr class="border-top border-1" style="border-color: #cbd5e1 !important;">
+                    <td class="fw-medium ps-3 py-3"
+                      style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">TOTAL ATIVIDADES DE
+                      FINANCIAMENTO</td>
+                    <td class="text-end fw-medium py-3"
+                      style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">{{ total_financiamento |
+                      formatar_float_para_brl }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- VARIAÇÃO DE CAIXA -->
+          {% if dre_dados.resultado.variacao_caixa is defined %}
+          <!-- <div class="mb-4">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
+              <div class="card-body text-center py-4 px-4">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center">
+                    <div class="badge me-3 rounded-circle p-2" style="background: #334155; color: white;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                        <line x1="8" y1="21" x2="16" y2="21" />
+                        <line x1="12" y1="17" x2="12" y2="21" />
+                      </svg>
+                    </div>
+                    <h5 class="mb-0 fw-medium" style="color: #334155; letter-spacing: 0.3px;">VARIAÇÃO DE CAIXA</h5>
+                  </div>
+                  {% set total_atividades_investimento = -(compra_floresta | sum(attribute='valor')) %}
+                  {% set total_atividades_financiamento = (aplicacoes_financeiras | sum(attribute='valor')) - (retirada_capital | sum(attribute='valor')) %}
+                  {% set variacao_caixa_filtrada = resultado_operacional_filtrado + total_atividades_investimento + total_atividades_financiamento %}
+                  <h4 class="mb-0 fw-bold"
+                    style="color: {% if variacao_caixa_filtrada >= 0 %}#334155{% else %}#dc2626{% endif %}; font-size: 1.4rem;">
+                    {{ variacao_caixa_filtrada | formatar_float_para_brl }}
+                  </h4>
+                </div>
+                <div class="mt-3 pt-3 border-top" style="border-color: #cbd5e1 !important;">
+                  <small class="text-muted">
+                    Resultado Operacional + Atividades de Investimento + Atividades de Financiamento
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div> -->
+          {% endif %}
+
+        </div>
+      </div>
+
+      {% else %}
+      <!-- Estado vazio -->
+      <div class="card">
+        <div class="card-body text-center p-5">
+          <div class="mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none"
+              stroke="#6c757d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icon-tabler-report-off">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M8 5h-1a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+              <rect x="9" y="3" width="6" height="4" rx="2" />
+              <path d="M3 3l18 18" />
+            </svg>
+          </div>
+          <h3 class="text-muted mb-3">Nenhum dado encontrado</h3>
+          <p class="text-muted mb-4">
+            Não foram encontrados lançamentos financeiros para o período selecionado.<br>
+            Tente ajustar os filtros de data ou verificar se existem lançamentos categorizados no sistema.
+          </p>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-filtros">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icon-tabler-filter me-2">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path
+                d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+            </svg>
+            Ajustar Período
+          </button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Modal de Filtros -->
+  <div class="modal modal-blur fade" id="modal-filtros" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
+      <form action="{{ url_for('dre_analitico') }}" method="POST">
+        <div class="modal-content">
+          <div class="modal-header bg-light border-0">
+            <h5 class="modal-title text-dark fw-semibold">Filtros - DRE Analítico</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Opção de Filtro por Exercício -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Filtrar por Exercício</label>
+              <div class="row">
+                <div class="col-md-12">
+                  <select name="exercicio" class="form-select" onchange="limparDatasPersonalizadas()">
+                    <option value="">Selecione um exercício ou use período personalizado</option>
+                    {% for exercicio in exercicios_disponiveis %}
+                    <option value="{{ exercicio.valor }}" 
+                            {% if dados_form.exercicio == exercicio.valor %}selected{% endif %}>
+                      {{ exercicio.texto }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <!-- Período Personalizado -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Selecione um período personalizado:</label>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="data_inicio" class="form-control" value="{{ dados_form.data_inicio }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="data_fim" class="form-control" value="{{ dados_form.data_fim }}">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a href="{{ url_for('dre_analitico') }}" class="btn btn-link link-secondary">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-search me-2">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              Gerar Relatório
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+<script>
+  document.querySelectorAll('select.form-select').forEach(function (select) {
+        new TomSelect(select, {
+          create: false,
+          allowEmptyOption: false,
+        });
+      });
+function limparDatasPersonalizadas() {
+    const exercicio = document.querySelector('select[name="exercicio"]');
+    if (exercicio.value) {
+        document.querySelector('input[name="data_inicio"]').value = '';
+        document.querySelector('input[name="data_fim"]').value = '';
+    }
+}
+
+// Limpar exercício quando selecionar datas personalizadas
+document.addEventListener('DOMContentLoaded', function() {
+    const dataInicio = document.querySelector('input[name="data_inicio"]');
+    const dataFim = document.querySelector('input[name="data_fim"]');
+    const exercicio = document.querySelector('select[name="exercicio"]');
+    
+    if (dataInicio && dataFim && exercicio) {
+        dataInicio.addEventListener('change', function() {
+            if (this.value) {
+                exercicio.value = '';
+            }
+        });
+        
+        dataFim.addEventListener('change', function() {
+            if (this.value) {
+                exercicio.value = '';
+            }
+        });
+    }
+});
+</script>
+
+{% endblock conteudo %}

@@ -1,0 +1,131 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+    <!-- Page header -->
+    <div class="page-header d-print-none">
+      <div class="container-xl">
+        <div class="row g-2 align-items-center">
+          <div class="col">
+            <!-- Page pre-title -->
+            <div class="page-pretitle">
+              HISTÓRICO DE VERSÕES
+            </div>
+            <h2 class="page-title">
+              Nova Versão de sistema
+            </h2>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page body -->
+    <div class="page-body">
+      <div class="container-xl">
+
+        {% include 'estrutura/mensagens_flash.html' %}
+
+        <div class="col-12">
+          <form class="card" 
+            action="{{ url_for('changelog_cadastrar') }}" 
+          method="POST">
+            <div class="card-body">
+              <div class="row row-cards">
+
+                <div class="col-sm-4 col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">Versão</label>
+                    <input type="text" name="versao" value="{{ dados_corretos['versao'] }}"
+                      class="form-control {% if 'versao' in campos_obrigatorios %}is-invalid{% endif %}"
+                    >
+                  </div>
+                </div>
+
+                <div class="col-sm-4 col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">Data de Publicação</label>
+                    <input type="text" name="dataPublicacao" value="{{ dados_corretos['dataPublicacao'] }}"
+                      data-mask="00/00/0000" placeholder="00/00/0000" 
+                      data-mask-visible="true" autocomplete="off" 
+                      class="form-control {% if 'dataPublicacao' in campos_obrigatorios %}is-invalid{% endif %}"
+                    >
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label">Descrição detalhada</label>
+                    <div id="editor-container"></div>
+                    <input type="hidden" name="conteudo" id="conteudo-input"
+                    >
+                  </div>
+                </div>
+
+              </div>
+            </div>
+            <div class="card-footer text-center text-md-end">
+              <a href="{{ url_for('principal') }}" 
+                class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" 
+                  width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
+                  fill="none" stroke-linecap="round" stroke-linejoin="round"
+                >
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                  <path d="M5 12l14 0"></path>
+                  <path d="M5 12l6 6"></path>
+                  <path d="M5 12l6 -6"></path>
+               </svg>
+                Voltar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" 
+                  width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
+                  fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                  <path d="M12 5l0 14"></path>
+                  <path d="M5 12l14 0"></path>
+                </svg>
+                Cadastrar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configs Quill -->
+    <script>
+      var CustomOptions = {
+        modules: {
+            toolbar: [
+                [{ 'size': ['small', false, 'large', 'huge'] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'align': [] }],
+                [{ 'color': [] }, { 'background': [] }],
+                ['link']
+                // Adicionar mais botões personalizados aqui
+            ]
+        },
+        theme: 'snow'
+      };
+
+      // Obtem o elemento do editor
+      var editor = new Quill('#editor-container', CustomOptions);
+
+      // Sincroniza o conteúdo do editor com o input escondido
+      editor.on('text-change', function () {
+        var content = editor.root.innerHTML;
+        document.querySelector('#conteudo-input').value = content;
+      });
+
+      // Define o conteúdo do editor a partir dos dados corretos
+      var descricao = '{{ dados_corretos['conteudo']|safe }}';
+      editor.clipboard.dangerouslyPasteHTML(descricao);
+    </script>
+
+    {% include 'estrutura/footer.html' %}
+    
+</div>
+
+
+{% endblock conteudo %}

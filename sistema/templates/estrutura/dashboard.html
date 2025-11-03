@@ -1,0 +1,592 @@
+{% extends 'estrutura/base.html' %}
+
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cards-dashboard.css') }}">
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">bem-vindo</div>
+          <h2 class="page-title">
+            {{ current_user.nome }} {{ current_user.sobrenome[0] }}.
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <a href="#" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modal-report">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-adjustments">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M4 10a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+              <path d="M6 4v4" />
+              <path d="M6 12v8" />
+              <path d="M10 16a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+              <path d="M12 4v10" />
+              <path d="M12 18v2" />
+              <path d="M16 7a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+              <path d="M18 4v1" />
+              <path d="M18 9v11" />
+            </svg>
+            Customizar Informações
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      <!-- Seção de Análise de Produção -->
+      <div class="dashboard-section">
+        {% if mostrar_linhas_graficas %}
+        <div class="row g-3">
+          <div class="col-lg-7">
+            <div class="glass-card chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">
+                  Gráfico demonstrativo de entrega de produtos - {{ '%02d' % mes
+                  }}/{{ ano }}.
+                </h3>
+              </div>
+              <div class="chart-body">
+                <div id="chart-toneladas-por-dia"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-5">
+            <div class="glass-card chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">
+                  Toneladas no mês por produto - {{ '%02d' % mes }}/{{ ano }}.
+                </h3>
+              </div>
+              <div class="chart-body">
+                <div id="chart-barra-acumulado-produtos"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon w-100">📊</div>
+          <div class="empty-title">Não há dados a serem exibidos</div>
+          <div class="empty-text">
+            Os gráficos de produção aparecerão aqui assim que houver registros
+            de entrega para o período selecionado.
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Seção de Controle de Estoque -->
+      <div class="dashboard-section">
+        {% if valores_contra_acumulados %}
+        <div class="glass-card chart-container">
+          <div class="chart-header">
+            <h3 class="chart-title">
+              Relação Entrada X Saída estoque – Acumulado geral
+            </h3>
+          </div>
+          <div class="chart-body">
+            <div id="chart-barra-vertical-grouped-produtos"></div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon w-100">📦</div>
+          <div class="empty-title">Dados de Estoque Indisponíveis</div>
+          <div class="empty-text">
+            Os relatórios de movimentação de estoque serão exibidos quando
+            houver registros de entrada e saída.
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Seção de Ranking -->
+      <div class="dashboard-section">
+        {% if tem_pontuacao %}
+        <div class="glass-card chart-container">
+          <div class="chart-header">
+            <h3 class="chart-title">
+              Ranking de <strong>produtividade</strong> por usuário - {{ '%02d'
+              % mes }}/{{ ano }}
+            </h3>
+          </div>
+          <div class="chart-body">
+            <div id="chart-pontuacao-usuario"></div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon w-100">🏆</div>
+          <div class="empty-title">Não há dados a serem exibidos</div>
+          <div class="empty-text">
+            O gráfico de pontuação de usuário aparecerá aqui assim que houver
+            registros.
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Seção de Alertas -->
+      <div class="dashboard-section">
+        <div class="row g-3">
+          <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+              <div class="stat-content">
+                <div class="stat-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+                    <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h6l6 6v10a2 2 0 0 1 -2 2z"></path>
+                    <path d="M12 12l0 .01"></path>
+                    <path d="M9 15h6"></path>
+                    <path d="M9 12h0.01"></path>
+                    <path d="M15 12h0.01"></path>
+                  </svg>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-label">Cargas sem NF</div>
+                  <div class="stat-value">{{ nfs_nao_emitidas | length }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+              <div class="stat-content">
+                <div class="stat-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 5l0 2"></path>
+                    <path d="M15 11l0 2"></path>
+                    <path d="M15 17l0 2"></path>
+                    <path
+                      d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2">
+                    </path>
+                  </svg>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-label">Cargas sem Ticket</div>
+                  <div class="stat-value">{{ tickets_nao_lancados | length
+                    }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+              <div class="stat-content">
+                <div class="stat-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 21v-4"></path>
+                    <path d="M12 13v-4"></path>
+                    <path d="M12 5v-2"></path>
+                    <path d="M10 12h4"></path>
+                    <path d="M4 8v-2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-8"></path>
+                    <path d="M3 12h1"></path>
+                  </svg>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-label">Cargas sem Origem</div>
+                  <div class="stat-value">{{ cargasOrigemNaoIdentificada |
+                    length
+                    }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+              <div class="stat-content">
+                <div class="stat-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 21v-4"></path>
+                    <path d="M12 13v-4"></path>
+                    <path d="M12 5v-2"></path>
+                    <path d="M10 12h4"></path>
+                    <path d="M4 8v-2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-8"></path>
+                    <path d="M3 12h1"></path>
+                  </svg>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-label">Cargas sem Contra Nota</div>
+                  <div class="stat-value">{{ nfContraNota | length }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
+      <form id="filtroForm" method="get">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Customizar dados</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-8 mb-3 mb-3">
+                <!-- Seletor de empresa -->
+                <label class="form-label" for="selectEmpresa"><strong>Empresa
+                    Emissora:</strong></label>
+                <select id="selectEmpresa" name="empresa_emissora_id" class="form-select">
+                  {% for emp in empresas_emissoras %}
+                  <option value="{{ emp.id }}" {% if emp.id==empresa_selecionada_id %}selected{% endif %}>
+                    {{ emp.identificacao }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label" for="selectMes"><strong>Mês:</strong></label>
+                <input type="month" id="selectMes" name="mesano" class="form-control"
+                  value="{{ '%04d-%02d'|format(ano, mes) }}">
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <a href="{{url_for('principal')}}" class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-2">
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Aplicar modificação
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // dispara o submit do mesmo form ao mudar mês ou empresa
+    document.getElementById('selectMes').addEventListener('change', () => {
+      document.getElementById('filtroForm').submit();
+    });
+    document.getElementById('selectEmpresa').addEventListener('change', () => {
+      document.getElementById('filtroForm').submit();
+    });
+  </script>
+
+  <!-- Scripts originais dos gráficos mantidos -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (!window.ApexCharts) return;
+
+      new ApexCharts(
+        document.getElementById("chart-toneladas-por-dia"),
+        {
+          chart: {
+            type: "bar",
+            stacked: true,
+            height: 400,
+            toolbar: { show: false },
+            animations: { enabled: false }
+          },
+          plotOptions: {
+            bar: {
+              horizontal: false,
+              borderRadius: 0,
+              columnWidth: "60%"
+            }
+          },
+          dataLabels: { enabled: false },
+          series: [
+            { name: "Eucalipto Torete", data: {{ dados_front.eucalipto_torete | tojson }} },
+      { name: "Pinus Torete", data: {{ dados_front.pinus_torete | tojson }} },
+      { name: "Pinus 18-25", data: {{ dados_front.pinus_18_25 | tojson }} },
+      { name: "Pinus 25-32", data: {{ dados_front.pinus_25_32 | tojson }} },
+      { name: "Pinus 33+", data: {{ dados_front.pinus_33_mais | tojson }} },
+      { name: "Biomassa", data: {{ dados_front.cavaco | tojson }} }
+      ],
+      xaxis: {
+      categories: {{ labels | tojson }},
+      title: { text: "Dias do Mês" }
+      },
+      yaxis: {
+      title: { text: "Toneladas" },
+      labels: {
+        formatter: function (value) {
+          return value.toFixed(2);
+        }
+      }
+    },
+      colors: ["#1b5e20", "#e65100", "#fb8c00", "#ffb74d", "#ffe0b2", "#04BFAD"],
+      tooltip: {
+      shared: true,
+      intersect: false,
+      y: {
+        formatter: function (val) {
+          return val.toFixed(2) + " toneladas";
+        }
+      }
+    },
+      legend: {
+      position: "top",
+      horizontalAlign: "center",
+      markers: { radius: 12 }
+    },
+      grid: {
+      borderColor: "#f1f1f1",
+      strokeDashArray: 4
+    }
+    }
+    ).render();
+});
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (!window.ApexCharts) return;
+
+      new ApexCharts(
+        document.getElementById("chart-barra-acumulado-produtos"),
+        {
+          chart: { type: "bar", height: 400 },
+          plotOptions: {
+            bar: {
+              distributed: true,
+              borderRadius: 4,
+              columnWidth: "50%",
+              dataLabels: { position: "top" }
+            }
+          },
+          xaxis: {
+            categories: {{ produtos_labels | tojson }},
+      labels: { style: { fontSize: "12px" } }
+      },
+      yaxis: {
+      title: { text: "Toneladas" },
+      labels: {
+        formatter: function (value) {
+          return value.toFixed(2);
+        }
+      }
+    },
+      series: [
+      { name: "Toneladas", data: {{ valores_acumulados | tojson }} }
+    ],
+      colors: ["#aed581", "#81d4fa", "#fff176", "#4dd0e1", "#ffcc80", "#04BFAD"],
+      dataLabels: {
+      enabled: true,
+      formatter: function (val) { return val.toFixed(2) + " t"; },
+      style: {
+        fontSize: "12px",
+        fontWeight: "bold",
+        colors: ["#333333"]
+      }
+    },
+      tooltip: {
+      y: {
+        formatter: function (val) {
+          return val.toFixed(2) + " toneladas";
+        }
+      }
+    },
+      legend: { show: false },
+      grid: {
+      borderColor: "#f1f1f1",
+      strokeDashArray: 4
+    }
+    }
+    ).render();
+});
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (!window.ApexCharts) return;
+
+      const options = {
+        chart: {
+          type: "line",
+          height: 450,
+          toolbar: {
+            show: true,
+            tools: {
+              download: true,
+              selection: true,
+              zoom: true,
+              zoomin: true,
+              zoomout: true,
+              pan: true,
+              reset: true
+            },
+            export: {
+              csv: { filename: "ranking_usuarios_mes" },
+              svg: { filename: "ranking_usuarios_mes" },
+              png: { filename: "ranking_usuarios_mes" }
+            }
+          },
+          animations: { enabled: false },
+          dropShadow: {
+            enabled: true,
+            top: 3,
+            left: 2,
+            blur: 4,
+            opacity: 0.1
+          }
+        },
+        stroke: { curve: "smooth", width: 2 },
+        markers: { size: 4, hover: { sizeOffset: 2 } },
+        dataLabels: {
+          enabled: true,
+          offsetY: -8,
+          formatter: function (val, opts) {
+            const point = opts.w.config.series[opts.seriesIndex]
+              .data[opts.dataPointIndex];
+            return point.label || "";
+          },
+          style: { fontSize: "11px", fontWeight: "bold", colors: ["#333"] },
+          background: {
+            enabled: true,
+            foreColor: "#fff",
+            padding: 4,
+            borderRadius: 4,
+            borderWidth: 1,
+            borderColor: "#999",
+            opacity: 0.9
+          }
+        },
+        series: {{ dados_usuarios_front | tojson
+    }},
+      xaxis: {
+      categories: {{ labels | tojson }},
+      title: {
+      text: "Dias do Mês",
+      style: { fontSize: "13px", fontWeight: 500, color: "#2c3e50" }
+    },
+      labels: { style: { fontSize: "12px", fontFamily: "Inter, sans-serif" } },
+      axisTicks: { show: false },
+      axisBorder: { show: true, color: "#78909c" }
+        },
+      yaxis: {
+      title: {
+        text: "Pontos Acumulados",
+        style: { fontSize: "13px", fontWeight: 500, color: "#2c3e50" }
+      },
+      labels: { formatter: (v) => v.toFixed(1), style: { fontSize: "12px" } }
+    },
+      tooltip: {
+      shared: true,
+      intersect: false,
+      theme: "light",
+      y: { formatter: (v) => v.toFixed(1) + " pontos" }
+    },
+      legend: {
+      show: true,
+      position: "bottom",
+      horizontalAlign: "center",
+      fontSize: "12px",
+      itemMargin: { horizontal: 10, vertical: 5 }
+    },
+      grid: {
+      borderColor: "#e0e0e0",
+      strokeDashArray: 4,
+      padding: { top: 0, right: 0, bottom: 0, left: 10 }
+    },
+      responsive: [
+      {
+        breakpoint: 768,
+        options: {
+          chart: { height: 360 },
+          legend: { position: "bottom" }
+        }
+      }
+    ]
+      };
+
+    new ApexCharts(
+      document.querySelector("#chart-pontuacao-usuario"),
+      options
+    ).render();
+    });
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (!window.ApexCharts) return;
+
+      const seriesData = [
+        {% for label in produtos_labels %}
+        {
+        x: "{{ label }}",
+        y: {{ valores_contra_acumulados[loop.index0] }},
+      goals: [
+      {
+        name: "Vendido",
+        value: {{ valores_acumulados_mes[loop.index0] }},
+      strokeHeight: 5,
+      strokeColor: "#ff9500"
+            }
+    ]
+        }{% if not loop.last %}, {% endif %}
+    {% endfor %}
+      ];
+
+    new ApexCharts(
+      document.querySelector("#chart-barra-vertical-grouped-produtos"),
+      {
+        series: [{ name: "Contra nota", data: seriesData }],
+        chart: { type: "bar", height: 350 },
+        plotOptions: {
+          bar: { columnWidth: "60%", endingShape: "rounded" }
+        },
+        colors: ["#81d4fa"],
+        dataLabels: { enabled: false },
+        annotations: {
+          points: seriesData.map((pt) => ({
+            x: pt.x,
+            y: pt.goals[0].value,
+            marker: { size: 0 },
+            label: {
+              text: (pt.y - pt.goals[0].value).toFixed(2) + " t",
+              offsetY: -6,
+              style: {
+                fontSize: "12px",
+                fontWeight: "bold",
+                color: "#333333",
+                background: "transparent"
+              }
+            }
+          }))
+        },
+        legend: {
+          show: true,
+          showForSingleSeries: true,
+          customLegendItems: ["ENTRADA (Contra nota)", "SAÍDA (NF saída)"],
+          markers: { fillColors: ["#81d4fa", "#ff9500"] }
+        }
+      }
+    ).render();
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

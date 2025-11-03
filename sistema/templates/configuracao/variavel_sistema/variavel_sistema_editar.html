@@ -1,0 +1,134 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            GERENCIAMENTO DE PARÂMETROS
+          </div>
+          <h2 class="page-title">
+            Edição de Parâmetros do Sistema
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+      <div class="col-12">
+        <form class="card" action="{{ url_for('variaveis_sistema_editar', id=1) }}" method="POST">
+          <div class="card-body">
+            <div class="row row-cards">
+              <div class="card-header">
+                <h3 class="card-title">Informações Gerais</h3>
+              </div>
+
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">Nome do Projeto</label>
+                  <input type="text" name="nomeProjeto" value="{{ configs.nome_projeto }}"
+                    class="form-control {% if 'nomeProjeto' in campos_obrigatorios %} is-invalid {% endif %}">
+                </div>
+              </div>
+
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">CNPJ</label>
+                  <input type="text" name="cnpj" value="{{ configs.cnpj }}" data-mask="00.000.000/0000-00"
+                    data-mask-visible="true" autocomplete="off"
+                    class="form-control {% if 'cnpj' in campos_obrigatorios or 'cnpj' in campos_erros %} is-invalid {% endif %}">
+                </div>
+              </div>
+
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">Telefone</label>
+                  <input type="text" name="telefone" value="{{ configs.telefone }}" data-mask="(00) 0 0000-0000"
+                    data-mask-visible="true" autocomplete="off"
+                    class="form-control {% if 'telefone' in campos_obrigatorios %} is-invalid {% endif %}">
+                </div>
+              </div>
+
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">E-mail corporativo</label>
+                  <input type="email" name="email" value="{{ configs.email_corporativo }}"
+                    class="form-control {% if 'email' in campos_obrigatorios %} is-invalid {% endif %}">
+                </div>
+              </div>
+
+              <div class="col-sm-6 col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Chave Pública Google
+                    ReCAPTCHA</label>
+                  <input type="text" name="chavePubGoogleRecaptcha" value="{{ configs.chave_pub_google_recaptcha }}"
+                    class="form-control {% if 'chavePubGoogleRecaptcha' in campos_obrigatorios %} is-invalid {% endif %}">
+                </div>
+              </div>
+
+              <div class="col-sm-6 col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Chave Privada Google
+                    ReCAPTCHA</label>
+                  <input type="text" name="chavePrivGoogleRecaptcha" value="{{ configs.chave_priv_google_recaptcha }}"
+                    class="form-control {% if 'chavePrivGoogleRecaptcha' in campos_obrigatorios %} is-invalid {% endif %}">
+                </div>
+              </div>
+            </div>
+
+            <div class="row row-cards">
+              <div class="card-header">
+                <h3 class="card-title">Sistema <span class="text-red">(ATENÇÃO!)</span></h3>
+              </div>
+
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label">Modo Manutenção</label>
+                  <select type="text" name="modoManutencao"
+                    class="form-select {% if 'modo_manutencao' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <option value="1" {% if configs.modo_manutencao==1 %}selected {% endif %}>
+                      Ativado
+                    </option>
+                    <option value="0" {% if configs.modo_manutencao==0 %}selected {% endif %}>
+                      Desativado
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="card-footer text-end">
+            <a href="{{ url_for('principal') }}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">Alterar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+
+</div>
+
+
+{% endblock conteudo %}

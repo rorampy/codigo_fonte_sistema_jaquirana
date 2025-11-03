@@ -1,0 +1,681 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">Listagem</div>
+          <h2 class="page-title">NF Complementar</h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <button id="btn-emitir-massa" class="btn btn-outline-success">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-checks">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M7 12l5 5l10 -10" />
+                <path d="M2 12l5 5m5 -5l5 -5" />
+              </svg>
+              Emitir selecionadas
+            </button>
+            <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <div class="card" id="registrosOperacionais">
+          <div class="card-body p-0">
+            {% if registros %}
+            <div class="accordion" id="clientesAccordion">
+              {% for cliente_group in registros|groupby('cliente') %}
+              {% set registros_filtrados = cliente_group.list |
+              selectattr('registro.peso_liquido_ticket') |
+              selectattr('registro.peso_ton_nf') | list %}
+
+              {% if registros_filtrados|length > 0 %}
+              {# captura índice do cliente #}
+              {% set clienteId = loop.index %}
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-cliente-{{ clienteId }}">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapse-cliente-{{ clienteId }}"
+                    aria-expanded="{% if loop.first %}true{% else %}false{% endif %}">
+                    {{ cliente_group.grouper or '-' }}
+                  </button>
+                </h2>
+                <div id="collapse-cliente-{{ clienteId }}"
+                  class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                  data-bs-parent="#clientesAccordion">
+                  <div class="accordion-body p-0">
+
+                    {% for produto_group in
+                    registros_filtrados|groupby('produto') %}
+                    {# captura índice do produto e gera groupId único #}
+                    {% set produtoId = loop.index %}
+                    {% set groupId = clienteId ~ 'p' ~ produtoId %}
+
+                    <div class="produto-section border-bottom">
+                      <div class="produto-header p-3 bg-light">
+                        <div class="d-flex align-items-center">
+                          <span class="fw-bold text-azure">
+                            {{ produto_group.grouper or '-' }}
+                          </span>
+                          <span class="badge bg-azure-lt ms-2">
+                            {{ produto_group.list|length }}
+                          </span>
+                        </div>
+                        <div class="d-flex align-items-center" style="justify-content: space-between;">
+                          <strong><span class="text-muted me-2">Total
+                              selecionado:</span><span id="totalDiff-{{ groupId }}" class="badge bg-danger-lt">0.00
+                              Ton.</span></strong>
+                        </div>
+                      </div>
+                      <div class="p-3">
+                        <div class="table-responsive" id="table-group-{{ groupId }}">
+                          <table class="table table-vcenter table-hover table-striped">
+                            <thead class="bg-light">
+                              <tr>
+                                <th class="text-center">
+                                  <input type="checkbox" class="form-check-input select-all-cliente"
+                                    data-cliente="{{ cliente_group.grouper }}" />
+                                </th>
+                                <th class="text-center text-primary">Data
+                                  Emissão NF</th>
+                                <th class="text-center">Cliente</th>
+                                <th class="text-center">Número NF</th>
+                                <th class="text-center">Peso NF</th>
+                                <th class="text-center">Peso Ticket</th>
+                                <th class="text-center">Diferença</th>
+                                <th class="text-center">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for item in produto_group.list %}
+                              {% set peso_nf_final =
+                              item.registro.peso_nf_ton_com_excecao if
+                              item.registro.peso_ton_nf_excesso else
+                              item.registro.peso_ton_nf %}
+                              {% set dif = (peso_nf_final -
+                              item.registro.peso_liquido_ticket) | round(2) %}
+                              <tr>
+                                <td class="text-center">
+                                  <input type="checkbox" class="form-check-input registro-checkbox"
+                                    data-id="{{ item.registro.id }}" data-cliente="{{ cliente_group.grouper }}"
+                                    data-group="{{ groupId }}" data-diff="{{ dif }}" data-peso="{{ dif | round(2) }}" {%
+                                    if item.registro.status_emissao_nf_complementar_id==1 %}disabled{% endif %} />
+                                </td>
+                                <td class="text-center">
+                                  {{ item.registro.destinatario_data_emissao
+                                  | formatar_data_para_brl
+                                  if item.registro.destinatario_data_emissao
+                                  else '-' }}
+                                </td>
+                                <td class="text-center">
+                                  {{
+                                  item.registro.solicitacao.cliente.identificacao
+                                  or '-' }}
+                                </td>
+                                <td class="text-center">
+                                  <span class="badge bg-warning-lt">
+                                    {% if item.registro.estorno_nf%}
+                                    {{ item.registro.numero_nota_fiscal_estorno
+                                    }} *
+                                    {% elif item.registro.numero_nota_fiscal %}
+                                    {{ item.registro.numero_nota_fiscal }}
+                                    {%else%}
+                                    -
+                                    {% endif %}
+                                  </span>
+                                </td>
+                                <td class="text-center">
+                                  {% if item.registro.peso_ton_nf_excesso %}
+                                  <span class="badge bg-orange-lt">{{
+                                    peso_nf_final }} Ton. (c/ excesso)</span>
+                                  {% else %}
+                                  <span class="badge bg-purple-lt">{{
+                                    peso_nf_final }} Ton.</span>
+                                  {% endif %}
+                                </td>
+                                <td class="text-center">
+                                  <span class="badge bg-cyan-lt">{{
+                                    item.registro.peso_liquido_ticket }}
+                                    Ton.</span>
+                                </td>
+                                <td class="text-center">
+                                  {% if dif < 0 %} <span class="badge bg-danger-lt">{{ dif }}
+                                    Ton.</span>
+                                    {% else %}
+                                    <span class="badge bg-green-lt">{{ dif }}
+                                      Ton.</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                  {% if item.registro.status_emissao_nf_complementar_id == 1 %}
+                                  <span class="badge bg-success-lt">Emitida</span>
+                                  {% else %}
+                                  <span class="badge bg-secondary-lt">Não Emitida</span>
+                                  {% endif %}
+                                </td>
+                              </tr>
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                    {% endfor %}
+
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="area-info-card" style="
+                    padding: 30px;
+                    border-radius: 10px;
+                    text-align: center;
+                    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+                    background-color: white;
+                  ">
+              <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">
+                ✅
+              </div>
+              <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">
+                Nenhum dado disponível
+              </h2>
+              <p style="color: #777;">
+                No momento não há registros para exibir.
+              </p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
+      <form action="{{ url_for('listagem_nf_complementar') }}" method="GET">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar NFs Complementares</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="dataInicio" class="form-control"
+                  value="{{ dados_corretos.get('dataInicio', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="dataFim" class="form-control" value="{{ dados_corretos.get('dataFim', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Número NF</label>
+                <input type="text" name="numeroNfComplementar" class="form-control"
+                  value="{{ dados_corretos.get('numeroNfComplementar', '') }}">
+              </div>
+              <div class="col-md-8 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="clienteNfComplementar" class="form-control"
+                  value="{{ dados_corretos.get('clienteNfComplementar', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Status NF Complementar</label>
+                <select name="statusNfComplementarEmitida" class="form-select">
+                  <option value="">Selecione...</option>
+                  {% for s in statusNfComplementar %}
+                  <option value="{{ s.id }}" {% if dados_corretos.get('statusNfComplementarEmitida')==s.id|string
+                    %}selected{% endif %}>
+                    {{ s.status }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a href="{{ url_for('listagem_nf_complementar') }}" class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para upload de arquivo PDF -->
+  <div class="modal modal-blur fade" id="modal-upload-pdf" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <form method="POST" action="{{ url_for('emitir_nfs_complementares_em_massa') }}" enctype="multipart/form-data"
+        id="form-emitir-nfs">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              NF Complementar
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Campo para IDs dos registros selecionados -->
+            <div id="registros-selecionados-container"></div>
+
+            <div class="row">
+              <div class="col-12 col-md-6 mb-3">
+                <label class="form-label">Cliente</label>
+                <select class="form-select" name="cliente_id" id="cliente_id" required>
+                  <option value="">Selecione...</option>
+                  {% for c in clientes %}
+                  <option value="{{ c.id }}">{{ c.identificacao }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-12 col-md-6 mb-3">
+                <label class="form-label" for="conta_bancaria_id"><strong>ContaBancária:</strong></label>
+                <select id="conta_bancaria_id" name="conta_bancaria_id" class="form-select">
+                  {% for conta in contas_bancarias %}
+                  <option value="{{ conta.id }}" {% if (conta_selecionada_id is none and conta.id==1) or
+                    (conta_selecionada_id is not none and conta.id==conta_selecionada_id) %} selected {% endif %}>
+                    {{ conta.identificacao }}
+                  </option>
+
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="col-12 mb-3">
+              <div class="alert alert-info">
+                <h5 class="alert-title">Resumo dos Registros Selecionados</h5>
+                <div class="text-secondary">
+                  <strong>Quantidade:</strong> <span id="total-registros-selecionados">0</span> registro(s)<br>
+                  <strong>Diferença Total:</strong> <span id="peso-total-selecionado">0,00</span> toneladas
+                  <input type="hidden" name="peso_total_selecionado" id="peso_total_hidden">
+                </div>
+              </div>
+            </div>
+            <div class="col-12 mb-3">
+              <label class="form-label">
+                Anexar Nota Fiscal Complementar <span class="text-danger">*</span>
+                <small class="text-muted d-block">Selecione o arquivo PDF da NF complementar</small>
+              </label>
+              <input type="file" id="input-arquivo-pdf" name="arquivo_nf_complementar" class="form-control"
+                accept=".pdf" required>
+              <div class="invalid-feedback" id="erro-arquivo-pdf">
+                Por favor, selecione um arquivo PDF válido.
+              </div>
+              <div class="form-text">
+                <strong>Importante:</strong> O sistema irá extrair automaticamente todos os dados da NF (número, peso,
+                valor, etc.) do arquivo PDF.
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-x me-1">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M18 6l-12 12" />
+                <path d="M6 6l12 12" />
+              </svg>
+              Cancelar
+            </button>
+            <button type="submit" id="btn-confirmar-emissao" class="btn btn-success">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-check me-1">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M5 12l5 5l10 -10" />
+              </svg>
+              Criar NF Complementar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('select.form-select').forEach(function (select) {
+      new TomSelect(select, {
+        create: false,
+        allowEmptyOption: false,
+        sortField: {
+          field: "text",
+          direction: "asc"
+        }
+      });
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+
+      const urls = {
+        emitirEmMassa: "{{ url_for('emitir_nfs_complementares_em_massa') }}"
+      };
+
+      const svgSuccess = `<svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-green icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 12l2 2l4 -4"/></svg>`;
+      const svgWarning = `<svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-yellow icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4"/><path d="M12 16h.01"/><path d="M5 19h14a2 2 0 0 0 1.84-2.75l-7.1-12.25a2 2 0 0 0-3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>`;
+      const svgError = `<svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-red icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v2m0 4v.01"/><path d="M5 19h14a2 2 0 0 0 1.84-2.75l-7.1-12.25a2 2 0 0 0-3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>`;
+      const spinner = `<span class="spinner-border spinner-border-sm" role="status"></span>`;
+
+      // === Funções de Modal (igual ao seu código) ===
+      function criarModal(status, icone, titulo, msg) {
+        const id = 'mod-' + Date.now();
+        const html = `
+          <div class="modal modal-blur fade" id="${id}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm modal-dialog-centered">
+              <div class="modal-content">
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-status bg-${status}"></div>
+                <div class="modal-body text-center py-4">
+                  ${icone}
+                  <h3>${titulo}</h3>
+                  <div class="text-secondary">${msg}</div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+
+        const el = document.getElementById(id);
+        const modal = new bootstrap.Modal(el);
+
+        el.addEventListener('hidden.bs.modal', () => {
+          modal.dispose();
+          el.remove();
+          document.body.classList.remove('modal-open');
+          document.querySelectorAll('.modal-backdrop')
+            .forEach(b => b.remove());
+        });
+
+        modal.show();
+        return modal;
+      }
+
+      function mostrarMensagem(tipo, msg) {
+        if (tipo === 'success') criarModal('success', svgSuccess, 'Sucesso', msg);
+        else if (tipo === 'warning') criarModal('warning', svgWarning, 'Atenção', msg);
+        else criarModal('danger', svgError, 'Erro', msg);
+      }
+
+      function pedirConfirmacao(titulo, texto) {
+        return new Promise(res => {
+          const id = 'cf-' + Date.now();
+          const html = `
+            <div class="modal modal-blur fade" id="${id}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-sm modal-dialog-centered">
+                <div class="modal-content">
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  <div class="modal-status bg-warning"></div>
+                  <div class="modal-body text-center py-4">
+                    ${svgWarning}
+                    <h3>${titulo}</h3>
+                    <div class="text-secondary mb-3">${texto}</div>
+                      <div class="modal-footer">
+                        <div class="w-100">
+                          <div class="row">
+                            <div class="col">
+                              <button type="button" class="btn btn-3 w-100" data-bs-dismiss="modal">Cancelar</button>
+                            </div>
+                            <div class="col">
+                              <button id="btn-ok" class="btn btn-warning ms-2">Confirmar</button>
+                            </div>
+                          </div>
+                        </div>
+                        </div>
+                     </div>
+                </div>
+              </div>
+            </div>`;
+          document.body.insertAdjacentHTML('beforeend', html);
+          const el = document.getElementById(id), m = new bootstrap.Modal(el);
+          m.show();
+          el.querySelector('#btn-ok').onclick = () => { res(true); m.hide(); };
+          el.addEventListener('hidden.bs.modal', () => { res(false); el.remove(); });
+        });
+      }
+
+      function postJSON(url, data) {
+        return fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify(data)
+        })
+          .then(r => r.json())
+          .catch(() => null);
+      }
+
+      // === Soma de diffs por grupo ===
+      function updateGroupTotal(group) {
+        const total = Array.from(
+          document.querySelectorAll(`.registro-checkbox[data-group="${group}"]:checked`)
+        ).reduce((sum, cb) => sum + (parseFloat(cb.dataset.diff) || 0), 0);
+        const totalElement = document.getElementById(`totalDiff-${group}`);
+        if (totalElement) {
+          totalElement.textContent = `${total.toFixed(2)} Ton.`;
+        }
+      }
+
+      // === Atualizar todos os totais ===
+      function updateAllTotals() {
+        // Buscar todos os elementos de total e atualizar
+        document.querySelectorAll('[id^="totalDiff-"]').forEach(element => {
+          const groupId = element.id.replace('totalDiff-', '');
+          updateGroupTotal(groupId);
+        });
+      }
+
+      // === Delegação de eventos para checkboxes e select-all ===
+      document.body.addEventListener('change', e => {
+        if (e.target.matches('.registro-checkbox')) {
+          const cliente = e.target.dataset.cliente;
+          const group = e.target.dataset.group;
+
+          // Se este checkbox foi marcado, desmarcar todos de outros clientes
+          if (e.target.checked) {
+            document.querySelectorAll('.registro-checkbox').forEach(cb => {
+              if (cb.dataset.cliente !== cliente && cb.checked) {
+                cb.checked = false;
+              }
+            });
+
+            // Desmarcar select-all de outros clientes
+            document.querySelectorAll('.select-all-cliente').forEach(cb => {
+              if (cb.dataset.cliente !== cliente) {
+                cb.checked = false;
+              }
+            });
+          }
+
+          // Atualizar total do grupo atual
+          if (group) {
+            updateGroupTotal(group);
+          }
+          updateAllTotals();
+
+          // Atualizar estado do select-all do cliente atual
+          const clienteCheckboxes = document.querySelectorAll(`.registro-checkbox[data-cliente="${cliente}"]:not(:disabled)`);
+          const clienteCheckedBoxes = document.querySelectorAll(`.registro-checkbox[data-cliente="${cliente}"]:checked`);
+          const selectAllCliente = document.querySelector(`.select-all-cliente[data-cliente="${cliente}"]`);
+
+          if (selectAllCliente) {
+            selectAllCliente.checked = clienteCheckboxes.length > 0 && clienteCheckboxes.length === clienteCheckedBoxes.length;
+          }
+        }
+
+        if (e.target.matches('.select-all-cliente')) {
+          const cliente = e.target.dataset.cliente;
+
+          // Se marcando select-all, desmarcar todos de outros clientes primeiro
+          if (e.target.checked) {
+            document.querySelectorAll('.registro-checkbox').forEach(cb => {
+              if (cb.dataset.cliente !== cliente) {
+                cb.checked = false;
+              }
+            });
+
+            document.querySelectorAll('.select-all-cliente').forEach(cb => {
+              if (cb.dataset.cliente !== cliente) {
+                cb.checked = false;
+              }
+            });
+          }
+
+          // Marcar/desmarcar todos do cliente atual
+          document.querySelectorAll(`.registro-checkbox[data-cliente="${cliente}"]`)
+            .forEach(cb => { if (!cb.disabled) cb.checked = e.target.checked; });
+
+          updateAllTotals();
+        }
+      });
+
+      // === Emissão em massa ===
+      document.getElementById('btn-emitir-massa').addEventListener('click', async function () {
+
+        const sel = Array.from(document.querySelectorAll('.registro-checkbox:checked'));
+        if (!sel.length) {
+          mostrarMensagem('warning', 'Selecione ao menos uma NF para emitir.');
+          return;
+        }
+
+        // Verificar se todas as NFs selecionadas são do mesmo cliente
+        const clientes = [...new Set(sel.map(cb => cb.dataset.cliente))];
+        if (clientes.length > 1) {
+          mostrarMensagem('warning', 'Todas as NFs selecionadas devem ser do mesmo cliente.');
+          return;
+        }
+
+        // Preencher container com inputs hidden dos IDs selecionados
+        const container = document.getElementById('registros-selecionados-container');
+        container.innerHTML = ''; // Limpar inputs anteriores
+
+        let pesoTotalSelecionado = 0;
+
+        sel.forEach(checkbox => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'ids_registros';
+          input.value = checkbox.dataset.id;
+          container.appendChild(input);
+
+          // Somar peso dos registros selecionados (sempre positivo)
+          const peso = Math.abs(parseFloat(checkbox.dataset.peso || 0));
+          pesoTotalSelecionado += peso;
+        });
+
+        // Atualizar campos do resumo
+        document.getElementById('total-registros-selecionados').textContent = sel.length;
+        document.getElementById('peso-total-selecionado').textContent = pesoTotalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('peso_total_hidden').value = pesoTotalSelecionado;
+
+        // Limpar campos do modal
+        document.getElementById('cliente_id').value = '';
+        document.getElementById('conta_bancaria_id').value = '';
+        document.getElementById('input-arquivo-pdf').value = '';
+        document.getElementById('input-arquivo-pdf').classList.remove('is-invalid');
+
+        // Mostrar modal de upload
+        const modalUpload = new bootstrap.Modal(document.getElementById('modal-upload-pdf'));
+        modalUpload.show();
+      });
+
+      // === Validação do formulário antes de enviar ===
+      document.getElementById('form-emitir-nfs').addEventListener('submit', function (e) {
+        const clienteSelect = document.getElementById('cliente_id');
+        const arquivoInput = document.getElementById('input-arquivo-pdf');
+        let valid = true;
+
+        // Validar cliente
+        if (!clienteSelect.value) {
+          valid = false;
+          clienteSelect.classList.add('is-invalid');
+          mostrarMensagem('warning', 'Por favor, selecione um cliente.');
+        } else {
+          clienteSelect.classList.remove('is-invalid');
+        }
+
+        // Validar arquivo
+        if (!arquivoInput.files[0]) {
+          valid = false;
+          arquivoInput.classList.add('is-invalid');
+          document.getElementById('erro-arquivo-pdf').textContent = 'Por favor, selecione um arquivo PDF.';
+          mostrarMensagem('warning', 'Por favor, selecione o arquivo da NF Complementar.');
+        } else if (arquivoInput.files[0].type !== 'application/pdf') {
+          valid = false;
+          arquivoInput.classList.add('is-invalid');
+          document.getElementById('erro-arquivo-pdf').textContent = 'Por favor, selecione apenas arquivos PDF.';
+          mostrarMensagem('warning', 'O arquivo deve ser um PDF válido.');
+        } else {
+          const tamanhoMaximo = 10 * 1024 * 1024; // 10MB
+          if (arquivoInput.files[0].size > tamanhoMaximo) {
+            valid = false;
+            arquivoInput.classList.add('is-invalid');
+            document.getElementById('erro-arquivo-pdf').textContent = 'O arquivo deve ter no máximo 10MB.';
+            mostrarMensagem('warning', 'O arquivo deve ter no máximo 10MB.');
+          } else {
+            arquivoInput.classList.remove('is-invalid');
+          }
+        }
+
+        if (!valid) {
+          e.preventDefault(); // Impedir envio do formulário
+        } else {
+          // Se válido, desabilitar botão para evitar duplo envio
+          const btnSubmit = document.getElementById('btn-confirmar-emissao');
+          btnSubmit.disabled = true;
+          btnSubmit.innerHTML = spinner + ' Processando...';
+        }
+      });
+
+      // === Limpar validação quando arquivo for selecionado ===
+      document.getElementById('input-arquivo-pdf').addEventListener('change', function () {
+        if (this.files.length > 0) {
+          this.classList.remove('is-invalid');
+        }
+      });
+
+      // === Tooltips do Bootstrap ===
+      document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el =>
+        new bootstrap.Tooltip(el, { trigger: 'hover focus', html: true })
+      );
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

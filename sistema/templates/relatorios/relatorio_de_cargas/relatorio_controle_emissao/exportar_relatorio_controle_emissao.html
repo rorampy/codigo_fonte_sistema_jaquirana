@@ -1,0 +1,100 @@
+{% include 'relatorios/estrutura/style.html' %}
+<div class="page-wrapper">
+  <div class="page body">
+    <div class="container">
+      <div class="watermark">
+        <img src="{{logo_path}}"
+          alt="MBR Extração Watermark" />
+      </div>
+
+      <div class="content">
+        <div class="header no-break">
+          <img src="{{logo_path}}"
+            alt="Logo MBR Extração" />
+          <div class="system-info">
+            <div><strong>Sistema de Gestão MBR</strong></div>
+            <div><strong>Versão</strong> {{changelog.versao}}</div>
+            <div><strong>Data:</strong> {{changelog.data_lancamento}}</div>
+          </div>
+        </div>
+
+        <div class="relatorio-title">Relatório de Controle de Emissões</div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: center;"><strong>Data NF</strong></th>
+              <th
+                style="text-align: center;"><strong>Produto/Bitola</strong></th>
+              <th
+                style="text-align: center;"><strong>Transportadora</strong></th>
+              <th
+                style="text-align: center;"><strong>Placa/Motorista</strong></th>
+              <th style="text-align: center;"><strong>Cliente</strong></th>
+              <th style="text-align: center;"><strong>Peso NF
+                  (Ton.)</strong></th>
+              <th style="text-align: center;"><strong>Número NF</strong></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in registrosOperacionais %}
+            <tr>
+              <td style="text-align: center;">{{ r.destinatario_data_emissao |
+                formatar_data_para_brl}}</td>
+              <td style="text-align: center;">
+                {%if r.solicitacao.produto.nome %}
+                {{ r.solicitacao.produto.nome }}
+                {%else%}-{%endif%} ({%if r.solicitacao.bitola.bitola %}
+                {{ r.solicitacao.bitola.bitola }}
+                {%else%}-{%endif%})
+              </td>
+              <td style="text-align: center;">
+                {%if r.solicitacao.transportadora_exibicao %}
+                {{ r.solicitacao.transportadora_exibicao.identificacao }}
+                {%else%}-{%endif%}
+              </td>
+              <td style="text-align: center;">
+                {%if r.solicitacao.veiculo.placa_veiculo %}
+                {{ r.solicitacao.veiculo.placa_veiculo }}
+                {%else%}-{%endif%} |
+                {% set nome_split =
+                r.solicitacao.motorista.nome_completo.split() %}
+                {% if nome_split|length > 1 %}
+                {{ nome_split[0] }} {{ nome_split[1][0] }}.
+                {% elif nome_split|length >= 0 %} {{ nome_split[0] }}
+                {% endif %}
+              </td>
+              <td style="text-align: center;">
+                {%if r.solicitacao.cliente.identificacao %}
+                {{ r.solicitacao.cliente.identificacao | truncate(20, true,
+                '...') }}
+                {%else%}-{%endif%}
+              </td>
+              <td style="text-align: center;">
+                {%if r.peso_ton_nf %}
+                {{ r.peso_ton_nf }}
+                {%else%}-{%endif%}
+              </td>
+              <td style="text-align: center;">
+                {% if r.estorno_nf%}
+                {{ r.numero_nota_fiscal_estorno }} *
+                {% elif r.numero_nota_fiscal %}
+                {{ r.numero_nota_fiscal }}
+                {%else%}
+                -
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos
+            reservados</p>
+          <p><strong>Sistema de Gestão MBR</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,223 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            TICKETS
+          </div>
+          <h2 class="page-title">
+            Listagem
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <a href="#" class="btn" data-bs-toggle="modal"
+              data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter"><path
+                  stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" /></svg>
+              Filtrar </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <div  class="card">
+
+          <!-- Início Tabela -->
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: center;">Cliente</th>
+                  <th style="text-align: center;">Peso Líquido</th>
+                  <th style="text-align: center;">Motorista Solicitação</th>
+                  <th style="text-align: center;">Motorista Ticket</th>
+                  <th style="text-align: center;">Placa Solicitação</th>
+                  <th style="text-align: center;">Placa Ticket</th>
+                  <th style="text-align: center;">Divergencia Placa</th>
+                  <th style="text-align: center;">Divergencia Motorista</th>
+                  <th style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for t in tickets %}
+                <tr>
+                  <td class="text-secondary"
+                    style="text-align: center;">
+                    {{t.solicitacao.cliente.identificacao[:14]}}{%if
+                    t.solicitacao.cliente.identificacao | length >
+                    14%}...{%endif%}
+                  </td>
+                  <td class="text-secondary"
+                    style="text-align: center;">{{t.peso_liquido}}</td>
+                  <td class="text-secondary"
+                    style="text-align: center;">{{t.solicitacao.motorista.nome_completo[:15]}}
+                    {%if t.solicitacao.motorista.nome_completo | length >
+                    15%}...{%endif%}</td>
+                  <td class="text-secondary"
+                    style="text-align: center;">{{t.motorista[:15]}} {%if
+                    t.motorista | length > 15%}...{%endif%}</td>
+                  <td class="text-secondary"
+                    style="text-align: center;">{{t.solicitacao.veiculo.placa_veiculo}}</td>
+                  <td class="text-secondary"
+                    style="text-align: center;">{{t.placa}}</td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {% set placaSolicitacao =
+                    t.solicitacao.veiculo.placa_veiculo %}
+                    {% set placaTicket = t.placa %}
+
+                    {% if placaSolicitacao != placaTicket %}
+                    <span class="badge badge-outline text-red">Sim</span>
+                    {% else %}
+                    <span class="badge badge-outline text-green">Não</span>
+                    {% endif %}
+                  </td>
+
+                  <td class="text-secondary" style="text-align: center;">
+                    {% if t.solicitacao.motorista.nome_completo and t.motorista
+                    %}
+                    {% set primeiro_nome =
+                    t.solicitacao.motorista.nome_completo.split(' ')[0] %}
+                    {% set primeiro_nome_mot = t.motorista.split(' ')[0] %}
+                    {% if primeiro_nome_mot.upper() != primeiro_nome.upper() %}
+                    <span class="badge badge-outline text-danger">Sim</span>
+                    {% else %}
+                    <span class="badge badge-outline text-green">Não</span>
+                    {% endif %}
+                    {% else %}
+                    -
+                    {% endif %}
+                  </td>
+
+                  <td>
+                    <div class="btn-list flex-nowrap"
+                      style="justify-content: center;">
+                      <a href="#" class="btn btn-grey btn-visualizar-arquivo"
+                        data-url="{{ url_for('diretorio_uploads_tickets', filename=t.arquivo_ticket.caminho.split('/')[-1]) }}"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modal-visualizar-arquivo">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                          height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-receipt">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path
+                            d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" />
+                        </svg>
+                        Ticket
+                      </a>
+                      <a
+                        href="{{url_for('editar_ticket', id=t.id)}}"
+                        class="btn">
+                        Editar
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1"
+    role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <form action="{{ url_for('listar_tickets') }}" method="POST">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar Tickets lançados</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"
+              aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="nomeCliente"
+                  class="form-control"
+                  value="{{ dados_corretos.get('nomeCliente', '') }}"
+                  placeholder="Nome do cliente">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Motorista NF</label>
+                <input type="text" name="motoristaNf"
+                  class="form-control"
+                  value="{{ dados_corretos.get('motoristaNf', '') }}"
+                  placeholder="Nome do motorista da NF">
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Motorista Solicitacao</label>
+                <input type="text" name="motoristaSolicitacao"
+                  class="form-control"
+                  value="{{ dados_corretos.get('motoristaSolicitacao', '') }}"
+                  placeholder="Nome do motorista da NF">
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Placa Ticket</label>
+                <input type="text" name="placaTicket"
+                  class="form-control"
+                  value="{{ dados_corretos.get('placaTicket', '') }}"
+                  placeholder="Ex: ABC1D23">
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Placa Solicitação</label>
+                <input type="text" name="placaSolicitacao"
+                  class="form-control"
+                  value="{{ dados_corretos.get('placaSolicitacao', '') }}"
+                  placeholder="Ex: ABC1D23">
+              </div>
+
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a href="{{ url_for('listar_tickets') }}"
+              class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-2">
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

@@ -1,0 +1,129 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            GERENCIAMENTO DE USUÁRIOS
+          </div>
+          <h2 class="page-title">
+            Edição de Usuário
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="{{ url_for('usuario_editar', id=usuario.id) }}" method="POST">
+          <div class="card-body">
+            <div class="row row-cards">
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Nome</label>
+                  <input type="text" name="nomeUsuario" value="{{ usuario.nome }}" 
+                    class="form-control {% if 'nome' in campos_obrigatorios %}is-invalid{% endif %}"
+                  >
+                  <div class="invalid-feedback">
+                  {% if 'nome' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['nome'] }}
+                  {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Sobrenome</label>
+                  <input type="text" name="sobrenomeUsuario" value="{{ usuario.sobrenome }}" 
+                    class="form-control {% if 'sobrenome' in campos_obrigatorios %}is-invalid{% endif %}"
+                    >
+                  <div class="invalid-feedback">
+                    {% if 'sobrenome' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['sobrenome'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">CPF</label>
+                  <input type="text" name="cpfUsuario" value="{{ usuario.cpf }}" disabled
+                    data-mask="000.000.000-00" placeholder="xxx.xxx.xxx-xx" data-mask-visible="true" autocomplete="off" 
+                    class="form-control"
+                  >
+                </div>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Telefone</label>
+                  <input type="text" name="telefoneUsuario" value="{{ usuario.telefone }}"
+                    data-mask="(00) 0 0000-0000" placeholder="(xx) x xxxx-xxxx" data-mask-visible="true" autocomplete="off"
+                    class="form-control {% if 'telefone' in campos_obrigatorios %}is-invalid{% endif %}"
+                  >
+                  <div class="invalid-feedback">
+                    {% if 'telefone' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['telefone'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">E-mail</label>
+                  <input type="text" name="emailUsuario" value="{{ usuario.email }}" placeholder="usuario@provedor"
+                    class="form-control {% if 'email' in campos_obrigatorios or 'email' in campos_erros %}is-invalid{% endif %}"
+                  >
+                  <div class="invalid-feedback">
+                    {% if 'email' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['email'] }}
+                    {% elif 'email' in campos_erros %}
+                      {{ campos_erros['email'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Cargo</label>
+                  <select type="text" name="cargoUsuario" id="cargoUsuario" 
+                    class="form-select {% if 'cargo' in campos_obrigatorios %}is-invalid{% endif %}"
+                  >
+                    {% for role in roles %}
+                      {% if role.id != 7 %}
+                        {% if usuario.role_id == role.id %}
+                          <option value="{{ role.id }}" selected>{{ role.cargo }}</option>
+                        {% else %}
+                          <option value="{{ role.id }}">{{ role.cargo }}</option>
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="card-footer text-end">
+            <button type="submit" class="btn btn-primary">Alterar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% include 'estrutura/footer.html' %}
+  
+</div>
+
+{% endblock conteudo %}

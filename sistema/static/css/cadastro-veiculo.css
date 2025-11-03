@@ -1,0 +1,4 @@
+.btn-primary svg,
+.btn-danger svg {
+    margin: 0 !important;
+}

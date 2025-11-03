@@ -1,0 +1,218 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            CONTAS BANCÁRIAS
+          </div>
+          <h2 class="page-title">
+            Listagem
+          </h2>
+        </div>
+
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('cadastrar_conta_bancaria') }}"
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon"
+                width="24" height="24" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor"
+                fill="none" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none" />
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Cadastrar Conta Bancária
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <div class="card">
+
+          {% if conta_bancaria %}
+          <!-- Início Tabela -->
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: left;">Identificação</th>
+                  <th style="text-align: center;">Banco</th>
+                  <th style="text-align: center;">Agência</th>
+                  <th style="text-align: center;">Conta</th>
+                  <th style="text-align: center;">Conta Principal</th>
+                  <th class="w-1" style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for cb in conta_bancaria %}
+                <tr>
+                  <td class="text-secondary">
+                    <div class="d-flex align-items-center">
+                      <div>
+                        <div class="fw-bold">{{ cb.identificacao | truncate(20, true, '...') }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ cb.nome_banco }}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ cb.agencia }}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ cb.conta }}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {% if cb.conta_principal %}
+                    <span class="badge badge-outline text-green">Sim</span>
+                    {% else %}
+                    <span class="badge badge-outline text-secondary">Não</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-list flex-nowrap">
+                      <!-- Botão: Editar conta -->
+                      <a href="{{url_for('editar_conta_bancaria', id=cb.id)}}"
+                        class="btn btn-icon btn-outline-warning"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        title="Editar conta bancária">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                          class="icon icon-tabler icon-tabler-pencil"
+                          width="24" height="24" viewBox="0 0 24 24"
+                          stroke-width="2" stroke="currentColor"
+                          fill="none" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path
+                            d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                          <path d="M13.5 6.5l4 4" />
+                        </svg>
+                      </a>
+
+                      <!-- Botão: Excluir conta -->
+                      <a href="#"
+                        class="btn btn-icon btn-outline-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modal-excluir-{{ cb.id }}"
+                        title="Excluir conta bancária">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                          class="icon icon-tabler icon-tabler-trash"
+                          width="24" height="24" viewBox="0 0 24 24"
+                          stroke-width="2" stroke="currentColor"
+                          fill="none" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M4 7l16 0" />
+                          <path d="M10 11l0 6" />
+                          <path d="M14 11l0 6" />
+                          <path
+                            d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                          <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                        </svg>
+                      </a>
+
+                      <!-- Modal: Confirmar exclusão -->
+                      <div class="modal modal-blur fade"
+                        id="modal-excluir-{{cb.id}}"
+                        tabindex="-1" role="dialog"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-md modal-dialog-centered"
+                          role="document">
+                          <div class="modal-content">
+                            <button type="button" class="btn-close"
+                              data-bs-dismiss="modal"
+                              aria-label="Close"></button>
+                            <div class="modal-status bg-danger"></div>
+                            <div class="modal-body text-center py-4">
+                              <svg xmlns="http://www.w3.org/2000/svg"
+                                width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="icon mb-2 text-danger icon-lg">
+                                <path d="M12 9v4" />
+                                <path
+                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                                <path d="M12 16h.01" />
+                              </svg>
+                              <h3>Confirmar exclusão</h3>
+                              <div class="text-secondary">
+                                Você realmente deseja excluir a conta <strong>{{
+                                  cb.identificacao }}</strong>?
+                                <br>
+                                <small class="text-muted">{{ cb.nome_banco }} -
+                                  Ag: {{ cb.agencia }} - Conta: {{ cb.conta
+                                  }}</small>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <div class="w-100">
+                                <div class="row">
+                                  <div class="col">
+                                    <a href="#" class="btn w-100"
+                                      data-bs-dismiss="modal">
+                                      Cancelar
+                                    </a>
+                                  </div>
+                                  <div class="col">
+                                    <a
+                                      href="{{url_for('excluir_conta_bancaria', id=cb.id)}}"
+                                      class="btn btn-danger w-100">
+                                      Confirmar
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="area-info-extrato text-center p-4 shadow-sm"
+            style="border-radius: 10px; background-color: white;">
+            <div
+              style="font-size: 70px; color: #fc7801; margin-bottom: 15px;">🏦</div>
+            <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">
+              Ainda não há contas bancárias cadastradas.
+            </h2>
+            <p style="color: #777;">
+              No momento não há registros de contas bancárias. Quando houver
+              novos dados,
+              eles aparecerão automaticamente aqui.
+            </p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

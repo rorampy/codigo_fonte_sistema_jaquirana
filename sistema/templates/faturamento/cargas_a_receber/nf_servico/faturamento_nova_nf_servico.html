@@ -1,0 +1,205 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+    <div class="page-header d-print-none">
+        <div class="container-xl">
+            <div class="row g-2 align-items-center">
+                <div class="col">
+                    <div class="page-pretitle">NF SERVIÇO</div>
+                    <h2 class="page-title">Cadastrar</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-body">
+        <div class="container-xl">
+            {% include 'estrutura/mensagens_flash.html' %}
+            <div class="col-12">
+                <form class="card" action="{{ url_for('cadastrar_nf_servico') }}" method="POST" enctype="multipart/form-data">
+                    <div class="card-body">
+                        <h3 class="text-primary">Informações Básicas</h3>
+                        <div class="row">
+                            <!-- Cliente -->
+                            <div class="col-12 col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label required">Cliente</label>
+                                    <select name="cliente_id"
+                                        class="form-select {% if 'cliente_id' in campos_obrigatorios or 'cliente_id' in campos_erros %}is-invalid{% endif %}">
+                                        <option value selected>Selecione...</option>
+                                        {% for c in clientes %}
+                                        <option value="{{ c.id }}">
+                                            {{ c.identificacao }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        {{ campos_obrigatorios.get('cliente_id') or
+                                        campos_erros.get('cliente_id') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="text-primary">NF Serviço</h3>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="form-label required">Arquivo NF Serviço (PDF)</label>
+                                    <input type="file" name="arquivo_nf_servico"
+                                        value="{{ dados_corretos['arquivo_nf_servico'] }}"
+                                        class="form-control {% if 'arquivo_nf_servico' in campos_obrigatorios %}is-invalid{% endif %}"
+                                        accept=".pdf">
+                                    <div class="invalid-feedback">
+                                        {% if 'arquivo_nf_servico' in
+                                        campos_obrigatorios
+                                        %}
+                                        {{ campos_obrigatorios['arquivo_nf_servico'] }}
+                                        {% elif 'arquivo_nf_servico' in campos_erros %}
+                                        {{ campos_erros['arquivo_nf_servico'] }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer text-center text-md-end">
+                        <a href="{{ url_for('faturamento_nf_servico') }}" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left"
+                                width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                                fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M5 12l14 0"></path>
+                                <path d="M5 12l6 6"></path>
+                                <path d="M5 12l6 -6"></path>
+                            </svg>
+                            Voltar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24"
+                                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M12 5l0 14"></path>
+                                <path d="M5 12l14 0"></path>
+                            </svg>
+                            Cadastrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document" style="display: grid;">
+            <form action="{{ url_for('faturamento_nf_complementar') }}" method="GET">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Filtrar NFs Complementares</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- Linha 1: Datas -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data Início</label>
+                                <input type="date" name="dataInicio" class="form-control"
+                                    value="{{ dados_corretos.get('dataInicio', '') }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data Fim</label>
+                                <input type="date" name="dataFim" class="form-control"
+                                    value="{{ dados_corretos.get('dataFim', '') }}">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Número NF Complementar</label>
+                                <input type="text" name="numeroNF" class="form-control"
+                                    value="{{ dados_corretos.get('numeroNF', '') }}"
+                                    placeholder="Número da nota fiscal complementar">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Destinatário</label>
+                                <input type="text" name="destinatario" class="form-control"
+                                    value="{{ dados_corretos.get('destinatario', '') }}"
+                                    placeholder="Nome do destinatário">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Cliente</label>
+                                <select class="form-select" name="clienteCarga" id="clienteCarga">
+                                    <option value>Selecione...</option>
+                                    {% for c in clientes %}
+                                    <option value="{{ c.identificacao }}" {% if
+                                        dados_corretos.get('clienteCarga')==c.identificacao %}selected{% endif %}>
+                                        {{ c.identificacao }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Transportador</label>
+                                <input type="text" name="transportador" class="form-control"
+                                    value="{{ dados_corretos.get('transportador', '') }}"
+                                    placeholder="Nome do transportador">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Situação Financeira</label>
+                                <select class="form-select" name="situacaoFinanceira" id="situacaoFinanceira">
+                                    <option value="">Todas as situações</option>
+                                    <option value="2" {% if dados_corretos.get('situacaoFinanceira')=='2' %}selected{%
+                                        endif %}>
+                                        Pendente de faturamento
+                                    </option>
+                                    <option value="5" {% if dados_corretos.get('situacaoFinanceira')=='5' %}selected{%
+                                        endif %}>
+                                        Faturado
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <a href="{{ url_for('faturamento_nf_complementar') }}"
+                            class="btn btn-link link-secondary btn-3">
+                            Limpar Filtros
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-tabler icon-tabler-filter">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path
+                                    d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+                            </svg>
+                            Filtrar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Inicializa Tom Select nos outros selects
+        document.querySelectorAll('select.form-select').forEach(function (select) {
+            new TomSelect(select, {
+                create: false,
+                allowEmptyOption: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                }
+            });
+        });
+    </script>
+
+    {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

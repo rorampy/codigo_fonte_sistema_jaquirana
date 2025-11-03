@@ -1,0 +1,316 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            EXTRATOR
+          </div>
+          <h2 class="page-title">
+            Cadastrar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="{{ url_for('cadastrar_extrator') }}"
+          method="POST">
+          <div class="card-body">
+            <h3 class="text-primary mb-4">Informações Básicas</h3>
+            <div class="row">
+              <div class="col-sm-6 col-md-6">
+                <div class="mb-3">
+                  <div class="form-label">Tipo de
+                    Cadastro</div>
+                  <div>
+                    <label
+                      class="form-check form-check-inline">
+                      <input class="form-check-input"
+                        type="radio" name="tipoCadastro"
+                        value="cpf" {% if
+                        dados_corretos['tipoCadastro']=='cpf'
+                        or not
+                        dados_corretos['tipoCadastro']
+                        %}checked{% endif
+                        %}>
+                      <span class="form-check-label">Por
+                        CPF</span>
+                    </label>
+                    <label
+                      class="form-check form-check-inline">
+                      <input class="form-check-input"
+                        type="radio" name="tipoCadastro"
+                        value="cnpj" {% if
+                        dados_corretos['tipoCadastro']=='cnpj'
+                        %}checked{% endif %}>
+                      <span class="form-check-label">Por
+                        CNPJ</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-8 col-md-8 grupoCPF">
+                <div class="mb-3">
+                  <label class="form-label required">Nome Completo</label>
+                  <input type="text" name="nomeExtrator"
+                    value="{{ dados_corretos['nomeExtrator'] }}"
+                    class="form-control {% if 'nomeExtrator' in campos_obrigatorios or 'nomeExtrator' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'nomeExtrator' in
+                    campos_obrigatorios %}
+                    {{ campos_obrigatorios['nomeExtrator'] }}
+                    {% elif 'nomeExtrator' in campos_erros %}
+                    {{ campos_erros['nomeExtrator'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-8 col-md-8 grupoCNPJ">
+                <div class="mb-3">
+                  <label class="form-label required">Razão
+                    Social</label>
+                  <input type="text" name="razaoSocial"
+                    value="{{ dados_corretos['razaoSocial'] }}"
+                    class="form-control {% if 'razaoSocial' in campos_obrigatorios or 'razaoSocial' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'razaoSocial' in
+                    campos_obrigatorios %}
+                    {{ campos_obrigatorios['razaoSocial'] }}
+                    {% elif 'razaoSocial' in campos_erros %}
+                    {{ campos_erros['razaoSocial'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-2 col-md-2 grupoCNPJ">
+                <div class="mb-3">
+                  <label class="form-label required">CNPJ</label>
+                  <input type="text" name="cnpj"
+                    value="{{ dados_corretos['cnpj'] }}"
+                    data-mask="00.000.000/0000-00"
+                    placeholder="xx.xxx.xxx/xxxx-xx"
+                    data-mask-visible="true"
+                    autocomplete="off"
+                    class="form-control {% if 'cnpj' in campos_obrigatorios or 'cnpj' in campos_erros %}
+                          is-invalid
+                        {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'cnpj' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['cnpj'] }}
+                    {% elif 'cnpj' in campos_erros %}
+                    {{ campos_erros['cnpj'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-2 col-md-2 grupoCPF">
+                <div class="mb-3">
+                  <label class="form-label required">CPF</label>
+                  <input type="text" name="cpfExtrator"
+                    value="{{ dados_corretos['cpfExtrator'] }}"
+                    data-mask="000.000.000-00"
+                    placeholder="xxx.xxx.xxx-xx"
+                    data-mask-visible="true"
+                    autocomplete="off"
+                    class="form-control {% if 'cpfExtrator' in campos_obrigatorios or 'cpfExtrator' in campos_erros %}
+                          is-invalid
+                        {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'cpfExtrator' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['cpfExtrator'] }}
+                    {% elif 'cpfExtrator' in campos_erros %}
+                    {{ campos_erros['cpfExtrator'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Telefone</label>
+                  <input type="text" name="telefone"
+                    value="{{ dados_corretos['telefone'] }}"
+                    data-mask="(00) 0 0000-0000"
+                    placeholder="(xx) x xxxx-xxxx"
+                    data-mask-visible="true"
+                    autocomplete="off"
+                    class="form-control {% if 'telefone' in campos_obrigatorios %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'telefone' in campos_obrigatorios
+                    %}
+                    {{ campos_obrigatorios['telefone'] }}
+                    {% elif 'telefone' in campos_erros %}
+                    {{ campos_erros['telefone'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <h3 class="text-primary mb-4">Informações Bancárias</h3>
+            <div class="row">
+              <div class="col-12 col-sm-12 col-md-3 mb-3">
+                <label class="form-label">Selecione um banco</label>
+                <select name="instituicao_financeira" class="form-select">
+                  <option value>Selecione</option>
+                  {% for banco in bancos %}
+                  <option value="{{ banco.id }}" {% if banco.id ==
+                    dados_corretos['instituicao_financeira'] %}selected{%
+                    endif %}>{{ banco.nome }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-12 col-sm-12 col-md-3 mb-3">
+                <label class="form-label">Agência</label>
+                <input type="text" name="agencia_bancaria" class="form-control"
+                  value="{{ dados_corretos['agencia_bancaria'] }}">
+                <div class="invalid-feedback">
+                  {% if 'agencia_bancaria' in campos_obrigatorios %}
+                  {{ campos_obrigatorios['agencia_bancaria'] }}
+                  {% elif 'agencia_bancaria' in campos_erros %}
+                  {{ campos_erros['agencia_bancaria'] }}
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-12 col-md-3 mb-3">
+                <label class="form-label">Conta</label>
+                <input type="text" name="conta_bancaria" class="form-control"
+                  value="{{ dados_corretos['conta_bancaria'] }}">
+                <div class="invalid-feedback">
+                  {% if 'conta_bancaria' in campos_obrigatorios %}
+                  {{ campos_obrigatorios['conta_bancaria'] }}
+                  {% elif 'conta_bancaria' in campos_erros %}
+                  {{ campos_erros['conta_bancaria'] }}
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-12 col-md-3 mb-3">
+                <label class="form-label">Chave PIX</label>
+                <input type="text" name="chave_pix" class="form-control"
+                  value="{{ dados_corretos['chave_pix'] }}">
+                <div class="invalid-feedback">
+                  {% if 'chave_pix' in campos_obrigatorios %}
+                  {{ campos_obrigatorios['chave_pix'] }}
+                  {% elif 'chave_pix' in campos_erros %}
+                  {{ campos_erros['chave_pix'] }}
+                  {% endif %}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="{{ url_for('listar_extratores') }}"
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-arrow-left"
+                width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-plus"
+                width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('select.form-select').forEach(function (select) {
+        new TomSelect(select, {
+          create: false,
+          allowEmptyOption: false,
+          sortField: {
+            field: "text",
+            direction: "asc"
+          }
+        });
+      });
+
+
+      function limparCampos(grupoClasse) {
+        document.querySelectorAll('.' + grupoClasse + ' input[type="text"]').forEach(function (input) {
+          input.value = '';
+        });
+      }
+
+      function alternarCampos() {
+        var radioCPF = document.querySelector('input[name="tipoCadastro"][value="cpf"]');
+
+        var grupoCPF = document.querySelectorAll('.grupoCPF');
+        var grupoCNPJ = document.querySelectorAll('.grupoCNPJ');
+
+        if (radioCPF.checked) {
+          grupoCPF.forEach(el => el.style.display = 'block');
+          grupoCNPJ.forEach(el => el.style.display = 'none');
+          limparCampos('grupoCNPJ'); // Limpa campos do grupo CNPJ
+        } else {
+          grupoCPF.forEach(el => el.style.display = 'none');
+          grupoCNPJ.forEach(el => el.style.display = 'block');
+          limparCampos('grupoCPF'); // Limpa campos do grupo CPF
+        }
+      }
+
+      document.querySelectorAll('input[name="tipoCadastro"]').forEach(radio => {
+        radio.addEventListener('change', alternarCampos);
+      });
+
+      alternarCampos(); // Configura o estado inicial dos campos
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+
+</div>
+
+{% endblock conteudo %}

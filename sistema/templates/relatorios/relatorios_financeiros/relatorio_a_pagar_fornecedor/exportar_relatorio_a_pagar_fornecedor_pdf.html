@@ -1,0 +1,189 @@
+{% include 'relatorios/estrutura/style.html' %}
+<div class="page-wrapper">
+  <div class="page body">
+    <div class="container">
+      <div class="watermark">
+        <img src="{{logo_path}}" alt="MBR Extração Watermark" />
+      </div>
+
+      <div class="content">
+        <div class="header no-break">
+          <img src="{{logo_path}}" alt="Logo MBR Extração" />
+          <div class="system-info">
+            <div><strong>Sistema de Gestão MBR</strong></div>
+            <div><strong>Versão</strong> {{changelog.versao}}</div>
+            <div><strong>Data:</strong>
+              {{changelog.data_lancamento}}</div>
+          </div>
+        </div>
+
+        <div class="relatorio-title">Relatório Financeiro a pagar Fornecedor</div>
+
+        <!-- Filtros aplicados se existirem -->
+        {% if dados_corretos %}
+        <div class="dados-registro no-break">
+          <div class="filtros-title">Filtros Aplicados</div>
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Data Início:</strong></span>
+                {{ dados_corretos.get('dataInicio', '') |
+                converte_data_para_datetime_converte_data_brl if
+                dados_corretos.get('dataInicio') else '-' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Data Fim:</strong></span>
+                {{ dados_corretos.get('dataFim', '') |
+                converte_data_para_datetime_converte_data_brl if
+                dados_corretos.get('dataFim') else '-' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Placa:</strong></span>
+                {{ dados_corretos.get('placaCargaCliente', 'Todos') or 'Todos' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Motorista:</strong></span>
+                {{ dados_corretos.get('motoristaCargaCliente', 'Todos') or 'Todos' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Transportadora:</strong></span>
+                {{ dados_corretos.get('tranpostadoraCargaCliente', 'Todos') or 'Todos'
+                }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Fornecedor:</strong></span>
+                {{ dados_corretos.get('fornecedorCargaCliente', 'Todos') or 'Todos' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Cliente:</strong></span>
+                {{ dados_corretos.get('clienteCarga', 'Todos') or 'Todos' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Número NF:</strong></span>
+                {{ dados_corretos.get('numeroNfCliente', 'Todos') or 'Todos' }}
+              </p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if registros %}
+        {% for cliente_group in registros|groupby('origem') %}
+        <!-- Seção do Cliente -->
+        <div class="no-break" style="margin-top: 20px;">
+          <div class="filtros-title">Fornecedor: {{ cliente_group.grouper }}</div>
+        </div>
+
+        {% for produto_group in cliente_group.list|groupby('produto') %}
+        <!-- Produto dentro do Cliente -->
+        <div class="section-title no-break">
+          Produto: {{ produto_group.grouper }}
+          <span style="float: right; font-weight: normal; font-size: 12px;">
+            Total de cargas: {{ produto_group.list|length }}
+          </span>
+        </div>
+
+        <!-- Tabela de cargas para este produto -->
+        <table>
+          <thead>
+            <tr>
+              <th class="text-center text-primary">Data
+                Entrega</th>
+              <th class="text-center">Placa/Motorista</th>
+              <th class="text-center">Transportadora</th>
+              <th class="text-center">Bitola</th>
+              <th class="text-center">Peso Ticket</th>
+              <th class="text-center">Número NF</th>
+              <th class="text-center">A pagar fornecedor</th>
+              <th class="text-center">Status pagamento</th>
+              <th class="text-center">Incompleto</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in produto_group.list %}
+            <tr>
+              <td class="text-center text-primary">{{
+                item.registro.data_entrega_ticket |
+                formatar_data_para_brl if
+                item.registro.data_entrega_ticket else '-'
+                }}</td>
+              <td class="text-center">{{
+                item.registro.solicitacao.veiculo.placa_veiculo
+                or '-' }} | {% set nome_split =
+                item.registro.solicitacao.motorista.nome_completo.split()
+                %}{% if nome_split|length > 1 %}{{
+                nome_split[0] }} {{ nome_split[1][0] }}.{%
+                else %}{{ nome_split[0] }}{% endif %}</td>
+              <td class="text-center">{{
+                item.registro.solicitacao.transportadora_exibicao.identificacao
+                | truncate(15, True, '...') if
+                item.registro.solicitacao.transportadora_exibicao
+                else '-' }}</td>
+              <td class="text-center">{{
+                item.registro.solicitacao.bitola.bitola |
+                truncate(15, True, '...') if
+                item.registro.solicitacao.bitola.bitola else
+                '-' }}</td>
+              <td class="text-center">{% if
+                item.registro_operacional.peso_liquido_ticket
+                %}<span class="badge bg-primary-lt p-2">{{
+                  item.registro_operacional.peso_liquido_ticket
+                  }} Ton.</span>{% else %}<span class="badge bg-secondary-lt p-2">Sem
+                  peso</span>{% endif %}</td>
+              <td class="text-center">
+                <span class="badge bg-orange-lt p-2">
+                  {% if item.registro_operacional.estorno_nf%}
+                  {{ item.registro_operacional.numero_nota_fiscal_estorno }} *
+                  {% elif item.registro_operacional.numero_nota_fiscal %}
+                  {{ item.registro_operacional.numero_nota_fiscal }}
+                  {%else%}
+                  -
+                  {% endif %}
+                </span>
+              </td>
+              <td class="text-center">{% if
+                item.registro.valor_total_a_pagar_100 %}<span class="badge bg-green-lt p-2">{{
+                  item.registro.valor_total_a_pagar_100 |
+                  formatar_float_para_brl }}</span>{% else
+                %}-{% endif %}</td>
+              <td class="text-center">{% if
+                item.registro.situacao.situacao == 'Pendente'
+                %}<span class="badge badge-outline text-orange">Pendente</span>{%
+                else %}<span class="badge badge-outline text-green">{{
+                  item.registro.situacao.situacao }}</span>{%
+                endif %}</td>
+              <td class="text-center">{% if
+                item.registro.incompleto %}<span class="badge badge-outline text-red">Sim</span>{%
+                else %}<span class="badge badge-outline text-gray">Não</span>{%
+                endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endfor %}
+
+        {% endfor %}
+
+        {% else %}
+        <!-- Estado vazio -->
+        <div style="text-align: center; padding: 50px 0;">
+          <h3 style="color: #666;">Nenhum registro encontrado</h3>
+          <p style="color: #999;">Não há registros de fornecedores a pagar </p>
+        </div>
+        {% endif %}
+
+        <div class="footer">
+          <p><strong>MBR Extração &copy; 2025</strong> - Todos os
+            direitos reservados</p>
+          <p><strong>Sistema de Gestão MBR</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

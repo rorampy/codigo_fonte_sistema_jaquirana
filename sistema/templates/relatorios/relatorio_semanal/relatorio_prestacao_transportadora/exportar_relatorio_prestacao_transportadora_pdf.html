@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório Prestação Contas Transportadora</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      font-size: 12px;
+      margin: 20px;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    /* Controle de quebras de página */
+    @page {
+      margin: 0.5cm;
+      size: portrait;
+    }
+
+    .no-break {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .section-break {
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    .group-break {
+      page-break-before: auto;
+      break-before: auto;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    .header {
+      border-bottom: 2px solid #1c5f20;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+
+    .header table {
+      width: 100%;
+      border: none;
+    }
+
+    .header img {
+      width: 120px;
+    }
+
+    .system-info {
+      text-align: right;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .relatorio-title {
+      text-align: center;
+      font-size: 18px;
+      color: #1c5f20;
+      font-weight: bold;
+      margin: 20px 0;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      color: #1c5f20;
+      font-weight: bold;
+      font-size: 14px;
+      margin: 20px 0 10px 0;
+      padding: 8px 10px;
+      background-color: #f0f8f0;
+      border-left: 4px solid #1c5f20;
+      page-break-after: avoid;
+      break-after: avoid;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0 20px 0;
+      border: 1px solid #ddd;
+      page-break-inside: auto;
+      break-inside: auto;
+    }
+
+    thead {
+      display: table-header-group;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    tbody {
+      page-break-inside: auto;
+      break-inside: auto;
+    }
+
+    tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      page-break-after: auto;
+      break-after: auto;
+    }
+
+    /* Evita quebra entre título da seção e sua tabela */
+    .section-title+table {
+      page-break-before: avoid;
+      break-before: avoid;
+    }
+
+    /* Mantém subtotais sempre com a tabela */
+    .subtotal {
+      background-color: #e8f5e8;
+      font-weight: bold;
+      color: #1c5f20;
+      page-break-before: avoid;
+      break-before: avoid;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    th {
+      background-color: #1c5f20;
+      color: white;
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    td:first-child {
+      text-align: left;
+      font-weight: bold;
+      background-color: #f8f9fa;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .valor-destaque {
+      color: #1c5f20;
+      font-weight: bold;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 10px;
+      color: #777;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+
+    .detalhes-registro {
+      font-size: 10px;
+    }
+
+    .filtros-aplicados {
+      background-color: #f0f8f0;
+      padding: 8px 12px;
+      margin: 8px 0;
+      border-radius: 4px;
+      border-left: 3px solid #1c5f20;
+      border: 1px solid #c3e6c3;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    .filtros-title {
+      color: #1c5f20;
+      font-weight: bold;
+      font-size: 11px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .filtros-linha {
+      display: block;
+      margin: 0;
+    }
+
+    .filtro-item {
+      display: block;
+      margin: 3px 0;
+    }
+
+    .filtro-label {
+      color: #1c5f20;
+      font-weight: 600;
+      font-size: 10px;
+      margin-right: 4px;
+    }
+
+    .filtro-valor {
+      color: #333;
+      font-size: 10px;
+    }
+
+    .info-bancaria {
+      background-color: #f8f9fa;
+      padding: 8px 12px;
+      margin: 10px 0 5px 0;
+      border-radius: 4px;
+      border-left: 3px solid #1c5f20;
+      border: 1px solid #dee2e6;
+      font-size: 13px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .info-bancaria-titulo {
+      color: #1c5f20;
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .dados-bancarios {
+      display: block;
+      margin: 0;
+    }
+
+    .dado-bancario {
+      display: block;
+      margin: 3px 0;
+    }
+
+    .dado-label {
+      color: #1c5f20;
+      font-weight: 600;
+      font-size: 13px;
+      margin-right: 3px;
+    }
+
+    .dado-valor {
+      color: #333;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <table>
+      <tr>
+        <td style="width: 200px;">
+          <img src="{{ logo_path }}" alt="Logo MBR Extração" />
+        </td>
+        <td class="system-info">
+          <div><strong>Sistema de Gestão MBR</strong></div>
+          {% if changelog %}
+          <div><strong>Versão:</strong> {{ changelog.versao }}</div>
+          <div><strong>Data:</strong> {{ changelog.data_lancamento }}</div>
+          {% else %}
+          <div><strong>Relatório gerado em:</strong> {{ data_geracao or 'N/A' }}</div>
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="relatorio-title">Relatório Prestação Contas Transportadora</div>
+
+  <!-- Filtros aplicados se existirem -->
+  {% if dados_corretos %}
+  <div class="filtros-aplicados">
+    <div class="filtros-title">Filtros Aplicados</div>
+    <div class="filtros-linha">
+      {% if dados_corretos.get('tipo_filtro') == 'data' %}
+      <div class="filtro-item">
+        <span class="filtro-label">Data Início:</span>
+        <span class="filtro-valor">
+          {{ dados_corretos.get('dataInicio', '') | converte_data_para_datetime_converte_data_brl if
+          dados_corretos.get('dataInicio', '') else '-' }}
+        </span>
+      </div>
+      <div class="filtro-item">
+        <span class="filtro-label">Data Fim:</span>
+        <span class="filtro-valor">
+          {{ dados_corretos.get('dataFim', '') | converte_data_para_datetime_converte_data_brl if
+          dados_corretos.get('dataFim', '') else '-' }}
+        </span>
+      </div>
+      {% else %}
+      <div class="filtro-item">
+        <span class="filtro-label">Semana:</span>
+        <span class="filtro-valor">
+          {% for semana in semanas_disponiveis %}
+          {% if semana.valor == dados_corretos.get('semanaSelecionada') %}
+          {{ semana.texto }}{% if semana.is_atual %} (Atual){% endif %}
+          {% endif %}
+          {% endfor %}
+        </span>
+      </div>
+      {% endif %}
+      {% if dados_corretos.get('fornecedorCargaCliente') %}
+      <div class="filtro-item">
+        <span class="filtro-label">Fornecedor:</span>
+        <span class="filtro-valor">{{ dados_corretos.get('fornecedorCargaCliente', 'Todos') or 'Todos' }}</span>
+      </div>
+      {% endif %}
+      {% if dados_corretos.get('transportadoraFiltro') %}
+      <div class="filtro-item">
+        <span class="filtro-label">Transportadora:</span>
+        <span class="filtro-valor">{{ dados_corretos.get('transportadoraFiltro', 'Todos') or 'Todos' }}</span>
+      </div>
+      {% endif %}
+      {% if dados_corretos.get('numeroNfCliente') %}
+      <div class="filtro-item">
+        <span class="filtro-label">NF:</span>
+        <span class="filtro-valor">{{ dados_corretos.get('numeroNfCliente', 'Todos') or 'Todos' }}</span>
+      </div>
+      {% endif %}
+      {% if dados_corretos.get('produtoFiltro') %}
+      <div class="filtro-item">
+        <span class="filtro-label">Produto:</span>
+        <span class="filtro-valor">{{ dados_corretos.get('produtoFiltro', 'Todos') or 'Todos' }}</span>
+      </div>
+      {% endif %}
+      {% if dados_corretos.get('clienteFiltro') %}
+      <div class="filtro-item">
+        <span class="filtro-label">Cliente:</span>
+        <span class="filtro-valor">{{ dados_corretos.get('clienteFiltro', 'Todos') or 'Todos' }}</span>
+      </div>
+      {% endif %}
+      {% if dados_corretos.get('origemFiltro') %}
+      <div class="filtro-item">
+        <span class="filtro-label">Origem:</span>
+        <span class="filtro-valor">{{ dados_corretos.get('origemFiltro', 'Todos') or 'Todos' }}</span>
+      </div>
+      {% endif %}
+      {% if dados_corretos.get('placaFiltro') %}
+      <div class="filtro-item">
+        <span class="filtro-label">Placa:</span>
+        <span class="filtro-valor">{{ dados_corretos.get('placaFiltro', 'Todos') or 'Todos' }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if registros %}
+  {% for transportadora_group in registros|groupby('transportadora') %}
+  {% set transportadora = transportadora_group.grouper %}
+  {% set registros_transportadora = transportadora_group.list %}
+
+  <!-- Seção da Transportadora -->
+  <div class="group-break">
+    <div class="section-title">
+      Transportadora: {{ transportadora }}
+      <span style="float: right; font-weight: normal; font-size: 12px;">
+        Total de cargas: {{ registros_transportadora|length }}
+      </span>
+    </div>
+
+    <!-- Informações Bancárias da Transportadora -->
+    {% if registros_transportadora and registros_transportadora[0].transportadora_obj %}
+    {% set transportadora_obj = registros_transportadora[0].transportadora_obj %}
+    {% if transportadora_obj.conta_bancaria or transportadora_obj.chave_pix %}
+    <div class="info-bancaria">
+      <div class="info-bancaria-titulo">Dados para Pagamento</div>
+      <div class="dados-bancarios">
+        {% if transportadora_obj.instituicao_financeira %}
+        <div class="dado-bancario">
+          <span class="dado-label">Banco:</span>
+          <span class="dado-valor">{{ transportadora_obj.instituicao_financeira.nome }}</span>
+        </div>
+        {% endif %}
+        {% if transportadora_obj.agencia_bancaria %}
+        <div class="dado-bancario">
+          <span class="dado-label">Agência:</span>
+          <span class="dado-valor">{{ transportadora_obj.agencia_bancaria }}</span>
+        </div>
+        {% endif %}
+        {% if transportadora_obj.conta_bancaria %}
+        <div class="dado-bancario">
+          <span class="dado-label">Conta:</span>
+          <span class="dado-valor">{{ transportadora_obj.conta_bancaria }}</span>
+        </div>
+        {% endif %}
+        {% if transportadora_obj.chave_pix %}
+        <div class="dado-bancario">
+          <span class="dado-label">PIX:</span>
+          <span class="dado-valor pix-destaque">{{ transportadora_obj.chave_pix }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <!-- Tabela de cargas para esta transportadora -->
+    <table class="no-break">
+      <thead>
+        <tr>
+          <th>Data Entrega</th>
+          <th>Placa</th>
+          <th>Fornecedor</th>
+          <th>Cliente</th>
+          <th>Produto/Bitola</th>
+          <th>NF</th>
+          <th>Peso Liquido</th>
+          <th>Valor Frete</th>
+          <th>Total Frete</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in registros_transportadora %}
+        <tr class="detalhes-registro">
+          <td>
+            {{ item.registro.data_entrega_ticket | formatar_data_para_brl if item.registro.data_entrega_ticket else '-'
+            }}
+          </td>
+          <td>
+            {{ item.registro.solicitacao.veiculo.placa_veiculo if item.registro.solicitacao.veiculo.placa_veiculo else
+            '-' }}
+          </td>
+          <td>
+            {{ item.fornecedor if item.fornecedor else '-' }}
+          </td>
+          <td>
+            {{ item.registro.solicitacao.cliente.identificacao if item.registro.solicitacao.cliente and
+            item.registro.solicitacao.cliente.identificacao else '-' }}
+          </td>
+          <td>
+            {{ item.registro.solicitacao.produto.nome }} |
+            {{ item.registro.solicitacao.bitola.bitola }}
+          </td>
+          <td>
+            {% if item.registro.estorno_nf%}
+            {{ item.registro.numero_nota_fiscal_estorno }} *
+            {% elif item.registro.numero_nota_fiscal %}
+            {{ item.registro.numero_nota_fiscal }}
+            {%else%}
+            -
+            {% endif %}
+          </td>
+          <td>
+            {% if item.registro.peso_liquido_ticket %}
+            {{ item.registro.peso_liquido_ticket }} Ton.
+            {% else %}
+            Sem peso
+            {% endif %}
+          </td>
+          <td>
+            {{ item.valor_frete_por_produto | formatar_float_para_brl }}
+          </td>
+          <td class="valor-destaque">
+            {{ item.valor_frete | formatar_float_para_brl }}
+          </td>
+        </tr>
+        {% endfor %}
+
+        <!-- Linhas de Total da Transportadora -->
+        <tr class="subtotal">
+          <td colspan="5"><strong>Total de cargas: {{ registros_transportadora|length }}</strong></td>
+          <td class="valor-destaque"><strong>{{ registros_transportadora | selectattr('registro.peso_liquido_ticket') |
+              map(attribute='registro.peso_liquido_ticket') | map('float') | sum | round(2) }} Ton.</strong></td>
+          <td colspan="3"></td>
+        </tr>
+        <tr class="subtotal">
+          <td colspan="8"><strong>Total a pagar</strong></td>
+          <td class="valor-destaque">
+            <strong>
+              {{ registros_transportadora | selectattr('valor_frete') | map(attribute='valor_frete') | map('float') |
+              sum | formatar_float_para_brl }}
+            </strong>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div> <!-- Fecha group-break -->
+  {% endfor %}
+
+  {% else %}
+  <!-- Estado vazio -->
+  <div style="text-align: center; padding: 50px 0;">
+    <h3 style="color: #666;">Nenhum registro encontrado</h3>
+    <p style="color: #999;">Não há registros de cargas disponíveis para os filtros selecionados.</p>
+  </div>
+  {% endif %}
+
+  <div class="footer">
+    <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão MBR - Módulo Financeiro</strong></p>
+    <p>Relatório de Prestação de Contas gerado automaticamente pelo Sistema de Gestão MBR</p>
+  </div>
+</body>
+
+</html>

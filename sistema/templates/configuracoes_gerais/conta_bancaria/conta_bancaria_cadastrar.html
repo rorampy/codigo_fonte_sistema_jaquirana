@@ -1,0 +1,168 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            CONTA BANCARIA CADASTRAR
+          </div>
+          <h2 class="page-title">
+            Cadastrar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="#" method="POST">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-sm-12 col-md-12">
+                <div class="mb-3">
+                  <label class="form-label required">Configurações da Conta</label>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="conta_principal" value="1" {% if
+                      dados_corretos['conta_principal'] %}checked{% endif %} id="switchContaPrincipal">
+                    <label class="form-check-label" for="switchContaPrincipal">
+                      Conta Principal
+                    </label>
+                  </div>
+                  <div class="invalid-feedback">
+                    {% if 'conta_principal' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['conta_principal'] }}
+                    {% elif 'conta_principal' in campos_erros %}
+                    {{ campos_erros['conta_principal'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <!-- Identificação -->
+              <div class="col-sm-12 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Identificação</label>
+                  <input type="text" name="identificacao" value="{{ dados_corretos['identificacao'] }}"
+                    placeholder="Ex: Conta Principal, Conta Poupança, etc." class="form-control {% if 'identificacao' in campos_obrigatorios or 'identificacao' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'identificacao' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['identificacao'] }}
+                    {% elif 'identificacao' in campos_erros %}
+                    {{ campos_erros['identificacao'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nome do Banco -->
+              <div class="col-sm-12 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Nome do Banco</label>
+                  <input type="text" name="nome_banco" value="{{ dados_corretos['nome_banco'] }}"
+                    placeholder="Ex: Banco do Brasil, Itaú, Bradesco, etc." class="form-control {% if 'nome_banco' in campos_obrigatorios or 'nome_banco' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'nome_banco' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['nome_banco'] }}
+                    {% elif 'nome_banco' in campos_erros %}
+                    {{ campos_erros['nome_banco'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-12 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Agência</label>
+                  <input type="text" name="agencia" value="{{ dados_corretos['agencia'] }}"
+                    placeholder="Informe a agência" autocomplete="off" class="form-control {% if 'agencia' in campos_obrigatorios or 'agencia' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'agencia' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['agencia'] }}
+                    {% elif 'agencia' in campos_erros %}
+                    {{ campos_erros['agencia'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Conta</label>
+                  <input type="text" name="conta" value="{{ dados_corretos['conta'] }}" placeholder="Informe a conta"
+                    autocomplete="off" class="form-control {% if 'conta' in campos_obrigatorios or 'conta' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'conta' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['conta'] }}
+                    {% elif 'conta' in campos_erros %}
+                    {{ campos_erros['conta'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-12 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label">Saldo Inicial</label>
+                  <input type="text" name="saldoInicial" value="{{ dados_corretos['saldoInicial'] }}" autocomplete="off"
+                    class="form-control {% if 'saldoInicial' in campos_obrigatorios or 'saldoInicial' in campos_erros %}
+                            is-invalid
+                          {% endif %} campo-moeda-brl">
+                  <div class="invalid-feedback">
+                    {% if 'saldoInicial' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['saldoInicial'] }}
+                    {% elif 'saldoInicial' in campos_erros %}
+                    {{ campos_erros['saldoInicial'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer text-center text-md-end">
+            <a href="{{url_for('listar_conta_bancaria')}}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

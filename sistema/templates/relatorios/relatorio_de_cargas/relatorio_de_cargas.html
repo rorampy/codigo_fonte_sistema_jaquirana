@@ -1,0 +1,150 @@
+{% include 'relatorios/estrutura/style.html' %}
+<div class="page-wrapper">
+  <div class="page body">
+    <div class="container">
+      <div class="watermark">
+        <img src="{{logo_path}}"
+          alt="MBR Extração Watermark" />
+      </div>
+
+      <div class="content">
+        <div class="header no-break">
+          <img src="{{logo_path}}"
+            alt="Logo MBR Extração" />
+          <div class="system-info">
+            <div><strong>Sistema de Gestão MBR</strong></div>
+            <div><strong>Versão</strong> {{changelog.versao}}</div>
+            <div><strong>Data:</strong>
+              {{changelog.data_lancamento}}</div>
+          </div>
+        </div>
+
+        <div class="relatorio-title">Relatório de Cargas</div>
+        <div class="dados-registro no-break">
+          <div class="filtros-title">Filtros Aplicados</div>
+          <div
+            style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Data Início:</strong></span>
+                {{data_inicio | converte_data_para_datetime_converte_data_brl if
+                data_inicio else '-'}}</p>
+              <p><span class="label"><strong>Data Fim:</strong></span>
+                {{data_fim | converte_data_para_datetime_converte_data_brl if
+                data_fim else '-'}}</p>
+              <p><span class="label"><strong>Placa:</strong></span>
+                {{placa_carga if placa_carga else '-'}}</p>
+            </div>
+
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Freteiro:</strong></span>
+                {{freteiro_carga if freteiro_carga else '-'}}</p>
+              <p><span class="label"><strong>Transportadora:</strong></span>
+                {{transportadora_carga if transportadora_carga else '-'}}</p>
+              <p><span
+                  class="label"><strong>Floresta/Fornecedor:</strong></span>
+                {{floresta_fornecedor if floresta_fornecedor else '-'}}</p>
+              <p><span
+                  class="label"><strong>Cliente:</strong></span>
+                {{cliente_carga if cliente_carga else
+                '-'}}</p>
+            </div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: center;">Data lançamento ticket</th>
+              <th style="text-align: center;">Placa/Freteiro</th>
+              <th style="text-align: center;">Transportadora</th>
+              <th style="text-align: center;">Floresta/Fornecedor</th>
+              <th style="text-align: center;">Cliente</th>
+              <th style="text-align: center;">Bitola</th>
+              <th style="text-align: center;">Peso Ticket (Ton.)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for registro in registrosOperacionais %}
+            <tr>
+              <td style="text-align: center;">
+                {% if registro.data_entrega_ticket %}
+                {{ registro.data_entrega_ticket |
+                formatar_data_para_brl }}
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              <td style="text-align: center;">
+                {%if registro.placa_ticket%}
+                {{ registro.placa_ticket }} | {{
+                registro.motorista_ticket[:10] }}
+                {% if registro.motorista_ticket | length > 10 %}...{% endif
+                %}
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              <td style="text-align: center;">
+                {% if registro.solicitacao.transportadora_exibicao
+                %}
+                {{
+                  registro.solicitacao.transportadora_exibicao.identificacao[:15]
+                }}
+                {%if registro.solicitacao.transportadora_exibicao.identificacao |
+                length > 15 %}...{% endif
+                %}
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              <td style="text-align: center;">
+                {% if registro.solicitacao.floresta_id %}
+                {{ registro.solicitacao.floresta.identificacao[:15] }}
+                {% if registro.solicitacao.floresta.identificacao | length >
+                15 %}...{% endif %}
+                {% elif registro.solicitacao.fornecedor_id %}
+                {{ registro.solicitacao.fornecedor.identificacao[:15] }}
+                {% if registro.solicitacao.fornecedor.identificacao | length
+                > 15 %}...{% endif %}
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              <td style="text-align: center;">
+                {% if registro.solicitacao.cliente_id %}
+                {{ registro.solicitacao.cliente.identificacao[:15] }}
+                {% if registro.solicitacao.cliente.identificacao | length >
+                15 %}...{%endif%}
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              <td style="text-align: center;">
+                {% if registro.solicitacao.bitola_id %}
+                {{ registro.solicitacao.bitola.bitola }}
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              <td style="text-align: center;">
+                {%if registro.peso_ton_nf %}
+                {{ registro.peso_ton_nf }}
+                {% else %}
+                -
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          <p><strong>MBR Extração &copy; 2025</strong> - Todos os
+            direitos
+            reservados</p>
+          <p><strong>Sistema de Gestão MBR</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

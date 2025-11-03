@@ -1,0 +1,383 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">
+            LANÇAMENTO NF
+          </div>
+          <h2 class="page-title">
+            Cadastrar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      {% if solicitacao %}
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="card border border-primary shadow-sm">
+            <div class="card-body">
+              <h3 class="card-title mb-3 text-primary">Informações da
+                Solicitação</h3>
+              <div class="row">
+
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Cliente</label>
+                    <input type="text" class="form-control" value="{{ solicitacao.cliente.identificacao }}" disabled>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Produto</label>
+                    <input type="text" class="form-control" value="{{ solicitacao.produto.nome }}" disabled>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Bitola</label>
+                    <input type="text" class="form-control" value="{{ solicitacao.bitola.bitola }}" disabled>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Motorista</label>
+                    <input type="text" class="form-control" value="{{ solicitacao.motorista.nome_completo }}" disabled>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Veículo</label>
+                    <input type="text" class="form-control" value="{{ solicitacao.veiculo.placa_veiculo }}" disabled>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="col-12">
+        <form class="card" action="{{ url_for('cadastrar_emissao', id=solicitacao.id) }}" method="POST"
+          enctype="multipart/form-data">
+          <div class="card-body">
+
+            <div class="row mb-4">
+              <div class="col-sm-12 col-md-6">
+                <div class="mb-3">
+                  <label class="form-check form-switch form-switch-3">
+                    <input class="form-check-input" type="checkbox" value="lancamentoFrf" name="lancamentoFrf"
+                      id="lancamentoFrf" {% if dados_corretos['lancamentoFrf'] %}checked{% endif %}>
+                    <span class="form-check-label">FRF</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div id="camposFrf" class="d-none">
+              <h3 class="text-primary">Informações destinatário</h3>
+              <div class="row">
+                <div class="col-sm-12 col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label required">Destinatário</label>
+                    <input type="text" name="destinatarioFrf"
+                      value="{{ dados_corretos['destinatarioFrf'] if dados_corretos['destinatarioFrf'] else '' }}"
+                      class="form-control {% if 'destinatarioFrf' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'destinatarioFrf' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['destinatarioFrf'] }}
+                      {% elif 'destinatarioFrf' in campos_erros %}
+                      {{ campos_erros['destinatarioFrf'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label required">CPF/CNPJ</label>
+                    <input type="text" name="destinatarioNumeroDocumento"
+                      value="{{ dados_corretos['destinatarioNumeroDocumento'] if dados_corretos['destinatarioNumeroDocumento'] else '' }}"
+                      class="form-control {% if 'destinatarioNumeroDocumento' in campos_obrigatorios or 'destinatarioNumeroDocumento' in campos_erros %}is-invalid{% endif %} cpfCnpj">
+                    <div class="invalid-feedback">
+                      {% if 'destinatarioNumeroDocumento' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['destinatarioNumeroDocumento'] }}
+                      {% elif 'destinatarioNumeroDocumento' in campos_erros %}
+                      {{ campos_erros['destinatarioNumeroDocumento'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label required">Data Lançamento</label>
+                    <input type="date" name="dataLancamentoFrf"
+                      value="{{ dados_corretos['dataLancamentoFrf'] if dados_corretos['dataLancamentoFrf'] else '' }}"
+                      class="form-control {% if 'dataLancamentoFrf' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'dataLancamentoFrf' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['dataLancamentoFrf'] }}
+                      {% elif 'dataLancamentoFrf' in campos_erros %}
+                      {{ campos_erros['dataLancamentoFrf'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <h3 class="text-primary">Informações transportadora</h3>
+                <div class="col-sm-12 col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label required">Transportadora</label>
+                    <input type="text" name="transportadorFrf"
+                      value="{{ dados_corretos['transportadorFrf'] if dados_corretos['transportadorFrf'] else '' }}"
+                      class="form-control {% if 'transportadorFrf' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'transportadorFrf' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['transportadorFrf'] }}
+                      {% elif 'transportadorFrf' in campos_erros %}
+                      {{ campos_erros['transportadorFrf'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label required">CPF/CNPJ</label>
+                    <input type="text" name="transportadoraNumeroDocumento"
+                      value="{{ dados_corretos['transportadoraNumeroDocumento'] if dados_corretos['transportadoraNumeroDocumento'] else '' }}"
+                      class="form-control {% if 'transportadoraNumeroDocumento' in campos_obrigatorios or 'transportadoraNumeroDocumento' in campos_erros %}is-invalid{% endif %} cpfCnpj">
+                    <div class="invalid-feedback">
+                      {% if 'transportadoraNumeroDocumento' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['transportadoraNumeroDocumento'] }}
+                      {% elif 'transportadoraNumeroDocumento' in campos_erros %}
+                      {{ campos_erros['transportadoraNumeroDocumento'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label required">Placa</label>
+                    <input type="text" name="placaFrf"
+                      value="{{ dados_corretos['placaFrf'] if dados_corretos['placaFrf'] else '' }}"
+                      class="form-control {% if 'placaFrf' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'placaFrf' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['placaFrf'] }}
+                      {% elif 'placaFrf' in campos_erros %}
+                      {{ campos_erros['placaFrf'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label required">Motorista</label>
+                    <input type="text" name="motoristaFrf"
+                      value="{{ dados_corretos['motoristaFrf'] if dados_corretos['motoristaFrf'] else '' }}"
+                      class="form-control {% if 'motoristaFrf' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'motoristaFrf' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['motoristaFrf'] }}
+                      {% elif 'motoristaFrf' in campos_erros %}
+                      {{ campos_erros['motoristaFrf'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <h3 class="text-primary">Informações carga</h3>
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label required">Peso (Ton.)</label>
+                    <input type="text" name="pesoFrf"
+                      value="{{ dados_corretos['pesoFrf'] if dados_corretos['pesoFrf'] else '' }}"
+                      class="form-control campo-float {% if 'pesoFrf' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'pesoFrf' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['pesoFrf'] }}
+                      {% elif 'pesoFrf' in campos_erros %}
+                      {{ campos_erros['pesoFrf'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label required">Valor Total (R$)</label>
+                    <input type="text" name="valorTotalFrf"
+                      value="{{ dados_corretos['valorTotalFrf'] if dados_corretos['valorTotalFrf'] else '' }}"
+                      class="form-control campo-moeda-brl {% if 'valorTotalFrf' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'valorTotalFrf' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['valorTotalFrf'] }}
+                      {% elif 'valorTotalFrf' in campos_erros %}
+                      {{ campos_erros['valorTotalFrf'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="camposOriginais">
+              <div class="row">
+                <div class="col-sm-12 col-md-6">
+                  <div class="mb-3">
+                    <div class="form-label">Possui NFe de Excesso de Carga?</div>
+                    <div>
+                      <label class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="possuiNFeExcesso" value="nao" {% if
+                          dados_corretos['possuiNFeExcesso']=='nao' or not dados_corretos['possuiNFeExcesso']
+                          %}checked{% endif %}>
+                        <span class="form-check-label">Não</span>
+                      </label>
+                      <label class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="possuiNFeExcesso" value="sim" {% if
+                          dados_corretos['possuiNFeExcesso']=='sim' %}checked{% endif %}>
+                        <span class="form-check-label">Sim</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-sm-12 col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label required">Arquivo NF (PDF)</label>
+                    <input type="file" name="arquivoNf" value="{{ dados_corretos['arquivoNf'] }}"
+                      class="form-control {% if 'arquivoNf' in campos_obrigatorios %}is-invalid{% endif %}"
+                      accept=".pdf">
+                    <div class="invalid-feedback">
+                      {% if 'arquivoNf' in
+                      campos_obrigatorios
+                      %}
+                      {{ campos_obrigatorios['arquivoNf'] }}
+                      {% elif 'arquivoNf' in campos_erros %}
+                      {{ campos_erros['arquivoNf'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-6 grupoNFeExcesso">
+                  <div class="mb-3">
+                    <label class="form-label required">Arquivo NFe de Excesso
+                      (PDF)</label>
+                    <input type="file" name="arquivoNFeExcesso" value="{{ dados_corretos['arquivoNFeExcesso'] }}"
+                      class="form-control {% if 'arquivoNFeExcesso' in campos_obrigatorios %}is-invalid{% endif %}"
+                      accept=".pdf">
+                    <div class="invalid-feedback">
+                      {% if 'arquivoNFeExcesso' in
+                      campos_obrigatorios
+                      %}
+                      {{ campos_obrigatorios['arquivoNFeExcesso'] }}
+                      {% elif 'arquivoNFeExcesso' in campos_erros %}
+                      {{ campos_erros['arquivoNFeExcesso'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="javascript:history.back()" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const frfCheckbox = document.getElementById('lancamentoFrf');
+      const camposFrf = document.getElementById('camposFrf');
+      const camposOriginais = document.getElementById('camposOriginais');
+
+      function limparCampos(grupoClasse) {
+        document.querySelectorAll('.' + grupoClasse + ' input[type="file"]').forEach(function (input) {
+          input.value = '';
+        });
+      }
+
+      function alternarCampos() {
+        var radioNao = document.querySelector('input[name="possuiNFeExcesso"][value="nao"]');
+        var grupoNFeExcesso = document.querySelectorAll('.grupoNFeExcesso');
+
+        if (radioNao && radioNao.checked) {
+          grupoNFeExcesso.forEach(el => el.style.display = 'none');
+          limparCampos('grupoNFeExcesso');
+        } else {
+          grupoNFeExcesso.forEach(el => el.style.display = 'block');
+        }
+      }
+
+      function alternarFormulario() {
+        if (frfCheckbox.checked) {
+          camposFrf.classList.remove('d-none');
+          camposOriginais.style.display = 'none';
+        } else {
+          camposFrf.classList.add('d-none');
+          camposOriginais.style.display = 'block';
+          alternarCampos();
+        }
+      }
+
+      frfCheckbox.addEventListener('change', alternarFormulario);
+
+      document.querySelectorAll('input[name="possuiNFeExcesso"]').forEach(radio => {
+        radio.addEventListener('change', alternarCampos);
+      });
+
+      alternarFormulario();
+      alternarCampos();
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+
+</div>
+
+{% endblock conteudo %}

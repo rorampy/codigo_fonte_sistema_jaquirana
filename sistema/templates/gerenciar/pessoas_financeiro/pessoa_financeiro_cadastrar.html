@@ -1,0 +1,511 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">PESSOA FINANCEIRO</div>
+          <h2 class="page-title">Cadastrar</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+      <div class="col-12">
+        <form class="card" action="{{ url_for('cadastrar_pessoa_financeiro') }}" method="POST">
+          <div class="card-body">
+            <h3 class="text-primary mb-4">Informações Básicas</h3>
+            <div class="row">
+              <div class="col-sm-6 col-md-6">
+                <div class="mb-3">
+                  <div class="form-label">Tipo de Cadastro</div>
+                  <div>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="tipoCadastro" value="cpf" {% if
+                        dados_corretos['tipoCadastro']=='cpf' or not dados_corretos['tipoCadastro'] %}checked{% endif
+                        %}>
+                      <span class="form-check-label">Por CPF</span>
+                    </label>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="tipoCadastro" value="cnpj" {% if
+                        dados_corretos['tipoCadastro']=='cnpj' %}checked{% endif %}>
+                      <span class="form-check-label">Por CNPJ</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-8 col-md-8 grupoCPF">
+                <div class="mb-3">
+                  <label class="form-label required">Nome Completo</label>
+                  <input type="text" name="nomePessoa" value="{{ dados_corretos['nomePessoa'] }}"
+                    class="form-control {% if 'nomePessoa' in campos_obrigatorios or 'nomePessoa' in campos_erros %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'nomePessoa' in campos_obrigatorios %}{{
+                    campos_obrigatorios['nomePessoa'] }}{% elif 'nomePessoa' in
+                    campos_erros %}{{ campos_erros['nomePessoa'] }}{% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-8 col-md-8 grupoCNPJ">
+                <div class="mb-3">
+                  <label class="form-label required">Razão Social</label>
+                  <input type="text" name="razaoSocial" value="{{ dados_corretos['razaoSocial'] }}"
+                    class="form-control {% if 'razaoSocial' in campos_obrigatorios or 'razaoSocial' in campos_erros %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'razaoSocial' in campos_obrigatorios %}{{
+                    campos_obrigatorios['razaoSocial'] }}{% elif 'razaoSocial'
+                    in campos_erros %}{{ campos_erros['razaoSocial'] }}{% endif
+                    %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-2 col-md-2 grupoCNPJ">
+                <div class="mb-3">
+                  <label class="form-label required">CNPJ</label>
+                  <input type="text" name="cnpj" value="{{ dados_corretos['cnpj'] }}" data-mask="00.000.000/0000-00"
+                    placeholder="xx.xxx.xxx/xxxx-xx" data-mask-visible="true" autocomplete="off"
+                    class="form-control {% if 'cnpj' in campos_obrigatorios or 'cnpj' in campos_erros %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'cnpj' in campos_obrigatorios %}{{
+                    campos_obrigatorios['cnpj'] }}{% elif 'cnpj' in campos_erros
+                    %}{{ campos_erros['cnpj'] }}{% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-2 col-md-2 grupoCPF">
+                <div class="mb-3">
+                  <label class="form-label required">CPF</label>
+                  <input type="text" name="cpfPessoa" value="{{ dados_corretos['cpfPessoa'] }}"
+                    data-mask="000.000.000-00" placeholder="xxx.xxx.xxx-xx" data-mask-visible="true" autocomplete="off"
+                    class="form-control {% if 'cpfPessoa' in campos_obrigatorios or 'cpfPessoa' in campos_erros %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'cpfPessoa' in campos_obrigatorios %}{{
+                    campos_obrigatorios['cpfPessoa'] }}{% elif 'cpfPessoa' in
+                    campos_erros %}{{ campos_erros['cpfPessoa'] }}{% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label">Telefone</label>
+                  <input type="text" name="telefone" value="{{ dados_corretos['telefone'] }}"
+                    data-mask="(00) 0 0000-0000" placeholder="(xx) x xxxx-xxxx" data-mask-visible="true"
+                    autocomplete="off"
+                    class="form-control {% if 'telefone' in campos_obrigatorios %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'telefone' in campos_obrigatorios %}{{
+                    campos_obrigatorios['telefone'] }}{% elif 'telefone' in
+                    campos_erros %}{{ campos_erros['telefone'] }}{% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <h3 class="text-primary mb-4">Informações Bancárias</h3>
+            <div class="row">
+              <div class="col-12 col-sm-12 col-md-3 mb-3">
+                <label class="form-label">Selecione um banco</label>
+                <select name="instituicao_financeira" class="form-select">
+                  <option value>Selecione</option>
+                  {% for banco in bancos %}
+                  <option value="{{ banco.id }}" {% if banco.id==dados_corretos['instituicao_financeira'] %}selected{%
+                    endif %}>{{ banco.nome }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12 col-sm-12 col-md-3 mb-3">
+                <label class="form-label">Agência</label>
+                <input type="text" name="agencia_bancaria" class="form-control"
+                  value="{{ dados_corretos['agencia_bancaria'] }}">
+                <div class="invalid-feedback">
+                  {% if 'agencia_bancaria' in campos_obrigatorios %}{{
+                  campos_obrigatorios['agencia_bancaria'] }}{% elif
+                  'agencia_bancaria' in campos_erros %}{{
+                  campos_erros['agencia_bancaria'] }}{% endif %}
+                </div>
+              </div>
+              <div class="col-12 col-sm-12 col-md-3 mb-3">
+                <label class="form-label">Conta</label>
+                <input type="text" name="conta_bancaria" class="form-control"
+                  value="{{ dados_corretos['conta_bancaria'] }}">
+                <div class="invalid-feedback">
+                  {% if 'conta_bancaria' in campos_obrigatorios %}{{
+                  campos_obrigatorios['conta_bancaria'] }}{% elif
+                  'conta_bancaria' in campos_erros %}{{
+                  campos_erros['conta_bancaria'] }}{% endif %}
+                </div>
+              </div>
+              <div class="col-12 col-sm-12 col-md-3 mb-3">
+                <label class="form-label">Chave PIX</label>
+                <input type="text" name="chave_pix" class="form-control" value="{{ dados_corretos['chave_pix'] }}">
+                <div class="invalid-feedback">
+                  {% if 'chave_pix' in campos_obrigatorios %}{{
+                  campos_obrigatorios['chave_pix'] }}{% elif 'chave_pix' in
+                  campos_erros %}{{ campos_erros['chave_pix'] }}{% endif %}
+                </div>
+              </div>
+            </div>
+            <h3 class="text-primary mb-4">Vínculo com Operacional</h3>
+
+            <div x-data="vinculoOperacional()">
+              <input type="hidden" name="vinculos_json" x-bind:value="JSON.stringify(getVinculosData())">
+
+              <div class="mb-4">
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="checkbox" x-model="vinculos.fornecedor.ativo"
+                    id="vinculoFornecedor">
+                  <label class="form-check-label fw-bold" for="vinculoFornecedor">
+                    Vínculo com Fornecedor?
+                  </label>
+                </div>
+
+                <div x-show="vinculos.fornecedor.ativo" x-transition class="border rounded p-3 bg-light">
+                  <template x-for="(item, index) in vinculos.fornecedor.lista" :key="index">
+                    <div class="row mb-3 align-items-center">
+                      <div class="col-lg-10 col-md-9 col-sm-9 col-9">
+                        <select class="form-select" x-model="item.id" @change="atualizarIdentificacao('fornecedor', index, $event.target)">
+                          <option value>Selecione um fornecedor...</option>
+                          {% for fornecedor in fornecedores %}
+                          <option value="{{ fornecedor.id }}">{{
+                            fornecedor.identificacao
+                            }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="col-lg-2 col-md-3 col-sm-3 col-3 text-center">
+                        <button type="button" class="btn btn-link text-danger p-1"
+                          @click="removerItem('fornecedor', index)" x-show="vinculos.fornecedor.lista.length > 1">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 7l16 0" />
+                            <path d="M10 11l0 6" />
+                            <path d="M14 11l0 6" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+
+                  <div class="mt-3">
+                    <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
+                      @click="adicionarItem('fornecedor')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-plus me-1">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 5l0 14" />
+                        <path d="M5 12l14 0" />
+                      </svg>
+                      Adicionar fornecedor
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="checkbox" x-model="vinculos.transportadora.ativo"
+                    id="vinculoTransportadora">
+                  <label class="form-check-label fw-bold" for="vinculoTransportadora">
+                    Vínculo com Transportadora?
+                  </label>
+                </div>
+
+                <div x-show="vinculos.transportadora.ativo" x-transition class="border rounded p-3 bg-light">
+                  <template x-for="(item, index) in vinculos.transportadora.lista" :key="index">
+                    <div class="row mb-3 align-items-center">
+                      <div class="col-lg-10 col-md-9 col-sm-9 col-9">
+                        <select class="form-select" x-model="item.id" @change="atualizarIdentificacao('transportadora', index, $event.target)">
+                          <option value>Selecione uma transportadora...</option>
+                          {% for transportadora in transportadoras %}
+                          <option value="{{ transportadora.id }}">{{
+                            transportadora.identificacao }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="col-lg-2 col-md-3 col-sm-3 col-3 text-center">
+                        <button type="button" class="btn btn-link text-danger p-1"
+                          @click="removerItem('transportadora', index)"
+                          x-show="vinculos.transportadora.lista.length > 1">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 7l16 0" />
+                            <path d="M10 11l0 6" />
+                            <path d="M14 11l0 6" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+
+                  <div class="mt-3">
+                    <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
+                      @click="adicionarItem('transportadora')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-plus me-1">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 5l0 14" />
+                        <path d="M5 12l14 0" />
+                      </svg>
+                      Adicionar transportadora
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="checkbox" x-model="vinculos.extrator.ativo"
+                    id="vinculoExtrator">
+                  <label class="form-check-label fw-bold" for="vinculoExtrator">
+                    Vínculo com Extrator?
+                  </label>
+                </div>
+
+                <div x-show="vinculos.extrator.ativo" x-transition class="border rounded p-3 bg-light">
+                  <template x-for="(item, index) in vinculos.extrator.lista" :key="index">
+                    <div class="row mb-3 align-items-center">
+                      <div class="col-lg-10 col-md-9 col-sm-9 col-9">
+                        <select class="form-select" x-model="item.id" @change="atualizarIdentificacao('extrator', index, $event.target)">
+                          <option value>Selecione um extrator...</option>
+                          {% for extrator in extratores %}
+                          <option value="{{ extrator.id }}">{{
+                            extrator.identificacao
+                            }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="col-lg-2 col-md-3 col-sm-3 col-3 text-center">
+                        <button type="button" class="btn btn-link text-danger p-1"
+                          @click="removerItem('extrator', index)" x-show="vinculos.extrator.lista.length > 1">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 7l16 0" />
+                            <path d="M10 11l0 6" />
+                            <path d="M14 11l0 6" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+
+                  <div class="mt-3">
+                    <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
+                      @click="adicionarItem('extrator')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-plus me-1">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 5l0 14" />
+                        <path d="M5 12l14 0" />
+                      </svg>
+                      Adicionar extrator
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="checkbox" x-model="vinculos.comissionado.ativo"
+                    id="vinculoComissionado">
+                  <label class="form-check-label fw-bold" for="vinculoComissionado">
+                    Vínculo com Comissionado?
+                  </label>
+                </div>
+
+                <div x-show="vinculos.comissionado.ativo" x-transition class="border rounded p-3 bg-light">
+                  <template x-for="(item, index) in vinculos.comissionado.lista" :key="index">
+                    <div class="row mb-3 align-items-center">
+                      <div class="col-lg-10 col-md-9 col-sm-9 col-9">
+                        <select class="form-select" x-model="item.id" @change="atualizarIdentificacao('comissionado', index, $event.target)">
+                          <option value>Selecione um comissionado...</option>
+                          {% for comissionado in comissionados %}
+                          <option value="{{ comissionado.id }}">{{
+                            comissionado.identificacao }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="col-lg-2 col-md-3 col-sm-3 col-3 text-center">
+                        <button type="button" class="btn btn-link text-danger p-1"
+                          @click="removerItem('comissionado', index)" x-show="vinculos.comissionado.lista.length > 1">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 7l16 0" />
+                            <path d="M10 11l0 6" />
+                            <path d="M14 11l0 6" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+
+                  <div class="mt-3">
+                    <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
+                      @click="adicionarItem('comissionado')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-plus me-1">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 5l0 14" />
+                        <path d="M5 12l14 0" />
+                      </svg>
+                      Adicionar comissionado
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="{{ url_for('listar_pessoas_financeiro') }}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function vinculoOperacional() {
+      return {
+        vinculos: {
+          fornecedor: {
+            ativo: false,
+            lista: [{ id: '', identificacao: '' }]
+          },
+          transportadora: {
+            ativo: false,
+            lista: [{ id: '', identificacao: '' }]
+          },
+          extrator: {
+            ativo: false,
+            lista: [{ id: '', identificacao: '' }]
+          },
+          comissionado: {
+            ativo: false,
+            lista: [{ id: '', identificacao: '' }]
+          }
+        },
+
+        adicionarItem(tipo) {
+          this.vinculos[tipo].lista.push({ id: '', identificacao: '' });
+        },
+
+        removerItem(tipo, index) {
+          if (this.vinculos[tipo].lista.length > 1) {
+            this.vinculos[tipo].lista.splice(index, 1);
+          }
+        },
+
+        atualizarIdentificacao(tipo, index, selectElement) {
+          const selectedOption = selectElement.options[selectElement.selectedIndex];
+          this.vinculos[tipo].lista[index].id = selectElement.value;
+          this.vinculos[tipo].lista[index].identificacao = selectedOption.text;
+        },
+
+        getVinculosData() {
+          const data = {};
+          let hasVinculos = false;
+          
+          Object.keys(this.vinculos).forEach(tipo => {
+            if (this.vinculos[tipo].ativo) {
+              const lista = this.vinculos[tipo].lista
+                .filter(item => item.id !== '')
+                .map(item => ({
+                  id: item.id,
+                  identificacao: item.identificacao
+                }));
+              
+              if (lista.length > 0) {
+                data[tipo] = lista;
+                hasVinculos = true;
+              }
+            }
+          });
+          
+          return hasVinculos ? data : null;
+        }
+      }
+    }
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('select.form-select').forEach(function (select) {
+        new TomSelect(select, {
+          create: false,
+          allowEmptyOption: false,
+          sortField: { field: "text", direction: "asc" }
+        });
+      });
+      function limparCampos(grupoClasse) {
+        document.querySelectorAll('.' + grupoClasse + ' input[type="text"]').forEach(function (input) {
+          input.value = '';
+        });
+      }
+      function alternarCampos() {
+        var radioCPF = document.querySelector('input[name="tipoCadastro"][value="cpf"]');
+        var grupoCPF = document.querySelectorAll('.grupoCPF');
+        var grupoCNPJ = document.querySelectorAll('.grupoCNPJ');
+        if (radioCPF.checked) {
+          grupoCPF.forEach(el => el.style.display = 'block');
+          grupoCNPJ.forEach(el => el.style.display = 'none');
+          limparCampos('grupoCNPJ');
+        } else {
+          grupoCPF.forEach(el => el.style.display = 'none');
+          grupoCNPJ.forEach(el => el.style.display = 'block');
+          limparCampos('grupoCPF');
+        }
+      }
+      document.querySelectorAll('input[name="tipoCadastro"]').forEach(radio => {
+        radio.addEventListener('change', alternarCampos);
+      });
+      alternarCampos();
+    });
+  </script>
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

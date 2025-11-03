@@ -1,0 +1,360 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle text-muted">Financeiro</div>
+          <h2 class="page-title fw-bold display-6">Confirmação de Faturamento em Massa - Comissionados</h2>
+          <p class="text-muted">{{ registros|length }} registro(s) selecionado(s) para faturamento</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if conciliar_transacao_id %}
+  {% set titulo_pagina = "comissionados" %}
+  {% include 'financeiro/importar_ofx/dados_conciliacao_component.html' %}
+  {% endif %}
+
+  <div class="py-4">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="row row-cards mb-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-orange text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-moneybag-move">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path
+                    d="M9.5 3h5a1.5 1.5 0 0 1 1.5 1.5a3.5 3.5 0 0 1 -3.5 3.5h-1a3.5 3.5 0 0 1 -3.5 -3.5a1.5 1.5 0 0 1 1.5 -1.5" />
+                  <path d="M12.5 21h-4.5a4 4 0 0 1 -4 -4v-1a8 8 0 0 1 14.946 -3.971" />
+                  <path d="M16 19h6" />
+                  <path d="M19 16l3 3l-3 3" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Total a Faturar</div>
+                <div class="fs-3 fw-bold text-orange mt-1" id="total-pagar">{{ valor_total_geral |
+                  formatar_float_para_brl }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-green text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icon-tabler-user-dollar">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                  <path d="M6 21v-2a4 4 0 0 1 4 -4h3" />
+                  <path d="M21 15h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5" />
+                  <path d="M19 21v1m0 -8v1" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Comissionados</div>
+                <div class="fs-3 fw-bold text-green mt-1">{{ comissionados_dict|length }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-blue text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icon-tabler-list-numbers">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M11 6h9" />
+                  <path d="M11 12h9" />
+                  <path d="M12 18h8" />
+                  <path d="M4 16a2 2 0 1 1 4 0c0 .591 -.5 1 -1 1.5l-3 2.5h4" />
+                  <path d="M6 10v-6l-2 2" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Registros</div>
+                <div class="fs-3 fw-bold text-blue mt-1">{{ registros|length }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-header bg-light fw-bold">Detalhes dos Registros por Comissionado</div>
+        <div class="card-body">
+          {% for comissionado_id, dados_comissionado in comissionados_dict.items() %}
+          <div class="mb-4 p-3 border rounded">
+            <div class="row align-items-center mb-3">
+              <div class="col">
+                <h5 class="fw-bold text-primary mb-1">
+                  {% if dados_comissionado.comissionado %}
+                  {{ dados_comissionado.comissionado.identificacao }}
+                  {% else %}
+                  Comissionado ID: {{ comissionado_id }}
+                  {% endif %}
+                </h5>
+                <span class="badge bg-blue-lt">{{ dados_comissionado.registros|length }} registro(s)</span>
+                <span class="badge bg-green-lt ms-2" id="total-comissionado-{{ comissionado_id }}">Total: {{
+                  dados_comissionado.valor_total | formatar_float_para_brl }}</span>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm table-striped">
+                <thead class="bg-light">
+                  <tr>
+                    <th>Data Entrega</th>
+                    <th>Fornecedor</th>
+                    <th>Transportadora</th>
+                    <th>Cliente</th>
+                    <th>Produto/Bitola</th>
+                    <th>NF</th>
+                    <th>Preço Comissão</th>
+                    <th>Peso (Ton.)</th>
+                    <th>Valor a Faturar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for registro in dados_comissionado.registros %}
+                  <tr data-id="{{ registro.id }}">
+                    <td>
+                      {% if registro.data_entrega_ticket %}
+                      {{ registro.data_entrega_ticket.strftime('%d/%m/%Y') }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if registro.solicitacao and registro.solicitacao.fornecedor %}
+                      {{ registro.solicitacao.fornecedor.identificacao | truncate(20, True, '...') }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if registro.solicitacao and registro.solicitacao.transportadora_exibicao %}
+                      {{ registro.solicitacao.transportadora_exibicao.identificacao | truncate(20, True, '...') }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if registro.solicitacao and registro.solicitacao.cliente %}
+                      {{ registro.solicitacao.cliente.identificacao | truncate(20, True, '...') }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if registro.solicitacao and registro.solicitacao.produto and registro.solicitacao.bitola %}
+                      {{ registro.solicitacao.produto.nome | truncate(15, True, '...') }} | {{
+                      registro.solicitacao.bitola.bitola | truncate(10, True, '...') }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                     <td>
+                      {% if registro.registro_operacional %}
+                        {% if registro.registro_operacional.estorno_nf %}
+                        {{registro.registro_operacional.numero_nota_fiscal_estorno}} *
+                        {% elif registro.registro_operacional.numero_nota_fiscal %}
+                        {{registro.registro_operacional.numero_nota_fiscal}}
+                        {%else%}
+                        -
+                        {% endif %}
+                      {% endif %}
+                    </td>
+                    <td>
+                      <input type="text" class="form-control form-control-sm campo-moeda-brl campo-preco-comissao"
+                        data-registro-id="{{ registro.id }}"
+                        value="{{ registro.preco_custo_bitola_100 | default(0) | formatar_float_para_brl }}"
+                        style="width: 120px;">
+                    </td>
+                    <td>
+                      {% if registro.registro_operacional and registro.registro_operacional.peso_liquido_ticket %}
+                      <span class="peso-toneladas" data-registro-id="{{ registro.id }}">{{
+                        registro.registro_operacional.peso_liquido_ticket }}</span>
+                      {% else %}
+                      <span class="peso-toneladas" data-registro-id="{{ registro.id }}">0</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <span class="valor-calculado badge bg-green-lt" data-registro-id="{{ registro.id }}">
+                        {{ registro.valor_total_a_pagar_100 | default(0) | formatar_float_para_brl }}
+                      </span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <form action="{{ url_for('comissionado_a_pagar_massa') }}" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="ids_registros" value="{{ ids_selecionados }}">
+        <input type="hidden" name="valores_calculados" id="valores-calculados-input">
+
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <div class="text-end">
+              <a class="btn btn-primary" href="{{ url_for('listagem_comissionados_a_pagar') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l14 0" />
+                  <path d="M5 12l6 6" />
+                  <path d="M5 12l6 -6" />
+                </svg>Voltar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l5 5l10 -10" />
+                </svg>Confirmar Faturamento em Massa ({{ registros|length }} registros)
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const valoresCalculados = {};
+
+      function extrairValorNumerico(valorMascarado) {
+        if (!valorMascarado) return 0;
+        return parseFloat(valorMascarado.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+      }
+
+      function formatarMoeda(valor) {
+        return valor.toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        });
+      }
+
+      function calcularValorRegistro(registroId) {
+        const precoInput = document.querySelector(`.campo-preco-comissao[data-registro-id="${registroId}"]`);
+        const pesoSpan = document.querySelector(`.peso-toneladas[data-registro-id="${registroId}"]`);
+        const valorSpan = document.querySelector(`.valor-calculado[data-registro-id="${registroId}"]`);
+
+        if (!precoInput || !pesoSpan || !valorSpan) return;
+
+        const preco = extrairValorNumerico(precoInput.value);
+        const peso = parseFloat(pesoSpan.textContent) || 0;
+        const valorTotal = preco * peso;
+
+        // Atualiza o display
+        valorSpan.textContent = formatarMoeda(valorTotal);
+
+        // Armazena os valores calculados
+        valoresCalculados[registroId] = {
+          preco_custo: preco,
+          valor_total: valorTotal
+        };
+
+        // Atualiza totais
+        atualizarTotais();
+      }
+
+      function atualizarTotais() {
+        // Atualizar total por comissionado
+        const totaisPorComissionado = {};
+
+        // Calcular totais por comissionado
+        Object.keys(valoresCalculados).forEach(registroId => {
+          const row = document.querySelector(`tr[data-id="${registroId}"]`);
+          if (row) {
+            const comissionadoSection = row.closest('.mb-4.p-3.border.rounded');
+            if (comissionadoSection) {
+              const totalSpan = comissionadoSection.querySelector('[id^="total-comissionado-"]');
+              if (totalSpan) {
+                const comissionadoId = totalSpan.id.replace('total-comissionado-', '');
+                if (!totaisPorComissionado[comissionadoId]) {
+                  totaisPorComissionado[comissionadoId] = 0;
+                }
+                totaisPorComissionado[comissionadoId] += valoresCalculados[registroId].valor_total;
+              }
+            }
+          }
+        });
+
+        // Atualizar displays dos totais por comissionado
+        Object.keys(totaisPorComissionado).forEach(comissionadoId => {
+          const span = document.getElementById(`total-comissionado-${comissionadoId}`);
+          if (span) {
+            span.textContent = 'Total: ' + formatarMoeda(totaisPorComissionado[comissionadoId]);
+          }
+        });
+
+        // Atualizar total geral
+        let totalGeral = 0;
+        Object.values(valoresCalculados).forEach(item => {
+          totalGeral += item.valor_total;
+        });
+
+        const totalPagarEl = document.getElementById('total-pagar');
+        if (totalPagarEl) {
+          totalPagarEl.textContent = formatarMoeda(totalGeral);
+        }
+
+        // Atualizar campo hidden com os valores para envio
+        document.getElementById('valores-calculados-input').value = JSON.stringify(valoresCalculados);
+      }
+
+      // Event listeners para campos de preço
+      document.querySelectorAll('.campo-preco-comissao').forEach(input => {
+        const registroId = input.dataset.registroId;
+
+        // Calcular valor inicial
+        calcularValorRegistro(registroId);
+
+        // Event listeners
+        input.addEventListener('input', () => calcularValorRegistro(registroId));
+        input.addEventListener('blur', () => calcularValorRegistro(registroId));
+      });
+
+      // Configurar data padrão
+      const dataInput = document.getElementById('dataLiquidacao');
+      if (!dataInput.value) {
+        const hoje = new Date();
+        const year = hoje.getFullYear();
+        const month = String(hoje.getMonth() + 1).padStart(2, '0');
+        const day = String(hoje.getDate()).padStart(2, '0');
+        dataInput.value = `${year}-${month}-${day}`;
+      }
+
+      // Inicializar totais
+      atualizarTotais();
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

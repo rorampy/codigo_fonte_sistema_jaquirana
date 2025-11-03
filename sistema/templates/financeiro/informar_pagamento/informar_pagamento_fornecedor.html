@@ -1,0 +1,777 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle text-muted">Financeiro</div>
+          <h2 class="page-title fw-bold display-6">Confirmação de Faturamento</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if conciliar_transacao_id %}
+  {% set titulo_pagina = "fornecedor" %}
+  {% include 'financeiro/importar_ofx/dados_conciliacao_component.html' %}
+  {% endif %}
+
+  <div class="py-4">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="row row-cards mb-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-blue text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-currency-dollar" width="24"
+                  height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                  <path d="M12 3v3m0 12v3" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Crédito Disponível</div>
+                <div class="fs-3 fw-bold text-blue mt-1" id="credito-disponivel">{{saldo_credito |
+                  formatar_float_para_brl}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-orange text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-moneybag-move">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path
+                    d="M9.5 3h5a1.5 1.5 0 0 1 1.5 1.5a3.5 3.5 0 0 1 -3.5 3.5h-1a3.5 3.5 0 0 1 -3.5 -3.5a1.5 1.5 0 0 1 1.5 -1.5" />
+                  <path d="M12.5 21h-4.5a4 4 0 0 1 -4 -4v-1a8 8 0 0 1 14.946 -3.971" />
+                  <path d="M16 19h6" />
+                  <path d="M19 16l3 3l-3 3" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Total a Faturar</div>
+                <div class="fs-3 fw-bold text-orange mt-1" id="total-faturar">{{registro.valor_total_a_pagar_100 |
+                  formatar_float_para_brl}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-red text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-alert-square-rounded">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" />
+                  <path d="M12 8v4" />
+                  <path d="M12 16h.01" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Saldo Restante</div>
+                <div class="fs-3 fw-bold text-red mt-1" id="saldo-restante">{{(saldo_credito -
+                  registro.valor_total_a_pagar_100) | formatar_float_para_brl}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-header bg-light fw-bold">Informações Gerais</div>
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-md-2">
+              <label class="form-label">Fornecedor</label>
+              <input type="text" class="form-control"
+                value="{{ registro_operacional.solicitacao.fornecedor.identificacao if registro_operacional.solicitacao and registro_operacional.solicitacao.fornecedor else '' }}"
+                disabled readonly>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Transportadora</label>
+              <input type="text" class="form-control"
+                value="{{ registro.solicitacao.transportadora_exibicao.identificacao if registro.solicitacao and registro.solicitacao.transportadora_exibicao else '' }}"
+                disabled readonly>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Produto/Bitola</label>
+              <input type="text" class="form-control"
+                value="{% if registro.solicitacao and registro.solicitacao.produto and registro.solicitacao.bitola %}{{ registro.solicitacao.produto.nome }} | {{ registro.solicitacao.bitola.bitola }}{% else %}{% endif %}"
+                disabled readonly>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Preço Custo</label>
+              <input type="text" id="preco-custo" class="form-control campo-moeda-brl"
+                value="{{ registro.preco_custo_bitola_100 | default(0) | formatar_float_para_brl }}">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Peso Ton.</label>
+              <input type="text" id="peso-toneladas" class="form-control"
+                value="{{ registro_operacional.peso_liquido_ticket or 0 }}" disabled readonly>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Valor a faturar</label>
+              <input type="text" id="valor-faturar-input" class="form-control"
+                value="{{ registro.valor_total_a_pagar_100 | default(0) | formatar_float_para_brl }}" disabled readonly>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form action="{{ url_for('fornecedor_a_pagar', id=registro.id) }}" method="POST">
+        <input type="hidden" name="valor_total_calculado" id="valor-total-hidden">
+        <input type="hidden" name="preco_custo_atualizado" id="preco-custo-hidden">
+
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-body">
+
+            <div class="row">
+              <div class="col-sm-6 col-md-6">
+                <div class="mb-3">
+                  <div class="form-label">Deseja utilizar o crédito disponível?</div>
+                  <div>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="usar_credito" value="sim" {% if
+                        dados_corretos['usar_credito']=='sim' %}checked{% endif %}>
+                      <span class="form-check-label">Sim</span>
+                    </label>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="usar_credito" value="nao" {% if
+                        dados_corretos['usar_credito']=='nao' or not dados_corretos['usar_credito'] %}checked{% endif
+                        %}>
+                      <span class="form-check-label">Não</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {% if saldo_credito != 0 or creditos_individuais %}
+            <!-- Seção de seleção de créditos individuais (aparece quando seleciona "Sim") -->
+            {% if creditos_individuais %}
+            <div id="secao-selecao-creditos" class="mb-4" style="display: none;">
+              <div class="card shadow-sm border-0" style="border-left: 4px solid #1B5E20 !important;">
+                <div class="card-header"
+                  style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 1px solid #dee2e6;">
+                  <div class="d-flex align-items-center">
+                    <div class="rounded-circle me-3 d-flex align-items-center justify-content-center"
+                      style="width: 32px; height: 32px; background: #1B5E20;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h6 class="card-title mb-0 fw-bold" style="color: #1B5E20;">
+                        Selecionar Créditos - {{ registro_operacional.solicitacao.fornecedor.identificacao if registro_operacional.solicitacao and registro_operacional.solicitacao.fornecedor else 'Fornecedor' }}
+                      </h6>
+                      <small class="text-muted">{{ creditos_individuais|length }} crédito(s) disponível(is)</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                      <thead style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        <tr>
+                          <th width="50" class="text-center">
+                            <input type="checkbox" class="form-check-input" id="select-all-creditos">
+                          </th>
+                          <th class="fw-bold text-center text-muted">Data</th>
+                          <th class="fw-bold text-center text-muted">Descrição</th>
+                          <th class="fw-bold text-center text-muted">Valor</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for credito in creditos_individuais %}
+                        <tr class="hover-row" style="border-bottom: 1px solid #f1f3f4;">
+                          <td class="text-center">
+                            <input type="checkbox" class="form-check-input credito-checkbox"
+                              name="creditos_selecionados" value="{{ credito.id }}"
+                              data-valor="{{ credito.valor_credito_100 }}">
+                          </td>
+                          <td class="text-center text-muted">{{ credito.data_movimentacao }}</td>
+                          <td class="text-center">{{ credito.descricao }}</td>
+                          <td class="text-center">
+                            {% if credito.valor_credito_100 < 0 %}
+                            <b style="color: #dc3545;">{{ credito.valor_credito_100 | formatar_float_para_brl}} <small>(Débito)</small></b>
+                            {% else %}
+                            <b style="color: #1B5E20;">{{ credito.valor_credito_100 | formatar_float_para_brl}} <small>(Crédito)</small></b>
+                            {% endif %}
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                      <tfoot
+                        style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 2px solid #dee2e6;">
+                        <tr>
+                          <td colspan="3" class="text-start fw-bold" style="color: #1B5E20;">Total Selecionado:</td>
+                          <td class="text-end">
+                            <span class="badge fs-6" style="background: #1B5E20; color: white;" id="total-creditos-selecionados">R$ 0,00</span>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            {% if saldo_credito != 0 and not creditos_individuais %}
+            <!-- Seção quando há saldo mas não há créditos individuais -->
+            <div id="secao-credito-total" class="mb-4" style="display: none;">
+              <div class="card shadow-sm border-0" style="border-left: 4px solid #1B5E20 !important;">
+                <div class="card-header" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                  <div class="d-flex align-items-center">
+                    <div class="rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #1B5E20;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h6 class="card-title mb-0 fw-bold" style="color: #1B5E20;">
+                        Usar Saldo Total - {{ registro_operacional.solicitacao.fornecedor.identificacao if registro_operacional.solicitacao and registro_operacional.solicitacao.fornecedor else 'Fornecedor' }}
+                      </h6>
+                      <small class="text-muted">Saldo disponível: {{ saldo_credito | formatar_float_para_brl }}</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="alert alert-info mb-0">
+                    <div class="d-flex align-items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="m9 12 2 2 4-4"/>
+                      </svg>
+                      <div>
+                        {% if saldo_credito < 0 %}
+                        <strong>Débito Detectado:</strong> O saldo negativo de {{ saldo_credito | formatar_float_para_brl }} será adicionado ao valor total a faturar.
+                        {% else %}
+                        <strong>Crédito Disponível:</strong> O saldo de {{ saldo_credito | formatar_float_para_brl }} será usado para reduzir o valor a faturar.
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Seção do resumo de créditos (aparece quando seleciona "Sim") -->
+            <div id="resumo-creditos" class="mb-4" style="display: none;">
+
+              <!-- Header moderno -->
+              <div class="card border-0 shadow-sm" style="border-radius: 5px; overflow: hidden;">
+                <div class="card-header border-0 text-white position-relative"
+                  style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 24px;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                      <div class="rounded-circle me-3 d-flex align-items-center justify-content-center"
+                        style="width: 48px; height: 48px; background: rgba(255,255,255,0.2);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 class="mb-1 fw-bold">Resumo Final</h4>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card-body p-0">
+                  <!-- Seção Principal: Cards lado a lado -->
+                  <div class="row g-0">
+
+                    <!-- Fornecedores -->
+                    <div class="col-12">
+                      <div class="p-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+
+                        <!-- Cards dos fornecedores -->
+                        <div class="space-y-3">
+                          <div class="card border-0 shadow-sm mb-3" style="border-radius: 5px; background: white;">
+                            <div class="card-body p-3">
+                              <div class="row align-items-center">
+                                <div class="col-12">
+                                  <h6 class="mb-1 fw-bold" style="color: #1B5E20; font-size: 0.95rem;">
+                                    {{ registro_operacional.solicitacao.fornecedor.identificacao if
+                                    registro_operacional.solicitacao and registro_operacional.solicitacao.fornecedor
+                                    else
+                                    'Fornecedor não identificado' | truncate(25, True, '...') }}
+                                  </h6>
+                                  <div class="row text-center mt-2">
+                                    <div class="col-4">
+                                      <div class="small text-muted">Crédito</div>
+                                      <div class="fw-bold small" style="color: #1B5E20;" id="resumo-credito-fornecedor">
+                                        {{
+                                        saldo_credito | formatar_float_para_brl }}</div>
+                                    </div>
+                                    <div class="col-4">
+                                      <div class="small text-muted">A Faturar</div>
+                                      <div class="fw-bold small text-dark" id="resumo-valor-fornecedor">{{
+                                        registro.valor_total_a_pagar_100 |
+                                        formatar_float_para_brl }}</div>
+                                    </div>
+                                    <div class="col-4" id="resumo-status-fornecedor">
+                                      {% set diferenca = saldo_credito - registro.valor_total_a_pagar_100 %}
+                                      {% if diferenca >= 0 %}
+                                      <div class="small fw-bold text-success">COBERTO</div>
+                                      {% else %}
+                                      <div class="small fw-bold text-warning">FALTA</div>
+                                      <div class="small text-warning">{{ (diferenca * -1) | formatar_float_para_brl }}
+                                      </div>
+                                      {% endif %}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Resumo Final Moderno -->
+                  <div class="border-top bg-light">
+                    <div class="p-4">
+
+                      <!-- Título do resumo -->
+                      <div class="text-center mb-4">
+                        <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center"
+                          style="width: 48px; height: 48px; background: #f8f9fa; border: 2px solid #dee2e6;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-script">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path
+                              d="M17 20h-11a3 3 0 0 1 0 -6h11a3 3 0 0 0 0 6h1a3 3 0 0 0 3 -3v-11a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v8" />
+                          </svg>
+                        </div>
+                        <h5 class="mb-0 text-dark">RESULTADO FINAL</h5>
+                      </div>
+
+                      <!-- Cards do resumo matemático -->
+                      <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                          <div class="card border shadow-sm"
+                            style="border-radius: 12px;">
+                            <div class="card-body p-3 text-center">
+                              <div class="small text-muted text-uppercase mb-1">Total a Faturar</div>
+                              <h4 class="fw-bold mb-0" id="resumo-total-pagar">{{ registro.valor_total_a_pagar_100 |
+                                formatar_float_para_brl }}</h4>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="card border shadow-sm"
+                            style="border-radius: 12px;">
+                            <div class="card-body p-3 text-center">
+                              <div class="small text-muted text-uppercase mb-1">Créditos Totais</div>
+                              <h4 class="fw-bold mb-0" id="resumo-creditos-totais">{{ saldo_credito |
+                                formatar_float_para_brl }}</h4>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="card border shadow-sm text-center" id="resumo-saldo-final-card"
+                            style="border-radius: 12px;">
+                            <div class="card-body p-3">
+                              <div class="small text-muted text-uppercase mb-1" id="resumo-saldo-final-label">Saldo
+                                Final a Faturar</div>
+                              <h4 class="fw-bold mb-0 text-danger" id="resumo-saldo-final">-{{ registro.valor_total_a_pagar_100 |
+                                formatar_float_para_brl }}</h4>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="text-end">
+              <a class="btn btn-primary" href="javascript:history.back()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l14 0" />
+                  <path d="M5 12l6 6" />
+                  <path d="M5 12l6 -6" />
+                </svg>Voltar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M12 5l0 14" />
+                  <path d="M5 12l14 0" />
+                </svg>Salvar
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <style>
+    .hover-row:hover {
+      background-color: #f8f9fa !important;
+      transition: background-color 0.2s ease;
+    }
+
+    /* Estilos da tabela de créditos - igual ao pagamento em massa */
+    #secao-selecao-creditos .table {
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    #secao-selecao-creditos .table td,
+    #secao-selecao-creditos .table th {
+      border: none;
+      padding: 12px 16px;
+      vertical-align: middle;
+    }
+
+    #secao-selecao-creditos .form-check-input {
+      transform: scale(1.1);
+    }
+
+    #secao-selecao-creditos .badge {
+      font-size: 0.85rem;
+      padding: 0.4em 0.8em;
+    }
+    
+    .table td {
+      vertical-align: middle;
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const precoCustoInput = document.getElementById('preco-custo');
+      const pesoInput = document.getElementById('peso-toneladas');
+      const valorFaturarInput = document.getElementById('valor-faturar-input');
+      const valorTotalHidden = document.getElementById('valor-total-hidden');
+      const precoCustoHidden = document.getElementById('preco-custo-hidden');
+      const totalFaturarEl = document.getElementById('total-faturar');
+      const saldoRestanteEl = document.getElementById('saldo-restante');
+      const creditoDisponivel = parseFloat('{{ (saldo_credito|default(0) / 100)|round(2) }}');
+
+      function extrairValorNumerico(valorMascarado) {
+        if (!valorMascarado) return 0;
+        return parseFloat(valorMascarado.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+      }
+
+      function formatarMoeda(valor) {
+        return valor.toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        });
+      }
+
+      function calcularValores() {
+        const precoCusto = extrairValorNumerico(precoCustoInput.value);
+        const peso = parseFloat(pesoInput.value) || 0;
+        const valorTotal = precoCusto * peso;
+
+        valorTotalHidden.value = valorTotal.toFixed(2);
+        precoCustoHidden.value = precoCusto.toFixed(2);
+
+        const valorFormatado = formatarMoeda(valorTotal);
+        valorFaturarInput.value = valorFormatado;
+        totalFaturarEl.textContent = valorFormatado;
+
+        const saldoRestante = creditoDisponivel - valorTotal;
+        saldoRestanteEl.textContent = formatarMoeda(saldoRestante);
+
+        atualizarResumoCredito(valorTotal);
+      }
+
+      function atualizarResumoCredito(valorTotal) {
+        const resumoTotalFaturar = document.getElementById('resumo-total-faturar');
+        const resumoSaldoFinal = document.getElementById('resumo-saldo-final');
+        const resumoValorFornecedor = document.getElementById('resumo-valor-fornecedor');
+        const resumoStatusFornecedor = document.getElementById('resumo-status-fornecedor');
+        const radioSim = document.querySelector('input[name="usar_credito"][value="sim"]');
+
+        if (resumoTotalFaturar) resumoTotalFaturar.textContent = formatarMoeda(valorTotal);
+        if (resumoValorFornecedor) resumoValorFornecedor.textContent = formatarMoeda(valorTotal);
+
+        if (radioSim && radioSim.checked) {
+          // Se usar crédito, recalcular com base nos créditos selecionados ou saldo disponível
+          calcularCreditosSelecionadosIndividuais();
+        } else {
+          // Não usar crédito: valor total negativo
+          if (resumoSaldoFinal) resumoSaldoFinal.textContent = formatarMoeda(-valorTotal);
+
+          if (resumoStatusFornecedor) {
+            resumoStatusFornecedor.innerHTML = '<div class="small fw-bold text-info">SEM CRÉDITO</div>';
+          }
+        }
+      }
+
+      // Funções de seleção de créditos individuais
+      function toggleAllCreditosIndividuais() {
+        const selectAllCheckbox = document.getElementById('select-all-creditos');
+        const creditoCheckboxes = document.querySelectorAll('.credito-checkbox');
+        
+        console.log('Toggle all - Estado:', selectAllCheckbox.checked); // Debug
+        
+        creditoCheckboxes.forEach(checkbox => {
+          checkbox.checked = selectAllCheckbox.checked;
+        });
+        
+        calcularCreditosSelecionadosIndividuais();
+      }
+
+      function calcularCreditosSelecionadosIndividuais() {
+        const creditoCheckboxes = document.querySelectorAll('.credito-checkbox:checked');
+        const allCheckboxes = document.querySelectorAll('.credito-checkbox');
+        let totalSelecionado = 0;
+        
+        // Se há checkboxes de créditos individuais e algum está selecionado
+        if (allCheckboxes.length > 0) {
+          creditoCheckboxes.forEach(checkbox => {
+            const valor = parseFloat(checkbox.getAttribute('data-valor')) / 100;
+            console.log('Valor do checkbox:', valor); // Debug
+            totalSelecionado += valor;
+          });
+        } else {
+          // Se não há checkboxes individuais, usar o saldo disponível total
+          totalSelecionado = creditoDisponivel;
+        }
+        
+        console.log('Total selecionado:', totalSelecionado); // Debug
+        
+        // Atualizar display do total selecionado
+        const totalElement = document.getElementById('total-creditos-selecionados');
+        if (totalElement) {
+          totalElement.textContent = formatarMoeda(totalSelecionado);
+        }
+        
+        // Atualizar campos do resumo
+        atualizarResumoComCreditosSelecionados(totalSelecionado);
+      }
+
+      function atualizarResumoComCreditosSelecionados(creditosSelecionados) {
+        const resumoCreditoFornecedor = document.getElementById('resumo-credito-fornecedor');
+        const resumoCreditosTotais = document.getElementById('resumo-creditos-totais');
+        const resumoSaldoFinal = document.getElementById('resumo-saldo-final');
+        const resumoSaldoFinalLabel = document.getElementById('resumo-saldo-final-label');
+        const resumoStatusFornecedor = document.getElementById('resumo-status-fornecedor');
+        const resumoTotalPagar = document.getElementById('resumo-total-pagar');
+        
+        const valorTotal = parseFloat(valorTotalHidden.value) || 0;
+        
+        console.log('Atualizando resumo - Créditos:', creditosSelecionados, 'Valor Total:', valorTotal); // Debug
+        
+        // Atualizar valor total a pagar no resumo
+        if (resumoTotalPagar) {
+          resumoTotalPagar.textContent = formatarMoeda(valorTotal);
+        }
+        
+        // Atualizar créditos no resumo
+        if (resumoCreditoFornecedor) {
+          resumoCreditoFornecedor.textContent = formatarMoeda(creditosSelecionados);
+        }
+        if (resumoCreditosTotais) {
+          resumoCreditosTotais.textContent = formatarMoeda(creditosSelecionados);
+        }
+        
+        // Calcular saldo final (permite créditos negativos)
+        const saldoFinal = valorTotal - creditosSelecionados;
+        
+        if (resumoSaldoFinal) {
+          resumoSaldoFinal.textContent = formatarMoeda(saldoFinal);
+        }
+        
+        // Atualizar o valor "A Faturar" com o saldo final
+        const resumoValorFornecedor = document.getElementById('resumo-valor-fornecedor');
+        if (resumoValorFornecedor) {
+          resumoValorFornecedor.textContent = formatarMoeda(saldoFinal);
+        }
+        
+        // Atualizar status (considera créditos negativos como débitos que aumentam o valor)
+        if (resumoStatusFornecedor) {
+          if (creditosSelecionados < 0) {
+            // Crédito negativo (débito) - aumenta o valor a faturar
+            const valorAdicional = Math.abs(creditosSelecionados);
+            resumoStatusFornecedor.innerHTML = `
+              <div class="small fw-bold text-warning">DÉBITO</div>
+              <div class="small text-warning">+${formatarMoeda(valorAdicional)}</div>
+            `;
+          } else if (creditosSelecionados >= valorTotal) {
+            // Crédito positivo suficiente
+            resumoStatusFornecedor.innerHTML = '<div class="small fw-bold text-success">COBERTO</div>';
+          } else {
+            // Crédito positivo insuficiente
+            const falta = valorTotal - creditosSelecionados;
+            resumoStatusFornecedor.innerHTML = `
+              <div class="small fw-bold text-warning">FALTA</div>
+              <div class="small text-warning">${formatarMoeda(falta)}</div>
+            `;
+          }
+        }
+      }
+
+      function alternarResumo() {
+        const radioSim = document.querySelector('input[name="usar_credito"][value="sim"]');
+        const radioNao = document.querySelector('input[name="usar_credito"][value="nao"]');
+        const resumoCreditos = document.getElementById('resumo-creditos');
+        const secaoSelecaoCreditos = document.getElementById('secao-selecao-creditos');
+        const secaoCreditoTotal = document.getElementById('secao-credito-total');
+
+        if (radioSim && radioSim.checked) {
+          // Mostrar seção de seleção de créditos individuais (se existir)
+          if (secaoSelecaoCreditos) {
+            secaoSelecaoCreditos.style.display = 'block';
+            secaoSelecaoCreditos.style.opacity = '0';
+            secaoSelecaoCreditos.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+              secaoSelecaoCreditos.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+              secaoSelecaoCreditos.style.opacity = '1';
+              secaoSelecaoCreditos.style.transform = 'translateY(0)';
+            }, 10);
+          }
+
+          // Mostrar seção de crédito total (se existir e não há créditos individuais)
+          if (secaoCreditoTotal) {
+            secaoCreditoTotal.style.display = 'block';
+            secaoCreditoTotal.style.opacity = '0';
+            secaoCreditoTotal.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+              secaoCreditoTotal.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+              secaoCreditoTotal.style.opacity = '1';
+              secaoCreditoTotal.style.transform = 'translateY(0)';
+            }, 10);
+          }
+
+          // Mostrar resumo de créditos
+          if (resumoCreditos) {
+            setTimeout(() => {
+              resumoCreditos.style.display = 'block';
+              resumoCreditos.style.opacity = '0';
+              resumoCreditos.style.transform = 'translateY(20px)';
+
+              setTimeout(() => {
+                resumoCreditos.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                resumoCreditos.style.opacity = '1';
+                resumoCreditos.style.transform = 'translateY(0)';
+              }, 10);
+            }, 200);
+          }
+        } else {
+          // Ocultar todas as seções
+          if (secaoSelecaoCreditos) {
+            secaoSelecaoCreditos.style.transition = 'all 0.3s ease-out';
+            secaoSelecaoCreditos.style.opacity = '0';
+            secaoSelecaoCreditos.style.transform = 'translateY(-20px)';
+
+            setTimeout(() => {
+              secaoSelecaoCreditos.style.display = 'none';
+            }, 300);
+          }
+
+          if (secaoCreditoTotal) {
+            secaoCreditoTotal.style.transition = 'all 0.3s ease-out';
+            secaoCreditoTotal.style.opacity = '0';
+            secaoCreditoTotal.style.transform = 'translateY(-20px)';
+
+            setTimeout(() => {
+              secaoCreditoTotal.style.display = 'none';
+            }, 300);
+          }
+
+          if (resumoCreditos) {
+            resumoCreditos.style.transition = 'all 0.3s ease-out';
+            resumoCreditos.style.opacity = '0';
+            resumoCreditos.style.transform = 'translateY(-20px)';
+
+            setTimeout(() => {
+              resumoCreditos.style.display = 'none';
+            }, 300);
+          }
+        }
+
+        const valorAtual = parseFloat(valorTotalHidden.value) || 0;
+        atualizarResumoCredito(valorAtual);
+      }
+
+      // Event listeners
+      precoCustoInput.addEventListener('input', calcularValores);
+      precoCustoInput.addEventListener('blur', calcularValores);
+
+      document.querySelectorAll('input[name="usar_credito"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+          alternarResumo();
+          const valorAtual = parseFloat(valorTotalHidden.value) || 0;
+          atualizarResumoCredito(valorAtual);
+        });
+      });
+
+      // Event listeners para checkboxes de crédito
+      document.querySelectorAll('.credito-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          calcularCreditosSelecionadosIndividuais();
+          // Atualizar o estado do checkbox "selecionar todos"
+          const selectAllCheckbox = document.getElementById('select-all-creditos');
+          const allCheckboxes = document.querySelectorAll('.credito-checkbox');
+          const checkedCheckboxes = document.querySelectorAll('.credito-checkbox:checked');
+          
+          if (selectAllCheckbox) {
+            selectAllCheckbox.checked = allCheckboxes.length === checkedCheckboxes.length;
+          }
+        });
+      });
+
+      // Event listener para o checkbox "Selecionar Todos"
+      const selectAllCheckbox = document.getElementById('select-all-creditos');
+      if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+          toggleAllCreditosIndividuais();
+        });
+      }
+
+      // Inicialização
+      calcularValores();
+      alternarResumo();
+
+      // Força atualização inicial do resumo e cálculo de créditos
+      setTimeout(() => {
+        const valorAtual = parseFloat(valorTotalHidden.value) || 0;
+        atualizarResumoCredito(valorAtual);
+        calcularCreditosSelecionadosIndividuais();
+      }, 100);
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

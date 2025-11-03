@@ -1,0 +1,66 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+    {% if current_user.role_id == 1 %}
+    <!-- Page header -->
+      <div class="page-header d-print-none">
+        <div class="container-xl">
+            
+            <!-- Page title actions -->
+            <div class="row justify-content-center">
+              <div class="col-lg-10 col-xl-9">
+                <div class="d-flex">
+                  <a href="{{ url_for('changelog_cadastrar') }}" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" 
+                      viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" 
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                      <path d="M12 5l0 14" />
+                      <path d="M5 12l14 0" />
+                    </svg>
+                    Novo Registro
+                  </a>
+                </div>
+              </div>
+            </div>
+          
+        </div>
+      </div> 
+    {% endif %} 
+
+    <!-- Page body -->
+    <div class="page-body">
+      <div class="container-xl">
+        <div class="row justify-content-center">
+          <div class="col-lg-10 col-xl-9">
+
+            {% include 'estrutura/mensagens_flash.html' %}
+
+            <div class="card card-lg">
+              <div class="card-body markdown">
+                <h1>Changelog</h1>
+
+                {% for changelog in changelog_sistema %}
+                  <div class="mb-4">
+                    <h2 class="mb-2">
+                      <span>Versão {{ changelog.versao }}</span> –
+                      <small>{{ changelog.data_lancamento }}</small>
+                    </h2>
+                    {{ changelog.conteudo | safe }}
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    {% include 'estrutura/footer.html' %}
+    
+</div>
+
+
+{% endblock conteudo %}

@@ -1,0 +1,222 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle text-muted">Faturamento</div>
+          <h2 class="page-title fw-bold display-6">Confirmação de Faturamento</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="py-4">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="row row-cards mb-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-success text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-currency-dollar">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                  <path d="M12 3v3m0 12v3" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Valor a Faturar</div>
+                <div class="fs-3 fw-bold text-success mt-1" id="valor-receber">
+                  {{ registro.valor_total | default(0) | formatar_float_para_brl }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-blue text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-building-bank">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M3 21l18 0" />
+                  <path d="M3 10l18 0" />
+                  <path d="M5 6l7 -3l7 3" />
+                  <path d="M4 10l0 11" />
+                  <path d="M20 10l0 11" />
+                  <path d="M8 14l0 3" />
+                  <path d="M12 14l0 3" />
+                  <path d="M16 14l0 3" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Cliente</div>
+                <div class="fs-3 fw-bold text-blue mt-1" id="saldo-atual">
+                  {{ registro.cliente.identificacao or '-' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-teal text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-trending-up">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M3 17l6 -6l4 4l8 -8" />
+                  <path d="M14 7l7 0l0 7" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Situação</div>
+                <div class="fs-3 fw-bold">
+                  {{ registro.situacao.situacao }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela com os registros operacionais -->
+      {% if registro.registro_servico %}
+      <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-vcenter table-hover mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th class="text-center text-primary">Data Emissão</th>
+                  <th class="text-center text-primary">Número NFS-e</th>
+                  <th class="text-center">Discriminação</th>
+                  <th class="text-center">Valor Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-center fw-bold text-primary">
+                    {{ registro.registro_servico.data_emissao | formatar_data_para_brl if
+                    registro.registro_servico.data_emissao else '-' }}
+                  </td>
+                  <td class="text-center fw-bold text-primary">
+                    {{ registro.numero_nota_fiscal}}
+                  </td>
+                  <td class="text-center">
+                    {{ registro.registro_servico.discriminacao_servico | truncate(53, '...') if
+                    registro.registro_servico.discriminacao_servico
+                    else '-' }} <br>
+                    {{ registro.registro_servico.carregamento_discriminacao if
+                    registro.registro_servico.carregamento_discriminacao else '-' }}
+                  </td>
+                  <td class="text-center">
+                    {{ registro.valor_total | formatar_float_para_brl}}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <form action="{{ url_for('informar_faturamento_nf_servico', id=registro.id) }}" method="POST"
+        enctype="multipart/form-data">
+        <input type="hidden" name="valor_total_calculado" id="valor-total-hidden"
+          value="{{ registro.valor_total_recebimento_100 | default(0) }}">
+
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-header bg-light fw-bold">Informar Faturamento</div>
+          <div class="card-body">
+            <div class="text-end mt-4">
+              <a class="btn btn-outline-secondary" href="javascript:history.back()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l14 0" />
+                  <path d="M5 12l6 6" />
+                  <path d="M5 12l6 -6" />
+                </svg>
+                Voltar
+              </a>
+              <button type="submit" class="btn btn-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l5 5l10 -10" />
+                </svg>
+                Confirmar Faturamento
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Aplica a máscara de moeda
+      if (typeof aplicarMascaraMoeda === 'function') {
+        aplicarMascaraMoeda();
+      }
+
+      // Gerencia mudanças no valor total
+      const valorTotalInput = document.getElementById('valor-total-input');
+      const valorTotalHidden = document.getElementById('valor-total-hidden');
+      const valorReceberDisplay = document.getElementById('valor-receber');
+      const saldoFuturoDisplay = document.getElementById('saldo-futuro');
+
+      valorTotalInput.addEventListener('input', function () {
+        const valorFormatado = this.value;
+
+        // Função robusta para converter BRL para centavos (considera negativos e centavos)
+        function brlToCents(str) {
+          if (!str) return 0;
+          // Remove R$, espaços, etc
+          str = str.replace(/[^\d,\.-]/g, '');
+          // Troca ponto por nada e vírgula por ponto
+          str = str.replace(/\./g, '').replace(/,/g, '.');
+          // Trata negativo
+          let val = parseFloat(str);
+          if (isNaN(val)) return 0;
+          return Math.round(val * 100);
+        }
+
+        const valorEmCentavos = brlToCents(valorFormatado);
+        valorTotalHidden.value = valorEmCentavos;
+        valorReceberDisplay.textContent = formatarMoeda(valorEmCentavos);
+
+        // Atualiza o card "Saldo Após Recebimento" se há saldo atual
+        const saldoAtualText = document.getElementById('saldo-atual').textContent;
+        const saldoAtualCentavos = brlToCents(saldoAtualText);
+        saldoFuturoDisplay.textContent = formatarMoeda(saldoAtualCentavos + valorEmCentavos);
+      });
+
+      function formatarMoeda(valor) {
+        return (valor / 100).toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        });
+      }
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

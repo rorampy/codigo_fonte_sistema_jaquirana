@@ -1,0 +1,120 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            EMPRESA EMISSORA
+          </div>
+          <h2 class="page-title">
+            Cadastrar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="#"
+          method="POST">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-sm-6 col-md-8">
+                <div class="mb-3">
+                  <label class="form-label required">Razão
+                    Social</label>
+                  <input type="text" name="razaoSocial"
+                    value="{{ dados_corretos['razaoSocial'] }}"
+                    class="form-control {% if 'razaoSocial' in campos_obrigatorios or 'razaoSocial' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'razaoSocial' in
+                    campos_obrigatorios %}
+                    {{ campos_obrigatorios['razaoSocial'] }}
+                    {% elif 'razaoSocial' in campos_erros %}
+                    {{ campos_erros['razaoSocial'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label
+                    class="form-label required">CNPJ</label>
+                  <input type="text" name="cnpj"
+                    value="{{ dados_corretos['cnpj'] }}"
+                    data-mask="00.000.000/0000-00"
+                    placeholder="xx.xxx.xxx/xxxx-xx"
+                    data-mask-visible="true"
+                    autocomplete="off"
+                    class="form-control {% if 'cnpj' in campos_obrigatorios or 'cnpj' in campos_erros %}
+                          is-invalid
+                        {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'cnpj' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['cnpj'] }}
+                    {% elif 'cnpj' in campos_erros %}
+                    {{ campos_erros['cnpj'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="#"
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-arrow-left"
+                width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-plus"
+                width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+
+</div>
+
+{% endblock conteudo %}

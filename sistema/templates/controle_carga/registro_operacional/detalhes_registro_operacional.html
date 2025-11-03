@@ -1,0 +1,649 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<style>
+  .pulse-card {
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 rgba(220, 53, 69, 0.5);
+    }
+
+    50% {
+      transform: scale(1.02);
+      box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+    }
+
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 rgba(220, 53, 69, 0.5);
+    }
+  }
+</style>
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row align-items-center">
+        <div class="col">
+          <div class="page-pretitle text-muted text-uppercase fs-sm fw-medium">Registro
+            Operacional</div>
+          <h2 class="page-title mb-0">Detalhes</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      {% if registro.solicitacao_nf_id and registro.arquivo_ticket_id %}
+      <!-- Divergências -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card rounded-3 overflow-hidden">
+            <div class="card-header bg-primary-subtle border-bottom-0">
+              <h3 class="card-title mb-0 fs-4 text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-search">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                  <path d="M21 21l-6 -6" />
+                </svg>
+                Diagnóstico de Divergências
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                {% set placa_solicitacao =
+                registro.solicitacao.veiculo.placa_veiculo if
+                registro.solicitacao and registro.solicitacao.veiculo else '' %}
+                {% set ticketEmitido = registro.solicitacao.ticket_emitido %}
+                {% set fornecedorId = registro.solicitacao.fornecedor_id %}
+                {% set florestaId = registro.solicitacao.floresta_id %}
+                {% set placa_ticket = registro.placa_ticket or '' %}
+                {% set motorista_solicitacao =
+                registro.solicitacao.motorista.nome_completo if
+                registro.solicitacao and registro.solicitacao.motorista else ''
+                %}
+                {% set motorista_ticket = registro.motorista_ticket or '' %}
+
+                {% if ticketEmitido and fornecedorId == none and florestaId ==
+                none %}
+                <div class="col-12">
+                  <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center p-3 pulse-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="me-3" width="20" height="20" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path
+                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                      </path>
+                      <line x1="12" y1="9" x2="12" y2="13"></line>
+                      <line x1="12" y1="17" x2="12" y2="17"></line>
+                    </svg>
+                    <strong style="margin-right: 5px;">Atenção: </strong>
+                    lançamento com origem da carga não identificada!
+                  </div>
+                </div>
+
+                {% endif %}
+
+                {% if placa_solicitacao != placa_ticket %}
+                <div class="col-md-6">
+                  <div class="alert alert-danger border-0 shadow-sm p-3 d-flex align-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="me-3">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <path d="M12 18v-6"></path>
+                      <path d="M8 15h8"></path>
+                    </svg>
+                    <div>
+                      <strong class="d-block mb-1">Placa divergente</strong>
+                      <div class="d-flex flex-column">
+                        <span class="text-secondary">Solicitação: <span class="fw-medium">{{ placa_solicitacao
+                            }}</span></span>
+                        <span class="text-secondary">Ticket: <span class="fw-medium">{{ placa_ticket }}</span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+
+                {% if motorista_solicitacao != motorista_ticket %}
+                <div class="col-md-6">
+                  <div class="alert alert-danger border-0 shadow-sm p-3 d-flex align-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="me-3">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <div>
+                      <strong class="d-block mb-1">Motorista divergente</strong>
+                      <div class="d-flex flex-column">
+                        <span class="text-secondary">Solicitação: <span class="fw-medium">{{ motorista_solicitacao
+                            }}</span></span>
+                        <span class="text-secondary">Ticket: <span class="fw-medium">{{ motorista_ticket
+                            }}</span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+
+                {% if placa_solicitacao == placa_ticket and
+                motorista_solicitacao == motorista_ticket %}
+                <div class="col-12">
+                  <div class="alert alert-success border-0 shadow-sm d-flex align-items-center p-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="me-3">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    Nenhuma divergência encontrada entre os dados da solicitação
+                    e o ticket.
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {%endif%}
+
+      {%if registro.solicitacao_nf_id%}
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card rounded-3 overflow-hidden">
+            <div class="card-header bg-secondary-subtle border-bottom-0">
+              <h3 class="card-title mb-0 fs-4 text-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="me-2 align-text-bottom">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Dados da Solicitação
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-lg-3 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="cliente"
+                      value="{{ registro.solicitacao.cliente.identificacao }}" disabled>
+                    <label for="cliente">Cliente</label>
+                  </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="motorista"
+                      value="{{ registro.solicitacao.motorista.nome_completo }}" disabled>
+                    <label for="motorista">Motorista</label>
+                  </div>
+                </div>
+                <div class="col-lg-1 col-md-2">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="placa"
+                      value="{{ registro.solicitacao.veiculo.placa_veiculo }}" disabled>
+                    <label for="placa">Placa</label>
+                  </div>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="transportadora"
+                      value="{{registro.solicitacao.transportadora_exibicao.identificacao}}" disabled>
+                    <label for="transportadora">Transportadora</label>
+                  </div>
+                </div>
+                <div class="col-lg-1 col-md-2">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="bitola"
+                      value="{{ registro.solicitacao.produto.nome }}" disabled>
+                    <label for="produto">Produto</label>
+                  </div>
+                </div>
+                <div class="col-lg-1 col-md-2">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="bitola"
+                      value="{{ registro.solicitacao.bitola.bitola }}" disabled>
+                    <label for="bitola">Bitola</label>
+                  </div>
+                </div>
+                {%if registro.solicitacao.floresta_id != none%}
+                <div class="col-lg-3 col-md-4">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="floresta"
+                      value="{{ registro.solicitacao.floresta.identificacao }}" disabled>
+                    <label for="floresta">Floresta</label>
+                  </div>
+                </div>
+                {%elif registro.solicitacao.fornecedor_id != none%}
+                <div class="col-lg-3 col-md-4">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="fornecedor"
+                      value="{{ registro.solicitacao.fornecedor.identificacao }}" disabled>
+                    <label for="fornecedor">Fornecedor</label>
+                  </div>
+                </div>
+                {%endif%}
+              </div>
+              <div class="mt-4">
+                <a href="{{url_for('editar_solicitacao', id=registro.solicitacao.id)}}"
+                  class="btn btn-outline-secondary">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                    <path d="M13.5 6.5l4 4" />
+                  </svg>
+                  Editar Solicitação
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {%endif%}
+
+      {%if registro.solicitacao.nf_emitida%}
+      <!-- Dados da Nota Fiscal -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card rounded-3 overflow-hidden">
+            <div class="card-header bg-success-subtle border-bottom-0">
+              <h3 class="card-title mb-0 fs-4 text-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="me-2 align-text-bottom">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Dados da {%if registro.carga_frf%}FRF{%else%}Nota Fiscal{%endif%}
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                {%if registro.carga_frf%}
+                <!-- Campos específicos para FRF -->
+                <div class="col-lg-4 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="destinatario"
+                      value="{{ registro.destinatario_nome or '' }}" disabled>
+                    <label for="destinatario">Destinatário</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="cnpj_cpf"
+                      value="{{ registro.destinatario_cnpj_cpf or '' }}" disabled>
+                    <label for="cnpj_cpf">CNPJ/CPF Destinatário</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="numero_nf"
+                      value="{{ registro.numero_nota_fiscal or '' }}" disabled>
+                    <label for="numero_nf">Número FRF</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="data_emissao"
+                      value="{{ registro.destinatario_data_emissao.strftime('%d/%m/%Y') if registro.destinatario_data_emissao else '' }}"
+                      disabled>
+                    <label for="data_emissao">Data Lançamento</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="peso_ton_nf"
+                      value="{{ registro.peso_ton_nf or '' }}" disabled>
+                    <label for="peso_ton_nf">Peso (ton)</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light campo-moeda-brl" id="valor_total"
+                      value="{{ registro.valor_total_nota_100 or '' }}" disabled>
+                    <label for="valor_total">Valor Total</label>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="transportador"
+                      value="{{ registro.transportador_nome or '' }}" disabled>
+                    <label for="transportador">Transportadora</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="cnpj_cpf_transportador"
+                      value="{{ registro.transportador_cnpj_cpf or '' }}" disabled>
+                    <label for="cnpj_cpf_transportador">CNPJ/CPF Transportadora</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="placa_nf" value="{{ registro.placa_nf or '' }}"
+                      disabled>
+                    <label for="placa_nf">Placa</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="motorista_nf"
+                      value="{{ registro.motorista_nf or '' }}" disabled>
+                    <label for="motorista_nf">Motorista</label>
+                  </div>
+                </div>
+                {%else%}
+                <!-- Campos padrão para Nota Fiscal -->
+                <div class="col-lg-4 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="emissor"
+                      value="{{ registro.razao_social_emissor or '' }}" disabled>
+                    <label for="emissor">Emissor</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="numero_nf"
+                      value="{{ registro.numero_nota_fiscal or '' }}" disabled>
+                    <label for="numero_nf">Número NF</label>
+                  </div>
+                </div>
+                <div class="col-lg-1 col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="serie" value="{{ registro.serie_nota or '' }}"
+                      disabled>
+                    <label for="serie">Série</label>
+                  </div>
+                </div>
+                <div class="col-lg-5 col-md-12">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="chave_acesso"
+                      value="{{ registro.chave_acesso or '' }}" disabled>
+                    <label for="chave_acesso">Chave de Acesso</label>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="destinatario"
+                      value="{{ registro.destinatario_nome or '' }}" disabled>
+                    <label for="destinatario">Destinatário</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="cnpj_cpf"
+                      value="{{ registro.destinatario_cnpj_cpf or '' }}" disabled>
+                    <label for="cnpj_cpf">CNPJ/CPF</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="data_emissao"
+                      value="{{ registro.destinatario_data_emissao.strftime('%d/%m/%Y') if registro.destinatario_data_emissao else '' }}"
+                      disabled>
+                    <label for="data_emissao">Data Emissão</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light campo-moeda-brl" id="valor_total"
+                      value="{{ registro.valor_total_nota_100 or '' }}" disabled>
+                    <label for="valor_total">Valor Total</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="peso_ton_nf"
+                      value="{{ registro.peso_ton_nf or '' }}" disabled>
+                    <label for="peso_ton_nf">Peso (ton)</label>
+                  </div>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="insc_estadual"
+                      value="{{ registro.destinatario_insc_estadual or '' }}" disabled>
+                    <label for="insc_estadual">Inscrição Estadual</label>
+                  </div>
+                </div>
+                {%if registro.preco_un_nf%}
+                <div class="col-lg-2 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light campo-moeda-brl" id="insc_estadual"
+                      value="{{ registro.preco_un_nf or '' }}" disabled>
+                    <label for="insc_estadual">Preço Un.</label>
+                  </div>
+                </div>
+                {%endif%}
+                {%endif%}
+              </div>
+              <div class="mt-4">
+                {% if registro.arquivo_nota_id %}
+                <a href="#" class="btn btn-outline-success btn-visualizar-arquivo"
+                  data-url="{%if registro.estorno_nf%}{{ url_for('diretorio_uploads_arquivo_estorno', filename=registro.arquivo_nota_estorno.caminho.split('/')[-1]) }}{%else%}{{ url_for('diretorio_uploads_nota_fiscal', filename=registro.arquivo_nota.caminho.split('/')[-1]) }}{%endif%}"
+                  data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path
+                      d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" />
+                  </svg>
+                  Visualizar {%if registro.carga_frf%}FRF{%else%}NF{%endif%}
+                </a>
+                {% endif %}
+                <a href="{{url_for('editar_emissao', id=registro.id)}}" class="btn btn-outline-success">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                    <path d="M13.5 6.5l4 4" />
+                  </svg>
+                  Editar {%if registro.carga_frf%}FRF{%else%}NF{%endif%}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {%endif%}
+
+      {%if registro.peso_ton_nf_excesso%}
+      <!-- Dados da NFe de Excesso -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card rounded-3 overflow-hidden">
+            <div class="card-header bg-warning-subtle border-bottom-0">
+              <h3 class="card-title mb-0 fs-4 text-warning">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="me-2 align-text-bottom">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                  </path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                NFe de Excesso de Carga
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-lg-3 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="possui_excesso"
+                      value="{{ registro.numero_nota_fiscal_excessao if registro.possui_excesso_carga and registro.numero_nota_fiscal_excessao else '-' }}"
+                      disabled>
+                    <label for="possui_excesso">Número Nota Fiscal Excesso</label>
+                  </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="peso_nf_normal"
+                      value="{{ registro.peso_ton_nf or '0' }}" disabled>
+                    <label for="peso_nf_normal">Peso NF Normal</label>
+                  </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="peso_nf_excesso"
+                      value="{{ registro.peso_ton_nf_excesso or '0' }}" disabled>
+                    <label for="peso_nf_excesso">Peso NFe Excesso</label>
+                  </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light fw-bold" id="peso_total_com_excesso"
+                      value="{{ registro.peso_nf_ton_com_excecao or '0' }}" disabled>
+                    <label for="peso_total_com_excesso">Peso Total (Normal +
+                      Excesso)</label>
+                  </div>
+                </div>
+              </div>
+              {% if registro.arquivo_nota_excesso_id %}
+              <div class="mt-4">
+                <a href="#" class="btn btn-outline-warning btn-visualizar-arquivo"
+                  data-url="{{ url_for('diretorio_uploads_nf_excessao', filename=registro.arquivo_nota_excesso.caminho.split('/')[-1]) }}"
+                  data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path
+                      d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" />
+                  </svg>
+                  Visualizar NFe Excesso
+                </a>
+                <a href="{{url_for('editar_emissao', id=registro.id)}}" class="btn btn-outline-warning">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                    <path d="M13.5 6.5l4 4" />
+                  </svg>
+                  Editar NF
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {%endif%}
+
+      {%if registro.arquivo_ticket_id%}
+      <!-- Dados do Ticket -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card rounded-3 overflow-hidden">
+            <div class="card-header bg-info-subtle border-bottom-0">
+              <h3 class="card-title mb-0 fs-4 text-info">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="me-2 align-text-bottom">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                Dados do Ticket
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="numero_nf_ticket"
+                      value="{{ registro.numero_nota_fiscal_ticket or '' }}" disabled>
+                    <label for="numero_nf_ticket">Número NF Ticket</label>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="peso_liquido"
+                      value="{{ registro.peso_liquido_ticket or '' }}" disabled>
+                    <label for="peso_liquido">Peso Líquido</label>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="placa_ticket"
+                      value="{{ registro.placa_ticket or '' }}" disabled>
+                    <label for="placa_ticket">Placa</label>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" id="motorista_ticket"
+                      value="{{ registro.motorista_ticket or '' }}" disabled>
+                    <label for="motorista_ticket">Motorista</label>
+                  </div>
+                </div>
+              </div>
+              {% if registro.arquivo_ticket_id %}
+              <div class="mt-4">
+                <a href="#" class="btn btn-outline-info btn-visualizar-arquivo"
+                  data-url="{{ url_for('diretorio_uploads_tickets', filename=registro.arquivo_ticket.caminho.split('/')[-1]) }}"
+                  data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path
+                      d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" />
+                  </svg>
+                  Visualizar Ticket
+                </a>
+                <a href="{{url_for('editar_ticket', id=registro.id)}}" class="btn btn-outline-info">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                    <path d="M13.5 6.5l4 4" />
+                  </svg>
+                  Editar Ticket
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {%endif%}
+
+      <!-- Botão de Voltar -->
+      <div class="text-end mt-4 mb-5">
+        <a href="{{ url_for('listagem_registros_operacionais') }}"
+          class="btn btn-primary px-4 py-2 d-inline-flex align-items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+            <path d="M5 12l14 0"></path>
+            <path d="M5 12l6 6"></path>
+            <path d="M5 12l6 -6"></path>
+          </svg>
+          Voltar
+        </a>
+      </div>
+    </div>
+  </div>
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

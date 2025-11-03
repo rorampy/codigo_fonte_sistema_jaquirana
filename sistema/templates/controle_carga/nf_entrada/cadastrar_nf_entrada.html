@@ -1,0 +1,276 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            CADASTRAR NF ENTRADA
+          </div>
+          <h2 class="page-title">
+            Cadastrar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card"
+          action="#"
+          method="POST" enctype="multipart/form-data">
+          <div class="card-body">
+
+            <div class="row row-cards">
+              <div class="row mt-3">
+
+                <div class="col-md-6">
+                  <label class="form-label required">Arquivo NF Entrada (PDF,
+                    JPG, PNG)</label>
+                  <div class="mb-3">
+                    {% if nfEntrada.arquivo_nf_entrada_id %}
+                    <div class="d-flex gap-4 mb-2">
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio"
+                          name="opcaoNfEntrada" value="manter"
+                          id="opcaoManterNfEntrada" checked>
+                        <label class="form-check-label"
+                          for="opcaoNfEntrada">
+                          Manter atual
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio"
+                          name="opcaoNfEntrada" value="alterar"
+                          id="opcaoAlterarNfEntrada">
+                        <label class="form-check-label"
+                          for="opcaoNfEntrada">
+                          Enviar novo
+                        </label>
+                      </div>
+                    </div>
+
+                    <a href="#" id="visualizar-arquivo-entrada"
+                      class="btn btn-visualizar-arquivo mb-3"
+                      data-url="{{ url_for('diretorio_uploads_nf_entrada', filename=nfEntrada.arquivo_nf_entrada.caminho.split('/')[-1]) }}"
+                      data-bs-toggle="modal"
+                      data-bs-target="#modal-visualizar-arquivo">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                        height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-receipt">
+                        <path stroke="none" d="M0 0h24v24H0z"
+                          fill="none"></path>
+                        <path
+                          d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2">
+                        </path>
+                      </svg>
+                      Visualizar NF Entrada
+                    </a>
+
+                    <div id="arquivoNfEntrada" class="d-none">
+                      <input type="file" name="arquivoNfEntrada"
+                        accept=".pdf, .png, .jpg"
+                        class="form-control {% if 'arquivoNfEntrada' in campos_obrigatorios or 'arquivoNfEntrada' in campos_erros %} is-invalid {% endif %}">
+                      <div class="invalid-feedback">
+                        {% if 'arquivoNfEntrada' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['arquivoNfEntrada'] }}
+                        {% elif 'arquivoNfEntrada' in campos_erros %}
+                        {{ campos_erros['arquivoNfEntrada'] }}
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% else %}
+                    <input type="file" name="arquivoNfEntrada"
+                      accept=".pdf, .png, .jpg"
+                      class="form-control {% if 'arquivoNfEntrada' in campos_obrigatorios or 'arquivoNfEntrada' in campos_erros %} is-invalid {% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'arquivoNfEntrada' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['arquivoNfEntrada'] }}
+                      {% elif 'arquivoNfEntrada' in campos_erros %}
+                      {{ campos_erros['arquivoNfEntrada'] }}
+                      {% endif %}
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label required">Arquivo Contra Nota
+                    (PDF)</label>
+                  <div class="mb-3">
+                    {% if nfEntrada.arquivo_contra_nota_id %}
+                    <div class="d-flex gap-4 mb-2">
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio"
+                          name="opcaoContraNota" value="manter"
+                          id="opcaoManterContraNota" checked>
+                        <label class="form-check-label"
+                          for="opcaoContraNota">
+                          Manter atual
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio"
+                          name="opcaoContraNota" value="alterar"
+                          id="opcaoAlterarContraNota">
+                        <label class="form-check-label"
+                          for="opcaoContraNota">
+                          Enviar novo
+                        </label>
+                      </div>
+                    </div>
+
+                    <a href="#" id="visualizar-contra-nota"
+                      class="btn btn-visualizar-arquivo mb-3"
+                      data-url="{{ url_for('diretorio_uploads_contra_nota', filename=nfEntrada.arquivo_contra_nota.caminho.split('/')[-1]) }}"
+                      data-bs-toggle="modal"
+                      data-bs-target="#modal-visualizar-arquivo">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                        height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-receipt">
+                        <path stroke="none" d="M0 0h24v24H0z"
+                          fill="none"></path>
+                        <path
+                          d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2">
+                        </path>
+                      </svg>
+                      Visualizar Contra Nota
+                    </a>
+
+                    <div id="inputUploadContraNota" class="d-none">
+                      <input type="file" name="arquivoContraNota" accept=".pdf"
+                        class="form-control {% if 'arquivoContraNota' in campos_obrigatorios or 'arquivoContraNota' in campos_erros %} is-invalid {% endif %}">
+                      <div class="invalid-feedback">
+                        {% if 'arquivoContraNota' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['arquivoContraNota'] }}
+                        {% elif 'arquivoContraNota' in campos_erros %}
+                        {{ campos_erros['arquivoContraNota'] }}
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% else %}
+                    <input type="file" name="arquivoContraNota" accept=".pdf"
+                      class="form-control {% if 'arquivoContraNota' in campos_obrigatorios or 'arquivoContraNota' in campos_erros %} is-invalid {% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'arquivoContraNota' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['arquivoContraNota'] }}
+                      {% elif 'arquivoContraNota' in campos_erros %}
+                      {{ campos_erros['arquivoContraNota'] }}
+                      {% endif %}
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="javascript:history.back()"
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-arrow-left"
+                width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-plus"
+                width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // === NF Entrada ===
+      const radioManterNfEntrada = document.getElementById("opcaoManterNfEntrada");
+      const radioAlterarNfEntrada = document.getElementById("opcaoAlterarNfEntrada");
+      const inputUploadNfEntrada = document.getElementById("arquivoNfEntrada");
+      const linkVisualizarNfEntrada = document.getElementById("visualizar-arquivo-entrada");
+  
+      if (radioManterNfEntrada && radioAlterarNfEntrada && inputUploadNfEntrada && linkVisualizarNfEntrada) {
+        function atualizarUploadNfEntrada() {
+          if (radioAlterarNfEntrada.checked) {
+            inputUploadNfEntrada.classList.remove("d-none");
+            linkVisualizarNfEntrada.classList.add("d-none");
+          } else {
+            inputUploadNfEntrada.classList.add("d-none");
+            linkVisualizarNfEntrada.classList.remove("d-none");
+          }
+        }
+  
+        radioManterNfEntrada.addEventListener("change", atualizarUploadNfEntrada);
+        radioAlterarNfEntrada.addEventListener("change", atualizarUploadNfEntrada);
+  
+        // Inicializa estado correto
+        atualizarUploadNfEntrada();
+      }
+  
+      // === Contra Nota ===
+      const radioManterContraNota = document.getElementById("opcaoManterContraNota");
+      const radioAlterarContraNota = document.getElementById("opcaoAlterarContraNota");
+      const inputUploadContraNota = document.getElementById("inputUploadContraNota");
+      const linkVisualizarContraNota = document.getElementById("visualizar-contra-nota");
+  
+      if (radioManterContraNota && radioAlterarContraNota && inputUploadContraNota && linkVisualizarContraNota) {
+        function atualizarUploadContraNota() {
+          if (radioAlterarContraNota.checked) {
+            inputUploadContraNota.classList.remove("d-none");
+            linkVisualizarContraNota.classList.add("d-none");
+          } else {
+            inputUploadContraNota.classList.add("d-none");
+            linkVisualizarContraNota.classList.remove("d-none");
+          }
+        }
+  
+        radioManterContraNota.addEventListener("change", atualizarUploadContraNota);
+        radioAlterarContraNota.addEventListener("change", atualizarUploadContraNota);
+  
+        // Inicializa estado correto
+        atualizarUploadContraNota();
+      }
+    });
+  
+  </script>
+  {% include 'estrutura/footer.html' %}
+
+</div>
+
+{% endblock conteudo %}

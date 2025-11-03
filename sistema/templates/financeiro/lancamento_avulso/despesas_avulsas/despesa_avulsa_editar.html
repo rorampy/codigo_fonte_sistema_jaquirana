@@ -1,0 +1,97 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            DESPESAS AVULSAS
+          </div>
+          <h2 class="page-title">
+            Editar Despesa Avulsa
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="{{url_for('editar_despesa_avulsa', id=lancamento_id)}}" method="POST">
+          <div class="card-body">
+            <div class="row">
+              
+              <!-- Descrição -->
+              <div class="col-md-10">
+                <div class="mb-3">
+                  <label class="form-label required">Descrição</label>
+                  <input type="text" name="descricao" value="{{ dados_corretos.get('descricao', '') }}" 
+                         placeholder="Digite a descrição da despesa"
+                         class="form-control {% if 'descricao' in campos_obrigatorios or 'descricao' in campos_erros %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'descricao' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['descricao'] }}
+                    {% elif 'descricao' in campos_erros %}
+                      {{ campos_erros['descricao'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Valor -->
+              <div class="col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Valor</label>
+                  <div class="input-group">
+                    <input type="text" name="valor" value="{{ dados_corretos.get('valor', '') }}"
+                           placeholder="0,00"
+                           class="form-control campo-moeda-brl {% if 'valor' in campos_obrigatorios or 'valor' in campos_erros %}is-invalid{% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'valor' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['valor'] }}
+                      {% elif 'valor' in campos_erros %}
+                        {{ campos_erros['valor'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="card-footer text-center text-md-end">
+            <a href="{{url_for('listagem_despesas_avulsas')}}" class="btn btn-outline-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M5 12l14 0"/>
+                <path d="M5 12l6 6"/>
+                <path d="M5 12l6 -6"/>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M12 5l0 14"/>
+                <path d="M5 12l14 0"/>
+              </svg>
+              Salvar Alterações
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

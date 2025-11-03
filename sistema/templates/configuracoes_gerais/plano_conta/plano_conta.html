@@ -1,0 +1,623 @@
+{% extends 'estrutura/base.html' %}
+{% macro render_categoria(categoria) %}
+<div class="tree-item" data-category="{{ categoria.codigo }}" data-id="{{ categoria.id }}">
+  <div class="tree-line">
+    <span class="tree-toggle" onclick="toggleNode(this)">
+      <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+        stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6,9 12,15 18,9"></polyline>
+      </svg>
+    </span>
+
+    {% if categoria.tipo == 1 %}
+    {% set badge_class = "btn btn-outline-success btn-icon" %}
+    {% elif categoria.tipo == 2 %}
+    {% set badge_class = "btn btn-outline-danger btn-icon" %}
+    {% elif categoria.tipo == 3 %}
+    {% set badge_class = "btn btn-outline-warning btn-icon" %}
+    {% else %}
+    {% set badge_class = "btn btn-outline-primary btn-icon" %}
+    {% endif %}
+
+    <span class="{{ badge_class }}" style="margin-right: 10px; padding-right: 10px; padding-left: 10px;">{{
+      categoria.codigo }}</span>
+    <span class="tree-label">{{ categoria.nome }}</span>
+
+    {% if categoria.nivel > 1 %}
+    <div class="tree-actions ms-auto" style="display: none;">
+      <button class="btn btn-icon btn-outline-warning me-1"
+        onclick="openEditModal({{ categoria.id }}, '{{ categoria.nome }}')" data-bs-toggle="tooltip"
+        data-bs-placement="top" title="Editar Categoria">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"></path>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+        </svg>
+      </button>
+      <button class="btn btn-icon btn-outline-danger"
+        onclick="openDeleteModal({{ categoria.id }}, '{{ categoria.nome }}')" title="Excluir">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18"></path>
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+          <path d="M8 6V4c0-1 1-2 2-2h4c0-1 1-2 2-2v2"></path>
+        </svg>
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="tree-children" style="display: block;">
+    {% if categoria.children %}
+    {% for subcategoria in categoria.children %}
+    {{ render_categoria(subcategoria) }}
+    {% endfor %}
+    {% endif %}
+
+    <div class="tree-add-item">
+      <button class="tree-add-btn" onclick="openAddModal('{{ categoria.codigo }}')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tree-view.css') }}">
+
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            PLANO DE CONTAS
+          </div>
+          <h2 class="page-title">
+            Listagem
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="treeview-container">
+
+              {% if estrutura %}
+              {% for categoria in estrutura %}
+              {{ render_categoria(categoria) }}
+              {% endfor %}
+              {% else %}
+              <div class="text-center py-4">
+                <p class="text-muted">Nenhuma categoria
+                  encontrada</p>
+                <small class="text-muted">As categorias serão
+                  criadas automaticamente</small>
+              </div>
+              {% endif %}
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Adicionar Categoria -->
+  <div class="modal modal-blur fade" id="modal-add-category" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Nova Subcategoria</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nome da subcategoria</label>
+            <input type="text" class="form-control" id="category-name" placeholder="Digite o nome...">
+          </div>
+          <div class="text-muted small mb-3">
+            Categoria pai: <span id="parent-category-name" class="fw-bold"></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-3" data-bs-dismiss="modal">
+            Cancelar
+          </a>
+          <button type="button" class="btn btn-primary btn-5 ms-auto" onclick="adicionarSubcategoria()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+              stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Adicionar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Categoria -->
+  <div class="modal modal-blur fade" id="modal-edit-category" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Editar Categoria</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nome da categoria</label>
+            <input type="text" class="form-control" id="edit-category-name" placeholder="Digite o nome...">
+          </div>
+          <div class="text-muted small mb-3">
+            Editando: <span id="current-category-name" class="fw-bold"></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-3" data-bs-dismiss="modal">
+            Cancelar
+          </a>
+          <button type="button" class="btn btn-warning btn-5 ms-auto" onclick="confirmarEdicaoCategoria()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+              stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            Salvar Alterações
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal modal-blur fade" id="modal-delete-category" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-status bg-danger"></div>
+        <div class="modal-body text-center py-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="icon mb-2 text-danger icon-lg">
+            <path d="M12 9v4" />
+            <path
+              d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+            <path d="M12 16h.01" />
+          </svg>
+          <div class="text-secondary">Deseja realmente excluir a categoria
+            "<span id="delete-category-name" class="fw-bold"></span>"?
+            Esta ação não pode ser desfeita.</div>
+        </div>
+        <div class="modal-footer">
+          <div class="w-100">
+            <div class="row">
+              <div class="col">
+                <button type="button" class="btn btn-3" data-bs-dismiss="modal">
+                  Cancelar
+                </button>
+              </div>
+              <div class="col">
+                <button type="button" class="btn btn-danger" onclick="confirmarExclusaoCategoria()">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                    stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c0-1 1-2 2-2v2"></path>
+                  </svg>
+                  Excluir Categoria
+                  </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+<script>
+  let currentParentCode = '';
+  let currentEditCategoryId = null;
+  let currentDeleteCategoryId = null;
+
+  // Função para expandir/colapsar nós
+  function toggleNode(toggleElement) {
+    const treeItem = toggleElement.closest('.tree-item');
+    const children = treeItem.querySelector('.tree-children');
+    const arrow = toggleElement.querySelector('.arrow-icon polyline');
+
+    if (children) {
+      const isCollapsed = children.style.display === 'none';
+
+      if (isCollapsed) {
+        children.style.display = 'block';
+        // seta para baixo
+        arrow.setAttribute('points', '6,9 12,15 18,9');
+      } else {
+        children.style.display = 'none';
+        // seta para direita
+        arrow.setAttribute('points', '9,6 15,12 9,18');
+      }
+    }
+  }
+
+  // Função para abrir modal de adicionar categoria
+  function openAddModal(parentCode) {
+    currentParentCode = parentCode;
+    const parentName = getParentName(parentCode);
+
+    document.getElementById('parent-category-name').textContent = parentName;
+    document.getElementById('category-name').value = '';
+
+    const modal = new bootstrap.Modal(document.getElementById('modal-add-category'));
+    modal.show();
+
+    setTimeout(() => {
+      document.getElementById('category-name').focus();
+    }, 150);
+  }
+
+  // Função para abrir modal de editar categoria
+  function openEditModal(categoriaId, categoriaAtualNome) {
+    currentEditCategoryId = categoriaId;
+
+    document.getElementById('current-category-name').textContent = categoriaAtualNome;
+    document.getElementById('edit-category-name').value = categoriaAtualNome;
+
+    const modal = new bootstrap.Modal(document.getElementById('modal-edit-category'));
+    modal.show();
+
+    setTimeout(() => {
+      const input = document.getElementById('edit-category-name');
+      input.focus();
+      input.select();
+    }, 150);
+  }
+
+  // Função para abrir modal de excluir categoria
+  function openDeleteModal(categoriaId, categoriaNome) {
+    currentDeleteCategoryId = categoriaId;
+
+    document.getElementById('delete-category-name').textContent = categoriaNome;
+
+    const modal = new bootstrap.Modal(document.getElementById('modal-delete-category'));
+    modal.show();
+  }
+
+  // Função para adicionar subcategoria - INTEGRADA COM BACKEND
+  async function adicionarSubcategoria() {
+    const nome = document.getElementById('category-name').value.trim();
+
+    if (!nome) {
+      document.getElementById('category-name').focus();
+      return;
+    }
+
+    const btn = document.querySelector('#modal-add-category .btn-primary');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Criando...';
+    btn.disabled = true;
+    let response, text, data;
+    try {
+      const response = await fetch('/configuracoes/gerais/plano-contas/criar', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          parent_code: currentParentCode,
+          nome: nome
+        })
+      });
+
+      if (!response.ok) {
+        text = await response.text();
+        console.error('Resposta HTTP não OK:', response.status, text);
+        showFlashMessage('error', `Erro ${response.status}: Entre em contato com o suporte!`);
+        return;
+      }
+
+      data = await response.json();
+
+      if (data.sucesso) {
+        adicionarCategoriaDOM(data.categoria);
+        showFlashMessage('success', data.mensagem);
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modal-add-category'));
+        modal.hide();
+      } else {
+        showFlashMessage('error', data.erro || 'Erro ao criar categoria');
+      }
+
+    } catch (error) {
+      console.error('Erro ao criar categoria:', error);
+      showFlashMessage('error', 'Erro de conexão. Tente novamente.');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  // Função para confirmar edição de categoria
+  async function confirmarEdicaoCategoria() {
+    const novoNome = document.getElementById('edit-category-name').value.trim();
+
+    if (!novoNome) {
+      document.getElementById('edit-category-name').focus();
+      return;
+    }
+
+    const btn = document.querySelector('#modal-edit-category .btn-warning');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+    btn.disabled = true;
+
+    try {
+      const response = await fetch(`/configuracoes/gerais/plano-contas/editar/${currentEditCategoryId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nome: novoNome
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.sucesso) {
+        const categoria = document.querySelector(`[data-id="${currentEditCategoryId}"]`);
+        const label = categoria.querySelector('.tree-label');
+        label.textContent = novoNome;
+
+        showFlashMessage('success', data.mensagem);
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modal-edit-category'));
+        modal.hide();
+      } else {
+        showFlashMessage('error', data.erro || 'Erro ao editar categoria');
+      }
+
+    } catch (error) {
+      console.error('Erro ao editar categoria:', error);
+      showFlashMessage('error', 'Erro de conexão. Tente novamente.');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  // Função para confirmar exclusão de categoria
+  async function confirmarExclusaoCategoria() {
+    const btn = document.querySelector('#modal-delete-category .btn-danger');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Excluindo...';
+    btn.disabled = true;
+
+    try {
+      const response = await fetch(`/configuracoes/gerais/plano-contas/excluir/${currentDeleteCategoryId}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.sucesso) {
+        const categoria = document.querySelector(`[data-id="${currentDeleteCategoryId}"]`);
+        categoria.remove();
+
+        showFlashMessage('success', data.mensagem);
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modal-delete-category'));
+        modal.hide();
+      } else {
+        showFlashMessage('error', data.erro || 'Erro ao excluir categoria');
+      }
+
+    } catch (error) {
+      console.error('Erro ao excluir categoria:', error);
+      showFlashMessage('error', 'Erro de conexão. Tente novamente.');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  // Função para adicionar categoria no DOM
+  function adicionarCategoriaDOM(categoria) {
+    const parentItem = document.querySelector(`[data-category="${currentParentCode}"]`);
+    const children = parentItem.querySelector('.tree-children');
+    const addItem = Array.from(children.children)
+      .find(el => el.classList.contains('tree-add-item'));
+
+    // Criar nova subcategoria
+    const newItem = document.createElement('div');
+    const isSubSubCategory = currentParentCode.includes('.');
+    newItem.className = `tree-item ${isSubSubCategory ? 'subsubcategory' : 'subcategory'}`;
+    newItem.setAttribute('data-category', categoria.codigo);
+    newItem.setAttribute('data-id', categoria.id);
+
+    const badgeClass = getBadgeClass(currentParentCode);
+
+    newItem.innerHTML = `
+        <div class="tree-line">
+            <span class="tree-toggle" onclick="toggleNode(this)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6,9 12,15 18,9"></polyline>
+                </svg>
+            </span>
+            <span class="${badgeClass}" style="margin-right: 10px; padding-right: 10px; padding-left: 10px;">${categoria.codigo}</span>
+            <span class="tree-label">${categoria.nome}</span>
+            <div class="tree-actions ms-auto" style="display: none;">
+                <button class="btn btn-icon btn-outline-warning me-1" onclick="openEditModal(${categoria.id}, '${categoria.nome}')" title="Editar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                </button>
+                <button class="btn btn-icon btn-outline-danger" onclick="openDeleteModal(${categoria.id}, '${categoria.nome}')" title="Excluir">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c0-1 1-2 2-2v2"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="tree-children" style="display: block;">
+            <div class="tree-add-item">
+                <button class="tree-add-btn" onclick="openAddModal('${categoria.codigo}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Inserir antes do botão de adicionar
+    children.insertBefore(newItem, addItem);
+
+    // insere o novo item antes do botão, ou anexa no fim
+    if (addItem && addItem.parentNode === children) {
+      children.insertBefore(newItem, addItem);
+    } else {
+      children.appendChild(newItem);
+    }
+
+
+    // Mostrar children se estiver oculto
+    if (children.style.display === 'none') {
+      children.style.display = 'block';
+      const toggle = parentItem.querySelector('.tree-toggle');
+      toggle.classList.remove('collapsed');
+    }
+
+    // Adicionar eventos de hover
+    addHoverEvents(newItem);
+    const caret = newItem.querySelector('.tree-toggle');
+    caret.addEventListener('click', () => toggleNode(caret));
+  }
+
+  // Função para mostrar mensagens flash
+  function showFlashMessage(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    const container = document.querySelector('.page-body .container-xl');
+    container.insertBefore(alertDiv, container.firstChild);
+
+    setTimeout(() => {
+      alertDiv.remove();
+    }, 5000);
+  }
+
+  // Função para determinar a classe do botão baseada no código pai
+  function getBadgeClass(parentCode) {
+    if (parentCode.startsWith('1')) {
+      return 'btn btn-outline-success btn-icon';
+    } else if (parentCode.startsWith('2')) {
+      return 'btn btn-outline-danger btn-icon';
+    } else if (parentCode.startsWith('3')) {
+      return 'btn btn-outline-warning btn-icon';
+    }
+    return 'btn btn-outline-primary btn-icon';
+  }
+
+  // Função para obter nome da categoria pai
+  function getParentName(parentCode) {
+    const names = {
+      '1': 'Receitas',
+      '2': 'Despesas',
+      '3': 'Movimentação'
+    };
+
+    if (parentCode.length === 1) {
+      return names[parentCode] || `Categoria ${parentCode}`;
+    }
+
+    const parentItem = document.querySelector(`[data-category="${parentCode}"]`);
+    if (parentItem) {
+      const titleElement = parentItem.querySelector('.tree-label');
+      return titleElement ? titleElement.textContent : `Categoria ${parentCode}`;
+    }
+
+    return `Categoria ${parentCode}`;
+  }
+
+  // Função para adicionar eventos de hover
+  function addHoverEvents(element) {
+    const treeLine = element.querySelector('.tree-line');
+    const actions = element.querySelector('.tree-actions');
+
+    if (actions) {
+      treeLine.addEventListener('mouseenter', () => {
+        actions.style.display = 'flex';
+      });
+
+      treeLine.addEventListener('mouseleave', () => {
+        actions.style.display = 'none';
+      });
+    }
+  }
+
+  // Inicializar quando a página carregar
+  document.addEventListener('DOMContentLoaded', function () {
+    // Ajustar todas as setas para baixo (aberto) ao carregar
+    document.querySelectorAll('.tree-toggle .arrow-icon polyline').forEach(poly => {
+      poly.setAttribute('points', '6,9 12,15 18,9');
+    });
+
+    // Enter para adicionar categoria
+    const categoryNameInput = document.getElementById('category-name');
+    if (categoryNameInput) {
+      categoryNameInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          adicionarSubcategoria();
+        }
+      });
+    }
+
+    // Enter para editar categoria
+    const editCategoryNameInput = document.getElementById('edit-category-name');
+    if (editCategoryNameInput) {
+      editCategoryNameInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          confirmarEdicaoCategoria();
+        }
+      });
+    }
+
+    // Adicionar eventos de hover para categorias existentes
+    document.querySelectorAll('.tree-item').forEach(addHoverEvents);
+  });
+</script>
+
+{% endblock conteudo %}

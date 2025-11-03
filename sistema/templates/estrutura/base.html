@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Gestão de madeireira</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+    integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"
+    integrity="sha512-pHVGpX7F/27yZ0ISY+VVjyULApbDlD0/X0rgGbTqCE7WFW5MezNTWG/dnhtbBuICzsd0WQPgpE4REBLv+UqChw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- CSS files -->
+  <link href="{{ url_for('static', filename='css/classes-proprias.css') }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/tabler.css') }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/tabler-flags.min.css') }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/tabler-payments.min.css') }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/tabler-vendors.min.css') }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/demo.min.css') }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='images/favicon.png') }}" rel="icon" type="image/png" sizes="68x68">
+  <link href="{{ url_for('static', filename='libs/quill/quill-1.3.7/quill.snow.css') }}" rel="stylesheet">
+
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+  <script src="{{ url_for('static', filename='libs/quill/quill-1.3.7/quill.min.js') }}"></script>
+
+  <!-- Tom Select CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+
+  <!-- Tom Select JS -->
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+  <style>
+    @import url('https://rsms.me/inter/inter.css');
+
+    :root {
+      --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+    }
+
+    body {
+      font-feature-settings: "cv03", "cv04", "cv11";
+    }
+  </style>
+
+</head>
+
+<body class="layout-fluid">
+  <script src="{{ url_for('static', filename='js/demo-theme.min.js') }}"></script>
+  <div class="page">
+
+    {% block conteudo %}
+
+    {% endblock conteudo %}
+
+  </div>
+
+  <!-- Modal de carregamento da página de Transmissão de FE -->
+  <div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Aguarde...</span>
+          </div>
+          <p class="mt-3">Transmitindo dados, por favor aguarde...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para visualização de imagens e arquivos PDF -->
+  <div class="modal fade" id="modal-visualizar-arquivo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <!-- Alterado para modal-xl -->
+      <div class="modal-content" style="max-width: 95vw;">
+        <!-- Define largura máxima -->
+        <div class="modal-header">
+          <h5 class="modal-title">Visualizar Arquivo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center" style="padding: 0;">
+          <!-- Remove padding para aproveitar mais espaço -->
+          <!-- Conteúdo do arquivo será injetado aqui -->
+          <div id="conteudo-arquivo" style="max-height: 90vh; overflow-y: auto;">
+            <!-- Ajustado para altura máxima -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal relatório de cargas -->
+  <div class="modal modal-blur fade" id="modal-relatorio-cargas" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="justify-content: center;">
+      <form action="{{url_for('relatorio_de_cargas')}}" method="POST">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Relatório de Cargas</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="row">
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Data Início</label>
+                  <input type="date" name="dataInicioCarga" class="form-control">
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Data Fim</label>
+                  <input type="date" name="dataFimCarga" class="form-control">
+                </div>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Placa</label>
+                <input type="text" name="placaCarga" class="form-control placaCarga">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Freteiro</label>
+                <input type="text" name="freteiroCarga" class="form-control freteiroCarga">
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Transportadora</label>
+                <input type="text" name="transportadoraCarga" class="form-control transportadoraCarga">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Floresta/Fornecedor</label>
+                <input type="text" name="florestaFornecedorCarga" class="form-control florestaFornecedorCarga">
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="clienteCarga" class="form-control clienteCarga">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <a data-bs-dismiss="modal" class="btn btn-link link-secondary btn-3">
+              Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Gerar Relatório
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal relatório de cargas receber -->
+  <div class="modal modal-blur fade" id="modal-cargas-receber" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document" style="justify-content: center;">
+      <form action="{{url_for('relatorio_cargas_receber')}}" method="POST">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Exportar Cargas a Receber</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <label class="form-label">Cliente</label>
+                  <input type="text" name="clienteCarga" class="form-control clienteCarga">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Data Início</label>
+                  <input type="date" name="dataInicio" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Data Fim</label>
+                  <input type="date" name="dataFim" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Situação do Pagamento</label>
+                  <select name="situacaoFinanceira" class="form-select">
+                    <option value="">Selecione uma situação...</option>
+                    {% for situacao in situacoes_pagamento %}
+                    <option value="{{ situacao.id }}">{{ situacao.situacao }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a data-bs-dismiss="modal" class="btn btn-link link-secondary btn-3">
+              Cancelar
+            </a>
+            <button type="submit" name="exportar_pdf" value="1" class="btn btn-danger btn-5 ms-auto">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
+                <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
+                <path d="M17 18h2" />
+                <path d="M20 15h-3v6" />
+                <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" />
+              </svg>
+              Exportar PDF
+            </button>
+            <button type="submit" name="exportar_excel" value="1" class="btn btn-success btn-5 ms-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-xls">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
+                <path d="M4 15l4 6" />
+                <path d="M4 21l4 -6" />
+                <path
+                  d="M17 20.25c0 .414 .336 .75 .75 .75h1.25a1 1 0 0 0 1 -1v-1a1 1 0 0 0 -1 -1h-1a1 1 0 0 1 -1 -1v-1a1 1 0 0 1 1 -1h1.25a.75 .75 0 0 1 .75 .75" />
+                <path d="M11 15v6h3" />
+              </svg>
+              Exportar Excel
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Relatório Excel Dashboard -->
+  <div class="modal modal-blur fade" id="modal-relatorio-excel" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <form action="{{ url_for('relatorio_excel_dashboard') }}" method="POST">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar Fornecedores a Faturar</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <!-- Toggle entre Filtro Semanal e Por Data -->
+              <div class="col-12 mb-3">
+                <label class="form-label">Tipo de Filtro</label>
+                <div class="form-selectgroup form-selectgroup-boxes d-flex flex-row">
+                  <label class="form-selectgroup-item flex-fill">
+                    <input type="radio" name="tipo_filtro" value="semanal" id="radio-semanal-relatorio"
+                      class="form-selectgroup-input" {% if dados_corretos.get('tipo_filtro') !='data' %}checked{% endif
+                      %}>
+                    <div class="form-selectgroup-label d-flex align-items-center p-3">
+                      <div class="me-3">
+                        <span class="form-selectgroup-check"></span>
+                      </div>
+                      <div>
+                        <strong>Filtro Semanal</strong>
+                        <div class="text-muted">Selecionar por semana</div>
+                      </div>
+                    </div>
+                  </label>
+                  <label class="form-selectgroup-item flex-fill">
+                    <input type="radio" name="tipo_filtro" value="data" id="radio-data-relatorio"
+                      class="form-selectgroup-input" {% if dados_corretos.get('tipo_filtro')=='data' %}checked{% endif
+                      %}>
+                    <div class="form-selectgroup-label d-flex align-items-center p-3">
+                      <div class="me-3">
+                        <span class="form-selectgroup-check"></span>
+                      </div>
+                      <div>
+                        <strong>Filtro por Data</strong>
+                        <div class="text-muted">Selecionar período específico</div>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Filtro Semanal -->
+              <div id="filtro-semanal-relatorio" class="col-12 mb-3" {% if dados_corretos.get('tipo_filtro')=='data'
+                %}style="display: none;" {% endif %}>
+                <label class="form-label">Selecionar Período</label>
+                <select name="semanaSelecionada" class="form-select" id="semanaSelecionada">
+                  <option value="">Selecione...</option>
+                  {% for semana in semanas_disponiveis %}
+                  <option value="{{ semana.valor }}" {% if semana.valor==dados_corretos.get('semanaSelecionada')
+                    %}selected{% endif %} {% if semana.is_atual %}data-current="true" {% endif %} {% if
+                    semana.get('is_mes_completo') %}data-mes-completo="true" {% endif %}>
+                    {{ semana.texto }}
+                    {% if semana.is_atual %} (Atual){% endif %}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Filtro por Data -->
+              <div id="filtro-data-relatorio" class="row" {% if dados_corretos.get('tipo_filtro') !='data'
+                %}style="display: none;" {% endif %}>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Data Início</label>
+                  <input type="date" name="dataInicio" class="form-control"
+                    value="{{ dados_corretos.get('dataInicio', '') }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Data Fim</label>
+                  <input type="date" name="dataFim" class="form-control"
+                    value="{{ dados_corretos.get('dataFim', '') }}">
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Número NF</label>
+                <input type="text" name="numeroNF" class="form-control" value="{{ dados_corretos.get('numeroNF', '') }}"
+                  placeholder="Número da nota fiscal">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Placa</label>
+                <input type="text" name="placaCarga" class="form-control"
+                  value="{{ dados_corretos.get('placaCarga', '') }}" placeholder="Placa do veículo">
+              </div>
+
+              <!-- Linha 2: Produto e Bitola -->
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Produto</label>
+                <input type="text" name="produtoCarga" class="form-control"
+                  value="{{ dados_corretos.get('produtoCarga', '') }}" placeholder="Nome do produto">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Bitola</label>
+                <input type="text" name="bitolaCarga" class="form-control"
+                  value="{{ dados_corretos.get('bitolaCarga', '') }}" placeholder="Bitola do produto">
+              </div>
+
+              <!-- Linha 3: Pessoas e Empresas -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Transportadora</label>
+                <input type="text" name="transportadoraCarga" class="form-control"
+                  value="{{ dados_corretos.get('transportadoraCarga', '') }}" placeholder="Nome da transportadora">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Motorista</label>
+                <input type="text" name="motoristaCarga" class="form-control"
+                  value="{{ dados_corretos.get('motoristaCarga', '') }}" placeholder="Nome do motorista">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="clienteCarga" class="form-control"
+                  value="{{ dados_corretos.get('clienteCarga', '') }}" placeholder="Nome do cliente">
+              </div>
+
+              <!-- Linha 4: Origem -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Origem (Fornecedor/Floresta)</label>
+                <input type="text" name="fornecedorCarga" class="form-control"
+                  value="{{ dados_corretos.get('fornecedorCarga', '') }}" placeholder="Nome do fornecedor ou floresta">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Status pagamento</label>
+                <select class="form-select" name="statusPagamentoCarga" id="statusPagamentoCarga">
+                  <option value="">Todas as situações</option>
+                  {% for s in statusPagamentos %}
+                  <option value="{{ s.id }}" {% if dados_corretos.get('statusPagamentoCarga')==s.id|string %}selected{%
+                    endif %}>
+                    {{ s.situacao }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <a data-bs-dismiss="modal" class="btn btn-link link-secondary">
+              Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Exportar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Relatório de Estoque por fornecedor -->
+  <div class="modal modal-blur fade" id="modal-controle-estoque-fornecedor" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document" style="display: grid;">
+      <form action="{{url_for('relatorio_controle_estoque_fornecedor')}}" method="GET" target="_blank">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Relatório de Controle de Estoque por Fornecedor</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="dataInicio" class="form-control"
+                  value="{{dados_corretos.get('dataInicio', '')}}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="dataFim" class="form-control" value="{{ dados_corretos.get('dataFim', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Número NF</label>
+                <input type="text" name="numeroNf" class="form-control"
+                  value="{{ dados_corretos.get('numeroNf', '') }}">
+              </div>
+              <div class="col-md-12 mb-3">
+                <label class="form-label">Origem</label>
+                <input type="text" name="origemEntrada" class="form-control"
+                  value="{{ dados_corretos.get('origemEntrada', '') }}" placeholder="Fornecedor/floresta">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <a data-bs-dismiss="modal" class="btn btn-link link-secondary btn-3">
+              Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Exportar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tabler Core -->
+  <script src="{{ url_for('static', filename='libs/tom-select/tom-select.base.min.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/tabler.min.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/demo.min.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/sistema/utilitarios.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/sistema/mascaras_config.js') }}" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js" defer></script>
+
+  <script src="{{ url_for('static', filename='libs/apexcharts/dist/apexcharts.min.js') }}" defer></script>
+
+  <!-- Data tables -->
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js" defer></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js" defer></script>
+
+  <!-- Fecha os alertas automaticamente -->
+  <script>
+    // Função para fechar o alerta
+    function closeAlert(alert) {
+      alert.classList.remove('show');
+      setTimeout(function () {
+        alert.remove();
+      }, 150); // Tempo para permitir a transição do fade
+    }
+
+    // Seleciona todos os alertas
+    const alerts = document.querySelectorAll('.meu-alerta');
+
+    // Configura cada alerta para fechar após 10 segundos
+    alerts.forEach(function (alert) {
+      setTimeout(function () {
+        closeAlert(alert);
+      }, 10000); // 10000 milissegundos = 10 segundos
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // Seleciona todos os botões de visualizar arquivo
+      const botoesVisualizar = document.querySelectorAll('.btn-visualizar-arquivo');
+
+      botoesVisualizar.forEach((botao, index) => {
+        botao.addEventListener('click', () => {
+
+          const urlArquivo = botao.getAttribute('data-url');
+          const conteudoArquivo = document.getElementById('conteudo-arquivo');
+
+          // Remove conteúdo anterior
+          conteudoArquivo.innerHTML = '';
+
+          // Verifica se a URL foi gerada corretamente
+          if (!urlArquivo) {
+            conteudoArquivo.innerHTML = '<p>Erro: URL do arquivo não encontrada.</p>';
+            return;
+          }
+
+          // Verifica a extensão do arquivo
+          const extensao = urlArquivo.split('.').pop().toLowerCase().trim();
+
+          if (['jpg', 'jpeg', 'png'].includes(extensao)) {
+            // Exibe imagem
+            const img = document.createElement('img');
+            img.src = urlArquivo;
+            img.alt = 'Visualização do Arquivo';
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+
+            img.onerror = () => {
+              conteudoArquivo.innerHTML = '<p>Erro ao carregar a imagem.</p>';
+            };
+
+            conteudoArquivo.appendChild(img);
+          } else if (extensao === 'pdf') {
+            // Exibe PDF
+            const iframe = document.createElement('iframe');
+            iframe.src = urlArquivo;
+            iframe.style.width = '100%';
+            iframe.style.height = '720px';
+            iframe.setAttribute('frameborder', '0');
+
+            iframe.onload = () => {
+              console.log('PDF carregado com sucesso.');
+            };
+
+            iframe.onerror = () => {
+              conteudoArquivo.innerHTML = '<p>Erro ao carregar o PDF.</p>';
+            };
+
+            conteudoArquivo.appendChild(iframe);
+          } else {
+            conteudoArquivo.innerHTML = '<p>Tipo de arquivo não suportado para visualização.</p>';
+          }
+
+          console.log('Finalizado processamento do clique do botão.');
+        });
+      });
+    });
+
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      function inicializarFiltros() {
+        const radioSemanal = document.getElementById('radio-semanal-relatorio');
+        const radioData = document.getElementById('radio-data-relatorio');
+        const filtroSemanal = document.getElementById('filtro-semanal-relatorio');
+        const filtroData = document.getElementById('filtro-data-relatorio');
+
+        if (!radioSemanal || !radioData || !filtroSemanal || !filtroData) {
+          console.error('Elementos de filtro não encontrados!');
+          return;
+        }
+
+        function alternarFiltros() {
+          if (radioSemanal.checked) {
+            filtroSemanal.style.display = 'block';
+            filtroData.style.display = 'none';
+          } else {
+            filtroSemanal.style.display = 'none';
+            filtroData.style.display = 'flex';
+          }
+        }
+
+        // Aplicar estado inicial baseado nos radio buttons já configurados pelo backend
+        alternarFiltros();
+
+        // Event listeners
+        radioSemanal.addEventListener('click', alternarFiltros);
+        radioData.addEventListener('click', alternarFiltros);
+        radioSemanal.addEventListener('change', alternarFiltros);
+        radioData.addEventListener('change', alternarFiltros);
+      }
+
+      inicializarFiltros();
+    });
+  </script>
+
+</body>
+
+</html>

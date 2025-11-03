@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório de Faturamento - {{ faturamento.codigo_faturamento }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      margin: 20px;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    .header {
+      border-bottom: 2px solid #1c5f20;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+
+    .header table {
+      width: 100%;
+      border: none;
+    }
+
+    .header img {
+      width: 120px;
+    }
+
+    .system-info {
+      text-align: right;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .relatorio-title {
+      text-align: center;
+      font-size: 18px;
+      color: #1c5f20;
+      font-weight: bold;
+      margin: 20px 0;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      color: #1c5f20;
+      font-weight: bold;
+      font-size: 14px;
+      margin: 20px 0 10px 0;
+      padding: 8px 10px;
+      background-color: #f0f8f0;
+      border-left: 4px solid #1c5f20;
+    }
+
+    .simple-info {
+      margin: 8px 0;
+      font-size: 12px;
+      padding: 5px 0;
+    }
+
+    .simple-info strong {
+      color: #1c5f20;
+      display: inline-block;
+      min-width: 150px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0 20px 0;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #1c5f20;
+      color: white;
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    td:first-child {
+      text-align: left;
+      font-weight: bold;
+      background-color: #f8f9fa;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .valor-destaque {
+      color: #1c5f20;
+      font-weight: bold;
+    }
+
+    .credito-sim {
+      color: #28a745;
+      font-weight: bold;
+      background-color: #d4edda;
+      padding: 2px 8px;
+      border-radius: 3px;
+      border: 1px solid #c3e6cb;
+    }
+
+    .credito-nao {
+      color: #6c757d;
+      font-weight: bold;
+      background-color: #f8f9fa;
+      padding: 2px 8px;
+      border-radius: 3px;
+      border: 1px solid #dee2e6;
+    }
+
+    .status-sim {
+      background-color: #d4edda;
+      color: #155724;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .status-nao {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .resumo-financeiro {
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f0f8f0;
+      border: 1px solid #c3e6c3;
+      border-radius: 5px;
+    }
+
+    .resumo-financeiro .simple-info {
+      margin: 10px 0;
+      font-size: 13px;
+    }
+
+    .valor-total-destaque {
+      font-size: 14px;
+      color: #1c5f20;
+      font-weight: bold;
+      margin: 15px 0;
+      padding: 8px 0;
+      border-top: 1px solid #c3e6c3;
+    }
+
+    .info-faturamento {
+      background-color: #f8f9fa;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 5px;
+      border: 1px solid #dee2e6;
+    }
+
+    .info-faturamento .simple-info {
+      margin: 5px 0;
+    }
+
+    .highlight-box {
+      background-color: #e8f5e8;
+      border: 1px solid #c3e6c3;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+
+    .total-principal {
+      background-color: #1c5f20 !important;
+      color: white !important;
+    }
+
+    .total-principal td {
+      background-color: #1c5f20 !important;
+      color: white !important;
+      font-size: 13px !important;
+      padding: 12px 8px !important;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .total-valor {
+      font-size: 15px !important;
+      font-weight: bold !important;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 10px;
+      color: #777;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+
+    .oculto {
+      background-color: #f5f5f5;
+      color: #999;
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
+      border: 1px dashed #ccc;
+    }
+
+    .detalhes-registro {
+      font-size: 10px;
+    }
+
+    .grupo-titulo {
+      background-color: #1c5f20;
+      color: white;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .grupo-titulo td {
+      background-color: #1c5f20 !important;
+      color: white !important;
+      padding: 8px !important;
+    }
+
+    .subtotal {
+      background-color: #e8f5e8;
+      font-weight: bold;
+      color: #1c5f20;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <table>
+      <tr>
+        <td style="width: 200px;">
+          <img src="{{ logo_path }}" alt="Logo MBR Extração" />
+        </td>
+        <td class="system-info">
+          <div><strong>Sistema de Gestão MBR</strong></div>
+          <div><strong>Relatório gerado em:</strong> {{ data_geracao }}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="relatorio-title">Relatório de Faturamento | {{ faturamento.codigo_faturamento }}</div>
+
+  <!-- Dados do Faturamento -->
+  <div class="section-title">DADOS DO FATURAMENTO</div>
+  <div class="">
+    <span class="mr-1"><strong style="color: #155724;">Código:</strong> {{ faturamento.codigo_faturamento }}</span>
+  </div>
+
+
+  <!-- Fornecedores -->
+  {% if not opcoes.ocultar_fornecedores and fornecedores %}
+  <!-- Detalhes dos fornecedores -->
+  {% for nome_fornecedor, grupo in fornecedores.items() %}
+  <div class="section-title">Fornecedor: {{ nome_fornecedor }}</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Data Entrega</th>
+        <th>Transportadora</th>
+        <th>Cliente</th>
+        <th>Produto/Bitola</th>
+        <th>NF</th>
+        {% if not opcoes.ocultar_cliente %}
+        <th>Cliente</th>
+        {% endif %}
+        <th>Peso (Ton)</th>
+        <th>Preço Custo</th>
+        <th>Valor Final</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for registro in grupo.registros %}
+      <tr class="detalhes-registro">
+        <td>{{ registro.data_entrega or '-' }}</td>
+        <td>{{ registro.transportadora_identificacao | truncate(30, '...') or '-' }}</td>
+        <td>{{ registro.cliente | truncate(20, '...') or '-' }}</td>
+        <td>{{ registro.produto or '-' }} | {{ registro.bitola or '-' }}</td>
+        <td>{{ registro.nota_fiscal or '-' }}</td>
+        {% if not opcoes.ocultar_cliente %}
+        <td>{{ registro.cliente | truncate(20, '...') or '-' }}</td>
+        {% endif %}
+        <td>{{ registro.peso_ticket or '-' }}</td>
+        <td>{{ registro.preco_custo | formatar_float_para_brl or '-' }}</td>
+        <td class="valor-destaque">{{ registro.valor_faturado | formatar_float_para_brl or '-' }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="subtotal">
+        <td {% if not opcoes.ocultar_cliente %} colspan="8" {%else%} colspan="7" {%endif%}><strong>Subtotal {{ nome_fornecedor }}</strong></td>
+        <td class="valor-destaque"><strong>{{ grupo.total | formatar_float_para_brl }}</strong></td>
+      </tr>
+      {% if grupo.registros|length > 1 %}
+      <tr class="subtotal">
+        <td {% if not opcoes.ocultar_cliente %} colspan="6" {%else%} colspan="5" {%endif%}><strong>Total de Cargas</strong></td>
+        <td class="valor-destaque"><strong>{{ "%.2f"|format(grupo.registros|selectattr('peso_ticket')|map(attribute='peso_ticket')|map('float')|sum) }}</strong></td>
+        <td {% if not opcoes.ocultar_cliente %} colspan="3" {%else%} colspan="3" {%endif%}></td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  {% endfor %}
+  {% endif %}
+
+
+  <!-- Transportadoras -->
+  {% if not opcoes.ocultar_transportadoras and transportadoras %}
+
+  <!-- Detalhes das transportadoras -->
+  {% for nome_transportadora, grupo in transportadoras.items() %}
+  <div class="section-title">Transportadora: {{ nome_transportadora }}</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Data Entrega</th>
+        <th>Fornecedor</th>
+        {% if not opcoes.ocultar_cliente %}
+        <th>Cliente</th>
+        {% endif %}
+        <th>Produto/Bitola</th>
+        <th>NF</th>
+        <th>Placa</th>
+        <th>Peso (Ton)</th>
+        <th>Preço Custo</th>
+        <th>Valor Final</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for registro in grupo.registros %}
+      <tr class="detalhes-registro">
+        <td>{{ registro.data_entrega or '-' }}</td>
+        <td>{{registro.fornecedor | truncate(20, '...') or '-' }}</td>
+         {% if not opcoes.ocultar_cliente %}
+        <td>{{ registro.cliente | truncate(20, '...') or '-' }}</td>
+        {% endif %}
+        <td>{{ registro.produto or '-' }} | {{ registro.bitola or '-' }}</td>
+        <td>{{ registro.nota_fiscal or '-' }}</td>
+        <td>{{ registro.placa_veiculo or '-' }}</td>
+        <td>{{ registro.peso_ticket or '-' }}</td>
+        <td>{{ registro.preco_custo | formatar_float_para_brl or '-' }}</td>
+        <td class="valor-destaque">{{ registro.valor_faturado | formatar_float_para_brl or '-' }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="subtotal">
+        <td {% if not opcoes.ocultar_cliente %} colspan="8" {%else%} colspan="9" {%endif%}><strong>Subtotal {{ nome_transportadora }}</strong></td>
+        <td class="valor-destaque"><strong>{{ grupo.total | formatar_float_para_brl }}</strong></td>
+      </tr>
+      {% if grupo.registros|length > 1 %}
+      <tr class="subtotal">
+        <td {% if not opcoes.ocultar_cliente %} colspan="6" {%else%} colspan="7" {%endif%}><strong>Total de Cargas</strong></td>
+        <td class="valor-destaque"><strong>{{ "%.2f"|format(grupo.registros|selectattr('peso_ticket')|map(attribute='peso_ticket')|map('float')|sum) }}</strong></td>
+        <td {% if not opcoes.ocultar_cliente %} colspan="3" {%else%} colspan="3" {%endif%}></td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  {% endfor %}
+  {% endif %}
+
+  {% if extratores %}
+
+  <!-- Detalhes dos extratores -->
+  {% for nome_extrator, grupo in extratores.items() %}
+  <div class="section-title">Extrator: {{ nome_extrator }}</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Data Entrega</th>
+        <th>Extrator</th>
+        <th>Fornecedor</th>
+        <th>Transportadora</th>
+        {% if not opcoes.ocultar_cliente %}
+        <th>Cliente</th>
+        {% endif %}
+        <th>Produto/Bitola</th>
+        <th>NF</th>
+        <th>Placa</th>
+        <th>Peso (Ton)</th>
+        <th>Valor Final</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for registro in grupo.registros %}
+      <tr class="detalhes-registro">
+        <td>{{ registro.data_entrega or '-' }}</td>
+        <td>{{ registro.extrator_identificacao | truncate(20, '...') or '-' }}</td>
+        <td>{{ registro.fornecedor_identificacao | truncate(20, '...') or '-' }}</td>
+        <td>{{ registro.transportadora_identificacao | truncate(20, '...') or '-' }}</td>
+         {% if not opcoes.ocultar_cliente %}
+        <td>{{ registro.cliente | truncate(20, '...') or '-' }}</td>
+        {% endif %}
+        <td>{{ registro.produto or '-' }} | {{ registro.bitola or '-' }}</td>
+        <td>{{ registro.nota_fiscal or '-' }}</td>
+        <td>{{ registro.placa_veiculo or '-' }}</td>
+        <td>{{ registro.peso_ticket or '-' }}</td>
+        <td class="valor-destaque">{{ registro.valor_faturado | formatar_float_para_brl or '-' }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="subtotal">
+        <td {% if not opcoes.ocultar_cliente %} colspan="9" {%else%} colspan="8" {%endif%}><strong>Subtotal</strong></td>
+        <td class="valor-destaque"><strong>{{ grupo.total | formatar_float_para_brl }}</strong></td>
+      </tr>
+      {% if grupo.registros|length > 1 %}
+      <tr class="subtotal">
+        <td {% if not opcoes.ocultar_cliente %} colspan="8" {%else%} colspan="7" {%endif%}><strong>Total de Cargas</strong></td>
+        <td class="valor-destaque"><strong>{{ "%.2f"|format(grupo.registros|selectattr('peso_ticket')|map(attribute='peso_ticket')|map('float')|sum) }}</strong></td>
+        <td></td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  {% endfor %}
+  {% endif %}
+
+  {% if comissionados %}
+  <!-- Detalhes dos comissionados -->
+  {% for nome_comissionado, grupo in comissionados.items() %}
+  <div class="section-title">Comissionado: {{ nome_comissionado }}</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Data Entrega</th>
+        <th>Comissionado</th>
+        <th>Fornecedor</th>
+        <th>Transportadora</th>
+        {% if not opcoes.ocultar_cliente %}
+        <th>Cliente</th>
+        {% endif %}
+        <th>Produto/Bitola</th>
+        <th>NF</th>
+        <th>Placa</th>
+        <th>Peso (Ton)</th>
+        <th>Valor Final</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for registro in grupo.registros %}
+      <tr class="detalhes-registro">
+        <td>{{ registro.data_entrega or '-' }}</td>
+        <td>{{ registro.comissionado_identificacao | truncate(20, '...') or '-' }}</td>
+        <td>{{ registro.fornecedor_identificacao | truncate(20, '...') or '-' }}</td>
+        <td>{{ registro.transportadora_identificacao | truncate(20, '...') or '-' }}</td>
+        {% if not opcoes.ocultar_cliente %}
+          <td>{{ registro.cliente | truncate(20, '...') or '-' }}</td>
+        {% endif %}
+        <td>{{ registro.produto or '-' }} | {{ registro.bitola or '-' }}</td>
+        <td>{{ registro.nota_fiscal or '-' }}</td>
+        <td>{{ registro.placa_veiculo or '-' }}</td>
+        <td>{{ registro.peso_ticket or '-' }}</td>
+        <td class="valor-destaque">{{ registro.valor_faturado | formatar_float_para_brl or '-' }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="subtotal">
+        <td {% if not opcoes.ocultar_cliente %} colspan="9" {%else%} colspan="8" {%endif%}><strong>Subtotal</strong></td>
+        <td class="valor-destaque"><strong>{{ grupo.total | formatar_float_para_brl }}</strong></td>
+      </tr>
+      {% if grupo.registros|length > 1 %}
+      <tr class="subtotal">
+        <td {% if not opcoes.ocultar_cliente %} colspan="8" {%else%} colspan="7" {%endif%}><strong>Total de Cargas</strong></td>
+        <td class="valor-destaque"><strong>{{ "%.2f"|format(grupo.registros|selectattr('peso_ticket')|map(attribute='peso_ticket')|map('float')|sum) }}</strong></td>
+        <td></td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  {% endfor %}
+  {% endif %}
+
+  <!-- Créditos Utilizados -->
+  {% if faturamento.utilizou_credito and creditos_utilizados %}
+  <div class="section-title">CRÉDITOS UTILIZADOS</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Categoria</th>
+        <th>Descrição do Crédito</th>
+        <th>Valor Utilizado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for credito in creditos_utilizados %}
+      <tr class="detalhes-registro">
+        <td class="text-center">
+          <b style="color: #155724;">{{credito.categoria }}</b>
+        </td>
+        <td class="text-center">{{ credito.descricao | truncate(50, '...') }}</td>
+        <td class="text-center valor-destaque">{{ credito.valor_utilizado }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="subtotal">
+        <td colspan="2"><strong>Total Créditos Utilizados</strong></td>
+        <td class="valor-destaque"><strong>{{ faturamento.valor_credito_aplicado | formatar_float_para_brl }}</strong>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  {% endif %}
+
+
+  <!-- Total Geral -->
+
+  <div class="section-title">RESUMO FNAL DO FATURAMENTO</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Descrição</th>
+        <th>Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if not opcoes.ocultar_fornecedores and fornecedores %}
+      <tr>
+        <td>Total a pagar Fornecedores</td>
+        <td class="valor-destaque">{{ faturamento.valor_fornecedor | formatar_float_para_brl }}</td>
+      </tr>
+      {% endif %}
+
+      {% if not opcoes.ocultar_transportadoras and transportadoras %}
+      <tr>
+        <td>Total a pagar Transportadoras</td>
+        <td class="valor-destaque">{{ faturamento.valor_transportadora | formatar_float_para_brl }}</td>
+      </tr>
+      {% endif %}
+
+      {% if not opcoes.ocultar_extratores and extratores %}
+      <tr>
+        <td>Total a pagar Extratores</td>
+        <td class="valor-destaque">{{ faturamento.valor_extrator | formatar_float_para_brl }}</td>
+      </tr>
+      {% endif %}
+
+      {% if comissionados %}
+      <tr>
+        <td>Total a pagar Comissionados</td>
+        <td class="valor-destaque">{{ (faturamento.valor_comissionado or 0) | formatar_float_para_brl }}</td>
+      </tr>
+      {% endif %}
+
+
+      <tr>
+        <td>Crédito Aplicado</td>
+        <td class="valor-destaque">{{ faturamento.valor_credito_aplicado | formatar_float_para_brl }}</td>
+      </tr>
+    
+      
+      <tr class="total-principal">
+        <td><strong>VALOR TOTAL FINAL</strong></td>
+        <td class="total-valor"><strong>{{ faturamento.valor_total | formatar_float_para_brl }}</strong></td>
+      </tr>
+
+    </tbody>
+  </table>
+
+
+  <div class="footer">
+    <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão MBR - Módulo Financeiro</strong></p>
+    <p>Relatório de Faturamento gerado automaticamente pelo Sistema de Gestão MBR</p>
+    {% if opcoes.ocultar_fornecedores or opcoes.ocultar_transportadoras or opcoes.ocultar_cliente %}
+    <p><em>* Algumas informações foram ocultadas conforme solicitado na geração do relatório.</em></p>
+    {% endif %}
+  </div>
+</body>
+
+</html>

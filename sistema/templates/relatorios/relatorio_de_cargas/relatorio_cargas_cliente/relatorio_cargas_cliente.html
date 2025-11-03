@@ -1,0 +1,348 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<link href="{{ url_for('static', filename='css/relatorio-cargas.css') }}" rel="stylesheet">
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">RELATÓRIOS</div>
+          <h2 class="page-title">Cargas por Cliente</h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <form action="{{ url_for('relatorio_cargas_cliente') }}" method="POST" id="exportPdfForm" target="_blank">
+              <input type="hidden" name="dataInicio" value="{{ dados_corretos.get('dataInicio', '') }}">
+              <input type="hidden" name="dataFim" value="{{ dados_corretos.get('dataFim', '') }}">
+              <input type="hidden" name="placaCargaCliente" value="{{ dados_corretos.get('placaCargaCliente', '') }}">
+              <input type="hidden" name="motoristaCargaCliente"
+                value="{{ dados_corretos.get('motoristaCargaCliente', '') }}">
+              <input type="hidden" name="tranpostadoraCargaCliente"
+                value="{{ dados_corretos.get('tranpostadoraCargaCliente', '') }}">
+              <input type="hidden" name="fornecedorCargaCliente"
+                value="{{ dados_corretos.get('fornecedorCargaCliente', '') }}">
+              <input type="hidden" name="clienteCarga" value="{{ dados_corretos.get('clienteCarga', '') }}">
+              <input type="hidden" name="numeroNfCliente" value="{{ dados_corretos.get('numeroNfCliente', '') }}">
+              <input type="hidden" name="produtoFiltro" value="{{ dados_corretos.get('produtoFiltro', '') }}">
+              <input type="hidden" name="exportar_pdf" value="1">
+              <button type="submit" class="btn btn-outline-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
+                  <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
+                  <path d="M17 18h2" />
+                  <path d="M20 15h-3v6" />
+                  <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" />
+                </svg>
+                Exportar em PDF
+              </button>
+            </form>
+            <form action="{{ url_for('relatorio_cargas_cliente') }}" method="POST" id="exportExcelForm">
+              <input type="hidden" name="dataInicio" value="{{ dados_corretos.get('dataInicio', '') }}">
+              <input type="hidden" name="dataFim" value="{{ dados_corretos.get('dataFim', '') }}">
+              <input type="hidden" name="placaCargaCliente" value="{{ dados_corretos.get('placaCargaCliente', '') }}">
+              <input type="hidden" name="motoristaCargaCliente"
+                value="{{ dados_corretos.get('motoristaCargaCliente', '') }}">
+              <input type="hidden" name="tranpostadoraCargaCliente"
+                value="{{ dados_corretos.get('tranpostadoraCargaCliente', '') }}">
+              <input type="hidden" name="fornecedorCargaCliente"
+                value="{{ dados_corretos.get('fornecedorCargaCliente', '') }}">
+              <input type="hidden" name="clienteCarga" value="{{ dados_corretos.get('clienteCarga', '') }}">
+              <input type="hidden" name="numeroNfCliente" value="{{ dados_corretos.get('numeroNfCliente', '') }}">
+              <input type="hidden" name="produtoFiltro" value="{{ dados_corretos.get('produtoFiltro', '') }}">
+              <input type="hidden" name="exportar_excel" value="1">
+              <button type="submit" class="btn btn-outline-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-spreadsheet">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                  <path d="M8 11h8v7h-8z" />
+                  <path d="M8 15h8" />
+                  <path d="M11 11v7" />
+                </svg> Exportar em Excel
+              </button>
+            </form>
+
+            <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+      <div class="col-12">
+        <div class="card" id="registrosOperacionais">
+          <div class="card-body p-0">
+            {% if registros %}
+            <div class="accordion" id="clientesAccordion">
+              {% for cliente_group in registros|groupby('cliente') %}
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-cliente-{{ loop.index }}">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapse-cliente-{{ loop.index }}" aria-expanded="true">
+                    {{ cliente_group.grouper }}
+                  </button>
+                </h2>
+                <div id="collapse-cliente-{{ loop.index }}"
+                  class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                  data-bs-parent="#clientesAccordion">
+                  <div class="accordion-body p-0">
+                    {% for produto_group in
+                    cliente_group.list|groupby('produto') %}
+                    <div class="produto-section border-bottom">
+                      <div class="produto-header p-3 bg-light">
+                        <div class="d-flex align-items-center">
+                          <span class="fw-bold text-azure">{{
+                            produto_group.grouper }}</span>
+                          <span class="badge bg-azure-lt ms-2">{{
+                            produto_group.list|length }}</span>
+                        </div>
+                      </div>
+                      <div class="p-3">
+                        <div class="table-responsive">
+                          <table class="table table-vcenter table-hover table-striped">
+                            <thead class="bg-light">
+                              <tr>
+                                <th class="text-center text-primary">Data
+                                  Entrega</th>
+                                <th class="text-center">Placa/Motorista</th>
+                                <th class="text-center">Transportadora</th>
+                                <th class="text-center">Fornecedor</th>
+                                <th class="text-center">Cliente</th>
+                                <th class="text-center">Produto/Bitola</th>
+                                <th class="text-center">Peso Ticket</th>
+                                <th class="text-center">Número NF</th>
+                                <th class="text-center">Valor NF</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for item in produto_group.list %}
+                              <tr>
+                                <td class="text-center fw-bold text-primary">
+                                  {% if item.registro.data_entrega_ticket %}
+                                  {{ item.registro.data_entrega_ticket |
+                                  formatar_data_para_brl }}
+                                  {% else %}-{% endif %}
+                                </td>
+
+                                <td class="text-center">
+                                  {% set placa =
+                                  item.registro.solicitacao.veiculo.placa_veiculo
+                                  or '-' %}
+                                  {% set motorista_nome =
+                                  item.registro.solicitacao.motorista.nome_completo
+                                  or '-' %}
+                                  {% set nome_split = motorista_nome.split() %}
+                                  {{ placa | truncate(10, True, '...') }} |
+                                  {% if nome_split|length > 1 %}
+                                  {{ nome_split[0] }} {{ nome_split[1][0] }}.
+                                  {% else %}
+                                  {{ nome_split[0] }}
+                                  {% endif %}
+                                </td>
+
+                                <td class="text-center">
+                                  {{
+                                  item.registro.solicitacao.transportadora_exibicao.identificacao
+                                  | truncate(15, True, '...') if
+                                  item.registro.solicitacao.transportadora_exibicao
+                                  and
+                                  item.registro.solicitacao.transportadora_exibicao.identificacao
+                                  else '-' }}
+                                </td>
+
+                                <td class="text-center">
+                                  {% if item.registro.solicitacao.floresta_id %}
+                                  {{
+                                  item.registro.solicitacao.floresta.identificacao
+                                  | truncate(15, True, '...') }}
+                                  {% elif
+                                  item.registro.solicitacao.fornecedor_id %}
+                                  {{
+                                  item.registro.solicitacao.fornecedor.identificacao
+                                  | truncate(15, True, '...') }}
+                                  {% else %}-{% endif %}
+                                </td>
+
+                                <td class="text-center">
+                                  {{
+                                  item.registro.solicitacao.cliente.identificacao
+                                  | truncate(15, True, '...') if
+                                  item.registro.solicitacao.cliente and
+                                  item.registro.solicitacao.cliente.identificacao
+                                  else '-' }}
+                                </td>
+
+                                <td class="text-center">
+                                  {{ item.registro.solicitacao.produto.nome |
+                                  truncate(10, True, '...') }} |
+                                  {{ item.registro.solicitacao.bitola.bitola |
+                                  truncate(10, True, '...') }}
+                                </td>
+
+                                <td class="text-center">
+                                  {% if item.registro.peso_liquido_ticket %}
+                                  <span class="badge bg-primary-lt p-2">{{
+                                    item.registro.peso_liquido_ticket }}
+                                    Ton.</span>
+                                  {% else %}
+                                  <span class="badge bg-secondary-lt p-2">Sem
+                                    peso</span>
+                                  {% endif %}
+                                </td>
+
+                                <td class="text-center">
+                                  <span class="badge bg-orange-lt p-2"> {% if item.registro.estorno_nf%}
+                                    {{ item.registro.numero_nota_fiscal_estorno }} *
+                                    {% elif item.registro.numero_nota_fiscal %}
+                                    {{ item.registro.numero_nota_fiscal }}
+                                    {%else%}
+                                    -
+                                    {% endif %}
+                                  </span>
+                                </td>
+
+                                <td class="text-center">
+                                  {% if item.registro.valor_total_nota_100 %}
+                                  <span class="badge bg-green-lt p-2">{{
+                                    item.registro.valor_total_nota_100 |
+                                    formatar_float_para_brl }}</span>
+                                  {% else %}-{% endif %}
+                                </td>
+                              </tr>
+
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="area-info-card"
+              style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">
+              <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
+              <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">Nenhum
+                dado disponível</h2>
+              <p style="color: #777;">No momento não há registros para
+                exibir.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
+      <form action="{{ url_for('relatorio_cargas_cliente') }}" method="GET">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar cargas</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <!-- Linha 1: Datas -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="dataInicio" class="form-control"
+                  value="{{ dados_corretos.get('dataInicio', '') }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="dataFim" class="form-control" value="{{ dados_corretos.get('dataFim', '') }}">
+              </div>
+
+              <!-- Linha 2: Placa e Motorista -->
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Produto</label>
+                <input type="text" name="produtoFiltro" class="form-control"
+                  value="{{ dados_corretos.get('produtoFiltro', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Placa</label>
+                <input type="text" name="placaCargaCliente" class="form-control"
+                  value="{{ dados_corretos.get('placaCargaCliente', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Motorista</label>
+                <input type="text" name="motoristaCargaCliente" class="form-control"
+                  value="{{ dados_corretos.get('motoristaCargaCliente', '') }}">
+              </div>
+
+              <!-- Linha 3: Transportadora e Fornecedor -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Transportadora</label>
+                <input type="text" name="tranpostadoraCargaCliente" class="form-control"
+                  value="{{ dados_corretos.get('tranpostadoraCargaCliente', '') }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Fornecedor</label>
+                <input type="text" name="fornecedorCargaCliente" class="form-control"
+                  value="{{ dados_corretos.get('fornecedorCargaCliente', '') }}">
+              </div>
+
+              <!-- Linha 4: Cliente e Número NF -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="clienteCarga" class="form-control"
+                  value="{{ dados_corretos.get('clienteCarga', '') }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Número NF</label>
+                <input type="text" name="numeroNfCliente" class="form-control"
+                  value="{{ dados_corretos.get('numeroNfCliente', '') }}">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <a href="{{ url_for('relatorio_cargas_cliente') }}" class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}
