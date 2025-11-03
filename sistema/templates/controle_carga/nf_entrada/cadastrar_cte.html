@@ -1,0 +1,199 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            CADASTRAR CTE
+          </div>
+          <h2 class="page-title">
+            Cadastrar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card"
+          action="#"
+          method="POST" enctype="multipart/form-data">
+          <div class="card-body">
+
+            <div class="row row-cards">
+              <div class="row mt-3">
+                <div class="col-md-12">
+                  <label class="form-label required">Arquivo
+                    CTE
+                    (PDF)</label>
+                  <div class="mb-3">
+                    {% if nfEntrada.arquivo_cte_id %}
+                    <div class="d-flex gap-4 mb-2">
+                      <div class="form-check">
+                        <input class="form-check-input"
+                          type="radio"
+                          name="opcaoCTE"
+                          value="manter"
+                          id="opcaoManterCTE" checked>
+                        <label class="form-check-label"
+                          for="opcaoCTE">
+                          Manter atual
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input"
+                          type="radio"
+                          name="opcaoCTE"
+                          value="alterar"
+                          id="opcaoAlterarCTE">
+                        <label class="form-check-label"
+                          for="opcaoCTE">
+                          Enviar novo
+                        </label>
+                      </div>
+                    </div>
+
+                    <a href="#" id="visualizar-contra-nota"
+                      class="btn btn-visualizar-arquivo mb-3"
+                      data-url="{{ url_for('diretorio_uploads_arquivo_cte', filename=nfEntrada.arquivo_cte.caminho.split('/')[-1]) }}"
+                      data-bs-toggle="modal"
+                      data-bs-target="#modal-visualizar-arquivo">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24" viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-receipt">
+                        <path stroke="none"
+                          d="M0 0h24v24H0z"
+                          fill="none"></path>
+                        <path
+                          d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2">
+                        </path>
+                      </svg>
+                      Visualizar CTE
+                    </a>
+
+                    <div id="inputUploadCTE" class="d-none">
+                      <input type="file" name="arquivoCTE"
+                        accept=".pdf"
+                        class="form-control {% if 'arquivoCTE' in campos_obrigatorios or 'arquivoCTE' in campos_erros %} is-invalid {% endif %}">
+                      <div class="invalid-feedback">
+                        {% if 'arquivoCTE' in
+                        campos_obrigatorios %}
+                        {{
+                        campos_obrigatorios['arquivoCTE']
+                        }}
+                        {% elif 'arquivoCTE' in
+                        campos_erros %}
+                        {{ campos_erros['arquivoCTE'] }}
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% else %}
+                    <input type="file" name="arquivoCTE"
+                      accept=".pdf"
+                      class="form-control {% if 'arquivoCTE' in campos_obrigatorios or 'arquivoCTE' in campos_erros %} is-invalid {% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'arquivoCTE' in
+                      campos_obrigatorios %}
+                      {{ campos_obrigatorios['arquivoCTE']
+                      }}
+                      {% elif 'arquivoCTE' in campos_erros
+                      %}
+                      {{ campos_erros['arquivoCTE'] }}
+                      {% endif %}
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="javascript:history.back()"
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-arrow-left"
+                width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-plus"
+                width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // === CTE ===
+      const radioManterCTE = document.getElementById("opcaoManterCTE");
+      const radioAlterarCTE = document.getElementById("opcaoAlterarCTE");
+      const inputUploadCTE = document.getElementById("inputUploadCTE");
+      const linkVisualizarCTE = document.getElementById("visualizar-contra-nota");
+  
+      if (radioManterCTE && radioAlterarCTE && inputUploadCTE && linkVisualizarCTE) {
+        function atualizarUploadCTE() {
+          if (radioAlterarCTE.checked) {
+            inputUploadCTE.classList.remove("d-none");
+            linkVisualizarCTE.classList.add("d-none");
+          } else {
+            inputUploadCTE.classList.add("d-none");
+            linkVisualizarCTE.classList.remove("d-none");
+          }
+        }
+  
+        radioManterCTE.addEventListener("change", atualizarUploadCTE);
+        radioAlterarCTE.addEventListener("change", atualizarUploadCTE);
+  
+        // Inicializa estado correto
+        atualizarUploadCTE();
+      }
+    });
+  
+  </script>
+  {% include 'estrutura/footer.html' %}
+
+</div>
+
+{% endblock conteudo %}

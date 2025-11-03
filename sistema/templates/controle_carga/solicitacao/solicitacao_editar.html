@@ -1,0 +1,349 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">SOLICITAÇÃO</div>
+          <h2 class="page-title">Editar</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card"
+          action="{{ url_for('editar_solicitacao', id=solicitacao.id) }}"
+          method="POST">
+          <div class="card-body">
+            <div class="row">
+
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label required">Empresa Emissora</label>
+                  <select name="empresaEmissora"
+                    class="form-select {% if 'empresaEmissora' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <option value selected>Selecione...</option>
+                    {% for e in empresas %}
+                    <option value="{{ e.id }}" {% if
+                      solicitacao.empresa_emissora_id ==
+                      e.id %}selected{% endif %}>{{ e.identificacao }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {{ campos_obrigatorios.get('empresaEmissora') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label required">Cliente</label>
+                  <select name="clienteSolicitacao"
+                    class="form-select {% if 'clienteSolicitacao' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <option value selected>Selecione...</option>
+                    {% for c in cliente %}
+                    <option value="{{ c.id }}" {% if solicitacao.cliente_id ==
+                      c.id %}selected{% endif %}>{{ c.identificacao }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {{ campos_obrigatorios.get('clienteSolicitacao') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Bitola</label>
+                  <select name="bitolaSolicitacao"
+                    class="form-select {% if 'bitolaSolicitacao' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <option value selected>Selecione...</option>
+                    {% for b in bitola %}
+                    <option value="{{ b.id }}" {% if solicitacao.bitola_id ==
+                      b.id %}selected{% endif %}>{{ b.bitola }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {{ campos_obrigatorios.get('bitolaSolicitacao') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Produto</label>
+                  <select name="produtoSolicitacao"
+                    class="form-select {% if 'produtoSolicitacao' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <option value selected>Selecione...</option>
+                    {% for p in produtos %}
+                    <option value="{{ p.id }}" {% if solicitacao.produto_id ==
+                      p.id %}selected{% endif %}>{{ p.nome }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {{ campos_obrigatorios.get('produtoSolicitacao') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">Nome grupo</label>
+                  <select name="nomeGrupo"
+                    class="form-select {% if 'nomeGrupo' in campos_obrigatorios or 'nomeGrupo' in campos_erros %}is-invalid{% endif %}">
+                    <option value selected>Selecione um grupo...</option>
+                    {% for g in grupo_whats %}
+                    <option value="{{ g.id }}" {% if solicitacao.nome_grupo_id
+                      == g.id %}selected{% endif %}>{{ g.nome_grupo_whats
+                      }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {{ campos_obrigatorios.get('nomeGrupo') or
+                    campos_erros.get('nomeGrupo') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label">Data e hora MSG Grupo</label>
+                  <input type="datetime-local" name="dataHoraSolicitacao"
+                    value="{% if solicitacao.data_hora_msg_whats %}{{ solicitacao.data_hora_msg_whats.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
+                    class="form-control {% if 'dataHoraSolicitacao' in campos_obrigatorios %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {{ campos_obrigatorios.get('dataHoraSolicitacao') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <h3 class="text-primary">Informações de transporte</h3>
+
+                <div class="col-sm-2 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label required">Placa</label>
+                    <select id="selectVeiculo" name="placaVeiculo"
+                      class="form-select {% if 'placaVeiculo' in campos_obrigatorios %}is-invalid{% endif %}">
+                      <option value selected>Selecione...</option>
+                      {% for v in veiculos %}
+                      <option value="{{ v.id }}" {% if v.id ==
+                        solicitacao.veiculo_id %}selected{% endif %}>{{
+                        v.placa_veiculo }}</option>
+                      {% endfor %}
+                    </select>
+                    <div class="invalid-feedback">
+                      {{ campos_obrigatorios.get('placaVeiculo') }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-sm-3 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label required">Capacidade carga
+                      (Ton.)</label>
+                    <input type="text" name="capacidadeCarga"
+                      id="inputcapacidadeCarga"
+                      class="form-control campo-float"
+                      value="{{ solicitacao.veiculo.capacidade_ton }}" disabled>
+                    <input type="hidden" name="capacidadeCargaSolicitacao"
+                      id="inputVeiculoId"
+                      value="{{ solicitacao.veiculo.id }}">
+                  </div>
+                </div>
+
+                <div class="col-sm-4 col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label required">Transportadora</label>
+                    <select name="transportadoraSolicitacao"
+                      id="selectTransportadora"
+                      class="form-select {% if 'transportadoraSolicitacao' in campos_obrigatorios or 'transportadoraSolicitacao' in campos_erros %}is-invalid{% endif %}">
+                      <option value selected>Selecione...</option>
+                    </select>
+                    <div class="invalid-feedback">
+                      {{ campos_obrigatorios.get('transportadoraSolicitacao') or
+                      campos_erros.get('transportadoraSolicitacao') }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-sm-3 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label required">Motorista</label>
+                    <select id="selectMotorista" name="motoristaSolicitacao"
+                      class="form-select {% if 'motoristaSolicitacao' in campos_obrigatorios %}is-invalid{% endif %}">
+                    </select>
+                    <div class="invalid-feedback">
+                      {{ campos_obrigatorios.get('motoristaSolicitacao') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="card-footer text-center text-md-end">
+            <a href="javascript:history.back()"
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-arrow-left"
+                width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-plus"
+                width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Editar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const veiculoSelect = document.getElementById('selectVeiculo');
+      const transportadoraSelect = document.getElementById('selectTransportadora');
+      const motoristaSelect = document.getElementById('selectMotorista');
+      const capacidadeCargaInput = document.getElementById('inputcapacidadeCarga');
+      const capacidadeCargaHidden = document.getElementById('inputVeiculoId');
+    
+      // Valores salvos (para edição)
+      const transportadoraSalva = "{{ solicitacao.transportadora_id or '' }}";
+      const motoristaSalvo = "{{ solicitacao.motorista_id or '' }}";
+    
+      function carregarMotoristas(transportadoraId, selecionarMotorista = null) {
+        if (!transportadoraId) {
+          motoristaSelect.innerHTML = '<option value selected>Selecione...</option>';
+          return;
+        }
+        fetch(`/motorista/${transportadoraId}/dados`)
+          .then(r => r.json())
+          .then(data => {
+            motoristaSelect.innerHTML = '<option value selected>Selecione...</option>';
+            data.motoristas.forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m.id;
+              opt.text = m.nome;
+              motoristaSelect.appendChild(opt);
+            });
+            if (selecionarMotorista) {
+              motoristaSelect.value = selecionarMotorista;
+            }
+          })
+          .catch(() => {
+            console.error('Erro ao buscar motoristas');
+            motoristaSelect.innerHTML = '<option value selected>Selecione...</option>';
+          });
+      }
+    
+      function carregarDadosVeiculo(veiculoId) {
+        if (!veiculoId) return;
+    
+        fetch(`/veiculo/${veiculoId}/dados`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.erro) {
+              alert(data.erro);
+              return;
+            }
+    
+            // Preenche capacidade
+            capacidadeCargaInput.value = data.capacidade_carga;
+            capacidadeCargaHidden.value = veiculoId;
+    
+            // Preenche transportadoras (todas as transportadoras do veículo)
+            transportadoraSelect.innerHTML = '<option value selected>Selecione...</option>';
+            data.transportadoras.forEach(t => {
+              const opt = document.createElement('option');
+              opt.value = t.id;
+              opt.text = t.nome;
+              transportadoraSelect.appendChild(opt);
+            });
+    
+            // Se houver valor salvo, seleciona automaticamente
+            if (transportadoraSalva && data.transportadoras.some(t => t.id == transportadoraSalva)) {
+              transportadoraSelect.value = transportadoraSalva;
+              carregarMotoristas(transportadoraSalva, motoristaSalvo);
+            } else {
+              // limpa lista de motoristas até o usuário escolher uma transportadora
+              motoristaSelect.innerHTML = '<option value selected>Selecione...</option>';
+            }
+          })
+          .catch(() => {
+            console.error('Erro ao buscar dados do veículo');
+          });
+      }
+    
+      veiculoSelect.addEventListener('change', function () {
+        const veiculoId = this.value;
+        if (veiculoId) {
+          carregarDadosVeiculo(veiculoId);
+        } else {
+          transportadoraSelect.innerHTML = '<option value selected>Selecione...</option>';
+          motoristaSelect.innerHTML = '<option value selected>Selecione...</option>';
+          capacidadeCargaInput.value = '';
+          capacidadeCargaHidden.value = '';
+        }
+      });
+    
+      transportadoraSelect.addEventListener('change', function () {
+        const transportadoraId = this.value;
+        // quando transportadora mudar, carrega motoristas correspondentes
+        carregarMotoristas(transportadoraId);
+      });
+    
+      // Se já existir veículo selecionado (edição), carrega dados dele:
+      const veiculoSelecionado = veiculoSelect.value;
+      if (veiculoSelecionado) {
+        carregarDadosVeiculo(veiculoSelecionado);
+      }
+    
+      // Inicializa TomSelect nos demais selects
+      document.querySelectorAll('select.form-select').forEach(function (select) {
+        if (!['selectMotorista', 'selectTransportadora'].includes(select.id)) {
+          new TomSelect(select, {
+            create: false,
+            allowEmptyOption: false,
+            sortField: {
+              field: "text",
+              direction: "asc"
+            }
+          });
+        }
+      });
+    });
+    </script>
+
+</div>
+{% endblock conteudo %}

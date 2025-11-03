@@ -1,0 +1,14 @@
+{%- for mensagem, tipo in get_flashed_messages() %}
+  <div class="alert alert-dismissible fade show meu-alerta
+    {% if tipo == 'success' %}alert-success
+    {% elif tipo == 'error' %}alert-danger
+    {% elif tipo == 'warning' %}alert-warning
+    {% endif %}" role="alert">
+    <div class="d-flex">
+      <div>
+        {{ mensagem }}
+      </div>
+    </div>
+    <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+  </div>
+{%- endfor %}

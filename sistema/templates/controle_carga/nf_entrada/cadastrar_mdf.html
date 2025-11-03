@@ -1,0 +1,199 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            CADASTRAR MDF
+          </div>
+          <h2 class="page-title">
+            Cadastrar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card"
+          action="#"
+          method="POST" enctype="multipart/form-data">
+          <div class="card-body">
+
+            <div class="row row-cards">
+              <div class="row mt-3">
+                <div class="col-md-12">
+                  <label class="form-label required">Arquivo
+                    MDF
+                    (PDF)</label>
+                  <div class="mb-3">
+                    {% if nfEntrada.arquivo_mdf_id %}
+                    <div class="d-flex gap-4 mb-2">
+                      <div class="form-check">
+                        <input class="form-check-input"
+                          type="radio"
+                          name="opcaoMDF"
+                          value="manter"
+                          id="opcaoManterMDF" checked>
+                        <label class="form-check-label"
+                          for="opcaoMDF">
+                          Manter atual
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input"
+                          type="radio"
+                          name="opcaoMDF"
+                          value="alterar"
+                          id="opcaoAlterarMDF">
+                        <label class="form-check-label"
+                          for="opcaoMDF">
+                          Enviar novo
+                        </label>
+                      </div>
+                    </div>
+
+                    <a href="#" id="visualizar-mdf"
+                      class="btn btn-visualizar-arquivo mb-3"
+                      data-url="{{ url_for('diretorio_uploads_arquivo_mdf', filename=nfEntrada.arquivo_mdf.caminho.split('/')[-1]) }}"
+                      data-bs-toggle="modal"
+                      data-bs-target="#modal-visualizar-arquivo">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24" viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-receipt">
+                        <path stroke="none"
+                          d="M0 0h24v24H0z"
+                          fill="none"></path>
+                        <path
+                          d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2">
+                        </path>
+                      </svg>
+                      Visualizar MDF
+                    </a>
+
+                    <div id="inputUploadMDF" class="d-none">
+                      <input type="file" name="arquivoMDF"
+                        accept=".pdf"
+                        class="form-control {% if 'arquivoMDF' in campos_obrigatorios or 'arquivoMDF' in campos_erros %} is-invalid {% endif %}">
+                      <div class="invalid-feedback">
+                        {% if 'arquivoMDF' in
+                        campos_obrigatorios %}
+                        {{
+                        campos_obrigatorios['arquivoMDF']
+                        }}
+                        {% elif 'arquivoMDF' in
+                        campos_erros %}
+                        {{ campos_erros['arquivoMDF'] }}
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% else %}
+                    <input type="file" name="arquivoMDF"
+                      accept=".pdf"
+                      class="form-control {% if 'arquivoMDF' in campos_obrigatorios or 'arquivoMDF' in campos_erros %} is-invalid {% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'arquivoMDF' in
+                      campos_obrigatorios %}
+                      {{ campos_obrigatorios['arquivoMDF']
+                      }}
+                      {% elif 'arquivoMDF' in campos_erros
+                      %}
+                      {{ campos_erros['arquivoMDF'] }}
+                      {% endif %}
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="javascript:history.back()"
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-arrow-left"
+                width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-plus"
+                width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // === MDF ===
+      const radioManterMDF = document.getElementById("opcaoManterMDF");
+      const radioAlterarMDF = document.getElementById("opcaoAlterarMDF");
+      const inputUploadMDF = document.getElementById("inputUploadMDF");
+      const linkVisualizarMDF = document.getElementById("visualizar-mdf");
+  
+      if (radioManterMDF && radioAlterarMDF && inputUploadMDF && linkVisualizarMDF) {
+        function atualizarUploadMDF() {
+          if (radioAlterarMDF.checked) {
+            inputUploadMDF.classList.remove("d-none");
+            linkVisualizarMDF.classList.add("d-none");
+          } else {
+            inputUploadMDF.classList.add("d-none");
+            linkVisualizarMDF.classList.remove("d-none");
+          }
+        }
+  
+        radioManterMDF.addEventListener("change", atualizarUploadMDF);
+        radioAlterarMDF.addEventListener("change", atualizarUploadMDF);
+  
+        // Inicializa estado correto
+        atualizarUploadMDF();
+      }
+    });
+  
+  </script>
+  {% include 'estrutura/footer.html' %}
+
+</div>
+
+{% endblock conteudo %}

@@ -1,0 +1,260 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            FLORESTA
+          </div>
+          <h2 class="page-title">
+            Cadastrar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="{{ url_for('cadastrar_floresta') }}"
+          method="POST" enctype="multipart/form-data">
+          <div class="card-body">
+
+            <div class="row">
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label
+                    class="form-label required">Identificação</label>
+                  <input type="text" name="identificacaoFloresta"
+                    class="form-control 
+                        {% if 'identificacaoFloresta' in campos_obrigatorios or 'identificacaoFloresta' in campos_erros %}is-invalid{% endif %}">
+
+                  <div class="invalid-feedback">
+                    {% if 'identificacaoFloresta' in
+                    campos_obrigatorios %}
+                    {{
+                    campos_obrigatorios['identificacaoFloresta']
+                    }}
+                    {% elif 'identificacaoFloresta' in
+                    campos_erros %}
+                    {{
+                    campos_erros['identificacaoFloresta']
+                    }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-1 col-md-1">
+                <div class="mb-3">
+                  <label class="form-label">Rodovia</label>
+                  <input type="text" name="rodoviaFloresta"
+                    value="{{ dados_corretos['rodoviaFloresta'] }}"
+                    class="form-control rodoviaFloresta {% if 'rodoviaFloresta' in campos_obrigatorios or 'rodoviaFloresta' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'rodoviaFloresta' in
+                    campos_obrigatorios %}
+                    {{ campos_obrigatorios['rodoviaFloresta']
+                    }}
+                    {% elif 'rodoviaFloresta' in campos_erros
+                    %}
+                    {{ campos_erros['rodoviaFloresta'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-1 col-md-1">
+                <div class="mb-3">
+                  <label class="form-label">KM</label>
+                  <input type="text" name="kmRodovia"
+                    value="{{ dados_corretos['kmRodovia'] }}"
+                    class="form-control kmRodovia {% if 'kmRodovia' in campos_obrigatorios or 'kmRodovia' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'kmRodovia' in
+                    campos_obrigatorios %}
+                    {{ campos_obrigatorios['kmRodovia']
+                    }}
+                    {% elif 'kmRodovia' in campos_erros
+                    %}
+                    {{ campos_erros['kmRodovia'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Cidade</label>
+                  <input type="text" name="cidadeFloresta"
+                    value="{{ dados_corretos['cidadeFloresta'] }}"
+                    class="form-control cidadeFloresta {% if 'cidadeFloresta' in campos_obrigatorios or 'cidadeFloresta' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'cidadeFloresta' in
+                    campos_obrigatorios %}
+                    {{ campos_obrigatorios['cidadeFloresta']
+                    }}
+                    {% elif 'cidadeFloresta' in campos_erros
+                    %}
+                    {{ campos_erros['cidadeFloresta'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Estado</label>
+                  <select type="text" name="estadoFloresta"
+                    value="{{ dados_corretos['estadoFloresta'] }}"
+                    class="form-select estadoFloresta {% if 'estadoFloresta' in campos_obrigatorios or 'estadoFloresta' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                    <option value selected>Selecione...</option>
+                    <option value="AC">AC</option>
+                    <option value="AL">AL</option>
+                    <option value="AP">AP</option>
+                    <option value="AM">AM</option>
+                    <option value="BA">BA</option>
+                    <option value="CE">CE</option>
+                    <option value="DF">DF</option>
+                    <option value="ES">ES</option>
+                    <option value="GO">GO</option>
+                    <option value="MA">MA</option>
+                    <option value="MT">MT</option>
+                    <option value="MS">MS</option>
+                    <option value="MG">MG</option>
+                    <option value="PA">PA</option>
+                    <option value="PB">PB</option>
+                    <option value="PR">PR</option>
+                    <option value="PE">PE</option>
+                    <option value="PI">PI</option>
+                    <option value="RJ">RJ</option>
+                    <option value="RN">RN</option>
+                    <option value="RS">RS</option>
+                    <option value="RO">RO</option>
+                    <option value="RR">RR</option>
+                    <option value="SC">SC</option>
+                    <option value="SP">SP</option>
+                    <option value="SE">SE</option>
+                    <option value="TO">TO</option></select>
+                  <div class="invalid-feedback">
+                    {% if 'estadoFloresta' in
+                    campos_obrigatorios %}
+                    {{ campos_obrigatorios['estadoFloresta']
+                    }}
+                    {% elif 'estadoFloresta' in campos_erros
+                    %}
+                    {{ campos_erros['estadoFloresta'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label">Crédito
+                    (R$)</label>
+                  <input type="text" name="creditoFloresta"
+                    value="{{ dados_corretos['creditoFloresta'] }}"
+                    class="form-control campo-moeda-brl {% if 'creditoFloresta' in campos_obrigatorios %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'creditoFloresta' in
+                    campos_obrigatorios
+                    %}
+                    {{
+                    campos_obrigatorios['creditoFloresta']
+                    }}
+                    {% elif 'creditoFloresta' in
+                    campos_erros %}
+                    {{ campos_erros['creditoFloresta'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label required">Contrato floresta</label>
+                  <input type="file" name="contratoFloresta"
+                    class="form-control contratoFloresta {% if 'contratoFloresta' in campos_obrigatorios or 'contratoFloresta' in campos_erros %}
+                            is-invalid
+                          {% endif %}" accept=".pdf">
+                  <div class="invalid-feedback">
+                    {% if 'contratoFloresta' in
+                    campos_obrigatorios %}
+                    {{ campos_obrigatorios['contratoFloresta']
+                    }}
+                    {% elif 'contratoFloresta' in campos_erros
+                    %}
+                    {{ campos_erros['contratoFloresta'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="{{ url_for('listar_florestas') }}"
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-arrow-left"
+                width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-plus"
+                width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        new TomSelect("#transportadoraSelect", {
+          create: false,
+          placeholder: "Selecione uma transportadora...",
+          maxItems: 1 
+        });
+      });
+  </script>
+
+</div>
+
+{% endblock conteudo %}

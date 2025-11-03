@@ -1,0 +1,112 @@
+{% include 'relatorios/estrutura/style.html' %}
+<div class="page-wrapper">
+  <div class="page body">
+    <div class="container">
+      <div class="watermark">
+        <img src="{{logo_path}}"
+          alt="MBR Extração Watermark" />
+      </div>
+
+      <div class="content">
+        <div class="header no-break">
+          <img src="{{logo_path}}"
+            alt="Logo MBR Extração" />
+          <div class="system-info">
+            <div><strong>Sistema de Gestão MBR</strong></div>
+            <div><strong>Versão</strong> {{changelog.versao}}</div>
+            <div><strong>Data:</strong>
+              {{changelog.data_lancamento}}</div>
+          </div>
+        </div>
+
+        <div class="relatorio-title">Relatório Sintético por
+          Fornecedor Floresta</div>
+
+        <!-- Filtros aplicados se existirem -->
+        {% if dados_corretos %}
+        <div class="dados-registro no-break">
+          <div class="filtros-title">Filtros Aplicados</div>
+          <div
+            style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Data
+                    Início:</strong></span>
+                {{ dados_corretos.get('dataInicio', '') |
+                converte_data_para_datetime_converte_data_brl if
+                dados_corretos.get('dataInicio', '') else '-' }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 10px;">
+              <p><span class="label"><strong>Data
+                    Fim:</strong></span>
+                {{ dados_corretos.get('dataFim', '') |
+                converte_data_para_datetime_converte_data_brl if
+                dados_corretos.get('dataFim', '') else '-' }}
+              </p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if registros %}
+        <table class="table table-vcenter table-hover table-striped">
+          <thead class="bg-light">
+            <tr>
+              <th class="text-center text-primary">Origem
+                (Fornecedor/Floresta)</th>
+              <th class="text-center">Total de Cargas</th>
+              <th class="text-center">Peso Total (Ton)</th>
+              <th class="text-center">Total a Pagar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for origem_group in registros|groupby('origem') %}
+            <tr>
+              <td class="text-center fw-bold text-primary">
+                {{ origem_group.grouper }}
+              </td>
+              <td class="text-center">
+                {{ origem_group.list | length }}
+              </td>
+              <td class="text-center">
+                {{
+                origem_group.list
+                | map(attribute='registro.peso_liquido_ticket')
+                | select
+                | sum
+                | round(2)
+                }}
+              </td>
+              <td class="text-center">
+                <span class="badge bg-green-lt p-2">
+                  {{
+                  origem_group.list
+                  | map(attribute='valor_pagar')
+                  | select
+                  | sum
+                  | formatar_float_para_brl
+                  }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <!-- Estado vazio -->
+        <div style="text-align: center; padding: 50px 0;">
+          <h3 style="color: #666;">Nenhum registro encontrado</h3>
+          <p style="color: #999;">Não há registros de cargas
+            disponíveis para os filtros selecionados.</p>
+        </div>
+        {% endif %}
+
+        <div class="footer">
+          <p><strong>MBR Extração &copy; 2025</strong> - Todos os
+            direitos reservados</p>
+          <p><strong>Sistema de Gestão MBR</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

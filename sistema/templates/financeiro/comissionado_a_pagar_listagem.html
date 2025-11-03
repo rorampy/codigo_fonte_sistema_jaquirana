@@ -1,0 +1,656 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">FINANCEIRO</div>
+          <h2 class="page-title">Comissionado a Faturar</h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <button id="btn-informar-pagamento-massa" class="btn btn-outline-success" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-tools">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M3 21h4l13 -13a1.5 1.5 0 0 0 -4 -4l-13 13v4" />
+                <path d="M14.5 5.5l4 4" />
+              </svg>
+              Faturamento em massa
+            </button>
+            <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% set titulo_pagina = "comissionado(s)" %}
+  {% include 'financeiro/importar_ofx/dados_conciliacao_component.html' %}
+
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+      <div class="col-12">
+        <div class="card" id="registrosOperacionais">
+          <div class="card-body p-0">
+            {% if registros %}
+            <div class="accordion" id="origensAccordion">
+              {% for origem_group in
+              registros|groupby('comissionado.identificacao') %}
+              {% set origem = origem_group.grouper %}
+              {% set registros_origem = origem_group.list %}
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-origem-{{ loop.index }}">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapse-origem-{{ loop.index }}" aria-expanded="true">
+                    <span class="fw-bold d-flex align-itens-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-user-dollar">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                        <path d="M6 21v-2a4 4 0 0 1 4 -4h3" />
+                        <path d="M21 15h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5" />
+                        <path d="M19 21v1m0 -8v1" />
+                      </svg>
+                      {{ origem }}
+                    </span>
+                  </button>
+                </h2>
+                <div id="collapse-origem-{{ loop.index }}"
+                  class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                  data-bs-parent="#origensAccordion">
+                  <div class="accordion-body p-0">
+                    {% set origemId = loop.index %}
+                    {% for produto_group in registros_origem|groupby('produto')
+                    %}
+                    {% set produtoId = loop.index %}
+                    {% set groupId = 'o' ~ origemId ~ 'p' ~ produtoId %}
+                    {% set produto = produto_group.grouper %}
+                    {% set registros_produto = produto_group.list %}
+                    <div class="produto-section border-bottom">
+                      <div class="produto-header p-3 bg-light">
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div class="d-flex align-items-center">
+                            <span class="fw-bold text-azure">{{ produto
+                              }}</span>
+                            <span class="badge bg-azure-lt ms-2">{{
+                              registros_produto|length }}</span>
+                          </div>
+                          <div>
+                            <strong>
+                              <span class="text-muted me-2">Total a
+                                pagar:</span>
+                              <span id="total-valor-{{ groupId }}" class="badge bg-green-lt">R$ 0,00</span>
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="p-3">
+                        <div class="table-responsive">
+                          <table class="table table-vcenter table-hover table-striped">
+                            <thead class="bg-light">
+                              <tr>
+                                <th class="text-center">
+                                  <input type="checkbox" class="form-check-input select-all-group"
+                                    data-group="{{ groupId }}" />
+                                </th>
+                                <th class="text-center text-primary">Data
+                                  Entrega</th>
+                                <th class="text-center">Fornecedor</th>
+                                <th class="text-center">Cliente</th>
+                                <th class="text-center">Produto/Bitola</th>
+                                <th class="text-center">NF</th>
+                                <th class="text-center">Peso Ticket</th>
+                                <th class="text-center">Preço Comissão
+                                  (Ton.)</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">A faturar</th>
+                                <th class="text-center">Informar
+                                  Faturamento</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for item in registros_produto %}
+                              <tr>
+                                <td class="text-center">
+                                  <!-- CHECKBOX DESABILITADO PARA REGISTROS JÁ PAGOS -->
+                                  <input type="checkbox" class="form-check-input registro-checkbox"
+                                    data-id="{{ item.registro.id }}" data-group="{{ groupId }}"
+                                    data-diff="{{ item.registro.valor_total_a_pagar_100 / 100 or 0 }}" {% if
+                                    item.registro.situacao_pagamento_id==1 %}disabled{% endif %}>
+                                </td>
+                                <td class="text-center text-primary">{{
+                                  item.registro.data_entrega_ticket |
+                                  formatar_data_para_brl if
+                                  item.registro.data_entrega_ticket else '-'
+                                  }}</td>
+                                <td class="text-center">{{
+                                  item.registro.solicitacao.fornecedor.identificacao
+                                  | truncate(15, True, '...') if
+                                  item.registro.solicitacao.fornecedor
+                                  else '-' }}</td>
+                                <td class="text-center">{{
+                                  item.registro.solicitacao.cliente.identificacao
+                                  | truncate(20, True, '...') if
+                                  item.registro.solicitacao.cliente
+                                  else '-' }}</td>
+                                <td class="text-center">
+                                  {{
+                                  item.registro.solicitacao.produto.nome |
+                                  truncate(15, True, '...') if
+                                  item.registro.solicitacao.produto.nome else
+                                  '-' }} |
+                                  {{
+                                  item.registro.solicitacao.bitola.bitola |
+                                  truncate(15, True, '...') if
+                                  item.registro.solicitacao.bitola.bitola else
+                                  '-' }}</td>
+                                <td class="text-center">
+                                  <span class="badge bg-orange-lt p-2">
+                                    {% if item.registro_operacional.estorno_nf%}
+                                    {{
+                                    item.registro_operacional.numero_nota_fiscal_estorno
+                                    }} *
+                                    {% elif
+                                    item.registro_operacional.numero_nota_fiscal
+                                    %}
+                                    {{
+                                    item.registro_operacional.numero_nota_fiscal
+                                    }}
+                                    {%else%}
+                                    -
+                                    {% endif %}
+                                  </span>
+                                </td>
+                                <td class="text-center">{% if
+                                  item.registro_operacional.peso_liquido_ticket
+                                  %}{{
+                                  item.registro_operacional.peso_liquido_ticket
+                                  }} Ton.{% else %}<span class="badge bg-secondary-lt p-2">Sem
+                                    peso</span>{% endif %}</td>
+                                <td class="text-center">{% if
+                                  item.registro.preco_custo_bitola_100 %}{{
+                                  item.registro.preco_custo_bitola_100 |
+                                  formatar_float_para_brl }}{% else
+                                  %}-{% endif %}</td>
+                                <td class="text-center">
+                                  <span
+                                    class="badge badge-outline {%if item.registro.situacao_pagamento_id == 5%}text-success{%else%} text-warning{%endif%}">{{item.registro.situacao.situacao}}</span>
+                                </td>
+                                <td class="text-center">{% if
+                                  item.registro.valor_total_a_pagar_100 %}<span class="badge bg-green-lt p-2">{{
+                                    item.registro.valor_total_a_pagar_100 |
+                                    formatar_float_para_brl }}</span>{% else
+                                  %}-{% endif %}</td>
+                                <td class="text-center">
+                                  <div class="btn-list flex-nowrap justify-content-center">
+                                    <a href="{% if item.registro.situacao_pagamento_id != 5 %}{{url_for('comissionado_a_pagar', id=item.registro.id)}}{% else %}#{% endif %}"
+                                      class="btn btn-icon btn-outline-success {% if item.registro.situacao_pagamento_id == 5 %}disabled{% endif %}"
+                                      data-bs-toggle="tooltip" data-bs-placement="top"
+                                      title="{% if item.registro.situacao_pagamento_id == 5 %}Já faturado{% else %}Informar Faturamento{% endif %}">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-tabler icon-tabler-user-dollar">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                        <path d="M6 21v-2a4 4 0 0 1 4 -4h3" />
+                                        <path d="M21 15h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5" />
+                                        <path d="M19 21v1m0 -8v1" />
+                                      </svg>
+                                    </a>
+                                  </div>
+                                </td>
+                              </tr>
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="area-info-card"
+              style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">
+              <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
+              <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">Nenhum
+                dado disponível</h2>
+              <p style="color: #777;">No momento não há registros para
+                exibir.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMAÇÃO PARA REGISTROS INVÁLIDOS -->
+  <div class="modal modal-blur fade" id="modal-registros-invalidos" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Registros Inválidos Detectados</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex align-items-center mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler text-warning me-3">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path
+                d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+              <path d="M12 9v4" />
+              <path d="M12 16h.01" />
+            </svg>
+            <div>
+              <h6 class="mb-1">Atenção!</h6>
+              <p class="text-muted mb-0">
+                <span id="count-registros-invalidos">0</span> registro(s)
+                selecionado(s) não está(ão) pendente(s) de
+                faturamento.
+              </p>
+            </div>
+          </div>
+          <p class="mb-0">Deseja continuar com apenas os registros válidos para
+            faturamento?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icon-tabler-x">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M18 6l-12 12" />
+              <path d="M6 6l12 12" />
+            </svg>
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-success" id="btn-confirmar-pagamento-massa">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icon-tabler-check">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M5 12l5 5l10 -10" />
+            </svg>
+            Continuar com Registros Válidos
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <form action="{{ url_for('listagem_comissionados_a_pagar') }}" method="GET">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar Comissionados a Faturar</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <!-- Toggle entre Filtro Semanal e Por Data -->
+              <div class="col-12 mb-3">
+                <label class="form-label">Tipo de Filtro</label>
+                <div class="form-selectgroup form-selectgroup-boxes d-flex flex-row">
+                  <label class="form-selectgroup-item flex-fill">
+                    <input type="radio" name="tipo_filtro" value="semanal" id="radio-semanal"
+                      class="form-selectgroup-input" {% if dados_corretos.get('tipo_filtro') !='data' %}checked{% endif %}>
+                    <div class="form-selectgroup-label d-flex align-items-center p-3">
+                      <div class="me-3">
+                        <span class="form-selectgroup-check"></span>
+                      </div>
+                      <div>
+                        <strong>Filtro Semanal</strong>
+                        <div class="text-muted">Selecionar por semana</div>
+                      </div>
+                    </div>
+                  </label>
+                  <label class="form-selectgroup-item flex-fill">
+                    <input type="radio" name="tipo_filtro" value="data" id="radio-data" class="form-selectgroup-input"
+                      {% if dados_corretos.get('tipo_filtro')=='data' %}checked{% endif %}>
+                    <div class="form-selectgroup-label d-flex align-items-center p-3">
+                      <div class="me-3">
+                        <span class="form-selectgroup-check"></span>
+                      </div>
+                      <div>
+                        <strong>Filtro por Data</strong>
+                        <div class="text-muted">Selecionar período específico</div>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Filtro Semanal -->
+              <div id="filtro-semanal" class="col-12 mb-3" {% if dados_corretos.get('tipo_filtro')=='data' %}style="display: none;"{% endif %}>
+                <label class="form-label">Selecionar Período</label>
+                <select name="semanaSelecionada" class="form-select" id="semanaSelecionada">
+                  <option value="">Selecione...</option>
+                  {% for semana in semanas_disponiveis %}
+                  <option value="{{ semana.valor }}" 
+                          {% if semana.valor == dados_corretos.get('semanaSelecionada') %}selected{% endif %}
+                          {% if semana.is_atual %}data-current="true"{% endif %}
+                          {% if semana.get('is_mes_completo') %}data-mes-completo="true"{% endif %}>
+                    {{ semana.texto }}
+                    {% if semana.is_atual %} (Atual){% endif %}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Filtro por Data -->
+              <div id="filtro-data" class="row" {% if dados_corretos.get('tipo_filtro') !='data' %}style="display: none;"{% endif %}>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Data Início</label>
+                  <input type="date" name="dataInicio" class="form-control"
+                    value="{{ dados_corretos.get('dataInicio', '') }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Data Fim</label>
+                  <input type="date" name="dataFim" class="form-control" value="{{ dados_corretos.get('dataFim', '') }}">
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Número NF</label>
+                <input type="text" name="numeroNF" class="form-control" value="{{ dados_corretos.get('numeroNF', '') }}"
+                  placeholder="Número da nota fiscal">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Placa</label>
+                <input type="text" name="placaCarga" class="form-control"
+                  value="{{ dados_corretos.get('placaCarga', '') }}" placeholder="Placa do veículo">
+              </div>
+
+              <!-- Linha 2: Produto e Bitola -->
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Produto</label>
+                <input type="text" name="produtoCarga" class="form-control" value="{{ dados_corretos.get('produtoCarga', '') }}"
+                  placeholder="Nome do produto">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Bitola</label>
+                <input type="text" name="bitolaCarga" class="form-control" value="{{ dados_corretos.get('bitolaCarga', '') }}"
+                  placeholder="Bitola do produto">
+              </div>
+
+              <!-- Linha 3: Pessoas e Empresas -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Transportadora</label>
+                <input type="text" name="transportadoraCarga" class="form-control"
+                  value="{{ dados_corretos.get('transportadoraCarga', '') }}" placeholder="Nome da transportadora">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Motorista</label>
+                <input type="text" name="motoristaCarga" class="form-control"
+                  value="{{ dados_corretos.get('motoristaCarga', '') }}" placeholder="Nome do motorista">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="clienteCarga" class="form-control" value="{{ dados_corretos.get('clienteCarga', '') }}"
+                  placeholder="Nome do cliente">
+              </div>
+
+              <!-- Linha 4: Origem e Status -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Origem (Fornecedor/Floresta)</label>
+                <input type="text" name="fornecedorCarga" class="form-control"
+                  value="{{ dados_corretos.get('fornecedorCarga', '') }}" placeholder="Nome do fornecedor ou floresta">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Comissionado</label>
+                <input type="text" name="comissionadoCarga" class="form-control"
+                  value="{{ dados_corretos.get('comissionadoCarga', '') }}" placeholder="Nome do comissionado">
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Status pagamento</label>
+                <select class="form-select" name="statusPagamentoCarga" id="statusPagamentoCarga">
+                  <option value="">Todas as situações</option>
+                  {% for s in statusPagamentos %}
+                  <option value="{{ s.id }}" {% if dados_corretos.get('statusPagamentoCarga')==s.id|string %}selected{%
+                    endif %}>
+                    {{ s.situacao }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <a href="{{ url_for('listagem_comissionados_a_pagar') }}" class="btn btn-link link-secondary">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Inicializar filtros de semana/data
+      inicializarFiltros();
+
+      // Inicializa Tom Select nos outros selects
+      document.querySelectorAll('select.form-select').forEach(function (select) {
+        new TomSelect(select, {
+        });
+      });
+
+      // === Soma de totais por grupo ===
+      function formatarParaBRL(valor) {
+        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      }
+
+      function updateGroupTotal(group) {
+        const total = Array.from(document.querySelectorAll(`.registro-checkbox[data-group="${group}"]:checked`))
+          .reduce((sum, cb) => sum + (parseFloat(cb.dataset.diff) || 0), 0);
+        const span = document.getElementById(`total-valor-${group}`);
+        if (span) span.textContent = formatarParaBRL(total);
+      }
+
+      document.body.addEventListener('change', e => {
+        if (e.target.matches('.registro-checkbox')) {
+          updateGroupTotal(e.target.dataset.group);
+          updatePagamentoMassaButton();
+        }
+        if (e.target.matches('.select-all-group')) {
+          const g = e.target.dataset.group;
+          document.querySelectorAll(`.registro-checkbox[data-group="${g}"]`).forEach(cb => {
+            if (!cb.disabled) cb.checked = e.target.checked;
+          });
+          updateGroupTotal(g);
+          updatePagamentoMassaButton();
+        }
+      });
+
+
+      function updatePagamentoMassaButton() {
+        const btnPagamentoMassa = document.getElementById('btn-informar-pagamento-massa');
+        if (!btnPagamentoMassa) return;
+
+        const selecionados = getRegistrosSelecionados();
+        const countSelecionados = selecionados.length;
+
+        if (countSelecionados > 0) {
+          btnPagamentoMassa.disabled = false;
+          btnPagamentoMassa.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-tools">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+          <path d="M3 21h4l13 -13a1.5 1.5 0 0 0 -4 -4l-13 13v4"/>
+          <path d="M14.5 5.5l4 4"/>
+        </svg>
+        Faturamento em massa (${countSelecionados})
+      `;
+          btnPagamentoMassa.className = 'btn btn-success';
+        } else {
+          btnPagamentoMassa.disabled = true;
+          btnPagamentoMassa.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-tools">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+          <path d="M3 21h4l13 -13a1.5 1.5 0 0 0 -4 -4l-13 13v4"/>
+          <path d="M14.5 5.5l4 4"/>
+        </svg>
+        Faturamento em massa
+      `;
+          btnPagamentoMassa.className = 'btn btn-outline-success';
+        }
+      }
+
+      function getRegistrosSelecionados() {
+        const checkboxes = document.querySelectorAll('.registro-checkbox:checked:not(:disabled)');
+        const selecionados = [];
+
+        checkboxes.forEach(checkbox => {
+          const id = checkbox.dataset.id;
+          if (id) {
+            selecionados.push(id);
+          }
+        });
+
+        return selecionados;
+      }
+
+      function iniciarPagamentoMassa() {
+        const selecionados = getRegistrosSelecionados();
+
+        if (selecionados.length === 0) {
+          alert('Selecione pelo menos um registro válido para pagamento!');
+          return;
+        }
+
+        // Validar se todos os registros selecionados são elegíveis para pagamento
+        let registrosInvalidos = 0;
+        document.querySelectorAll('.registro-checkbox:checked').forEach(checkbox => {
+          const row = checkbox.closest('tr');
+          const statusCell = row.querySelector('td:nth-child(9)'); // Coluna do status
+
+          if (statusCell) {
+            const statusText = statusCell.textContent.trim();
+            if (statusText !== 'Pendente') {
+              registrosInvalidos++;
+            }
+          }
+        });
+
+        if (registrosInvalidos > 0) {
+          // Usar modal em vez de confirm
+          document.getElementById('count-registros-invalidos').textContent = registrosInvalidos;
+
+          // Armazenar IDs para usar no modal
+          window.idsSelecionadosPagamento = selecionados;
+
+          // Mostrar modal
+          const modal = new bootstrap.Modal(document.getElementById('modal-registros-invalidos'));
+          modal.show();
+          return;
+        }
+
+        // Se não há registros inválidos, prosseguir direto
+        prosseguirPagamentoMassa(selecionados);
+      }
+
+      function prosseguirPagamentoMassa(selecionados) {
+        // Criar URL para Faturamento em massa
+        const idsParam = selecionados.join(',');
+        const url = `/financeiro/a-pagar/comissionado-a-pagar-massa?ids=${encodeURIComponent(idsParam)}`;
+
+        // Redirecionar para a tela de Faturamento em massa
+        window.location.href = url;
+      }
+
+      // Event listener para o botão de Faturamento em massa
+      const btnPagamentoMassa = document.getElementById('btn-informar-pagamento-massa');
+      if (btnPagamentoMassa) {
+        btnPagamentoMassa.addEventListener('click', iniciarPagamentoMassa);
+        updatePagamentoMassaButton();
+      }
+
+      // Event listener para confirmar no modal
+      const btnConfirmarModal = document.getElementById('btn-confirmar-pagamento-massa');
+      if (btnConfirmarModal) {
+        btnConfirmarModal.addEventListener('click', function () {
+          const modal = bootstrap.Modal.getInstance(document.getElementById('modal-registros-invalidos'));
+          modal.hide();
+
+          // Usar os IDs armazenados
+          if (window.idsSelecionadosPagamento) {
+            prosseguirPagamentoMassa(window.idsSelecionadosPagamento);
+          }
+        });
+      }
+
+      // Inicializar estado do botão na carga da página
+      updatePagamentoMassaButton();
+
+      function inicializarFiltros() {
+        const radioSemanal = document.getElementById('radio-semanal');
+        const radioData = document.getElementById('radio-data');
+        const filtroSemanal = document.getElementById('filtro-semanal');
+        const filtroData = document.getElementById('filtro-data');
+
+        if (!radioSemanal || !radioData || !filtroSemanal || !filtroData) {
+          console.error('Elementos de filtro não encontrados!');
+          return;
+        }
+
+        function alternarFiltros() {
+          if (radioSemanal.checked) {
+            filtroSemanal.style.display = 'block';
+            filtroData.style.display = 'none';
+          } else {
+            filtroSemanal.style.display = 'none';
+            filtroData.style.display = 'flex';
+          }
+        }
+
+        // Aplicar estado inicial baseado nos radio buttons já configurados pelo backend
+        alternarFiltros();
+
+        // Event listeners
+        radioSemanal.addEventListener('click', alternarFiltros);
+        radioData.addEventListener('click', alternarFiltros);
+        radioSemanal.addEventListener('change', alternarFiltros);
+        radioData.addEventListener('change', alternarFiltros);
+      }
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

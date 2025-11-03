@@ -1,0 +1,810 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<style>
+/* Painel de Seleção Minimalista */
+.selection-panel {
+  background: #ffffff;
+  border-bottom: 1px solid #f0f2f5;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.selection-controls {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.checkbox-label {
+  font-size: 0.875rem;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0;
+}
+
+.selection-summary {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.summary-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.125rem;
+}
+
+.summary-divider {
+  width: 1px;
+  height: 32px;
+  background: #e5e7eb;
+}
+
+.checkbox-column {
+  width: 48px;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
+/* Hover Effects */
+.table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .selection-panel {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .selection-summary {
+    gap: 1rem;
+  }
+  
+  .summary-item {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+  
+  .summary-value {
+    font-size: 1rem;
+  }
+}
+</style>
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            FINANCEIRO
+          </div>
+          <h2 class="page-title">
+            Receitas Categorizadas
+          </h2>
+        </div>
+        <!-- Page title actions -->
+        <div class="col-auto ms-auto d-print-none">
+          <div class="btn-list">
+            <a href="{{url_for('cadastrar_receita_avulsa')}}" class="btn btn-primary d-none d-sm-inline-block">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Nova Receita
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="card">
+        {%if agendamentos%}
+        <!-- Painel de Seleção -->
+        <div class="selection-panel">
+          <div class="selection-controls">
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="selectAll" class="form-check-input">
+              <label for="selectAll" class="checkbox-label">Selecionar todos</label>
+            </div>
+          </div>
+          <div class="selection-summary">
+            <div class="summary-item">
+              <span class="summary-value" id="totalSelecionado">R$ 0,00</span>
+              <span class="summary-label">Total</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-item">
+              <span class="summary-value" id="quantidadeSelecionada">0</span>
+              <span class="summary-label">Selecionados</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-vcenter">
+            <thead>
+              <tr>
+                <th class="text-center checkbox-column">
+                  <input type="checkbox" id="selectAllHeader" class="form-check-input">
+                </th>
+                <th class="text-center">Descrição</th>
+                <th class="text-center">Beneficiário</th>
+                <th class="text-center">Data Vencimento</th>
+                <th class="text-center">Valor</th>
+                <th class="text-center">Situação</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for agendamento in agendamentos %}
+              <tr>
+                <td class="text-center">
+                  {# Sempre usar o valor_total_100 (em centavos) e dividir por 100 para consistência #}
+                  {% set valor_centavos = agendamento.valor_total_100 %}
+                  {% set valor_item = valor_centavos / 100 %}
+                  <input type="checkbox" class="form-check-input item-checkbox" 
+                         data-valor="{{ '%.2f'|format(valor_item|float) }}" 
+                         data-id="{{ agendamento.id }}"
+                         data-debug="Valor_centavos: {{ valor_centavos }} | Valor_item: {{ valor_item }} | Agendamento_ID: {{ agendamento.id }}">
+                </td>
+                <td class="text-center">
+                  <div class="d-flex py-1 align-items-center">
+                    <div class="flex-fill">
+                      {% if agendamento.faturamento_id %}
+                      <div class="font-weight-medium">{{ agendamento.faturamento.codigo_faturamento }}</div>
+                      {% elif agendamento.lancamento_avulso_id %}
+                      <div class="font-weight-medium">{{ agendamento.lancamento_avulso.descricao | truncate(40, '...')
+                        }}</div>
+                      {% else %}
+                      <div class="font-weight-medium">{{ agendamento.descricao | truncate(40, '...') or 'N/A' }}</div>
+                      {% endif %}
+                      {% if agendamento.descricao %}
+                      <div class="text-muted small">{{ agendamento.descricao | truncate(40, '...') }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <div class="font-weight-medium">
+                    {% if agendamento.faturamento_id and agendamento.faturamento and agendamento.faturamento.cliente %}
+                    {{ agendamento.faturamento.cliente.nome or agendamento.faturamento.cliente.razao_social }}
+                    {% else %}
+                    {{ agendamento.pessoa_financeiro.identificacao }}
+                    {% endif %}
+                  </div>
+                </td>
+                <td class="text-center">
+                  {{ agendamento.data_vencimento.strftime('%d/%m/%Y') }}
+                </td>
+                <td class="text-center">
+                  {% if agendamento.faturamento_id and agendamento.faturamento %}
+                  <span class="text-success font-weight-bold">{{ agendamento.faturamento.valor_total |
+                    formatar_float_para_brl }}</span>
+                  {% elif agendamento.lancamento_avulso_id and agendamento.lancamento_avulso %}
+                  <span class="text-success font-weight-bold">{{ agendamento.lancamento_avulso.valor_movimentacao_100 |
+                    formatar_float_para_brl }}</span>
+                  {% else %}
+                  <span class="text-success font-weight-bold">{{ agendamento.valor_total_100 | formatar_float_para_brl
+                    }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% set situacao_class = {
+                  6: 'bg-lime-lt'
+                  } %}
+                  <span class="badge {{ situacao_class.get(agendamento.situacao_pagamento_id, 'bg-lime-lt') }}">
+                    {{ agendamento.situacao.situacao if agendamento.situacao else 'N/A' }}
+                  </span>
+                </td>
+                <td class="d-flex justify-content-center">
+                  <div class="btn-list flex-nowrap">
+                    <!-- Botão para visualizar detalhes -->
+                    {% if agendamento.faturamento_id %}
+                    <button class="btn btn-icon btn-outline-primary" data-bs-toggle="modal"
+                      data-bs-target="#modal-faturamento-{{ agendamento.faturamento_id }}" data-bs-placement="top"
+                      title="Visualizar Faturamento">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-eye">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                        <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                      </svg>
+                    </button>
+                    {% elif agendamento.lancamento_avulso_id %}
+                    <button class="btn btn-icon btn-outline-primary" data-bs-toggle="modal"
+                      data-bs-target="#modal-lancamento-{{ agendamento.lancamento_avulso_id }}" data-bs-placement="top"
+                      title="Visualizar Lançamento Avulso">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-eye">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                        <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                      </svg>
+                    </button>
+                    {% endif %}
+
+                    <!-- Botão para editar categorização -->
+                    <a href="{{ url_for('editar_categorizacao', agendamento_id=agendamento.id) }}"
+                      class="btn btn-icon btn-outline-warning" data-bs-toggle="tooltip" data-bs-placement="top"
+                      title="Editar Categorização">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                        <path d="M13.5 6.5l4 4" />
+                      </svg>
+                    </a>
+
+                    <!-- Botão para liquidar -->
+                    <button type="button" class="btn btn-icon btn-outline-success" data-bs-toggle="modal"
+                      data-bs-target="#modal-liquidacao-{{ agendamento.id }}" title="Liquidar Receita">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-moneybag">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path
+                          d="M9.5 3h5a1.5 1.5 0 0 1 1.5 1.5a3.5 3.5 0 0 1 -3.5 3.5h-1a3.5 3.5 0 0 1 -3.5 -3.5a1.5 1.5 0 0 1 1.5 -1.5" />
+                        <path d="M4 17v-1a8 8 0 1 1 16 0v1a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4" />
+                      </svg>
+                    </button>
+
+                  </div>
+                </td>
+              </tr>
+
+
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {%else%}
+        <div class="area-info-extrato text-center p-4 shadow-sm" style="border-radius: 10px; background-color: white;">
+          <div style="font-size: 70px; color: #fc7801; margin-bottom: 15px;">❌</div>
+          <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">
+            Ainda não há receitas cadastradas.
+          </h2>
+          <p style="color: #777;">
+            No momento não há registros de receitas. Quando houver
+            novos dados,
+            eles aparecerão automaticamente aqui.
+          </p>
+        </div>
+        {%endif%}
+      </div>
+    </div>
+  </div>
+
+  <!-- Modais para Faturamentos -->
+  {% for agendamento in agendamentos %}
+  {% if agendamento.faturamento_id and agendamento.faturamento %}
+  <div class="modal modal-blur fade" id="modal-faturamento-{{ agendamento.faturamento_id }}" tabindex="-1" role="dialog"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header border-0"
+          style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 1.5rem 2rem;">
+          <h4 class="modal-title text-white fw-bold">
+            {{ agendamento.faturamento.codigo_faturamento }}
+          </h4>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0">
+          <!-- Resumo Financeiro Destacado -->
+          <div class="p-4"
+            style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-bottom: 1px solid #dee2e6;">
+            <div class="row g-4">
+              <div class="col-md-4 text-center">
+                <div class="mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                    stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                </div>
+                <div class="text-muted small fw-medium text-uppercase">Valor Bruto</div>
+                <div class="mb-0 fw-bold" style="color: #1B5E20;">{{ agendamento.faturamento.valor_bruto_total |
+                  formatar_float_para_brl if agendamento.faturamento.valor_bruto_total else 'R$ 0,00' }}</div>
+              </div>
+              <div class="col-md-4 text-center">
+                <div class="mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                    stroke="#1B5E20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon-tabler icons-tabler-outline icon-tabler-basket-dollar">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M17 10l-2 -6" />
+                    <path d="M7 10l2 -6" />
+                    <path
+                      d="M13 20h-5.756a3 3 0 0 1 -2.965 -2.544l-1.255 -7.152a2 2 0 0 1 1.977 -2.304h13.999a2 2 0 0 1 1.977 2.304" />
+                    <path d="M10 14a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                    <path d="M21 15h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5" />
+                    <path d="M19 21v1m0 -8v1" />
+                  </svg>
+                </div>
+                <div class="text-muted small fw-medium text-uppercase">Valor Final</div>
+                <div class="mb-0 fw-bold" style="color: #1B5E20;">{{ agendamento.faturamento.valor_total |
+                  formatar_float_para_brl if agendamento.faturamento.valor_total else 'R$ 0,00' }}</div>
+              </div>
+              <div class="col-md-4 text-center">
+                <div class="mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                    stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </div>
+                <div class="text-muted small fw-medium text-uppercase">Data</div>
+                <div class="fw-bold">{{ agendamento.faturamento.data_cadastro.strftime('%d/%m/%Y') if
+                  agendamento.faturamento.data_cadastro else 'N/A' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4">
+
+            <div id="lista-cargas-faturamento-{{ agendamento.faturamento_id }}">
+              {% set cargas_a_receber = agendamento.faturamento.obter_lista_cargas_a_receber() %}
+              {% if cargas_a_receber %}
+              {% set cargas_agrupadas = {} %}
+              {% for carga in cargas_a_receber %}
+              {% set cliente_nome = carga.cliente %}
+              {% if cliente_nome not in cargas_agrupadas %}
+              {% set _ = cargas_agrupadas.update({cliente_nome: []}) %}
+              {% endif %}
+              {% set _ = cargas_agrupadas[cliente_nome].append(carga) %}
+              {% endfor %}
+
+              {% for cliente_nome, cargas_cliente in cargas_agrupadas.items() %}
+              <div class="card mb-4 shadow-sm" style="border-radius: 12px; border: 1px solid #e3e6f0;">
+                <div class="card-header py-3" style="background: #f8f9fa; border-bottom: 1px solid #e3e6f0;">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                      <div>
+                        <h6 class="mb-0 fw-bold">{{ cliente_nome }}</h6>
+                        <small class="text-muted">{{ cargas_cliente|length }} registro(s)</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table mb-0">
+                      <thead style="background: #f8f9fa;">
+                        <tr>
+                          <th class="fw-semibold text-center">Data Entrega</th>
+                          <th class="fw-semibold text-center">Produto | Bitola</th>
+                          <th class="fw-semibold text-center">NF</th>
+                          <th class="fw-semibold text-center">Peso Ticket (Ton.)</th>
+                          <th class="fw-semibold text-center text-end">Preço Custo</th>
+                          <th class="fw-semibold text-center text-end">Valor Bruto</th>
+                          <th class="fw-semibold text-center text-end">Valor Final</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for carga in cargas_cliente %}
+                        <tr>
+                          <td class="text-center">{{ carga.data_entrega }}</td>
+                          <td class="text-center">{{ carga.produto }} | {{ carga.bitola }}</td>
+                          <td class="text-center">{{ carga.nota_fiscal }}</td>
+                          <td class="text-center">{{ carga.peso_ticket }}</td>
+                          <td class="text-center">{{ carga.preco_custo | formatar_float_para_brl }}</td>
+                          <td class="text-center">{{ carga.valor_bruto | formatar_float_para_brl }}</td>
+                          <td class="text-center">
+                            <span class="badge badge-outline" style="color: #1B5E20; border-color: #1B5E20;">{{
+                              carga.valor_faturado | formatar_float_para_brl }}</span>
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              {% else %}
+              <div class="text-center py-4 text-muted">
+                <div class="mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                    <path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                    <path d="M5 17h-2v-4m-1 -8h11v12m0 -8h4l2 2v4h-2" />
+                  </svg>
+                </div>
+                <h6 class="fw-bold mb-2">Nenhuma carga encontrada</h6>
+                <p class="text-muted mb-0">Este faturamento não possui cargas associadas.</p>
+              </div>
+              {% endif %}
+            </div>
+
+          </div>
+        </div>
+        <div class="modal-footer border-0" style="background: #f8f9fa; padding: 1rem 2rem;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="20" height="20" viewBox="0 0 24 24"
+              stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M18 6l-12 12" />
+              <path d="M6 6l12 12" />
+            </svg>
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <!-- Modais para Lançamentos Avulsos -->
+  {% for agendamento in agendamentos %}
+  {% if agendamento.lancamento_avulso_id and agendamento.lancamento_avulso %}
+  <div class="modal modal-blur fade" id="modal-lancamento-{{ agendamento.lancamento_avulso_id }}" tabindex="-1"
+    role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header border-0"
+          style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 1.5rem 2rem;">
+          <h4 class="modal-title text-white fw-bold">
+            Lançamento Avulso - {{ agendamento.lancamento_avulso.descricao if agendamento.lancamento_avulso.descricao
+            else 'N/A' }}
+          </h4>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0">
+          <!-- Resumo Financeiro Destacado -->
+          <div class="p-4"
+            style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-bottom: 1px solid #dee2e6;">
+            <div class="row g-4">
+              <div class="col-md-4 text-center">
+                <div class="mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                    stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </div>
+                <div class="text-muted small fw-medium text-uppercase">Data de Lançamento</div>
+                <div class="mb-0 fw-bold">{{ agendamento.lancamento_avulso.data_cadastro.strftime('%d/%m/%Y') if
+                  agendamento.lancamento_avulso.data_cadastro else 'N/A' }}</div>
+              </div>
+              <div class="col-md-4 text-center">
+                <div class="mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                    stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                </div>
+                <div class="text-muted small fw-medium text-uppercase">Valor</div>
+                <div class="mb-0 fw-bold" style="color: #1B5E20;">{{
+                  agendamento.lancamento_avulso.valor_movimentacao_100 | formatar_float_para_brl if
+                  agendamento.lancamento_avulso.valor_movimentacao_100 else 'R$ 0,00' }}</div>
+              </div>
+              <div class="col-md-4 text-center">
+                <div class="mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                    stroke="#1B5E20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M7 10l5 -6l5 6" />
+                    <path d="M21 10l-2 8a2 2.5 0 0 1 -2 2h-10a2 2.5 0 0 1 -2 -2l-2 -8z" />
+                    <path d="M12 15v4" />
+                  </svg>
+                </div>
+                <div class="text-muted small fw-medium text-uppercase">Situação</div>
+                <div class="mb-0 fw-bold">{{ agendamento.lancamento_avulso.situacao.situacao if
+                  agendamento.lancamento_avulso.situacao else 'N/A' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4">
+            <div class="row g-4 mb-4">
+              <div class="col-md-12">
+                <div class="card shadow-sm" style="border-radius: 12px; border: 1px solid #e3e6f0;">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="#1B5E20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                        <path d="M13.5 6.5l4 4" />
+                      </svg>
+                      <span class="text-muted small fw-medium text-uppercase">Descrição</span>
+                    </div>
+                    <div class="fw-bold mb-0">{{ agendamento.lancamento_avulso.descricao if
+                      agendamento.lancamento_avulso.descricao else 'N/A' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0" style="background: #f8f9fa; padding: 1rem 2rem;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="20" height="20" viewBox="0 0 24 24"
+              stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M18 6l-12 12" />
+              <path d="M6 6l12 12" />
+            </svg>
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <!-- Modais para Liquidação -->
+  {% for agendamento in agendamentos %}
+  <div class="modal modal-blur fade" id="modal-liquidacao-{{ agendamento.id }}" tabindex="-1" role="dialog"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header border-0"
+          style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 1.5rem 2rem;">
+          <h4 class="modal-title text-white fw-bold">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M7 9m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
+              <path d="M14 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+              <path d="M17 9v-2a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v2" />
+            </svg>
+            Liquidar Receita
+          </h4>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form method="POST" action="{{ url_for('liquidar_receita') }}">
+          <input type="hidden" name="agendamento_id" value="{{ agendamento.id }}">
+
+          <div class="modal-body p-0">
+            <!-- Resumo da Receita -->
+            <div class="p-4"
+              style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-bottom: 1px solid #dee2e6;">
+              <div class="row g-4">
+                <div class="col-md-4 text-center">
+                  <div class="mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                      stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  </div>
+                  <div class="text-muted small fw-medium text-uppercase">Vencimento</div>
+                  <div class="mb-0 fw-bold">{{ agendamento.data_vencimento.strftime('%d/%m/%Y') }}</div>
+                </div>
+                <div class="col-md-4 text-center">
+                  <div class="mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                      stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    </svg>
+                  </div>
+                  <div class="text-muted small fw-medium text-uppercase">Valor Total</div>
+                  <div class="mb-0 fw-bold" style="color: #1B5E20;">
+                    {% if agendamento.faturamento_id and agendamento.faturamento %}
+                    {{ agendamento.faturamento.valor_total | formatar_float_para_brl }}
+                    {% elif agendamento.lancamento_avulso_id and agendamento.lancamento_avulso %}
+                    {{ agendamento.lancamento_avulso.valor_movimentacao_100 | formatar_float_para_brl }}
+                    {% else %}
+                    {{ agendamento.valor_total_100 | formatar_float_para_brl }}
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="col-md-4 text-center">
+                  <div class="mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                      stroke="#1B5E20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                      <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                    </svg>
+                  </div>
+                  <div class="text-muted small fw-medium text-uppercase">Beneficiário</div>
+                  <div class="mb-0 fw-bold">
+                    {% if agendamento.faturamento_id and agendamento.faturamento and agendamento.faturamento.cliente %}
+                    {{ agendamento.faturamento.cliente.nome or agendamento.faturamento.cliente.razao_social }}
+                    {% else %}
+                    {{ agendamento.pessoa_financeiro.identificacao | truncate(20, '...') }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4">
+              <div class="row g-4">
+                <div class="col-md-12 mb-3">
+                <label class="form-label">Selecionar Conta Bancária</label>
+                <select class="form-select" name="conta_bancaria_id" id="selectConta">
+                  <option value="">Todas as contas</option>
+                  {% for conta in contas_bancarias %}
+                  <option value="{{ conta.id }}" 
+                    {% if conta_selecionada_id == conta.id %}selected{% endif %}>
+                    {{ conta.identificacao }} 
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer border-0" style="background: #f8f9fa; padding: 1rem 2rem;">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="20" height="20" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M18 6l-12 12" />
+                <path d="M6 6l12 12" />
+              </svg>
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-success">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="20" height="20" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M7 9m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
+                <path d="M14 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                <path d="M17 9v-2a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v2" />
+              </svg>
+              Confirmar Liquidação
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  {% include 'estrutura/footer.html' %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Inicializar TomSelect
+      document.querySelectorAll('select.form-select').forEach(function (select) {
+        new TomSelect(select, {
+          create: false,
+          allowEmptyOption: false,
+        });
+      });
+
+      // Elementos do DOM
+      const selectAll = document.getElementById('selectAll');
+      const selectAllHeader = document.getElementById('selectAllHeader');
+      const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+      const totalSelecionado = document.getElementById('totalSelecionado');
+      const quantidadeSelecionada = document.getElementById('quantidadeSelecionada');
+
+      // Função para formatar valor em BRL
+      function formatarValor(valor) {
+        return new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        }).format(valor);
+      }
+
+      // Função para atualizar totais
+      function atualizarTotais() {
+        let total = 0;
+        let quantidade = 0;
+
+        itemCheckboxes.forEach(checkbox => {
+          if (checkbox.checked) {
+            const valorString = checkbox.dataset.valor || '0';
+            const valorNumerico = parseFloat(valorString.replace(',', '.'));
+            
+            console.log('=== CHECKBOX DEBUG ===');
+            console.log('ID:', checkbox.dataset.id);
+            console.log('Valor String:', valorString);
+            console.log('Valor Numérico:', valorNumerico);
+            console.log('Debug Info:', checkbox.dataset.debug);
+            console.log('======================');
+            
+            if (!isNaN(valorNumerico) && valorNumerico > 0) {
+              total += valorNumerico;
+              quantidade++;
+            }
+          }
+        });
+
+        console.log('TOTAL FINAL:', total.toFixed(2), 'QUANTIDADE:', quantidade);
+        totalSelecionado.textContent = formatarValor(total);
+        quantidadeSelecionada.textContent = quantidade;
+
+        // Atualizar estado dos checkboxes "selecionar todos"
+        const todosChecados = Array.from(itemCheckboxes).every(cb => cb.checked);
+        const algumChecado = Array.from(itemCheckboxes).some(cb => cb.checked);
+        
+        selectAll.checked = todosChecados;
+        selectAllHeader.checked = todosChecados;
+        
+        // Adicionar classe indeterminada se alguns estão selecionados
+        selectAll.indeterminate = algumChecado && !todosChecados;
+        selectAllHeader.indeterminate = algumChecado && !todosChecados;
+      }
+
+      // Event listener para "Selecionar Todos" (header)
+      selectAll.addEventListener('change', function() {
+        itemCheckboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+        });
+        selectAllHeader.checked = this.checked;
+        atualizarTotais();
+      });
+
+      // Event listener para "Selecionar Todos" (cabeçalho da tabela)
+      selectAllHeader.addEventListener('change', function() {
+        itemCheckboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+        });
+        selectAll.checked = this.checked;
+        atualizarTotais();
+      });
+
+      // Event listener para checkboxes individuais
+      itemCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', atualizarTotais);
+      });
+
+      // Inicializar totais
+      atualizarTotais();
+    });
+  </script>
+</div>
+
+{% endblock conteudo %}

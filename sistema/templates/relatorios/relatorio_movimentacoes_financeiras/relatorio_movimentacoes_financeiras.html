@@ -1,0 +1,586 @@
+{% include 'relatorios/estrutura/style.html' %}
+<div class="page-wrapper">
+  <div class="page body">
+    <div class="container">
+      <div class="watermark">
+        <img src="{{logo_path}}" alt="MBR Extração Watermark" />
+      </div>
+
+      <div class="content">
+        <div class="header no-break">
+          <img src="{{logo_path}}" alt="Logo MBR Extração" />
+          <div class="system-info">
+            <div><strong>Sistema de Gestão MBR</strong></div>
+            <div><strong>Versão</strong> {{changelog.versao}}</div>
+            <div><strong>Data:</strong>
+              {{changelog.data_lancamento}}</div>
+          </div>
+        </div>
+
+        <div class="relatorio-title">Relatório de Movimentações
+          Financeiras</div>
+
+        <!-- Filtros aplicados se existirem -->
+        {% if conta_label %}
+        <div class="dados-registro no-break">
+          <div class="filtros-title">Filtros Aplicados</div>
+          <div class="row">
+            <div class="col-6 mb-2">
+              <p>
+                <strong>Conta Bancária Selecionada:</strong>
+                {{ conta_label }}
+              </p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Resumo Financeiro -->
+        <div class="section-title no-break">Resumo Financeiro</div>
+        <div class="card-section no-break">
+          <div class="card">
+            <div class="card-title">Saldo Atual</div>
+            <div
+              style="font-size: 18px; font-weight: bold; color: #1e5631;">
+              {{saldo_disponivel | formatar_float_para_brl}}
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Total Recebido</div>
+            <div
+              style="font-size: 18px; font-weight: bold; color: #2b8a3e;">
+              {{total_recebido | formatar_float_para_brl}}
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Total Pago</div>
+            <div
+              style="font-size: 18px; font-weight: bold; color: #c92a2a;">
+              {{valor_total_pago | formatar_float_para_brl}}
+            </div>
+          </div>
+        </div>
+
+        {% if movimentacoes %}
+        <!-- Extrato Detalhado -->
+        <div class="section-title no-break">Extrato Detalhado de
+          Movimentações</div>
+
+        <table>
+          <thead>
+            <tr>
+              <th class="text-center">Data</th>
+              <th class="text-center">Tipo</th>
+              <th class="text-center">Descrição</th>
+              <th class="text-center">Valor</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for mov in movimentacoes %}
+            <tr>
+              <td class="text-center">
+                {{ mov.data_movimentacao.strftime('%d/%m/%Y') }}
+              </td>
+
+              <td class="text-center">
+                {% if mov.tipo_movimentacao == 1 %}
+                {% if mov.conciliacao_lancamento_avulso %}
+                <span class="badge bg-green-lt p-2">Entrada por
+                  Lançamento</span>
+                {% else %}
+                <span
+                  class="badge bg-green-lt p-2">Entrada</span>
+                {% endif %}
+                {% elif mov.tipo_movimentacao == 2 %}
+                {% if mov.conciliacao_lancamento_avulso %}
+                <span class="badge bg-danger-lt p-2">Saída por
+                  Lançamento</span>
+                {% else %}
+                <span
+                  class="badge bg-danger-lt p-2">Saída</span>
+                {% endif %}
+                {% elif mov.tipo_movimentacao == 3 %}
+                <span
+                  class="badge bg-orange-lt p-2">Cancelamento</span>
+                {% elif mov.tipo_movimentacao == 4 %}
+                <span class="badge bg-blue-lt p-2">Estorno de
+                  Crédito</span>
+                {% elif mov.tipo_movimentacao == 5 %}
+                <span class="badge bg-green-lt p-2">Estorno de
+                  Saldo</span>
+                {% endif %}
+              </td>
+
+              <td class="text-center">
+                {# 1 - Entrada #}
+                {% if mov.tipo_movimentacao == 1 %}
+                {% if mov.conciliacao_faturamento %}
+                Recebimento: {{
+                mov.conciliacao_faturamento.codigo_faturamento |
+                truncate(25, True, '...') }}
+                {% elif mov.conciliacao_lancamento_avulso %}
+                Recebimento avulso: {{
+                mov.conciliacao_lancamento_avulso.descricao |
+                truncate(25, True, '...') }}
+                {% endif %}
+
+                {# 2 - Saída / Inclusão de crédito e pagamentos
+                #}
+                {% elif mov.tipo_movimentacao == 2 %}
+                {% if mov.conciliacao_lancamento_avulso %}
+                Saída avulsa: {{
+                mov.conciliacao_lancamento_avulso.descricao |
+                truncate(25, True, '...') }}
+                {% elif mov.credito_extrator %}
+                Inclusão de crédito: Extrator {{
+                mov.credito_extrator.extrator.identificacao |
+                truncate(20, True, '...') }}
+                {% elif mov.credito_fornecedor %}
+                Inclusão de crédito: Fornecedor {{
+                mov.credito_fornecedor.fornecedor.identificacao
+                | truncate(20, True, '...') }}
+                {% elif mov.credito_freteiro %}
+                Inclusão de crédito: Freteiro {{
+                mov.credito_freteiro.transportadora.identificacao
+                | truncate(20, True, '...') }}
+                {% elif mov.fornecedor_pagamento %}
+                Pagamento de fornecedor: {{ mov.usuario.nome |
+                truncate(20, True, '...') }}
+                {% elif mov.freteiro_pagamento %}
+                Pagamento freteiro: {{
+                mov.freteiro_pagamento.transportadora.identificacao
+                | truncate(20, True, '...') }}
+                {% elif mov.extrator_pagamento %}
+                Pagamento extrator: {{
+                mov.extrator_pagamento.fornecedor.extrator.identificacao
+                | truncate(20, True, '...') }}
+                {% else %}
+                Movimentação genérica
+                {% endif %}
+
+                {# 3 - Cancelamento #}
+                {% elif mov.tipo_movimentacao == 3 %}
+                Cancelamento de movimentação
+
+                {# 4 - Estorno de crédito #}
+                {% elif mov.tipo_movimentacao == 4 %}
+                {% if mov.credito_fornecedor %}
+                Estorno de crédito de fornecedor: {{
+                mov.credito_fornecedor.fornecedor.identificacao
+                | truncate(20, True, '...') }}
+                {% elif mov.credito_extrator %}
+                Estorno de crédito de extrator: {{
+                mov.credito_extrator.extrator.identificacao |
+                truncate(20, True, '...') }}
+                {% elif mov.credito_freteiro %}
+                Estorno de crédito de freteiro: {{
+                mov.credito_freteiro.transportadora.identificacao
+                | truncate(20, True, '...') }}
+                {% else %}
+                Estorno de crédito genérico
+                {% endif %}
+
+                {# 5 - Estorno de saldo de conta #}
+                {% elif mov.tipo_movimentacao == 5 %}
+                Estorno de saldo de conta
+
+                {# Fallback #}
+                {% else %}
+                Movimentação desconhecida
+                {% endif %}
+              </td>
+
+              <td class="text-center">
+                {% set valor = 0 %}
+
+                {% if mov.recebimento %}
+                {% set valor =
+                mov.recebimento.valor_total_recebimento_100 or 0
+                %}
+                {% elif mov.credito_extrator %}
+                {% set valor =
+                mov.credito_extrator.valor_credito_100 or 0 %}
+                {% elif mov.credito_fornecedor %}
+                {% set valor =
+                mov.credito_fornecedor.valor_credito_100 or 0 %}
+                {% elif mov.credito_freteiro %}
+                {% set valor =
+                mov.credito_freteiro.valor_credito_100 or 0 %}
+                {% elif mov.fornecedor_pagamento %}
+                {% if mov.movimentacao_extra %}
+                {% set valor = mov.valor_movimentacao_100
+                or 0 %}
+                {% else %}
+                {% set valor =
+                mov.fornecedor_pagamento.valor_total_a_pagar_100
+                or 0 %}
+                {% endif %}
+                {% elif mov.freteiro_pagamento %}
+                {% if mov.movimentacao_extra %}
+                {% set valor = mov.valor_movimentacao_100
+                or 0 %}
+                {% else %}
+                {% set valor =
+                mov.freteiro_pagamento.valor_total_a_pagar_100
+                or 0 %}
+                {% endif %}
+                {% elif mov.extrator_pagamento %}
+                {% if mov.movimentacao_extra %}
+                {% set valor = mov.valor_movimentacao_100
+                or 0 %}
+                {% else %}
+                {% set valor =
+                mov.extrator_pagamento.valor_total_a_pagar_100
+                or 0 %}
+                {% endif %}
+                {% elif mov.conciliacao_lancamento_avulso %}
+                {% set valor =
+                mov.conciliacao_lancamento_avulso.valor_movimentacao_100
+                or 0 %}
+                {% endif %}
+
+                {% if mov.tipo_movimentacao == 1 %}
+                <span class="badge bg-green-lt p-2">+ {{ valor |
+                  formatar_float_para_brl }}</span>
+                {% elif mov.tipo_movimentacao == 2 %}
+                <span class="badge bg-danger-lt p-2">- {{ valor
+                  | formatar_float_para_brl }}</span>
+                {% elif mov.tipo_movimentacao == 3 %}
+                <span class="badge bg-orange-lt p-2">× {{ valor
+                  | formatar_float_para_brl }}</span>
+                {% elif mov.tipo_movimentacao == 4 or
+                mov.tipo_movimentacao == 5 %}
+                <span class="badge bg-blue-lt p-2">↺ {{ valor |
+                  formatar_float_para_brl }}</span>
+                {% endif %}
+              </td>
+
+              <td class="text-center">
+                {% if mov.tipo_movimentacao == 1 %}
+                <span
+                  class="badge bg-green-lt p-2">Concluída</span>
+                {% elif mov.tipo_movimentacao == 2 %}
+                <span
+                  class="badge bg-danger-lt p-2">Concluída</span>
+                {% elif mov.tipo_movimentacao == 3 %}
+                <span
+                  class="badge bg-orange-lt p-2">Cancelada</span>
+                {% elif mov.tipo_movimentacao == 4 or
+                mov.tipo_movimentacao == 5 %}
+                <span
+                  class="badge bg-blue-lt p-2">Estornada</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        {% else %}
+        <!-- Estado vazio -->
+        <div style="text-align: center; padding: 50px 0;">
+          <h3 style="color: #666;">Nenhuma movimentação
+            encontrada</h3>
+          <p style="color: #999;">Não há movimentações financeiras
+            disponíveis para os filtros selecionados.</p>
+        </div>
+        {% endif %}
+
+        <div class="footer">
+          <p><strong>MBR Extração &copy; 2025</strong> - Todos os
+            direitos reservados</p>
+          <p><strong>Sistema de Gestão MBR</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background-color: #F9F9F9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .container {
+    margin: 20px auto;
+    background-color: #FFFFFF;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .watermark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999999999;
+    opacity: 0.03;
+    pointer-events: none;
+  }
+  
+  .watermark img {
+    width: 70%;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eaeaea6b;
+  }
+
+  .header img {
+    width: 120px;
+  }
+
+  .system-info {
+    text-align: right;
+    font-size: 13px;
+    color: #777;
+  }
+
+  h1, h2, h3 {
+    color: #1e5631;
+    margin-top: 0;
+    font-weight: 600;
+  }
+
+  h2 {
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eaeaea6b;
+    padding-bottom: 10px;
+  }
+
+  .dados-registro {
+    background-color: #f6f8f6;
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border-left: 4px solid #1e5631;
+  }
+
+  .dados-registro p {
+    margin: 5px 0;
+    font-size: 13px;
+  }
+
+  .dados-registro .label {
+    font-weight: 600;
+    color: #1e5631;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    page-break-inside: auto;
+  }
+  
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  th {
+    text-align: left;
+    padding: 12px 10px;
+    background-color: #e7f0e7;
+    color: #1e5631;
+    font-weight: 600;
+    border-bottom: 2px solid #1e5631;
+    font-size: 13px;
+  }
+
+  td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+    font-size: 13px;
+    color: #333;
+  }
+
+  tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+
+  .section-title {
+    color: #1e5631;
+    font-weight: 600;
+    font-size: 15px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e7f0e7;
+    padding-bottom: 5px;
+    page-break-after: avoid;
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 12px;
+    color: #777;
+    border-top: 1px solid #eaeaea6b;
+    padding-top: 10px;
+  }
+
+  .card-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+  }
+
+  .card {
+    flex: 1 1 30%;
+    background-color: #f6f8f6;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  }
+
+  .card-title {
+    font-weight: 600;
+    color: #1e5631;
+    margin-bottom: 10px;
+    font-size: 14px;
+    border-bottom: 1px solid #e7f0e7;
+    padding-bottom: 5px;
+  }
+  
+  .no-break {
+    page-break-inside: avoid;
+  }
+
+  .filtros-title {
+    color: #1e5631;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #e7f0e7;
+  }
+  
+  .relatorio-title {
+    text-align: center;
+    font-size: 20px;
+    color: #1e5631;
+    margin: 15px 0;
+    font-weight: 700;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25em 0.4em;
+    font-size: 75%;
+    font-weight: 600;
+    line-height: 1;
+    border-radius: 0.25rem;
+  }
+
+  .badge.bg-danger-lt {
+    color: #c92a2a;           
+    background-color: #fff5f5;
+  }
+
+  .badge.bg-green-lt {
+    color: #2b8a3e;         
+    background-color: #ebfbee;
+  }
+
+  .badge.bg-orange-lt {
+    color: #fd7e14;         
+    background-color: #fff4e6;
+  }
+
+  .badge.bg-blue-lt {
+    color: #206bc4;         
+    background-color: #e6f3ff;
+  }
+  
+  .p-2 {
+    padding: 0.5rem !important;
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  @media print {
+    body {
+      background-color: #fff;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
+      border-radius: 0;
+    }
+    
+    @page {
+      margin: 0.5cm;
+      size: portrait;
+    }
+    
+    .watermark {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    .dados-registro, .card, th, .badge {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #fafafa !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    body {
+      font-size: 12px;
+    }
+    
+    h2 {
+      font-size: 16px;
+    }
+    
+    .section-title {
+      font-size: 14px;
+    }
+    
+    * {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+</style>

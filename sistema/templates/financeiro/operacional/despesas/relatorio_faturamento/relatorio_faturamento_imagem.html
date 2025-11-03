@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório de Despesas Avulsas - {{ faturamento.codigo_faturamento }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      margin: 20px;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    .header {
+      border-bottom: 2px solid #1c5f20;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+
+    .header table {
+      width: 100%;
+      border: none;
+    }
+
+    .header img {
+      width: 120px;
+    }
+
+    .system-info {
+      text-align: right;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .relatorio-title {
+      text-align: center;
+      font-size: 18px;
+      color: #1c5f20;
+      font-weight: bold;
+      margin: 20px 0;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      color: #1c5f20;
+      font-weight: bold;
+      font-size: 14px;
+      margin: 20px 0 10px 0;
+      padding: 8px 10px;
+      background-color: #f0f8f0;
+      border-left: 4px solid #1c5f20;
+    }
+
+    .simple-info {
+      margin: 8px 0;
+      font-size: 12px;
+      padding: 5px 0;
+    }
+
+    .simple-info strong {
+      color: #1c5f20;
+      display: inline-block;
+      min-width: 150px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0 20px 0;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #1c5f20;
+      color: white;
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    td:first-child {
+      text-align: left;
+      font-weight: bold;
+      background-color: #f8f9fa;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .valor-destaque {
+      color: #1c5f20;
+      font-weight: bold;
+    }
+
+    .status-sim {
+      background-color: #d4edda;
+      color: #155724;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .status-nao {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .resumo-financeiro {
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f0f8f0;
+      border: 1px solid #c3e6c3;
+      border-radius: 5px;
+    }
+
+    .resumo-financeiro .simple-info {
+      margin: 10px 0;
+      font-size: 13px;
+    }
+
+    .valor-total-destaque {
+      font-size: 14px;
+      color: #1c5f20;
+      font-weight: bold;
+      margin: 15px 0;
+      padding: 8px 0;
+      border-top: 1px solid #c3e6c3;
+    }
+
+    .info-faturamento {
+      background-color: #f8f9fa;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 5px;
+      border: 1px solid #dee2e6;
+    }
+
+    .info-faturamento .simple-info {
+      margin: 5px 0;
+    }
+
+    .highlight-box {
+      background-color: #e8f5e8;
+      border: 1px solid #c3e6c3;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+
+    .total-principal {
+      background-color: #1c5f20 !important;
+      color: white !important;
+    }
+
+    .total-principal td {
+      background-color: #1c5f20 !important;
+      color: white !important;
+      font-size: 13px !important;
+      padding: 12px 8px !important;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .total-valor {
+      font-size: 15px !important;
+      font-weight: bold !important;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 10px;
+      color: #777;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+
+    .oculto {
+      background-color: #f5f5f5;
+      color: #999;
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
+      border: 1px dashed #ccc;
+    }
+
+    .detalhes-registro {
+      font-size: 10px;
+    }
+
+    .grupo-titulo {
+      background-color: #1c5f20;
+      color: white;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .grupo-titulo td {
+      background-color: #1c5f20 !important;
+      color: white !important;
+      padding: 8px !important;
+    }
+
+    .subtotal {
+      background-color: #e8f5e8;
+      font-weight: bold;
+      color: #1c5f20;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <table>
+      <tr>
+        <td style="width: 200px;">
+          <img src="{{ logo_path }}" alt="Logo MBR Extração" />
+        </td>
+        <td class="system-info">
+          <div><strong>Sistema de Gestão MBR</strong></div>
+          <div><strong>Relatório gerado em:</strong> {{ data_geracao }}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="relatorio-title">Relatório de Despesas Avulsas | {{ faturamento.codigo_faturamento }}</div>
+
+  <!-- Dados das Despesas Avulsas -->
+  <div class="section-title">DADOS DAS DESPESAS AVULSAS</div>
+  <div class="simple-info">
+    <strong>Código:</strong> {{ faturamento.codigo_faturamento }}
+  </div>
+  <div class="simple-info">
+    <strong>Data/Hora:</strong> {{ faturamento.data_cadastro if faturamento.data_cadastro else '-' }}
+  </div>
+  <div class="simple-info">
+    <strong>Responsável:</strong> {{ faturamento.usuario if faturamento.usuario else '-' }}
+  </div>
+  <div class="simple-info">
+    <strong>Situação:</strong> {{ faturamento.situacao if faturamento.situacao else 'Pendente' }}
+  </div>
+
+  <!-- Despesas Avulsas -->
+  {% if despesas_avulsas %}
+  <div class="section-title">DESPESAS AVULSAS ({{ despesas_avulsas | length }} registros)</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Data Cadastro</th>
+        <th>Descrição</th>
+        <th>Conta Bancária</th>
+        <th>Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for despesa in despesas_avulsas %}
+      <tr class="detalhes-registro">
+        <td>{{ despesa.data_cadastro or '-' }}</td>
+        <td>{{ despesa.descricao or '-' }}</td>
+        <td>{{ despesa.conta_bancaria or '-' }}</td>
+        <td class="valor-destaque">{{ despesa.valor or '-' }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="total-principal">
+        <td colspan="3"><strong>TOTAL DESPESAS AVULSAS</strong></td>
+        <td class="total-valor">
+          <strong>
+            {% set total_despesas = despesas_avulsas | sum(attribute='valor_numerico') %}
+            R$ {{ "{:,.2f}".format(total_despesas).replace(",", "X").replace(".", ",").replace("X", ".") }}
+          </strong>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  {% endif %}
+
+  <!-- Consolidado Final das Despesas -->
+  <div class="section-title">RESUMO FINANCEIRO</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Tipo</th>
+        <th>Qtd. Registros</th>
+        <th>Valor Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if despesas_avulsas %}
+      <tr>
+        <td>Despesas Avulsas</td>
+        <td>{{ despesas_avulsas | length }}</td>
+        <td class="valor-destaque">
+          {% set total_despesas = despesas_avulsas | sum(attribute='valor_numerico') %}
+          R$ {{ "{:,.2f}".format(total_despesas).replace(",", "X").replace(".", ",").replace("X", ".") }}
+        </td>
+      </tr>
+      {% endif %}
+
+      <tr class="total-principal">
+        <td><strong>TOTAL GERAL</strong></td>
+        <td><strong>{{ despesas_avulsas | length if despesas_avulsas else 0 }}</strong></td>
+        <td class="total-valor">
+          <strong>
+            {% set total_geral = despesas_avulsas | sum(attribute='valor_numerico') if despesas_avulsas else 0 %}
+            R$ {{ "{:,.2f}".format(total_geral).replace(",", "X").replace(".", ",").replace("X", ".") }}
+          </strong>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão MBR - Módulo Financeiro</strong></p>
+    <p>Relatório de Despesas Avulsas gerado automaticamente pelo Sistema de Gestão MBR</p>
+  </div>
+</body>
+
+</html>

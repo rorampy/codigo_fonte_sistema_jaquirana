@@ -1,0 +1,686 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle text-muted">FINANCEIRO</div>
+          <h2 class="page-title fw-bold display-6" style="color: #335B45;">CONTAS BANCÁRIAS</h2>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <a href="{%if transacoes_nao_conciliadas > 0%}{{url_for('listagem_ofx')}}{%else%}{{url_for('importar_ofx')}}{%endif%}"
+              class="btn" style="background-color: #335B45; color: white; border: 1px solid #335B45;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-file-arrow-right">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                <path d="M9 15h6" />
+                <path d="M12.5 17.5l2.5 -2.5l-2.5 -2.5" />
+              </svg>
+              {%if transacoes_nao_conciliadas > 0%}Conciliar{%else%}Importar{%endif%} OFX
+            </a>
+            <a href="#" class="btn btn-outline" style="border-color: #335B45; color: #335B45;" data-bs-toggle="modal" data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-replace">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M3 3m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M15 15m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M21 11v-3a2 2 0 0 0 -2 -2h-6l3 3m0 -6l-3 3" />
+                <path d="M3 13v3a2 2 0 0 0 2 2h6l-3 -3m0 6l3 -3" />
+              </svg>
+              Trocar Conta Bancária
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body py-4">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <!-- Cards de Informações -->
+      <div class="row row-cards mb-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3" style="border-color: #335B45 !important;">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar text-white me-3" style="background-color: #335B45;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M17 8v-3a1 1 0 0 0 -1 -1h-10a2 2 0 0 0 0 4h12a1 1 0 0 1 1 1v3m0 4v3a1 1 0 0 1 -1 1h-12a2 2 0 0 1 -2 -2v-12" />
+                  <path d="M20 12v4h-4a2 2 0 0 1 0 -4h4" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Saldo Atual</div>
+                <div class="fs-3 fw-bold mt-1" style="color: #335B45;">{{saldo_disponivel | formatar_float_para_brl}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3" style="border-color: #335B45 !important;">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar text-white me-3" style="background-color: #335B45;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M7 9m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
+                  <path d="M14 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                  <path d="M17 9v-2a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v6a2 2 0 0 0 2 2h2" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Total Recebido</div>
+                <div class="fs-3 fw-bold mt-1" style="color: #335B45;">{{total_recebido | formatar_float_para_brl}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3" style="border-color: #335B45 !important;">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar text-white me-3" style="background-color: #335B45;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M17 8v-3a1 1 0 0 0 -1 -1h-10a2 2 0 0 0 0 4h12a1 1 0 0 1 1 1v3m0 4v3a1 1 0 0 1 -1 1h-12a2 2 0 0 1 -2 -2v-12" />
+                  <path d="M20 12v4h-4a2 2 0 0 1 0 -4h4" />
+                  <path d="M13 10l-2 2l2 2" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Total Pago</div>
+                <div class="fs-3 fw-bold mt-1" style="color: #335B45;">{{valor_total_pago | formatar_float_para_brl}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Extrato de Movimentações Bancárias -->
+      <div class="row mt-4">
+        <div class="col">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body p-0">
+              {%if movimentacoes != []%}
+              <ul class="list-group list-group-flush">
+                {% for mov in movimentacoes %}
+                <li class="list-group-item py-3 px-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+
+                      {% if mov.tipo_movimentacao == 2 %}
+                      <span class="text-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-down">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M12 5l0 14" />
+                          <path d="M18 13l-6 6" />
+                          <path d="M6 13l6 6" />
+                        </svg>
+                      </span>
+                      {% elif mov.tipo_movimentacao == 1 %}
+                      <span class="text-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-up">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M12 5l0 14" />
+                          <path d="M18 11l-6 -6" />
+                          <path d="M6 11l6 -6" />
+                        </svg>
+                      </span>
+                      {% elif mov.tipo_movimentacao == 3 %}
+                      <span class="text-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-x">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M18 6l-12 12" />
+                          <path d="M6 6l12 12" />
+                        </svg>
+                      </span>
+                      {% elif mov.tipo_movimentacao == 4 %}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-currency-dollar">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                        <path d="M12 3v3m0 12v3" />
+                      </svg>
+                      {% elif mov.tipo_movimentacao == 5 %}
+                      <span class="text-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-up">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M12 5l0 14" />
+                          <path d="M18 11l-6 -6" />
+                          <path d="M6 11l6 -6" />
+                        </svg>
+                      </span>
+                      {% endif %}
+
+                      <div>
+
+                        <div class="fw-semibold">
+                          {% if mov.tipo_movimentacao == 1 %}
+                          {% if mov.conciliacao_bancaria and mov.importacao_ofx %}
+                          {% if mov.recebimentos_massa is defined and mov.recebimentos_massa|length > 0 %}
+                          <div class="d-flex align-items-center">
+                            <span>Recebimento cliente</span>
+                            <button type="button" class="btn btn-sm btn-ghost-dark ms-2 p-1" data-bs-toggle="modal"
+                              data-bs-target="#modalRecebimentos{{ mov.id }}" title="Ver detalhes">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                <path
+                                  d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                              </svg>
+                              <span class="ms-1">{{ mov.recebimentos_massa|length }} transações</span>
+                            </button>
+                          </div>
+                          {% elif mov.conciliacao_faturamento %}
+                          Recebimento: {{ mov.conciliacao_faturamento.codigo_faturamento }}
+                          {% elif mov.conciliacao_lancamento_avulso %}
+                          Receita extra conciliada: {{ mov.conciliacao_lancamento_avulso.descricao }}
+                          {% else %}
+                          Receita extra conciliada
+                          {% endif %}
+                          {% elif mov.conciliacao_faturamento %}
+                          Recebimento: {{ mov.conciliacao_faturamento.codigo_faturamento }}
+                          {% elif mov.agendamento and mov.agendamento.situacao_pagamento_id == 9 %}
+                          Liquidação de receita: {{ mov.agendamento.descricao or mov.agendamento.referencia or "Receita liquidada" }}
+                          {% elif mov.observacao_movimentacao  %}
+                          {{ mov.observacao_movimentacao }}
+                          {%else%}
+                          Receita avulsa: {{mov.conciliacao_lancamento_avulso.descricao if mov.conciliacao_lancamento_avulso else "Entrada"}}
+                          {% endif %}
+
+                          {% elif mov.tipo_movimentacao == 2 %}
+                          {% if mov.conciliacao_bancaria and mov.importacao_ofx %}
+                          {% if mov.fornecedores_pagos_massa is defined and mov.fornecedores_pagos_massa|length > 0 %}
+                          <div class="d-flex align-items-center">
+                            <span>Pagamento fornecedor</span>
+                            <button type="button" class="btn btn-sm btn-ghost-dark ms-2 p-1" data-bs-toggle="modal"
+                              data-bs-target="#modalFornecedores{{ mov.id }}" title="Ver detalhes">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                <path
+                                  d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                              </svg>
+                              <span class="ms-1">{{ mov.fornecedores_pagos_massa|length }} transações</span>
+                            </button>
+                          </div>
+                          {% elif mov.transportadoras_pagas_massa is defined and
+                          mov.transportadoras_pagas_massa|length > 0 %}
+                          <div class="d-flex align-items-center">
+                            <span>Pagamento transportadora</span>
+                            <button type="button" class="btn btn-sm btn-ghost-dark ms-2 p-1" data-bs-toggle="modal"
+                              data-bs-target="#modalTransportadoras{{ mov.id }}" title="Ver detalhes">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                <path
+                                  d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                              </svg>
+                              <span class="ms-1">{{ mov.transportadoras_pagas_massa|length }} transações</span>
+                            </button>
+                          </div>
+                          {% elif mov.extratores_pagos_massa is defined and mov.extratores_pagos_massa|length > 0 %}
+                          <div class="d-flex align-items-center">
+                            <span>Pagamento extrator</span>
+                            <button type="button" class="btn btn-sm btn-ghost-dark ms-2 p-1" data-bs-toggle="modal"
+                              data-bs-target="#modalExtratores{{ mov.id }}" title="Ver detalhes">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                <path
+                                  d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                              </svg>
+                              <span class="ms-1">{{ mov.extratores_pagos_massa|length }} transações</span>
+                            </button>
+                          </div>
+                          {% elif mov.comissionados_pagos_massa is defined and mov.comissionados_pagos_massa|length > 0 %}
+                          <div class="d-flex align-items-center">
+                            <span>Pagamento comissionado</span>
+                            <button type="button" class="btn btn-sm btn-ghost-dark ms-2 p-1" data-bs-toggle="modal"
+                              data-bs-target="#modalComissionados{{ mov.id }}" title="Ver detalhes">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                <path
+                                  d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                              </svg>
+                              <span class="ms-1">{{ mov.comissionados_pagos_massa|length }} transações</span>
+                            </button>
+                          </div>
+                          {% elif mov.conciliacao_lancamento_avulso %}
+                          Despesa extra conciliada: {{mov.conciliacao_lancamento_avulso.descricao}}
+                          {% elif mov.fornecedor_pagamento %}
+                          Pagamento de fornecedor: {{ mov.fornecedor_pagamento.fornecedor.identificacao }}
+                          {% elif mov.freteiro_pagamento %}
+                          Pagamento freteiro: {{ mov.freteiro_pagamento.transportadora.identificacao }}
+                          {% elif mov.extrator_pagamento %}
+                          Pagamento extrator: {{ mov.extrator_pagamento.fornecedor.extrator.identificacao }}
+                          {% elif mov.comissionado_pagamento %}
+                          Pagamento comissionado: {{ mov.comissionado_pagamento.comissionado.identificacao }}
+                          {% else %}
+                          Pagamento conciliado
+                          {% endif %}
+                          {% elif mov.agendamento and mov.agendamento.situacao_pagamento_id == 9 %}
+                          Liquidação de despesa: {{ mov.agendamento.descricao or mov.agendamento.referencia or "Despesa liquidada" }}
+                          {% elif mov.conciliacao_lancamento_avulso %}
+                          Despesa avulsa: {{mov.conciliacao_lancamento_avulso.descricao}}
+                          {% elif mov.credito_extrator %}
+                          Inclusão de crédito: Extrator {{ mov.credito_extrator.extrator.identificacao }}
+                          {% elif mov.credito_fornecedor %}
+                          Inclusão de crédito: Fornecedor {{ mov.credito_fornecedor.fornecedor.identificacao }}
+                          {% elif mov.credito_freteiro %}
+                          Inclusão de crédito: Freteiro {{ mov.credito_freteiro.transportadora.identificacao }}
+                          {% elif mov.fornecedor_pagamento %}
+                          Pagamento de fornecedor: {{ mov.fornecedor_pagamento.fornecedor.identificacao }}
+                          {% elif mov.freteiro_pagamento %}
+                          Pagamento freteiro: {{ mov.freteiro_pagamento.transportadora.identificacao }}
+                          {% elif mov.extrator_pagamento %}
+                          Pagamento extrator: {{ mov.extrator_pagamento.fornecedor.extrator.identificacao }}
+                          {% elif mov.comissionado_pagamento %}
+                          Pagamento comissionado: {{ mov.comissionado_pagamento.comissionado.identificacao }}
+                          {%elif mov.observacao_movimentacao%}
+                          {{ mov.observacao_movimentacao }}
+                          {% else %}
+                          Movimentação genérica
+                          {% endif %}
+
+                          {% elif mov.tipo_movimentacao == 3 %}
+                          Cancelamento de movimentação
+
+                          {% elif mov.tipo_movimentacao == 4 %}
+                          {% if mov.credito_fornecedor %}
+                          Estorno de crédito de fornecedor: {{ mov.credito_fornecedor.fornecedor.identificacao }}
+                          {% elif mov.credito_extrator %}
+                          Estorno de crédito de extrator: {{ mov.credito_extrator.extrator.identificacao }}
+                          {% elif mov.credito_freteiro %}
+                          Estorno de crédito de freteiro: {{ mov.credito_freteiro.transportadora.identificacao }}
+                          {% else %}
+                          Estorno de crédito genérico
+                          {% endif %}
+
+                          {% elif mov.tipo_movimentacao == 5 %}
+                          Estorno de saldo de conta
+
+                          {% else %}
+                          Movimentação desconhecida
+                          {% endif %}
+                        </div>
+
+                        <small class="text-muted">
+                          {{ mov.data_movimentacao.strftime('%d/%m/%Y') }} •
+                          {%if mov.tipo_movimentacao == 1 and
+                          mov.conciliacao_lancamento_avulso %}
+                          {% if mov.conciliacao_bancaria and mov.importacao_ofx %}Receita conciliada{% else %}Receita
+                          por lançamento{% endif %}
+                          {% elif mov.tipo_movimentacao == 1 %}
+                          Entrada
+                          {% elif mov.tipo_movimentacao == 2 and
+                          mov.conciliacao_lancamento_avulso %}
+                          {% if mov.conciliacao_bancaria and mov.importacao_ofx %}Despesa conciliada{% else %}Despesa
+                          por lançamento{% endif %}
+                          {% elif mov.tipo_movimentacao == 2 %}
+                          Saída
+                          {% elif mov.tipo_movimentacao == 3 %}
+                          Cancelamento
+                          {% elif mov.tipo_movimentacao == 4 %}
+                          Estorno de crédito
+                          {% elif mov.tipo_movimentacao == 5 %}
+                          Estorno de saldo
+                          {% endif %}
+                        </small>
+                        <small class="text-muted">
+                          {%if mov.conciliacao_bancaria and mov.importacao_ofx_id%}
+                          • FTID: {{ mov.importacao_ofx.fitid }}
+                          {% endif %}
+                        </small>
+                      </div>
+
+                    </div>
+
+                    <div class="text-end">
+                      {% set valor = 0 %}
+
+                      {% if mov.conciliacao_bancaria and mov.importacao_ofx and mov.valor_movimentacao_100 %}
+                      {% set valor = mov.valor_movimentacao_100 %}
+                      {% elif mov.recebimento %}
+                      {% set valor = mov.recebimento.valor_total_recebimento_100 or 0 %}
+                      {% elif mov.credito_extrator %}
+                      {% set valor = mov.credito_extrator.valor_credito_100 or 0 %}
+                      {% elif mov.credito_fornecedor %}
+                      {% set valor = mov.credito_fornecedor.valor_credito_100 or 0 %}
+                      {% elif mov.credito_freteiro %}
+                      {% set valor = mov.credito_freteiro.valor_credito_100 or 0 %}
+                      {% elif mov.fornecedor_pagamento %}
+                      {% if mov.movimentacao_extra %}
+                      {% set valor = mov.valor_movimentacao_100 or 0 %}
+                      {% else %}
+                      {% set valor = mov.fornecedor_pagamento.valor_total_a_pagar_100 or 0 %}
+                      {% endif %}
+                      {% elif mov.freteiro_pagamento %}
+                      {% if mov.movimentacao_extra %}
+                      {% set valor = mov.valor_movimentacao_100 or 0 %}
+                      {% else %}
+                      {% set valor = mov.freteiro_pagamento.valor_total_a_pagar_100 or 0 %}
+                      {% endif %}
+                      {% elif mov.extrator_pagamento %}
+                      {% if mov.movimentacao_extra %}
+                      {% set valor = mov.valor_movimentacao_100 or 0 %}
+                      {% else %}
+                      {% set valor = mov.extrator_pagamento.valor_total_a_pagar_100 or 0 %}
+                      {% endif %}
+                      {% elif mov.comissionado_pagamento %}
+                      {% if mov.movimentacao_extra %}
+                      {% set valor = mov.valor_movimentacao_100 or 0 %}
+                      {% else %}
+                      {% set valor = mov.comissionado_pagamento.valor_total_a_pagar_100 or 0 %}
+                      {% endif %}
+                      {% elif mov.conciliacao_lancamento_avulso %}
+                      {% set valor = mov.conciliacao_lancamento_avulso.valor_movimentacao_100 or 0 %}
+                      {% elif mov.agendamento and mov.agendamento.situacao_pagamento_id == 9 %}
+                      {% set valor = mov.valor_movimentacao_100 or 0 %}
+                      {% else %}
+                      {% set valor = mov.valor_movimentacao_100 or 0 %}
+                      {% endif %}
+
+                      <div class="{% if mov.tipo_movimentacao == 1 %}text-success
+         {% elif mov.tipo_movimentacao == 2 %}text-danger
+         {% elif mov.tipo_movimentacao == 3 %}text-warning
+         {% elif mov.tipo_movimentacao == 4 %}text-primary
+         {% elif mov.tipo_movimentacao == 5 %}text-success
+         {% endif %} fw-bold">
+                        {{ '+' if mov.tipo_movimentacao == 1 else
+                        '-' if mov.tipo_movimentacao == 2 else
+                        '×' if mov.tipo_movimentacao == 3 else
+                        '↺' }} {{ valor | formatar_float_para_brl }}
+                      </div>
+
+                      <div class="d-flex flex-column align-items-end gap-1">
+                        <span class="badge
+                        {% if mov.tipo_movimentacao == 1 %}bg-success-lt text-success
+                        {% elif mov.tipo_movimentacao == 2 %}bg-danger-lt text-danger
+                        {% elif mov.tipo_movimentacao == 3 %}bg-warning-lt text-warning
+                        {% elif mov.tipo_movimentacao == 4 %}bg-primary-lt text-primary
+                        {% elif mov.tipo_movimentacao == 5 %}bg-success-lt text-success
+                        {% endif %}">
+                          {% if mov.conciliacao_bancaria and mov.importacao_ofx and mov.conciliacao_lancamento_avulso %}
+                          {% if mov.tipo_movimentacao == 1 %}Receita conciliada{% else %}Despesa conciliada{% endif %}
+                          {% elif mov.agendamento and mov.agendamento.situacao_pagamento_id == 9 %}
+                          {% if mov.tipo_movimentacao == 1 %}Liquidação de receita{% else %}Liquidação de despesa{% endif %}
+                          {% else %}
+                          {{"Entrada por lançamento" if
+                          mov.conciliacao_lancamento_avulso and mov.tipo_movimentacao
+                          == 1 else
+                          "Entrada" if mov.tipo_movimentacao == 1 else
+                          "Saída por lançamento" if mov.conciliacao_lancamento_avulso
+                          and mov.tipo_movimentacao == 2 else
+                          "Saída" if mov.tipo_movimentacao == 2 else
+                          "Cancelamento" if mov.tipo_movimentacao == 3 else
+                          "Estorno" }}
+                          {% endif %}
+                        </span>
+
+                        {%if mov.conciliacao_bancaria and mov.importacao_ofx%}
+                        <span
+                          class="badge {% if mov.tipo_movimentacao == 1 %}bg-success-lt text-success{% else %}bg-danger-lt text-danger{% endif %}">
+                          Conciliado OFX
+                        </span>
+                        {% endif %}
+                      </div>
+
+                    </div>
+                  </div>
+                </li>
+                {% endfor %}
+              </ul>
+
+              {%else%}
+              <div class="area-info-extrato" style="
+              padding: 30px;
+              border-radius: 10px;
+              text-align: center;
+              box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            ">
+                <div class="icon-extrato" style="font-size: 60px; color: #fc7801; margin-bottom: 15px">
+                  📄
+                </div>
+                <h2 style="font-size: 22px; margin-bottom: 10px">
+                  Nenhuma Movimentação encontrada
+                </h2>
+                <p>
+                  Não encontramos movimentações para serem exibidos no
+                  momento.
+                </p>
+              </div>
+              {%endif%}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal para Customizar Conta Bancária -->
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document" style="display: grid;">
+      <form id="filtroForm" method="get">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Trocar Conta Bancária</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label class="form-label">Selecionar Conta Bancária</label>
+                <select class="form-select" name="conta_bancaria_id" id="selectConta">
+                  <option value="">Todas as contas</option>
+                  {% for conta in contas_bancarias %}
+                  <option value="{{ conta.id }}" 
+                    {% if conta_selecionada_id == conta.id %}selected{% endif %}>
+                    {{ conta.identificacao }} 
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a href="{{url_for('conciliacao_contas_bancarias')}}" class="btn btn-link link-secondary">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                <path d="M21 21l-6 -6" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para Filtros do Extrato -->
+  <div class="modal modal-blur fade" id="modal-filtros-extrato" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <form id="filtroExtratoForm" method="get">
+        <div class="modal-content">
+          <div class="modal-header" style="background: linear-gradient(135deg, #335B45 0%, #4a7c59 100%); color: white;">
+            <h5 class="modal-title fw-bold">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z"/>
+              </svg>
+              Filtros do Extrato Bancário
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <!-- Conta Bancária -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Conta Bancária</label>
+                <select class="form-select" name="conta_bancaria_id">
+                  <option value="">Todas as contas</option>
+                  {% for conta in contas_bancarias %}
+                  <option value="{{ conta.id }}" 
+                    {% if conta_selecionada_id == conta.id %}selected{% endif %}>
+                    {{ conta.identificacao }} 
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Tipo de Movimentação -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Tipo de Movimentação</label>
+                <select class="form-select" name="tipo_movimentacao">
+                  <option value="">Todos os tipos</option>
+                  <option value="1">Entradas</option>
+                  <option value="2">Saídas</option>
+                </select>
+              </div>
+
+              <!-- Data Inicial -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Data Inicial</label>
+                <input type="date" class="form-control" name="data_inicial">
+              </div>
+
+              <!-- Data Final -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Data Final</label>
+                <input type="date" class="form-control" name="data_final">
+              </div>
+
+              <!-- Valor Mínimo -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Valor Mínimo</label>
+                <input type="text" class="form-control campo-moeda-brl" name="valor_minimo" placeholder="R$ 0,00">
+              </div>
+
+              <!-- Valor Máximo -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Valor Máximo</label>
+                <input type="text" class="form-control campo-moeda-brl" name="valor_maximo" placeholder="R$ 0,00">
+              </div>
+
+              <!-- Status Conciliação -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Status de Conciliação</label>
+                <select class="form-select" name="status_conciliacao">
+                  <option value="">Todos os status</option>
+                  <option value="1">Conciliado</option>
+                  <option value="0">Não Conciliado</option>
+                </select>
+              </div>
+
+              <!-- Ordenação -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Ordenar Por</label>
+                <select class="form-select" name="ordenacao">
+                  <option value="data_desc">Data (Mais Recente)</option>
+                  <option value="data_asc">Data (Mais Antiga)</option>
+                  <option value="valor_desc">Valor (Maior)</option>
+                  <option value="valor_asc">Valor (Menor)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a href="{{url_for('conciliacao_contas_bancarias')}}" class="btn btn-link link-secondary">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn text-white" style="background-color: #335B45;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/>
+                <path d="M21 21l-6 -6"/>
+              </svg>
+              Aplicar Filtros
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <script>
+    document.getElementById('selectConta').addEventListener('change', () => {
+      document.getElementById('filtroForm').submit();
+    });
+
+
+
+
+
+    // Inicializar máscaras de moeda nos campos de filtro
+    document.addEventListener('DOMContentLoaded', function() {
+      const camposMoeda = document.querySelectorAll('.campo-moeda-brl');
+      camposMoeda.forEach(campo => {
+        // Aplicar máscara de moeda brasileira (se você tiver uma função para isso)
+        // Por exemplo, usando uma biblioteca como IMask ou similar
+      });
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+<style>
+  /* Hover effects para os cards */
+  .card:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+    box-shadow: 0 8px 25px rgba(51, 91, 69, 0.15) !important;
+  }
+
+  /* Estilo para os botões ao passar o mouse */
+  .btn:hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s ease;
+  }
+</style>
+
+{% endblock conteudo %}

@@ -1,0 +1,353 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<link href="{{ url_for('static', filename='css/relatorio-cargas.css') }}" rel="stylesheet">
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">RELATÓRIOS</div>
+          <h2 class="page-title">Relatório Sintético por Transportadora</h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <!-- Formulário PDF Corrigido -->
+            <form action="{{ url_for('relatorio_sintetico_transportadora') }}" method="POST" id="exportPdfForm" target="_blank">
+              {% for key, value in dados_corretos.items() %}
+              {% if key not in ['exportar_pdf', 'exportar_excel'] %}
+              <input type="hidden" name="{{ key }}" value="{{ value }}">
+              {% endif %}
+              {% endfor %}
+              <input type="hidden" name="exportar_pdf" value="1">
+              <button type="submit" class="btn btn-outline-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
+                  <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
+                  <path d="M17 18h2" />
+                  <path d="M20 15h-3v6" />
+                  <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" />
+                </svg>
+                Exportar em PDF
+              </button>
+            </form>
+            <!-- Formulário Excel Corrigido -->
+            <form action="{{ url_for('relatorio_sintetico_transportadora') }}" method="POST" id="exportExcelForm">
+              {% for key, value in dados_corretos.items() %}
+              {% if key not in ['exportar_pdf', 'exportar_excel'] %}
+              <input type="hidden" name="{{ key }}" value="{{ value }}">
+              {% endif %}
+              {% endfor %}
+              <input type="hidden" name="exportar_excel" value="1">
+              <button type="submit" class="btn btn-outline-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-spreadsheet">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                  <path d="M8 11h8v7h-8z" />
+                  <path d="M8 15h8" />
+                  <path d="M11 11v7" />
+                </svg> Exportar em Excel
+              </button>
+            </form>
+            <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+      <!-- Indicador do período selecionado -->
+      <div class="col-12 mb-3">
+        <div class="alert {% if tipo_filtro == 'data' %}alert-info{% else %}alert-success{% endif %} d-flex align-items-center bg-white" role="alert">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="icon icon-tabler me-2">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <rect x="4" y="5" width="16" height="16" rx="2" />
+            <line x1="16" y1="3" x2="16" y2="7" />
+            <line x1="8" y1="3" x2="8" y2="7" />
+            <line x1="4" y1="11" x2="20" y2="11" />
+          </svg>
+          <div>
+            {% if tipo_filtro == 'data' %}
+              <strong>Período selecionado (Data):</strong>
+              {{ dataInicio | formatar_data_para_brl }} até {{ dataFim | formatar_data_para_brl }}
+            {% else %}
+              <strong>Período selecionado (Semanal):</strong>
+              {% for semana in semanas_disponiveis %}
+                {% if semana.valor == dados_corretos.get('semanaSelecionada') %}
+                  {{ semana.texto }}
+                  {% if semana.is_atual %} (Atual){% endif %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="card" id="registrosOperacionais">
+          <div class="card-body p-0">
+            {% if registros %}
+            <div class="table-responsive">
+              <table class="table table-vcenter table-hover table-striped">
+                <thead class="bg-light">
+                  <tr>
+                    <th class="text-center text-primary">Transportadora</th>
+                    <th class="text-center">Total de
+                      Cargas</th>
+                    <th class="text-center">Peso Total
+                      (Ton)</th>
+                    <th class="text-center">Total a Pagar
+                      (R$)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for transportadora_group in
+                  registros|groupby('transportadora') %}
+                  <tr>
+                    <td class="text-center fw-bold text-primary">
+                      {{ transportadora_group.grouper }}
+                    </td>
+                    <td class="text-center">
+                      {{ transportadora_group.list |
+                      length }}
+                    </td>
+                    <td class="text-center">
+                      {{
+                      transportadora_group.list
+                      |
+                      map(attribute='registro.peso_liquido_ticket')
+                      | select
+                      | sum
+                      | round(2)
+                      }}
+                    </td>
+                    <td class="text-center">
+                      <span class="badge bg-green-lt p-2">
+                        {{
+                        transportadora_group.list
+                        | map(attribute='valor_frete')
+                        | select
+                        | sum
+                        | formatar_float_para_brl
+                        }}
+                      </span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="area-info-card"
+              style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">
+              <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
+              <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">
+                Nenhum dado disponível
+              </h2>
+              <p style="color: #777;">No momento não há registros
+                para exibir.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
+      <form action="{{ url_for('relatorio_sintetico_transportadora') }}" method="GET">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar Relatório Sintético</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <!-- Toggle entre Filtro Semanal e Por Data -->
+              <div class="col-12 mb-3">
+                <label class="form-label">Tipo de Filtro</label>
+                <div class="form-selectgroup form-selectgroup-boxes d-flex flex-row">
+                  <label class="form-selectgroup-item flex-fill">
+                    <input type="radio" name="tipo_filtro" value="semanal" id="radio-semanal" class="form-selectgroup-input" 
+                           {% if dados_corretos.get('tipo_filtro') != 'data' %}checked{% endif %}>
+                    <div class="form-selectgroup-label d-flex align-items-center p-3">
+                      <div class="me-3">
+                        <span class="form-selectgroup-check"></span>
+                      </div>
+                      <div>
+                        <strong>Filtro Semanal</strong>
+                        <div class="text-muted">Selecionar por semana</div>
+                      </div>
+                    </div>
+                  </label>
+                  <label class="form-selectgroup-item flex-fill">
+                    <input type="radio" name="tipo_filtro" value="data" id="radio-data" class="form-selectgroup-input"
+                           {% if dados_corretos.get('tipo_filtro') == 'data' %}checked{% endif %}>
+                    <div class="form-selectgroup-label d-flex align-items-center p-3">
+                      <div class="me-3">
+                        <span class="form-selectgroup-check"></span>
+                      </div>
+                      <div>
+                        <strong>Filtro por Data</strong>
+                        <div class="text-muted">Selecionar período específico</div>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Filtro Semanal -->
+              <div id="filtro-semanal" class="col-12 mb-3" {% if dados_corretos.get('tipo_filtro') == 'data' %}style="display: none;"{% endif %}>
+                <label class="form-label">Selecionar Período</label>
+                <select name="semanaSelecionada" class="form-select" id="semanaSelecionada">
+                  {% for semana in semanas_disponiveis %}
+                  <option value="{{ semana.valor }}" 
+                          {% if semana.is_atual and not dados_corretos.get('semanaSelecionada') %}selected{% endif %}
+                          {% if semana.valor == dados_corretos.get('semanaSelecionada') %}selected{% endif %}
+                          {% if semana.is_atual %}data-current="true"{% endif %}
+                          {% if semana.get('is_mes_completo') %}data-mes-completo="true"{% endif %}>
+                    {{ semana.texto }}
+                    {% if semana.is_atual %} (Atual){% endif %}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Filtro por Data -->
+              <div id="filtro-data" class="row" {% if dados_corretos.get('tipo_filtro') != 'data' %}style="display: none;"{% endif %}>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Data Início</label>
+                  <input type="date" name="dataInicio" class="form-control"
+                    value="{{ dados_corretos.get('dataInicio', '') }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Data Fim</label>
+                  <input type="date" name="dataFim" class="form-control"
+                    value="{{ dados_corretos.get('dataFim', '') }}">
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="clienteFiltro" class="form-control"
+                  value="{{ dados_corretos.get('clienteFiltro', '') }}">
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Produto</label>
+                <select name="produtoFiltro" class="form-select">
+                  <option value="">Selecione...</option>
+                  {% for p in produto %}
+                  <option value="{{ p.nome }}" {% if p.nome==dados_corretos.get('produtoFiltro', '' ) %}selected{% endif
+                    %}>
+                    {{ p.nome }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Bitola</label>
+                <select name="bitolaFiltro" class="form-select">
+                  <option value="">Selecione...</option>
+                  {% for b in bitola %}
+                  <option value="{{ b.bitola }}" {% if b.bitola==dados_corretos.get('bitolaFiltro', '' ) %}selected{%
+                    endif %}>
+                    {{ b.bitola }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <a href="{{ url_for('relatorio_sintetico_transportadora') }}" class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Inicializar Tom Select
+      document.querySelectorAll('select.form-select').forEach(function (select) {
+        new TomSelect(select, {
+          create: false,
+          allowEmptyOption: false,
+        });
+      });
+      
+      // Inicializar filtros após carregamento completo
+      setTimeout(function() {
+        inicializarFiltros();
+      }, 300);
+    });
+
+    function inicializarFiltros() {
+      const radioSemanal = document.getElementById('radio-semanal');
+      const radioData = document.getElementById('radio-data');
+      const filtroSemanal = document.getElementById('filtro-semanal');
+      const filtroData = document.getElementById('filtro-data');
+      
+      if (!radioSemanal || !radioData || !filtroSemanal || !filtroData) {
+        console.error('Elementos de filtro não encontrados!');
+        return;
+      }
+
+      function alternarFiltros() {
+        if (radioSemanal.checked) {
+          filtroSemanal.style.display = 'block';
+          filtroData.style.display = 'none';
+        } else {
+          filtroSemanal.style.display = 'none';
+          filtroData.style.display = 'flex';
+        }
+      }
+
+      // Aplicar estado inicial baseado nos radio buttons já configurados pelo backend
+      alternarFiltros();
+
+      // Event listeners
+      radioSemanal.addEventListener('click', alternarFiltros);
+      radioData.addEventListener('click', alternarFiltros);
+      radioSemanal.addEventListener('change', alternarFiltros);
+      radioData.addEventListener('change', alternarFiltros);
+    }
+  </script>
+</div>
+{% endblock conteudo %}

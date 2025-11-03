@@ -1,0 +1,164 @@
+.treeview-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  padding: 20px;
+  line-height: 1.4;
+}
+
+.tree-item {
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.tree-line {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+  position: relative;
+}
+
+.tree-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  cursor: pointer;
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+.tree-toggle.collapsed {
+  transform: rotate(-90deg);
+}
+
+.tree-toggle.no-children {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tree-label {
+  flex: 1;
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.tree-children {
+  margin-left: 20px;
+  border-left: 2px solid #e2e8f0;
+  padding-left: 20px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.tree-children.collapsed {
+  display: none;
+}
+
+.tree-add-item {
+  margin: 8px 0;
+  position: relative;
+}
+
+.tree-add-item::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  width: 20px;
+  height: 2px;
+  background: #e2e8f0;
+}
+
+.tree-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #cbd5e1;
+  background: white;
+  border-radius: 4px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tree-add-btn:hover {
+  background: #6B7280;
+  border-color: #6B7280;
+  color: white;
+}
+
+/* Linhas conectoras para itens filhos */
+.tree-children .tree-item:not(.tree-add-item) .tree-line::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  width: 20px;
+  height: 2px;
+  background: #e2e8f0;
+}
+
+.tree-children .tree-item:last-child::after {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  bottom: -50px;
+  width: 2px;
+  background: white;
+}
+
+/* Subcategorias com opacidade reduzida */
+.tree-item.subcategory .btn-outline-primary {
+  opacity: 0.8;
+}
+
+.tree-item.subcategory .btn-outline-danger {
+  opacity: 0.8;
+}
+
+.tree-item.subcategory .btn-outline-success {
+  opacity: 0.8;
+}
+
+.tree-item.subsubcategory .btn-outline-primary {
+  opacity: 0.6;
+}
+
+.tree-item.subsubcategory .btn-outline-danger {
+  opacity: 0.6;
+}
+
+.tree-item.subsubcategory .btn-outline-success {
+  opacity: 0.6;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .treeview-container {
+    padding: 12px;
+  }
+  
+  .tree-children {
+    margin-left: 16px;
+    padding-left: 16px;
+  }
+  
+  .tree-children .tree-item .tree-line::before {
+    left: -16px;
+    width: 16px;
+  }
+  
+  .tree-children .tree-item:last-child::after {
+    left: -18px;
+  }
+  
+  .tree-add-item::before {
+    left: -16px;
+    width: 16px;
+  }
+}

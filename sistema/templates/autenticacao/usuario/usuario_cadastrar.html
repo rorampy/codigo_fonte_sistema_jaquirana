@@ -1,0 +1,182 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            GERENCIAMENTO DE USUÁRIOS
+          </div>
+          <h2 class="page-title">
+            Novo Usuário
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="{{ url_for('usuario_cadastrar') }}" method="POST" enctype="multipart/form-data">
+          <div class="card-body">
+            <div class="row row-cards">
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Nome</label>
+                  <input type="text" name="nomeUsuario" value="{{ dados_corretos['nomeUsuario'] }}" 
+                    class="form-control {% if 'nome' in campos_obrigatorios %}is-invalid{% endif %}"
+                  >
+                  <div class="invalid-feedback">
+                  {% if 'nome' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['nome'] }}
+                  {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Sobrenome</label>
+                  <input type="text" name="sobrenomeUsuario" value="{{ dados_corretos['sobrenomeUsuario'] }}" 
+                    class="form-control {% if 'sobrenome' in campos_obrigatorios %}is-invalid{% endif %}"
+                    >
+                  <div class="invalid-feedback">
+                    {% if 'sobrenome' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['sobrenome'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">CPF</label>
+                  <input type="text" name="cpfUsuario" value="{{ dados_corretos['cpfUsuario'] }}" 
+                    data-mask="000.000.000-00" placeholder="xxx.xxx.xxx-xx" data-mask-visible="true" autocomplete="off"
+                    class="form-control {% if 'cpf' in campos_obrigatorios or 'cpf' in campos_erros %}is-invalid{% endif %}"
+                  >
+                  <div class="invalid-feedback">
+                    {% if 'cpf' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['cpf'] }}
+                    {% elif 'cpf' in campos_erros %}
+                      {{ campos_erros['cpf'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Telefone</label>
+                  <input type="text" name="telefoneUsuario" value="{{ dados_corretos['telefoneUsuario'] }}"
+                    data-mask="(00) 0 0000-0000" placeholder="(xx) x xxxx-xxxx" data-mask-visible="true" autocomplete="off"
+                    class="form-control {% if 'telefone' in campos_obrigatorios %}is-invalid{% endif %}"
+                  >
+                  <div class="invalid-feedback">
+                    {% if 'telefone' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['telefone'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">E-mail</label>
+                  <input type="text" name="emailUsuario" value="{{ dados_corretos['emailUsuario'] }}" placeholder="usuario@provedor"
+                    class="form-control {% if 'email' in campos_obrigatorios or 'email' in campos_erros %}is-invalid{% endif %}"
+                  >
+                  <div class="invalid-feedback">
+                    {% if 'email' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['email'] }}
+                    {% elif 'email' in campos_erros %}
+                      {{ campos_erros['email'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Senha</label>
+                  <input type="text" name="senhaUsuario" value="{{ dados_corretos['senhaUsuario'] }}"
+                    class="form-control {% if 'senhaUsuario' in campos_obrigatorios or 'senhaUsuario' in campos_erros %}is-invalid{% endif %}"
+                  >
+                  <div class="invalid-feedback">
+                    {% if 'email' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['email'] }}
+                    {% elif 'email' in campos_erros %}
+                      {{ campos_erros['email'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Cargo</label>
+                  <select type="text" name="cargoUsuario" id="cargoUsuario" 
+                    class="form-select {% if 'cargoUsuario' in campos_obrigatorios %}is-invalid{% endif %}"
+                  >
+                    <option value="">Selecione um cargo</option>
+                    
+                    {% for role in roles %}
+                      {% if role.id != 1 and role.id != 7 %}
+                        {% if 'cargoUsuario' in dados_corretos and role.id == dados_corretos['cargoUsuario']|int %}
+                          <option value="{{ role.id }}" selected>{{ role.cargo }}</option>
+                        {% else %}
+                          <option value="{{ role.id }}">{{ role.cargo }}</option>
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {% if 'cargoUsuario' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['cargoUsuario'] }}
+                    {% endif %}
+                    </div>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="{{ url_for('usuarios_listar') }}" 
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" 
+                width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
+                fill="none" stroke-linecap="round" stroke-linejoin="round"
+              >
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+             </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" 
+                width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
+                fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+
+</div>
+
+
+{% endblock conteudo %}

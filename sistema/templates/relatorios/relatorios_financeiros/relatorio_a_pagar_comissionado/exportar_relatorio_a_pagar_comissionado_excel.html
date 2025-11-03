@@ -1,0 +1,182 @@
+{% if registros %}
+<table border="1">
+  <!-- Cabeçalho do relatório -->
+  <tr>
+    <td colspan="8" style="text-align: center; font-weight: bold; font-size: 16px; background-color: #e9ecef;">
+      RELATÓRIO FINANCEIRO A PAGAR COMISSIONADO
+    </td>
+  </tr>
+  
+  <!-- Informações do sistema -->
+  <tr>
+    <td colspan="8" style="text-align: center; font-size: 12px;">
+      Sistema de Gestão MBR - Versão {{changelog.versao}} - Data: {{changelog.data_lancamento}}
+    </td>
+  </tr>
+  
+  <!-- Filtros aplicados -->
+  {% if dados_corretos %}
+  <tr>
+    <td colspan="8" style="font-weight: bold; background-color: #f8f9fa;">FILTROS APLICADOS</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">Data Início:</td>
+    <td>{{ dados_corretos.get('dataInicio', '') | converte_data_para_datetime_converte_data_brl if dados_corretos.get('dataInicio') else '-' }}</td>
+    <td style="font-weight: bold;">Data Fim:</td>
+    <td>{{ dados_corretos.get('dataFim', '') | converte_data_para_datetime_converte_data_brl if dados_corretos.get('dataFim') else '-' }}</td>
+    <td style="font-weight: bold;">Placa:</td>
+    <td>{{ dados_corretos.get('placaCargaCliente', 'Todos') or 'Todos' }}</td>
+    <td style="font-weight: bold;">Comissionado:</td>
+    <td>{{ dados_corretos.get('comissionadoCargaCliente', 'Todos') or 'Todos' }}</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">Transportadora:</td>
+    <td>{{ dados_corretos.get('tranpostadoraCargaCliente', 'Todos') or 'Todos' }}</td>
+    <td style="font-weight: bold;">Fornecedor:</td>
+    <td>{{ dados_corretos.get('fornecedorCargaCliente', 'Todos') or 'Todos' }}</td>
+    <td colspan="4"></td>
+  </tr>
+  {% endif %}
+  
+  <!-- Linha em branco -->
+  <tr>
+    <td colspan="8"></td>
+  </tr>
+
+  {% for origem_group in registros|groupby('comissionado.identificacao') %}
+  {% set origem = origem_group.grouper %}
+  {% set registros_origem = origem_group.list %}
+
+  <!-- Cabeçalho do comissionado -->
+  <tr>
+    <td colspan="8" style="font-weight: bold; background-color: #d4edda; text-align: center;">
+      COMISSIONADO dasd: {{ origem }}
+    </td>
+  </tr>
+
+  {% for produto_group in registros_origem|groupby('produto') %}
+  {% set produto = produto_group.grouper %}
+  {% set registros_produto = produto_group.list %}
+
+  <!-- Cabeçalho do produto -->
+  <tr>
+    <td colspan="8" style="font-weight: bold; background-color: #e9ecef;">
+      Produto: {{ produto }}
+    </td>
+  </tr>
+
+  <!-- Cabeçalho da tabela -->
+  <tr style="background-color: #f8f9fa; font-weight: bold;">
+    <td>Data Entrega</td>
+    <td>Transportadora</td>
+    <td>Fornecedor</td>
+    <td>Produto/Bitola</td>
+    <td>Peso (Ton.)</td>
+    <td>Preço Comissão</td>
+    <td>A pagar</td>
+    <td>Status</td>
+  </tr>
+
+  <!-- Dados do produto -->
+  {% set total_produto = 0 %}
+  {% for item in registros_produto %}
+  {% set valor_item = item.registro.valor_total_a_pagar_100 / 100 if item.registro.valor_total_a_pagar_100 else 0 %}
+  {% set total_produto = total_produto + valor_item %}
+  <tr>
+    <td>
+      {{ item.registro.data_entrega_ticket | formatar_data_para_brl if item.registro.data_entrega_ticket else '-' }}
+    </td>
+    <td>
+      {{ item.registro.solicitacao.transportadora_exibicao.identificacao if item.registro.solicitacao.transportadora_exibicao else '-' }}
+    </td>
+    <td>
+      {{ item.registro.solicitacao.fornecedor.identificacao if item.registro.solicitacao.fornecedor else '-' }}
+    </td>
+    <td>
+      {% if item.registro.solicitacao.produto and item.registro.solicitacao.bitola %}
+      {{ item.registro.solicitacao.produto.nome }} | {{ item.registro.solicitacao.bitola.bitola }}
+      {% else %}
+      -
+      {% endif %}
+    </td>
+    <td>
+      {% if item.registro_operacional.peso_liquido_ticket %}
+      {{ item.registro_operacional.peso_liquido_ticket }}
+      {% else %}
+      Sem peso
+      {% endif %}
+    </td>
+    <td>
+      {{ item.registro.preco_custo_bitola_100 | formatar_float_para_brl if item.registro.preco_custo_bitola_100 else '-' }}
+    </td>
+    <td style="text-align: right;">
+      {{ valor_item | formatar_moeda_brl if valor_item > 0 else '-' }}
+    </td>
+    <td>
+      {{ item.registro.situacao.situacao if item.registro.situacao else 'Pendente' }}
+    </td>
+  </tr>
+  {% endfor %}
+
+  <!-- Total do produto -->
+  <tr style="background-color: #f8f9fa; font-weight: bold;">
+    <td colspan="6">TOTAL PRODUTO</td>
+    <td style="text-align: right;">{{ total_produto | formatar_moeda_brl }}</td>
+    <td></td>
+  </tr>
+  {% endfor %}
+
+  <!-- Total do comissionado -->
+  {% set total_comissionado = 0 %}
+  {% for item in registros_origem %}
+  {% set valor_item = item.registro.valor_total_a_pagar_100 / 100 if item.registro.valor_total_a_pagar_100 else 0 %}
+  {% set total_comissionado = total_comissionado + valor_item %}
+  {% endfor %}
+  
+  <tr style="background-color: #d4edda; font-weight: bold;">
+    <td colspan="6">TOTAL COMISSIONADO</td>
+    <td style="text-align: right;">{{ total_comissionado | formatar_moeda_brl }}</td>
+    <td></td>
+  </tr>
+
+  <!-- Linha em branco entre comissionados -->
+  <tr>
+    <td colspan="8"></td>
+  </tr>
+  {% endfor %}
+
+  <!-- Total geral -->
+  {% set total_geral = 0 %}
+  {% for item in registros %}
+  {% set valor_item = item.registro.valor_total_a_pagar_100 / 100 if item.registro.valor_total_a_pagar_100 else 0 %}
+  {% set total_geral = total_geral + valor_item %}
+  {% endfor %}
+  
+  <tr style="background-color: #cce5ff; font-weight: bold; font-size: 14px;">
+    <td colspan="6">TOTAL GERAL</td>
+    <td style="text-align: right;">{{ total_geral | formatar_moeda_brl }}</td>
+    <td></td>
+  </tr>
+
+  <!-- Informações de rodapé -->
+  <tr>
+    <td colspan="8"></td>
+  </tr>
+  <tr>
+    <td colspan="4" style="font-weight: bold;">Data de Emissão:</td>
+    <td colspan="4">{{ dataHoje }}</td>
+  </tr>
+  <tr>
+    <td colspan="4" style="font-weight: bold;">Sistema:</td>
+    <td colspan="4">MBR Gestão</td>
+  </tr>
+</table>
+{% else %}
+<table border="1">
+  <tr>
+    <td style="text-align: center; padding: 20px; font-weight: bold; color: #6c757d;">
+      Nenhum registro encontrado com os filtros aplicados.
+    </td>
+  </tr>
+</table>
+{% endif %}

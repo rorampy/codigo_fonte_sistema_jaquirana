@@ -1,0 +1,667 @@
+  :root {
+    --mbr-primary: #355F48;
+    --mbr-gray: #6c757d;
+    --mbr-light: #f8f9fa;
+    --mbr-border: #dee2e6;
+    --mbr-success: #198754;
+    --mbr-warning: #ffc107;
+  }
+
+
+  /* Estilos para a seção de resultados */
+  .mbr-metric-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .mbr-metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .mbr-metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--mbr-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .mbr-metric-label {
+    font-weight: 600;
+    color: var(--mbr-dark);
+    margin-bottom: 0.25rem;
+  }
+
+  .mbr-metric-description {
+    font-size: 0.75rem;
+    color: var(--mbr-gray);
+  }
+
+  .mbr-highlight {
+    background-color: #e3f2fd !important;
+    border-color: #2196f3 !important;
+    font-weight: 600;
+  }
+
+  .mbr-success {
+    background-color: #e8f5e8 !important;
+    border-color: #4caf50 !important;
+    color: #2e7d32 !important;
+    font-weight: 700;
+  }
+
+  .form-text.text-muted {
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+  }
+
+  .mbr-card {
+    border: 1px solid var(--mbr-border);
+    border-radius: 8px;
+    background: white;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .mbr-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .mbr-card-header {
+    background: var(--mbr-primary);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    border-bottom: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+  }
+
+  .mbr-card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
+  }
+
+  .mbr-card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .mbr-card-icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.9;
+  }
+
+  .mbr-card-total {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: white;
+    text-align: right;
+    line-height: 1;
+  }
+
+  .mbr-card-total-label {
+    font-size: 0.7rem;
+    opacity: 0.85;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .mbr-card-body {
+    padding: 1.5rem;
+  }
+
+  /* Seções dentro dos cards */
+  .mbr-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .mbr-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .mbr-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--mbr-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--mbr-primary);
+    display: inline-block;
+  }
+
+  .mbr-form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--mbr-gray);
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .mbr-form-label.required::after {
+    content: ' *';
+    color: #dc3545;
+    font-weight: bold;
+  }
+
+  .mbr-form-control {
+    border: 1.5px solid var(--mbr-border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    width: 100%;
+    transition: all 0.2s ease;
+  }
+
+  .mbr-form-control:focus {
+    border-color: var(--mbr-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(53, 95, 72, 0.1);
+    transform: translateY(-1px);
+  }
+
+  /* Campos monetários */
+  .mbr-currency {
+    position: relative;
+  }
+
+  .mbr-currency::before {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--mbr-primary);
+    font-weight: 700;
+    font-size: 0.875rem;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .mbr-readonly {
+    background: linear-gradient(135deg, var(--mbr-light) 0%, #e9ecef 100%);
+    color: var(--mbr-primary);
+    font-weight: 700;
+    border-style: dashed;
+  }
+
+  /* Cards especiais */
+    {
+    border: 2px solid var(--mbr-primary);
+    box-shadow: 0 4px 20px rgba(53, 95, 72, 0.15);
+  }
+
+  .mbr-card-header {
+    background: linear-gradient(135deg, var(--mbr-primary) 0%, #2a4a3a 100%);
+  }
+
+  .mbr-card-compact .mbr-card-body {
+    padding: 1.25rem;
+  }
+
+  /* Campo de grupos */
+  .mbr-field-group {
+    background: #fafbfc;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .mbr-field-group-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--mbr-primary);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.5px;
+  }
+
+  /* Resultados */
+  .mbr-results {
+    background: white;
+    border: 2px solid var(--mbr-border);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .mbr-results-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--mbr-primary);
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: center;
+    position: relative;
+  }
+
+  .mbr-results-title::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: var(--mbr-primary);
+    border-radius: 2px;
+  }
+
+  .mbr-metric {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    background: var(--mbr-light);
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .mbr-metric:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border-color: var(--mbr-primary);
+  }
+
+  .mbr-metric-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--mbr-primary);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .mbr-metric-label {
+    font-size: 0.75rem;
+    color: var(--mbr-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  .mbr-price-final {
+    background: linear-gradient(135deg, var(--mbr-primary) 0%, #2a4a3a 100%);
+    color: white;
+    text-align: center;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-top: 2rem;
+    box-shadow: 0 6px 25px rgba(53, 95, 72, 0.3);
+  }
+
+  .mbr-price-final-value {
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .mbr-price-final-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+
+  /* Botões */
+  .mbr-btn {
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mbr-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .mbr-btn:hover::before {
+    left: 100%;
+  }
+
+  .mbr-btn-primary {
+    background: linear-gradient(135deg, var(--mbr-primary) 0%, #2a4a3a 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(53, 95, 72, 0.3);
+  }
+
+  .mbr-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(53, 95, 72, 0.4);
+    color: white;
+  }
+
+  .mbr-btn-secondary {
+    background: white;
+    color: var(--mbr-primary);
+    border: 2px solid var(--mbr-primary);
+  }
+
+  .mbr-btn-secondary:hover {
+    background: var(--mbr-primary);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  /* Responsividade */
+  @media (max-width: 768px) {
+    .mbr-card-body {
+      padding: 1.25rem;
+    }
+
+    .mbr-price-final-value {
+      font-size: 2rem;
+    }
+
+    .mbr-results {
+      padding: 1.5rem;
+    }
+  }
+
+  /* Melhoria das tabelas de resumo */
+  .creditos-table-container {
+    overflow-x: auto;
+    margin-top: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .creditos-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .creditos-table thead tr {
+    background: linear-gradient(135deg, var(--mbr-primary) 0%, #2a4a3a 100%);
+    color: white;
+  }
+
+  .creditos-table th {
+    padding: 1.25rem 0.75rem;
+    text-align: center !important;
+    /* Centralizado */
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border: none;
+    white-space: nowrap;
+  }
+
+  .creditos-table th:first-child {
+    width: 25%;
+    min-width: 180px;
+  }
+
+  .creditos-table th:nth-child(2) {
+    text-align: center !important;
+    /* Centralizado */
+    width: 15%;
+    min-width: 100px;
+  }
+
+  .creditos-table th:nth-child(3) {
+    text-align: center !important;
+    /* Centralizado */
+    width: auto;
+  }
+
+  .creditos-table td {
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid #f1f3f4;
+    vertical-align: middle;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    text-align: center !important;
+    /* Centralizado */
+  }
+
+  .creditos-table tbody tr {
+    transition: all 0.2s ease;
+  }
+
+  .creditos-table tbody tr:hover {
+    background: #f8f9fa;
+    transform: translateX(2px);
+  }
+
+  .credito-label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9rem;
+    padding-left: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center !important;
+    /* Centralizado */
+  }
+
+  .credito-valor {
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-weight: 700;
+    color: var(--mbr-primary);
+    font-size: 0.95rem;
+    text-align: center !important;
+    /* Centralizado */
+    white-space: nowrap;
+  }
+
+  /* Destaque especial para linhas importantes */
+  .mbr-highlight {
+    background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%) !important;
+    /* border-left: 4px solid var(--mbr-primary) !important; */
+  }
+
+  .mbr-highlight:hover {
+    background: linear-gradient(135deg, #d4edda 0%, #e8f5e8 100%) !important;
+  }
+
+  .mbr-highlight .credito-label {
+    color: var(--mbr-primary) !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    /* Centralizado */
+  }
+
+  .mbr-highlight .credito-valor {
+    color: var(--mbr-primary) !important;
+    font-weight: 800 !important;
+    font-size: 1rem !important;
+    text-align: center !important;
+    /* Centralizado */
+  }
+
+  /* Linha de total final */
+  .credito-total-row {
+    background: linear-gradient(135deg, var(--mbr-primary) 0%, #2a4a3a 100%) !important;
+    color: white !important;
+    border-top: 3px solid #1a3d26 !important;
+  }
+
+  .credito-total-row:hover {
+    background: linear-gradient(135deg, #2a4a3a 0%, var(--mbr-primary) 100%) !important;
+    transform: translateX(0px) !important;
+  }
+
+  .credito-total-label {
+    font-weight: 800 !important;
+    color: white !important;
+    font-size: 0.9rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    /* Centralizado */
+  }
+
+  .credito-total-valor {
+    font-weight: 800 !important;
+    color: white !important;
+    font-size: 1rem !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    /* Centralizado */
+  }
+
+  /* Espaçamento entre seções */
+  .mbr-section {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .mbr-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  /* Responsividade */
+  @media (max-width: 768px) {
+    .creditos-table {
+      font-size: 0.8rem;
+    }
+
+    .creditos-table th,
+    .creditos-table td {
+      padding: 0.6rem 0.4rem;
+      text-align: center !important;
+      /* Centralizado também no mobile */
+    }
+
+    .credito-label {
+      font-size: 0.8rem;
+      text-align: center !important;
+      /* Centralizado também no mobile */
+    }
+
+    .credito-valor {
+      font-size: 0.8rem;
+      text-align: center !important;
+      /* Centralizado também no mobile */
+    }
+  }
+
+
+  /* Switches de serviços opcionais */
+
+  /* Estilos para switches de serviços opcionais */
+  .form-switch-3 {
+    padding-left: 3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-switch-3 .form-check-input {
+    width: 2.5rem;
+    height: 1.25rem;
+    margin-left: -3rem;
+    background-color: #e9ecef;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+  }
+
+  .form-switch-3 .form-check-input:checked {
+    background-color: var(--mbr-primary);
+    border-color: var(--mbr-primary);
+    box-shadow: 0 2px 8px rgba(53, 95, 72, 0.3);
+  }
+
+  .form-switch-3 .form-check-label {
+    font-weight: 600;
+    color: var(--mbr-gray);
+    font-size: 0.875rem;
+    margin-left: 0.5rem;
+  }
+
+  /* Cards opcionais com transição suave */
+  .mbr-card-opcional {
+    transition: all 0.4s ease;
+    overflow: hidden;
+  }
+
+  .mbr-card-opcional.oculto {
+    opacity: 0;
+    transform: translateY(-20px);
+    max-height: 0;
+    margin-bottom: 0;
+    padding: 0;
+    border: none;
+  }
+
+  .mbr-card-total-area {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #f0f0f0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 6px;
+    padding: 1.25rem;
+}
+
+.mbr-total-display {
+    text-align: center;
+}
+
+.mbr-total-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--mbr-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.mbr-total-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--mbr-primary);
+    line-height: 1;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}

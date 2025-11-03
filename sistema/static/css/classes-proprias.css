@@ -1,0 +1,72 @@
+
+/* Configurações do Quill */
+.ql-size-small {
+    font-size: 10px; /* Tamanho pequeno */
+}
+
+.ql-size-large {
+    font-size: 24px; /* Tamanho grande */
+}
+
+.ql-size-huge {
+    font-size: 36px; /* Tamanho enorme */
+}
+
+/* Thumbnails de Imagens */
+#thumbnailsContainer img {
+    width: 100px;
+    height: auto;
+    padding: 5px;
+    border: 1px solid #ddd;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
+}
+
+#thumbnailsContainer img:hover {
+    transform: scale(1.1);
+}
+
+/* Estilo para múltiplos itens na tela de fe */
+.blocos-itens-fatura {
+    animation: slideDown 0.3s ease-out;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px; /* Espaço entre os blocos */
+    padding: 5px;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Estilo para múltiplos itens na tela de FE */
+.blocos-itens {
+    animation: slideDown 0.3s ease-out;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px; /* Espaço entre os blocos */
+    padding: 5px;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Aumenta tamanho da tabela */
+.tabela-maior table {
+    min-width: 1920px; /* Ajuste este valor conforme necessário */
+}

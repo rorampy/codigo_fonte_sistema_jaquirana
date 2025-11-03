@@ -1,0 +1,1350 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle text-muted">Financeiro</div>
+          <h2 class="page-title fw-bold display-6">Confirmação de Faturamento em Massa - Extratores</h2>
+          <p class="text-muted">{{ registros|length }} registro(s) selecionado(s) para faturamento</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if conciliar_transacao_id %}
+  {% set titulo_pagina = "extratores" %}
+  {% include 'financeiro/importar_ofx/dados_conciliacao_component.html' %}
+  {% endif %}
+
+  <div class="py-4">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+      <div class="row g-3 mb-4">
+        <!-- Card Crédito -->
+        <div class="col-6 col-md-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4 d-flex flex-column">
+              <div class="d-flex align-items-center flex-grow-1">
+                <div class="me-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 48px; height: 48px; background-color: #1B5E20;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-1 small text-uppercase fw-medium">Crédito Total</p>
+                  <h4 class="mb-0 fw-bold" style="color: #1B5E20;" id="credito-total">
+                    {{ total_credito_disponivel | formatar_float_para_brl }}
+                  </h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4 d-flex flex-column">
+              <div class="d-flex align-items-center flex-grow-1">
+                <div class="me-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 48px; height: 48px; background-color: #1B5E20;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 21h4l13 -13a1.5 1.5 0 0 0 -4 -4l-13 13v4" />
+                      <path d="M14.5 5.5l4 4" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-1 small text-uppercase fw-medium">TOTAL EXTRATORES</p>
+                  <span id="extratores-subtotal" class="mb-0 fw-bold" style="color: #1B5E20;">{{ valor_total_geral |
+                    formatar_float_para_brl }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Total a Faturar -->
+        <div class="col-6 col-md-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4 d-flex flex-column">
+              <div class="d-flex align-items-center flex-grow-1">
+                <div class="me-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 48px; height: 48px; background-color: #1B5E20;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon icon-tabler icons-tabler-outline icon-tabler-moneybag">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path
+                        d="M9.5 3h5a1.5 1.5 0 0 1 1.5 1.5a3.5 3.5 0 0 1 -3.5 3.5h-1a3.5 3.5 0 0 1 -3.5 -3.5a1.5 1.5 0 0 1 1.5 -1.5" />
+                      <path d="M4 17v-1a8 8 0 1 1 16 0v1a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-1 small text-uppercase fw-medium" id="total-pagar-label">Total a Faturar</p>
+
+                  <!-- Valor principal (dinâmico conforme uso do crédito) -->
+                  <h4 class="mb-0 fw-bold" style="color: #1B5E20;" id="total-pagar">
+                    {{ valor_total_geral | formatar_float_para_brl }}
+                  </h4>
+
+                  <!-- Informações adicionais -->
+                  <div id="total-pagar-detalhes">
+                    <!-- Badge de status do crédito (aparece apenas quando usar crédito) -->
+                    <div id="credito-status" class="mt-1" style="display: none;">
+                      <small class="text-muted d-block mt-1">
+                        Total bruto: <span id="total-bruto-mini">-</span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-header bg-light fw-bold">Detalhes dos Registros por Extrator</div>
+        <div class="card-body">
+          {% for extrator_id, dados_extrator in extratores_dict.items() %}
+          <div class="mb-4 p-3 border rounded">
+            <div class="row align-items-center mb-3">
+              <div class="col">
+                <h5 class="fw-bold text-primary mb-1">
+                  {% if dados_extrator.extrator %}
+                  {{ dados_extrator.extrator.identificacao }}
+                  {% else %}
+                  Extrator ID: {{ extrator_id }}
+                  {% endif %}
+                </h5>
+                <span class="badge bg-blue-lt">{{ dados_extrator.registros|length }} registro(s)</span>
+                <span class="badge bg-green-lt ms-2" id="total-extrator-{{ extrator_id }}">Total: {{
+                  dados_extrator.valor_total | formatar_float_para_brl }}</span>
+                <span class="badge bg-yellow-lt ms-2">Crédito disponível: {{ dados_extrator.credito_disponivel |
+                  formatar_float_para_brl }}</span>
+              </div>
+              <div class="col-auto">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                  data-bs-target="#modalLancarCredito" data-tipo="extrator" data-id="{{ extrator_id }}"
+                  data-nome="{% if dados_extrator.extrator %}{{ dados_extrator.extrator.identificacao }}{% else %}Extrator ID: {{ extrator_id }}{% endif %}"
+                  title="Lançar crédito/débito para este extrator">
+                  <i class="ti ti-wallet-plus me-1"></i>
+                  Lançar Crédito
+                </button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm table-striped">
+                <thead class="bg-light">
+                  <tr>
+                    <th>Data Entrega</th>
+                    <th>Fornecedor</th>
+                    <th>Transportadora</th>
+                    <th>Cliente</th>
+                    <th>Produto/Bitola</th>
+                    <th>NF</th>
+                    <th>Preço Custo</th>
+                    <th>Peso (Ton.)</th>
+                    <th>Valor a Faturar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for registro in dados_extrator.registros %}
+                  <tr data-registro-id="{{ registro.id }}" data-extrator-id="{{ extrator_id }}">
+                    <td>
+                      {% if registro.data_entrega_ticket %}
+                      {{ registro.data_entrega_ticket | formatar_data_para_brl }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if registro.solicitacao and registro.solicitacao.fornecedor %}
+                      {{ registro.solicitacao.fornecedor.identificacao | truncate(20, True, '...')
+                      }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if registro.solicitacao and registro.solicitacao.transportadora_exibicao %}
+                      {{ registro.solicitacao.transportadora_exibicao.identificacao | truncate(20, True, '...')
+                      }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if registro.solicitacao and registro.solicitacao.cliente %}
+                      {{ registro.solicitacao.cliente.identificacao | truncate(20, True, '...')
+                      }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if registro.solicitacao and registro.solicitacao.produto and registro.solicitacao.bitola %}
+                      {{ registro.solicitacao.produto.nome | truncate(15, True, '...') }} | {{
+                      registro.solicitacao.bitola.bitola | truncate(10, True, '...') }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                     <td>
+                      {% if registro.registro_operacional %}
+                        {% if registro.registro_operacional.estorno_nf %}
+                        {{registro.registro_operacional.numero_nota_fiscal_estorno}} *
+                        {% elif registro.registro_operacional.numero_nota_fiscal %}
+                        {{registro.registro_operacional.numero_nota_fiscal}}
+                        {%else%}
+                        -
+                        {% endif %}
+                      {% endif %}
+                    </td>
+                    <td style="width: 10%;">
+                      <input type="text" class="form-control form-control-sm campo-moeda-brl preco-custo-input w-20"
+                        value="{{ registro.preco_custo_bitola_100 | default(0) | formatar_float_para_brl }}"
+                        data-registro-id="{{ registro.id }}">
+                    </td>
+                    <td
+                      data-peso="{{ registro.registro_operacional.peso_liquido_ticket if registro.registro_operacional else 0 }}">
+                      {{ registro.registro_operacional.peso_liquido_ticket if registro.registro_operacional else 0 }}
+                    </td>
+                    <td>
+                      <span class="badge bg-success-lt valor-pagar-badge" data-registro-id="{{ registro.id }}">
+                        {{ registro.valor_total_a_pagar_100 | formatar_float_para_brl }}
+                      </span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <form action="{{ url_for('extrator_a_pagar_massa') }}" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="ids_registros" value="{{ ids_selecionados }}">
+        <input type="hidden" name="valores_calculados" id="valores-calculados-hidden" value="">
+        <input type="hidden" name="creditos_selecionados" id="creditos-selecionados-hidden" value="">
+
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-body">
+
+            <div class="row">
+              <div class="col-sm-6 col-md-6">
+                <div class="mb-3">
+                  <div class="form-label">Deseja utilizar o crédito disponível?</div>
+                  <div>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="usar_credito" value="sim" {% if
+                        dados_corretos['usar_credito']=='sim' %}checked{% endif %}>
+                      <span class="form-check-label">Sim</span>
+                    </label>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="usar_credito" value="nao" {% if
+                        dados_corretos['usar_credito']=='nao' or not dados_corretos['usar_credito'] %}checked{% endif
+                        %}>
+                      <span class="form-check-label">Não</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {%if total_credito_disponivel != 0%}
+            <!-- Seção do resumo de créditos (aparece quando seleciona "Sim") -->
+            <div id="resumo-creditos" class="mb-4" style="display: none;">
+
+              <!-- Tabelas de Créditos Individuais - Extratores -->
+              {% for extrator_id, dados_extrator in extratores_dict.items() %}
+              {% if dados_extrator.creditos_individuais %}
+              <div class="creditos-section mb-3" id="creditos-extrator-{{ extrator_id }}"
+                style="display: none;">
+                <div class="card shadow-sm border-0" style="border-left: 4px solid #1B5E20 !important;">
+                  <div class="card-header"
+                    style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 1px solid #dee2e6;">
+                    <div class="d-flex align-items-center">
+                      <div class="rounded-circle me-3 d-flex align-items-center justify-content-center"
+                        style="width: 32px; height: 32px; background: #1B5E20;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                          stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 21h4l13 -13a1.5 1.5 0 0 0 -4 -4l-13 13v4" />
+                          <path d="M14.5 5.5l4 4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h6 class="card-title mb-0 fw-bold" style="color: #1B5E20;">
+                          Selecionar Créditos -
+                          {% if dados_extrator.extrator %}{{
+                          dados_extrator.extrator.identificacao }}{% else %}Extrator {{
+                          extrator_id }}{% endif %}
+                        </h6>
+                        <small class="text-muted">{{ dados_extrator.creditos_individuais|length }} crédito(s)
+                          disponível(is)</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-body p-0">
+                    <div class="table-responsive">
+                      <table class="table table-sm mb-0">
+                        <thead style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                          <tr>
+                            <th width="50" class="text-center">
+                              <input type="checkbox" class="form-check-input"
+                                id="select-all-creditos-extrator-{{ extrator_id }}"
+                                onchange="toggleAllCreditos('extrator', {{ extrator_id }})">
+                            </th>
+                            <th class="fw-bold text-center text-muted">Data</th>
+                            <th class="fw-bold text-center text-muted">Descrição</th>
+                            <th class="fw-bold text-center text-muted">Valor</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for credito in dados_extrator.creditos_individuais %}
+                          <tr class="hover-row" style="border-bottom: 1px solid #f1f3f4;">
+                            <td class="text-center">
+                              <input type="checkbox" class="form-check-input credito-checkbox"
+                                name="creditos_extrator_{{ extrator_id }}[]" value="{{ credito.id }}"
+                                data-valor="{{ credito.valor_credito_100 }}" data-tipo="extrator"
+                                data-entidade-id="{{ extrator_id }}" onchange="calcularCreditosSelecionados()">
+                            </td>
+                            <td class="text-center text-muted">{{ credito.data_movimentacao }}</td>
+                            <td class="text-center">{{ credito.descricao }}</td>
+                            <td class="text-center">
+                              <b style="color: #1B5E20;">{{ credito.valor_credito_100 | formatar_float_para_brl}}</b>
+                            </td>
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                        <tfoot
+                          style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 2px solid #dee2e6;">
+                          <tr>
+                            <td colspan="3" class="text-start fw-bold" style="color: #1B5E20;">Total Selecionado:</td>
+                            <td class="text-end">
+                              <span class="badge fs-6" style="background: #1B5E20; color: white;"
+                                id="total-credito-extrator-{{ extrator_id }}">R$ 0,00</span>
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+              {% endfor %}
+
+              <!-- Header moderno -->
+              <div class="card border-0 shadow-sm" style="border-radius: 5px; overflow: hidden;">
+                <div class="card-header border-0 text-white position-relative"
+                  style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 24px;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                      <div class="rounded-circle me-3 d-flex align-items-center justify-content-center"
+                        style="width: 48px; height: 48px; background: rgba(255,255,255,0.2);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 class="mb-1 fw-bold">Resumo Final</h4>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card-body p-0">
+                  <!-- Seção Principal: Cards lado a lado -->
+                  <div class="row g-0">
+
+                    <!-- Extratores -->
+                    <div class="col-12">
+                      <div class="p-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+
+                        <!-- Título da seção -->
+                        <div class="d-flex align-items-center mb-4">
+                          <div class="rounded-circle me-3 d-flex align-items-center justify-content-center"
+                            style="width: 40px; height: 40px; background: #1B5E20;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                              fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round">
+                              <path d="M3 21h4l13 -13a1.5 1.5 0 0 0 -4 -4l-13 13v4" />
+                              <path d="M14.5 5.5l4 4" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h6 class="mb-0 fw-bold" style="color: #1B5E20;">EXTRATORES</h6>
+                            <small class="text-muted">{{ extratores_dict|length }} extrator(es)</small>
+                          </div>
+                        </div>
+
+                        <!-- Cards dos extratores -->
+                        <div class="space-y-3">
+                          {% for extrator_id, dados_extrator in extratores_dict.items() %}
+                          <div class="card border-0 shadow-sm mb-3" style="border-radius: 5px; background: white;"
+                            data-resumo-extrator-id="{{ extrator_id }}">
+                            <div class="card-body p-3">
+                              <div class="row align-items-center">
+                                <div class="col-12">
+                                  <h6 class="mb-1 fw-bold" style="color: #1B5E20; font-size: 0.95rem;">
+                                    {% if dados_extrator.extrator %}
+                                    {{ dados_extrator.extrator.identificacao | truncate(25, True, '...') }}
+                                    {% else %}
+                                    Extrator {{ extrator_id }}
+                                    {% endif %}
+                                  </h6>
+                                  <div class="row text-center mt-2">
+                                    <div class="col-4">
+                                      <div class="small text-muted">Crédito</div>
+                                      <div class="fw-bold small" style="color: #1B5E20;"
+                                        id="resumo-credito-extrator-{{ extrator_id }}">{{
+                                        dados_extrator.credito_disponivel | formatar_float_para_brl }}</div>
+                                    </div>
+                                    <div class="col-4">
+                                      <div class="small text-muted">A Faturar</div>
+                                      <div class="fw-bold small text-dark"
+                                        id="resumo-valor-extrator-{{ extrator_id }}">{{
+                                        dados_extrator.valor_total |
+                                        formatar_float_para_brl }}</div>
+                                    </div>
+                                    <div class="col-4" id="resumo-status-extrator-{{ extrator_id }}">
+                                      {% set diferenca_extrator = dados_extrator.credito_disponivel -
+                                      dados_extrator.valor_total %}
+                                      {% if diferenca_extrator >= 0 %}
+                                      <div class="small fw-bold text-success">COBERTO</div>
+                                      {% else %}
+                                      <div class="small fw-bold text-warning">FALTA</div>
+                                      <div class="small text-warning">{{ (diferenca_extrator * -1) |
+                                        formatar_float_para_brl }}</div>
+                                      {% endif %}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          {% endfor %}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Resumo Final Moderno -->
+                  <div class="border-top bg-light">
+                    <div class="p-4">
+
+                      <!-- Título do resumo -->
+                      <div class="text-center mb-4">
+                        <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center"
+                          style="width: 48px; height: 48px; background: #f8f9fa; border: 2px solid #dee2e6;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-script">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path
+                              d="M17 20h-11a3 3 0 0 1 0 -6h11a3 3 0 0 0 0 6h1a3 3 0 0 0 3 -3v-11a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v8" />
+                          </svg>
+                        </div>
+                        <h5 class="mb-0 text-dark">RESULTADO FINAL</h5>
+                      </div>
+
+                      <!-- Cards do resumo matemático -->
+                      <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                          <div class="card border shadow-sm"
+                            style="border-radius: 12px;">
+                            <div class="card-body p-3 text-center">
+                              <div class="small text-muted text-uppercase mb-1">Total a Faturar</div>
+                              <h4 class="fw-bold mb-0" id="resumo-total-pagar">{{ valor_total_geral |
+                                formatar_float_para_brl }}</h4>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="card border shadow-sm"
+                            style="border-radius: 12px;">
+                            <div class="card-body p-3 text-center">
+                              <div class="small text-muted text-uppercase mb-1">Créditos Selecionados</div>
+                              <h4 class="fw-bold mb-0" id="resumo-creditos-totais">R$ 0,00</h4>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="card border shadow-sm text-center" id="resumo-saldo-final-card"
+                            style="border-radius: 12px;">
+                            <div class="card-body p-3">
+                              <div class="small text-muted text-uppercase mb-1" id="resumo-saldo-final-label">Saldo
+                                Final a Faturar</div>
+                              {% set saldo_final = total_credito_disponivel - valor_total_geral %}
+                              {% if saldo_final >= 0 %}
+                              <h4 class="fw-bold mb-0 text-success" id="resumo-saldo-final">{{ saldo_final | formatar_float_para_brl
+                                }}</h4>
+                              {% else %}
+                              <h4 class="fw-bold mb-0 text-danger" id="resumo-saldo-final">{{ (saldo_final * -1) |
+                                formatar_float_para_brl }}</h4>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="text-end">
+              <a class="btn btn-primary" href="{{ url_for('listagem_extratores_a_pagar') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l14 0" />
+                  <path d="M5 12l6 6" />
+                  <path d="M5 12l6 -6" />
+                </svg>Voltar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l5 5l10 -10" />
+                </svg>Confirmar Faturamento em Massa ({{ registros|length }} registros)
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Estilos customizados para as tabelas de créditos -->
+  <style>
+    .hover-row:hover {
+      background-color: #f8f9fa !important;
+      cursor: pointer;
+    }
+
+    .creditos-section {
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .creditos-section .table {
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .creditos-section .table td,
+    .creditos-section .table th {
+      border: none;
+      padding: 12px 16px;
+      vertical-align: middle;
+    }
+
+    .creditos-section .form-check-input {
+      transform: scale(1.1);
+    }
+
+    .creditos-section .badge {
+      font-size: 0.85rem;
+      padding: 0.4em 0.8em;
+    }
+
+    .hover-row {
+      transition: background-color 0.2s ease;
+    }
+  </style>
+
+  <!-- Sistema de Gerenciamento de Créditos -->
+  <script>
+    // Inicialização do TomSelect para selects
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('select.form-select:not(.categoria-select)').forEach(function (select) {
+        new TomSelect(select, {
+          create: false,
+          allowEmptyOption: false,
+        });
+      });
+    });
+
+    // Variáveis globais para créditos selecionados
+    let creditosSelecionados = {
+      extrator: {}
+    };
+
+    // Função para alternar todos os créditos de uma entidade
+    function toggleAllCreditos(tipo, entidadeId) {
+      const checkboxPrincipal = document.getElementById(`select-all-creditos-${tipo}-${entidadeId}`);
+      const checkboxes = document.querySelectorAll(`input[name="creditos_${tipo}_${entidadeId}[]"]`);
+
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = checkboxPrincipal.checked;
+      });
+
+      calcularCreditosSelecionados();
+    }
+
+    // Função para calcular créditos selecionados
+    function calcularCreditosSelecionados() {
+      // Reset dos totais
+      const creditosParaEnvio = { extrator: {} };
+      creditosSelecionados = { extrator: {} };
+
+      // Calcular por tipo de entidade
+      document.querySelectorAll('.credito-checkbox:checked').forEach(checkbox => {
+        const tipo = checkbox.dataset.tipo;
+        const entidadeId = checkbox.dataset.entidadeId;
+        const valor = parseInt(checkbox.dataset.valor) || 0;
+        const creditoId = parseInt(checkbox.value);
+
+        // Para exibição visual
+        if (!creditosSelecionados[tipo][entidadeId]) {
+          creditosSelecionados[tipo][entidadeId] = [];
+        }
+        creditosSelecionados[tipo][entidadeId].push({
+          id: creditoId,
+          valor: valor
+        });
+
+        // Para envio ao backend (apenas IDs)
+        if (!creditosParaEnvio[tipo][entidadeId]) {
+          creditosParaEnvio[tipo][entidadeId] = [];
+        }
+        creditosParaEnvio[tipo][entidadeId].push(creditoId);
+      });
+
+      // Atualizar totais visuais
+      atualizarTotaisCreditos();
+
+      // Atualizar campo hidden com estrutura simplificada para o backend
+      document.getElementById('creditos-selecionados-hidden').value = JSON.stringify(creditosParaEnvio);
+
+      // Verificar se há créditos excessivos
+      verificarCreditosExcessivos();
+
+      // Recalcular totais gerais se estiver usando crédito
+      const radioUsarCredito = document.querySelector('input[name="usar_credito"][value="sim"]');
+      if (radioUsarCredito && radioUsarCredito.checked) {
+        calcularTotaisGerais();
+      }
+    }
+
+    // Função para verificar créditos excessivos
+    function verificarCreditosExcessivos() {
+      // Calcular total de créditos selecionados
+      let totalCreditosSelecionados = 0;
+
+      Object.keys(creditosSelecionados.extrator).forEach(extratorId => {
+        if (creditosSelecionados.extrator[extratorId]) {
+          totalCreditosSelecionados += creditosSelecionados.extrator[extratorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
+        }
+      });
+
+      // Calcular valor total da fatura
+      let valorTotalFatura = 0;
+      Object.values(valoresCalculados).forEach(dados => {
+        valorTotalFatura += dados.valor_total;
+      });
+
+      // Verificar se há excesso
+      const creditoExcessivo = Math.max(0, totalCreditosSelecionados - valorTotalFatura);
+
+      // Remover alerta anterior se existir
+      const alertaExistente = document.getElementById('alerta-credito-excessivo');
+      if (alertaExistente) {
+        alertaExistente.remove();
+      }
+
+      // Mostrar alerta se há crédito excessivo
+      if (creditoExcessivo > 0) {
+        const alertaDiv = document.createElement('div');
+        alertaDiv.id = 'alerta-credito-excessivo';
+        alertaDiv.className = 'bg-white alert alert-primary mt-3';
+        alertaDiv.innerHTML = `
+          <div class="d-flex align-items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
+            <div>
+              <strong>Crédito Suficiente!</strong><br>
+              <small>Você selecionou <strong>${formatarMoeda(totalCreditosSelecionados)}</strong> em créditos, mas apenas <strong>${formatarMoeda(Math.min(totalCreditosSelecionados, valorTotalFatura))}</strong> serão utilizados para cobrir o valor da fatura.</small>
+            </div>
+          </div>
+        `;
+
+        // Inserir após as tabelas de crédito
+        const resumoCreditos = document.getElementById('resumo-creditos');
+        if (resumoCreditos) {
+          resumoCreditos.appendChild(alertaDiv);
+        }
+      }
+    }
+
+    // Função para atualizar totais visuais dos créditos
+    function atualizarTotaisCreditos() {
+      // Atualizar totais por extrator
+      Object.keys(creditosSelecionados.extrator).forEach(extratorId => {
+        const total = creditosSelecionados.extrator[extratorId].reduce((sum, credito) => sum + credito.valor, 0);
+        const elemento = document.getElementById(`total-credito-extrator-${extratorId}`);
+        if (elemento) {
+          elemento.textContent = formatarMoeda(total / 100);
+        }
+      });
+
+      // Limpar totais para entidades sem créditos selecionados
+      document.querySelectorAll('[id^="total-credito-extrator-"]').forEach(elemento => {
+        const extratorId = elemento.id.replace('total-credito-extrator-', '');
+        if (!creditosSelecionados.extrator[extratorId] || creditosSelecionados.extrator[extratorId].length === 0) {
+          elemento.textContent = 'R$ 0,00';
+        }
+      });
+    }
+  </script>
+
+  <!-- Sistema de Cálculo de Faturamento -->
+  <script>
+    // Variáveis globais do sistema
+    const totalCreditoDisponivel = {{ total_credito_disponivel|default (0) / 100}};
+    let valoresCalculados = {};
+
+    const creditosOriginais = {
+      extratores: {}
+    };
+
+    {% for extrator_id, dados_extrator in extratores_dict.items() %}
+    creditosOriginais.extratores['{{ extrator_id }}'] = {{ dados_extrator.credito_disponivel / 100 }};
+    {% endfor %}
+
+    // Utilitários de formatação
+    function extrairValorNumerico(valorMascarado) {
+      if (!valorMascarado) return 0;
+      return parseFloat(valorMascarado.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+    }
+
+    function formatarMoeda(valor) {
+      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // Cálculo de valores individuais
+    function calcularValorRegistro(registroId) {
+      const row = document.querySelector(`tr[data-registro-id="${registroId}"]`);
+      if (!row) return;
+
+      const precoCustoInput = row.querySelector('.preco-custo-input');
+      const pesoCell = row.querySelector('td[data-peso]');
+      const valorBadge = row.querySelector('.valor-pagar-badge');
+
+      if (!precoCustoInput || !pesoCell || !valorBadge) return;
+
+      const precoCusto = extrairValorNumerico(precoCustoInput.value);
+      const peso = parseFloat(pesoCell.dataset.peso) || 0;
+      const valorTotal = (precoCusto * peso);
+
+      valorBadge.textContent = formatarMoeda(valorTotal);
+      valoresCalculados[registroId] = {
+        preco_custo: precoCusto,
+        peso: peso,
+        valor_total: valorTotal
+      };
+
+      calcularTotaisGerais();
+    }
+
+    // Motor principal de cálculo
+    function calcularTotaisGerais() {
+      let totalGeralExtratores = 0;
+      const totaisPorExtrator = {};
+
+      Object.values(valoresCalculados).forEach(dados => {
+        totalGeralExtratores += dados.valor_total;
+      });
+
+      Object.keys(valoresCalculados).forEach(registroId => {
+        const row = document.querySelector(`tr[data-registro-id="${registroId}"]`);
+        if (row) {
+          const extratorId = row.dataset.extratorId;
+          if (!totaisPorExtrator[extratorId]) {
+            totaisPorExtrator[extratorId] = 0;
+          }
+          totaisPorExtrator[extratorId] += valoresCalculados[registroId].valor_total;
+        }
+      });
+
+      const radioUsarCredito = document.querySelector('input[name="usar_credito"][value="sim"]');
+      const usandoCredito = radioUsarCredito && radioUsarCredito.checked;
+
+      // Aplicação de crédito por entidade
+      let valorFinalExtratores = totalGeralExtratores;
+      let totalCreditoAplicado = 0;
+
+      if (usandoCredito) {
+        // CALCULAR TOTAL DE CRÉDITOS SELECIONADOS
+        let totalCreditosSelecionados = 0;
+
+        // Somar créditos de extratores
+        Object.keys(creditosSelecionados.extrator).forEach(extratorId => {
+          if (creditosSelecionados.extrator[extratorId]) {
+            const creditoExtrator = creditosSelecionados.extrator[extratorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
+            totalCreditosSelecionados += creditoExtrator;
+          }
+        });
+
+        // LIMITAR CRÉDITOS AO VALOR TOTAL (não usar mais que o necessário)
+        totalCreditoAplicado = Math.min(totalCreditosSelecionados, totalGeralExtratores);
+
+        // APLICAR DESCONTO GLOBAL: Total Geral - Créditos Utilizados
+        valorFinalExtratores = Math.max(0, totalGeralExtratores - totalCreditoAplicado);
+      }
+
+      const valorFinalAPagar = valorFinalExtratores;
+
+      atualizarInterface(totalGeralExtratores, valorFinalAPagar, usandoCredito, totalCreditoAplicado, totaisPorExtrator);
+      atualizarCamposHidden();
+    }
+
+    // Atualização da interface
+    function atualizarInterface(totalBruto, valorFinal, usandoCredito, creditoAplicado, totaisPorExtrator) {
+      atualizarCardTotalFaturar(totalBruto, valorFinal, usandoCredito, creditoAplicado);
+      atualizarSubtotais(totalBruto);
+      atualizarBadgesEntidades(totaisPorExtrator);
+      atualizarResumoFinal(totalBruto, valorFinal, usandoCredito, totaisPorExtrator);
+    }
+
+    function atualizarCardTotalFaturar(totalBruto, valorFinal, usandoCredito, creditoAplicado) {
+      const elements = {
+        total: document.getElementById('total-pagar'),
+        label: document.getElementById('total-pagar-label'),
+        status: document.getElementById('credito-status'),
+        brutoMini: document.getElementById('total-bruto-mini'),
+        badge: document.getElementById('credito-aplicado-badge')
+      };
+
+      if (!elements.total) return;
+
+      if (usandoCredito) {
+        elements.total.textContent = formatarMoeda(valorFinal);
+        elements.label.textContent = "Valor Final a Faturar";
+
+        if (elements.status) {
+          elements.status.style.display = 'block';
+          if (elements.brutoMini) elements.brutoMini.textContent = formatarMoeda(totalBruto);
+
+          if (elements.badge) {
+            elements.badge.textContent = `Crédito aplicado: ${formatarMoeda(creditoAplicado || 0)}`;
+
+            if (valorFinal === 0) {
+              elements.badge.className = 'badge bg-success-lt';
+              elements.badge.textContent += ' ✓ Totalmente coberto';
+            } else {
+              elements.badge.className = 'badge bg-warning-lt';
+              if (creditoAplicado > 0) {
+                elements.badge.textContent += ` (Restante: ${formatarMoeda(valorFinal)})`;
+              }
+            }
+          }
+        }
+
+        elements.total.style.color = valorFinal === 0 ? '#1B5E20' :
+          creditoAplicado > 0 ? '#fd7e14' : '#dc3545';
+      } else {
+        elements.total.textContent = formatarMoeda(totalBruto);
+        elements.label.textContent = "Total a Faturar";
+        elements.total.style.color = '#1B5E20';
+
+        if (elements.status) elements.status.style.display = 'none';
+      }
+    }
+
+    function atualizarSubtotais(totalExtratores) {
+      const extratorElement = document.getElementById('extratores-subtotal');
+      if (extratorElement) extratorElement.textContent = formatarMoeda(totalExtratores);
+    }
+
+    function atualizarBadgesEntidades(totaisPorExtrator) {
+      Object.keys(totaisPorExtrator).forEach(extratorId => {
+        const badge = document.getElementById(`total-extrator-${extratorId}`);
+        if (badge) {
+          badge.textContent = `Total: ${formatarMoeda(totaisPorExtrator[extratorId])}`;
+        }
+      });
+    }
+
+    function atualizarResumoFinal(totalGeral, valorFinalPagar, usandoCredito, totaisPorExtrator) {
+      const resumoCreditos = document.getElementById('resumo-creditos');
+      if (!resumoCreditos) return;
+
+      const elements = {
+        totalPagar: document.getElementById('resumo-total-pagar'),
+        creditosTotais: document.getElementById('resumo-creditos-totais'),
+        saldoFinal: document.getElementById('resumo-saldo-final'),
+        saldoCard: document.getElementById('resumo-saldo-final-card'),
+        saldoLabel: document.getElementById('resumo-saldo-final-label')
+      };
+
+      if (elements.totalPagar) elements.totalPagar.textContent = formatarMoeda(totalGeral);
+
+      // Calcular e mostrar créditos selecionados
+      if (elements.creditosTotais) {
+        let totalCreditosSelecionados = 0;
+
+        // Somar créditos de extratores
+        Object.keys(creditosSelecionados.extrator).forEach(extratorId => {
+          if (creditosSelecionados.extrator[extratorId]) {
+            totalCreditosSelecionados += creditosSelecionados.extrator[extratorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
+          }
+        });
+
+        // Limitar aos créditos que serão realmente utilizados (não mais que o valor total)
+        const creditosUtilizados = Math.min(totalCreditosSelecionados, totalGeral);
+        elements.creditosTotais.textContent = formatarMoeda(creditosUtilizados);
+      }
+
+      if (elements.saldoFinal && elements.saldoCard && elements.saldoLabel) {
+        if (usandoCredito) {
+          elements.saldoFinal.textContent = formatarMoeda(valorFinalPagar);
+          elements.saldoLabel.textContent = 'VALOR FINAL A FATURAR';
+
+          elements.saldoCard.style.background = valorFinalPagar === 0 ? 'rgba(76, 175, 80, 0.25)' :
+            valorFinalPagar < totalGeral ? 'rgba(255,255,255,0.15)' :
+              'rgba(255,255,255,0.25)';
+        } else {
+          elements.saldoFinal.textContent = formatarMoeda(totalGeral);
+          elements.saldoLabel.textContent = 'SALDO FINAL A FATURAR';
+          elements.saldoCard.style.background = 'rgba(255,255,255,0.25)';
+        }
+      }
+
+      atualizarStatusEntidades(totaisPorExtrator);
+    }
+
+    function atualizarStatusEntidades(totaisPorExtrator) {
+      Object.keys(totaisPorExtrator).forEach(extratorId => {
+        const valorElement = document.getElementById(`resumo-valor-extrator-${extratorId}`);
+        const statusElement = document.getElementById(`resumo-status-extrator-${extratorId}`);
+
+        if (valorElement) {
+          valorElement.textContent = formatarMoeda(totaisPorExtrator[extratorId]);
+        }
+
+        if (statusElement) {
+          const valorPagar = totaisPorExtrator[extratorId] || 0;
+          let creditoSelecionado = 0;
+
+          // Calcular créditos selecionados para este extrator
+          if (creditosSelecionados.extrator[extratorId]) {
+            creditoSelecionado = creditosSelecionados.extrator[extratorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
+          }
+
+          const diferenca = creditoSelecionado - valorPagar;
+
+          statusElement.innerHTML = diferenca >= 0 ?
+            '<div class="small fw-bold text-success">COBERTO</div>' :
+            `<div class="small fw-bold text-warning">FALTA</div>
+             <div class="small text-warning">${formatarMoeda(Math.abs(diferenca))}</div>`;
+        }
+      });
+    }
+
+    function atualizarCamposHidden() {
+      const hiddenInput = document.getElementById('valores-calculados-hidden');
+      if (hiddenInput) hiddenInput.value = JSON.stringify(valoresCalculados);
+    }
+
+    // Inicialização do sistema
+    function inicializarValoresOriginais() {
+      document.querySelectorAll('tr[data-registro-id]').forEach(row => {
+        const registroId = row.dataset.registroId;
+        const precoCustoInput = row.querySelector('.preco-custo-input');
+        const pesoCell = row.querySelector('td[data-peso]');
+        const valorBadge = row.querySelector('.valor-pagar-badge');
+
+        if (precoCustoInput && pesoCell && valorBadge) {
+          const precoCusto = extrairValorNumerico(precoCustoInput.value);
+          const peso = parseFloat(pesoCell.dataset.peso) || 0;
+          const valorOriginal = extrairValorNumerico(valorBadge.textContent);
+
+          valoresCalculados[registroId] = {
+            preco_custo: precoCusto,
+            peso: peso,
+            valor_total: valorOriginal
+          };
+        }
+      });
+    }
+
+    function configurarEventListeners() {
+      const radioSim = document.querySelector('input[name="usar_credito"][value="sim"]');
+      const radioNao = document.querySelector('input[name="usar_credito"][value="nao"]');
+
+      if (radioSim) radioSim.addEventListener('change', calcularTotaisGerais);
+      if (radioNao) radioNao.addEventListener('change', calcularTotaisGerais);
+
+      document.querySelectorAll('.preco-custo-input').forEach(input => {
+        const row = input.closest('tr[data-registro-id]');
+        if (!row) return;
+
+        const registroId = row.dataset.registroId;
+        ['input', 'blur', 'keyup'].forEach(event => {
+          input.addEventListener(event, () => setTimeout(() => calcularValorRegistro(registroId), 10));
+        });
+      });
+    }
+
+    // Inicialização principal
+    document.addEventListener('DOMContentLoaded', function () {
+      inicializarValoresOriginais();
+      configurarEventListeners();
+      calcularCreditosSelecionados(); // Inicializar sistema de créditos
+      calcularTotaisGerais();
+    });
+  </script>
+
+  <!-- Script para máscara de moeda -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Função para aplicar máscara de moeda brasileira
+      function aplicarMascaraMoeda(input) {
+        let valor = input.value.replace(/\D/g, '');
+        if (valor === '') {
+          input.value = 'R$ 0,00';
+          return;
+        }
+        valor = (parseInt(valor) / 100).toFixed(2) + '';
+        valor = valor.replace(".", ",");
+        valor = valor.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+        valor = valor.replace(/(\d)(\d{3}),/g, "$1.$2,");
+        input.value = 'R$ ' + valor;
+      }
+
+      // Aplicar máscara nos inputs de preço de custo
+      document.querySelectorAll('.campo-moeda-brl').forEach(input => {
+        input.addEventListener('input', function () {
+          aplicarMascaraMoeda(this);
+        });
+
+        input.addEventListener('focus', function () {
+          if (this.value === 'R$ 0,00') {
+            this.value = '';
+          }
+        });
+
+        input.addEventListener('blur', function () {
+          if (this.value === '' || this.value === 'R$ ') {
+            this.value = 'R$ 0,00';
+          }
+        });
+
+        // Permitir apenas números e vírgula
+        input.addEventListener('keypress', function (e) {
+          const char = String.fromCharCode(e.which);
+          if (!/[0-9,.]/.test(char)) {
+            e.preventDefault();
+          }
+        });
+      });
+    });
+  </script>
+
+  <!-- JavaScript aprimorado -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const radioSim = document.querySelector('input[name="usar_credito"][value="sim"]');
+      const radioNao = document.querySelector('input[name="usar_credito"][value="nao"]');
+      const resumoCreditos = document.getElementById('resumo-creditos');
+
+      function toggleResumo() {
+        const creditosSections = document.querySelectorAll('.creditos-section');
+
+        if (radioSim && radioSim.checked) {
+          // Mostrar resumo
+          resumoCreditos.style.display = 'block';
+          resumoCreditos.style.opacity = '0';
+          resumoCreditos.style.transform = 'translateY(20px)';
+
+          setTimeout(() => {
+            resumoCreditos.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            resumoCreditos.style.opacity = '1';
+            resumoCreditos.style.transform = 'translateY(0)';
+          }, 10);
+
+          // Mostrar tabelas de créditos com animação
+          creditosSections.forEach(section => {
+            section.style.display = 'block';
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(10px)';
+
+            setTimeout(() => {
+              section.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+              section.style.opacity = '1';
+              section.style.transform = 'translateY(0)';
+            }, 100);
+          });
+
+        } else {
+          // Esconder resumo
+          resumoCreditos.style.transition = 'all 0.3s ease-out';
+          resumoCreditos.style.opacity = '0';
+          resumoCreditos.style.transform = 'translateY(-20px)';
+
+          setTimeout(() => {
+            resumoCreditos.style.display = 'none';
+          }, 300);
+
+          // Esconder tabelas de créditos
+          creditosSections.forEach(section => {
+            section.style.transition = 'all 0.3s ease-out';
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(-10px)';
+
+            setTimeout(() => {
+              section.style.display = 'none';
+            }, 300);
+          });
+
+          // Desmarcar todos os checkboxes de crédito
+          document.querySelectorAll('.credito-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+          });
+
+          // Recalcular totais sem créditos selecionados
+          calcularCreditosSelecionados();
+        }
+      }
+
+      if (radioSim) radioSim.addEventListener('change', toggleResumo);
+      if (radioNao) radioNao.addEventListener('change', toggleResumo);
+
+      // Inicializar
+      toggleResumo();
+    });
+  </script>
+
+  <!-- Modal para Lançamento de Crédito -->
+  <div class="modal fade" id="modalLancarCredito" tabindex="-1" aria-labelledby="modalLancarCreditoLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalLancarCreditoLabel">
+            Lançar Crédito
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formLancarCredito">
+            <input type="hidden" id="creditoTipoEntidade" name="tipo_entidade">
+            <input type="hidden" id="creditoEntidadeId" name="entidade_id">
+
+            <div class="bg-white shadow-sm alert alert-info d-flex align-items-center" role="alert">
+              <i class="ti ti-info-circle me-2"></i>
+              <div>
+                <span id="creditoNomeEntidade">-</span><br>
+                <small class="text-muted">O crédito será lançado e os saldos atualizados automaticamente.</small>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <div class="form-label required">Tipo de Valor</div>
+                <div>
+                  <label class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="tipo_valor" value="positivo" checked>
+                    <span class="form-check-label">Crédito</span>
+                  </label>
+                  <label class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="tipo_valor" value="negativo">
+                    <span class="form-check-label">Débito</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label required">Data Movimentação</label>
+                <input type="date" name="data_movimentacao" class="form-control" id="creditoDataMovimentacao" required>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label required">Valor</label>
+                <input type="text" name="valor_credito" class="form-control campo-moeda-brl" id="creditoValor"
+                  placeholder="R$ 0,00" required>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label required">Conta Bancária</label>
+                <select name="contaBancaria" class="form-select" id="creditoContaBancaria" required>
+                  <option value="">Selecione...</option>
+                  {% for conta in contas_bancarias %}
+                  <option value="{{ conta.id }}">{{ conta.identificacao }} - {{ conta.nome_banco }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-12 mb-3">
+                <label class="form-label required">Descrição</label>
+                <input type="text" name="descricao" class="form-control" id="creditoDescricao"
+                  placeholder="Descrição do lançamento" required>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btnSalvarCredito">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M12 5l0 14" />
+              <path d="M5 12l14 0" />
+            </svg>
+            Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuração do modal de lançamento de crédito
+    document.getElementById('modalLancarCredito').addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
+
+      const tipoEntidade = button.getAttribute('data-tipo');
+      const entidadeId = button.getAttribute('data-id');
+      const nomeEntidade = button.getAttribute('data-nome');
+
+      document.getElementById('creditoTipoEntidade').value = tipoEntidade;
+      document.getElementById('creditoEntidadeId').value = entidadeId;
+      document.getElementById('creditoNomeEntidade').textContent = nomeEntidade;
+
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('creditoDataMovimentacao').value = hoje;
+
+      document.getElementById('creditoValor').value = '';
+      document.getElementById('creditoDescricao').value = '';
+      document.getElementById('creditoContaBancaria').value = '';
+
+      document.querySelector('input[name="tipo_valor"][value="positivo"]').checked = true;
+    });
+
+    document.getElementById('btnSalvarCredito').addEventListener('click', async function () {
+      const form = document.getElementById('formLancarCredito');
+      const formData = new FormData(form);
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const tipoEntidade = document.getElementById('creditoTipoEntidade').value;
+      const entidadeId = document.getElementById('creditoEntidadeId').value;
+
+      let endpoint;
+      if (tipoEntidade === 'fornecedor') {
+        endpoint = `/financeiro/extrato-terceiros/fornecedores/lancar-credito/${entidadeId}`;
+      } else if (tipoEntidade === 'freteiro') {
+        endpoint = `/financeiro/extrato-terceiros/freteiros/lancar-credito/${entidadeId}`;
+      } else if (tipoEntidade === 'extrator') {
+        endpoint = `/financeiro/extrato-terceiros/extratores/lancar-credito/${entidadeId}`;
+      } else {
+        alert('Tipo de entidade inválido!');
+        return;
+      }
+
+      try {
+        const btnSalvar = this;
+        const textoOriginal = btnSalvar.innerHTML;
+        btnSalvar.disabled = true;
+        btnSalvar.innerHTML = '<i class="ti ti-loader-2 animate-spin me-1"></i> Salvando...';
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          const modal = bootstrap.Modal.getInstance(document.getElementById('modalLancarCredito'));
+          modal.hide();
+
+          const nomeEntidade = document.getElementById('creditoNomeEntidade').textContent;
+          const tipoTexto = tipoEntidade === 'fornecedor' ? 'Fornecedor' : 
+                           tipoEntidade === 'freteiro' ? 'Transportadora' : 'Extrator';
+
+          mostrarToast(`Crédito lançado com sucesso para ${tipoTexto}: ${nomeEntidade}`, 'success');
+
+          // Recarregar a página após um breve delay para mostrar o toast
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+
+        } else {
+          const errorText = await response.text();
+          console.error('Erro na resposta:', errorText);
+          mostrarToast('Erro ao lançar crédito. Verifique os dados e tente novamente.', 'error');
+        }
+
+      } catch (error) {
+        console.error('Erro ao salvar lançamento:', error);
+        mostrarToast('Erro de conexão. Tente novamente.', 'error');
+      } finally {
+        const btnSalvar = document.getElementById('btnSalvarCredito');
+        if (btnSalvar) {
+          btnSalvar.disabled = false;
+          btnSalvar.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-plus"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg> Salvar';
+        }
+      }
+    });
+
+    function mostrarToast(mensagem, tipo) {
+      const toast = document.createElement('div');
+      toast.className = `alert alert-${tipo === 'success' ? 'success' : 'danger'} position-fixed`;
+      toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; background-color: rgba(255, 255, 255, 0.9); box-shadow: 0 2px 6px rgba(0,0,0,0.2);';
+      toast.innerHTML = `
+          <i class="ti ti-${tipo === 'success' ? 'check' : 'x'} me-2"></i>
+          ${mensagem}
+        `;
+
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 3000);
+    }
+
+    // Função para formatar moeda (reutilizada)
+    function formatarMoeda(valor) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(valor);
+    }
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

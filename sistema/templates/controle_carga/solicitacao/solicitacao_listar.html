@@ -1,0 +1,395 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            SOLICITAÇÕES
+          </div>
+          <h2 class="page-title">
+            Listagem
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('cadastrar_solicitacao') }}"
+              class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor"
+                fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z"
+                  fill="none" />
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Cadastrar Solicitação
+            </a>
+            <a href="#" class="btn" data-bs-toggle="modal"
+              data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter"><path
+                  stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" /></svg>
+              Filtrar </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        {%if solicitacao%}
+        <div class="card">
+
+          <!-- Início Tabela -->
+          <div class="table-responsive">
+            <table id="tabela-informacao" class="table table-vcenter card-table"
+              style="margin-bottom: 0 !important;">
+              <thead>
+                <tr>
+                  <th style="text-align: center;">CLIENTE</th>
+                  <th style="text-align: center;">BITOLA</th>
+                  <th style="text-align: center;">PRODUTO</th>
+                  <th style="text-align: center;">PLACA/MOTORISTA</th>
+                  <th style="text-align: center;">PESO MÉDIO DO VEÍCULO</th>
+                  <th style="text-align: center;">AÇÕES</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in solicitacao %}
+                <tr>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ s.cliente.identificacao[:25] }}
+                    {% if s.cliente.identificacao | length > 25 %}
+                    ... {%endif%}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{s.bitola.bitola}}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ s.produto.nome }}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ s.veiculo.placa_veiculo }} | {{
+                    s.motorista.nome_completo.split(' ')[0] }}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{s.veiculo.capacidade_ton}}
+                  </td>
+                  <td>
+                    <div class="btn-list flex-nowrap"
+                      style="justify-content: center; gap: 8px;">
+                      <!-- Botão Lançar NF - Verde -->
+                      <a href="{{url_for('cadastrar_emissao', id=s.id)}}"
+                        class="btn btn-icon btn-outline-success {% if s.nf_emitida == 1 %}disabled{% endif %}"
+                        data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Lançar Nota Fiscal">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                          class="icon icon-tabler icon-tabler-receipt"
+                          width="24" height="24" viewBox="0 0 24 24"
+                          stroke-width="2" stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z"
+                            fill="none"></path>
+                          <path
+                            d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2"></path>
+                          <path
+                            d="M14 8h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5"></path>
+                          <path d="M12 7v9"></path>
+                        </svg>
+                      </a>
+
+                      <!-- Relatorio da solicitacao -->
+                      <a
+                        href="{{url_for('relatorio_solicitacoes_lancamentos', id=s.id)}}"
+                        class="btn disabled btn-icon btn-outline-red"
+                        data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Exportar relatório para PDF">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                          height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf"><path
+                            stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+                            d="M14 3v4a1 1 0 0 0 1 1h4" /><path
+                            d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" /><path
+                            d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" /><path
+                            d="M17 18h2" /><path d="M20 15h-3v6" /><path
+                            d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" /></svg>
+                      </a>
+
+                      <!-- Botão Detalhes - Cinza -->
+                      <a href="{{url_for('detalhes_solicitacao', id=s.id )}}"
+                        class="btn btn-icon btn-outline-secondary"
+                        data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Ver Detalhes">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                          class="icon icon-tabler icon-tabler-details"
+                          width="24" height="24" viewBox="0 0 24 24"
+                          stroke-width="2" stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z"
+                            fill="none"></path>
+                          <path
+                            d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+                          <path d="M12 12l.01 0"></path>
+                          <path d="M12 16l0 -4"></path>
+                        </svg>
+                      </a>
+
+                      <!-- Botão Editar - Amarelo -->
+                      <a href="{{url_for('editar_solicitacao', id=s.id)}}"
+                        class="btn btn-icon btn-outline-warning"
+                        data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Editar Solicitação">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                          class="icon icon-tabler icon-tabler-edit" width="24"
+                          height="24" viewBox="0 0 24 24" stroke-width="2"
+                          stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z"
+                            fill="none"></path>
+                          <path
+                            d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
+                          <path
+                            d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"></path>
+                          <path d="M16 5l3 3"></path>
+                        </svg>
+                      </a>
+                      {% if s.cancelada == 0 %}
+                      <!-- Botão Cancelar - Vermelho -->
+                      <a href="#"
+                        class="btn btn-icon btn-outline-danger {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%} excluir"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modal-cancelar-{{s.id}}"
+                        title="Cancelar Solicitação">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                          class="icon icon-tabler icon-tabler-x" width="24"
+                          height="24" viewBox="0 0 24 24" stroke-width="2"
+                          stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z"
+                            fill="none"></path>
+                          <path d="M18 6l-12 12"></path>
+                          <path d="M6 6l12 12"></path>
+                        </svg>
+                      </a>
+
+                      <!-- Modal de Confirmação -->
+                      <div class="modal modal-blur fade"
+                        id="modal-cancelar-{{s.id}}"
+                        tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-sm modal-dialog-centered"
+                          role="document">
+                          <div class="modal-content">
+                            <button type="button" class="btn-close"
+                              data-bs-dismiss="modal"
+                              aria-label="Close"></button>
+                            <div class="modal-status bg-danger"></div>
+                            <div class="modal-body text-center py-4">
+                              <svg xmlns="http://www.w3.org/2000/svg"
+                                class="icon mb-2 text-danger icon-lg" width="24"
+                                height="24" viewBox="0 0 24 24" stroke-width="2"
+                                stroke="currentColor" fill="none"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z"
+                                  fill="none"></path>
+                                <path d="M12 9v4"></path>
+                                <path
+                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"></path>
+                                <path d="M12 16h.01"></path>
+                              </svg>
+                              <div class="text-secondary">
+                                Você realmente deseja cancelar solicitação?
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <div class="w-100">
+                                <div class="row">
+                                  <div class="col">
+                                    <a href="#"
+                                      class="btn btn-outline-secondary w-100"
+                                      data-bs-dismiss="modal">
+                                      <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="icon icon-tabler icon-tabler-x"
+                                        width="24" height="24"
+                                        viewBox="0 0 24 24" stroke-width="2"
+                                        stroke="currentColor" fill="none"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z"
+                                          fill="none"></path>
+                                        <path d="M18 6l-12 12"></path>
+                                        <path d="M6 6l12 12"></path>
+                                      </svg>
+                                      Fechar
+                                    </a>
+                                  </div>
+                                  <div class="col">
+                                    <a
+                                      href="{{url_for('cancelar_solicitacao', id=s.id)}}"
+                                      class="btn btn-danger w-100">
+                                      <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="icon icon-tabler icon-tabler-check"
+                                        width="24" height="24"
+                                        viewBox="0 0 24 24" stroke-width="2"
+                                        stroke="currentColor" fill="none"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z"
+                                          fill="none"></path>
+                                        <path d="M5 12l5 5l10 -10"></path>
+                                      </svg>
+                                      Sim
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+        {%else%}
+        <div class="area-info-card" style="
+          padding: 30px;
+          border-radius: 10px;
+          text-align: center;
+          box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+          background-color: white;
+        ">
+          <div class="icon-extrato"
+            style="font-size: 70px; color: #fc7801; margin-bottom: 15px">
+            ✅
+          </div>
+          <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">
+            Nenhum dado disponível
+          </h2>
+          <p style="color: #777;">
+            No momento não há registros para exibir.
+          </p>
+        </div>
+        {%endif%}
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1"
+    role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <form action="{{url_for('listagem_solicitacoes')}}" method="POST">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar solicitações</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"
+              aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="cliente" class="form-control"
+                  value="{{ dados_corretos.get('cliente', '') }}"
+                  placeholder="Nome ou razão social">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Motorista</label>
+                <input type="text" name="motorista" class="form-control"
+                  value="{{ dados_corretos.get('motorista', '') }}"
+                  placeholder="Nome do motorista">
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Placa do Veículo</label>
+                <input type="text" name="placa" class="form-control"
+                  value="{{ dados_corretos.get('placa', '') }}"
+                  placeholder="Ex: ABC1D23">
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <a href="{{ url_for('listagem_solicitacoes') }}"
+              class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto"
+              data-bs-dismiss="modal">
+              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-2">
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function limparCampos(grupoClasse) {
+      document.querySelectorAll('.' + grupoClasse + ' input[type="text"]').forEach(function (input) {
+        input.value = '';
+      });
+    }
+
+    function alternarCampos() {
+      var radioCPF = document.querySelector('input[name="tipoOrigem"][value="floresta"]');
+
+      var grupoFloresta = document.querySelectorAll('.grupoFloresta');
+      var grupoFornecedor = document.querySelectorAll('.grupoFornecedor');
+
+      if (radioCPF.checked) {
+        grupoFloresta.forEach(el => el.style.display = 'block');
+        grupoFornecedor.forEach(el => el.style.display = 'none');
+        limparCampos('grupoFornecedor'); // Limpa campos do grupo Fornecedor
+      } else {
+        grupoFloresta.forEach(el => el.style.display = 'none');
+        grupoFornecedor.forEach(el => el.style.display = 'block');
+        limparCampos('grupoFloresta'); // Limpa campos do grupo floresta
+      }
+    }
+
+    document.querySelectorAll('input[name="tipoOrigem"]').forEach(radio => {
+      radio.addEventListener('change', alternarCampos);
+    });
+
+    alternarCampos(); // Configura o estado inicial dos campos
+  </script>
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

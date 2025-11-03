@@ -1,0 +1,339 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            Cadastrar
+          </div>
+          <h2 class="page-title">
+            Rota de Frete
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="{{ url_for('cadastrar_rota') }}" method="POST">
+          <div class="card-body">
+            <div class="row">
+
+              <div class="col-sm-6 col-md-6">
+                <div class="mb-3">
+                  <label class="form-label required">Fornecedor/Floresta</label>
+                  <select type="text" name="fornecedorIdentificacao"
+                    value="{{ dados_corretos['fornecedorIdentificacao'] }}" class="form-select {% if 'fornecedorIdentificacao' in campos_obrigatorios or 'fornecedorIdentificacao' in campos_erros %}
+                                                is-invalid
+                                            {% endif %}">
+                    <option value selected>Selecione...</option>
+                    {% for f in fornecedores %}
+                    <option value="{{f.id}}">{{f.identificacao}}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {% if 'fornecedorIdentificacao' in
+                    campos_obrigatorios %}
+                    {{
+                    campos_obrigatorios['fornecedorIdentificacao']
+                    }}
+                    {% elif 'fornecedorIdentificacao' in
+                    campos_erros
+                    %}
+                    {{ campos_erros['fornecedorIdentificacao']
+                    }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Cliente destino</label>
+                  <select type="text" name="clienteDestino" value="{{ dados_corretos['clienteDestino'] }}" class="form-select {% if 'clienteDestino' in campos_obrigatorios or 'clienteDestino' in campos_erros %}
+                                                is-invalid
+                                            {% endif %}">
+                    <option value selected>Selecione...</option>
+                    {% for c in clientes %}
+                    <option value="{{c.id}}">{{c.identificacao}}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {% if 'clienteDestino' in
+                    campos_obrigatorios %}
+                    {{
+                    campos_obrigatorios['clienteDestino']
+                    }}
+                    {% elif 'clienteDestino' in
+                    campos_erros
+                    %}
+                    {{ campos_erros['clienteDestino']
+                    }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Transportadora</label>
+                  <select type="text" name="transportadoraFrete" value="{{ dados_corretos['transportadoraFrete'] }}"
+                    class="form-select {% if 'transportadoraFrete' in campos_obrigatorios or 'transportadoraFrete' in campos_erros %}
+                                                is-invalid
+                                            {% endif %}">
+                    <option value selected>Selecione...</option>
+                    {% for t in transportadoras %}
+                    <option value="{{t.id}}">{{t.identificacao}}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {% if 'transportadoraFrete' in
+                    campos_obrigatorios %}
+                    {{
+                    campos_obrigatorios['transportadoraFrete']
+                    }}
+                    {% elif 'transportadoraFrete' in
+                    campos_erros
+                    %}
+                    {{ campos_erros['transportadoraFrete']
+                    }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <h3 class="text-primary mb-4">Preços de custo de frete por Bitola</h3>
+            <div class="row">
+
+              <!-- Eucalipto -->
+              <div class="col-md-4">
+                <div class="card border-0 shadow-sm mb-4">
+                  <div class="card-header text-dark">
+                    <strong>Eucalipto</strong>
+                  </div>
+                  <div class="card-body">
+
+                    <!-- Bitola 1 Eucalipto -->
+                    <div class="row mb-3">
+                      <div class="col-md-4">
+                        <label class="form-label">Bitola</label>
+                        <input type="text" name="eucaBitolaId1" value="Torete" disabled
+                          class="form-control {% if 'eucaBitolaId1' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                      <div class="col-md-8">
+                        <label class="form-label">Preço Custo Frete
+                          (Ton.)</label>
+                        <input type="text" name="eucaPrecoCusto1" value="{{ dados_corretos['eucaPrecoCusto1'] }}"
+                          class="form-control campo-moeda-brl {% if 'eucaPrecoCusto1' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                    </div>
+
+                    <!-- Bitola 2 Eucalipto -->
+                    <div class="row mb-3">
+                      <div class="col-md-4">
+                        <label class="form-label">Bitola</label>
+                        <input type="text" name="eucaBitolaId2" value="18-25" disabled
+                          class="form-control {% if 'eucaBitolaId2' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                      <div class="col-md-8">
+                        <label class="form-label">Preço Custo Frete
+                          (Ton.)</label>
+                        <input type="text" name="eucaPrecoCusto2" value="{{ dados_corretos['eucaPrecoCusto2'] }}"
+                          class="form-control campo-moeda-brl {% if 'eucaPrecoCusto2' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                    </div>
+
+                    <!-- Bitola 3 Eucalipto -->
+                    <div class="row mb-3">
+                      <div class="col-md-4">
+                        <label class="form-label">Bitola</label>
+                        <input type="text" name="eucaBitolaId3" value="25-32" disabled
+                          class="form-control {% if 'eucaBitolaId3' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                      <div class="col-md-8">
+                        <label class="form-label">Preço Custo Frete
+                          (Ton.)</label>
+                        <input type="text" name="eucaPrecoCusto3" value="{{ dados_corretos['eucaPrecoCusto3'] }}"
+                          class="form-control campo-moeda-brl {% if 'eucaPrecoCusto3' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                    </div>
+
+                    <!-- Bitola 4 Eucalipto -->
+                    <div class="row mb-3">
+                      <div class="col-md-4">
+                        <label class="form-label">Bitola</label>
+                        <input type="text" name="eucaBitolaId4" value="33+" disabled
+                          class="form-control {% if 'eucaBitolaId4' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                      <div class="col-md-8">
+                        <label class="form-label">Preço Custo Frete
+                          (Ton.)</label>
+                        <input type="text" name="eucaPrecoCusto4" value="{{ dados_corretos['eucaPrecoCusto4'] }}"
+                          class="form-control campo-moeda-brl {% if 'eucaPrecoCusto4' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pinus -->
+              <div class="col-md-4">
+                <div class="card border-0 shadow-sm mb-4">
+                  <div class="card-header text-dark">
+                    <strong>Pinus</strong>
+                  </div>
+                  <div class="card-body">
+
+                    <!-- Bitola 1 Pinus -->
+                    <div class="row mb-3">
+                      <div class="col-md-5">
+                        <label class="form-label">Bitola</label>
+                        <input type="text" name="pinusBitolaId1" value="Torete" disabled
+                          class="form-control {% if 'pinusBitolaId1' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                      <div class="col-md-7">
+                        <label class="form-label">Preço Custo Frete
+                          (Ton.)</label>
+                        <input type="text" name="pinusPrecoCusto1" value="{{ dados_corretos['pinusPrecoCusto1'] }}"
+                          class="form-control campo-moeda-brl {% if 'pinusPrecoCusto1' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                    </div>
+
+                    <!-- Bitola 2 Pinus -->
+                    <div class="row mb-3">
+                      <div class="col-md-5">
+                        <label class="form-label">Bitola</label>
+                        <input type="text" name="pinusBitolaId2" value="18-25" disabled
+                          class="form-control {% if 'pinusBitolaId2' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                      <div class="col-md-7">
+                        <label class="form-label">Preço Custo Frete
+                          (Ton.)</label>
+                        <input type="text" name="pinusPrecoCusto2" value="{{ dados_corretos['pinusPrecoCusto2'] }}"
+                          class="form-control campo-moeda-brl {% if 'pinusPrecoCusto2' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                    </div>
+
+                    <!-- Bitola 3 Pinus -->
+                    <div class="row mb-3">
+                      <div class="col-md-5">
+                        <label class="form-label">Bitola</label>
+                        <input type="text" name="pinusBitolaId3" value="25-32" disabled
+                          class="form-control {% if 'pinusBitolaId3' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                      <div class="col-md-7">
+                        <label class="form-label">Preço Custo Frete
+                          (Ton.)</label>
+                        <input type="text" name="pinusPrecoCusto3" value="{{ dados_corretos['pinusPrecoCusto3'] }}"
+                          class="form-control campo-moeda-brl {% if 'pinusPrecoCusto3' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                    </div>
+
+                    <!-- Bitola 4 Pinus -->
+                    <div class="row mb-3">
+                      <div class="col-md-5">
+                        <label class="form-label">Bitola</label>
+                        <input type="text" name="pinusBitolaId4" value="33+" disabled
+                          class="form-control {% if 'pinusBitolaId4' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                      <div class="col-md-7">
+                        <label class="form-label">Preço Custo Frete
+                          (Ton.)</label>
+                        <input type="text" name="pinusPrecoCusto4" value="{{ dados_corretos['pinusPrecoCusto4'] }}"
+                          class="form-control campo-moeda-brl {% if 'pinusPrecoCusto4' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                    </div>
+
+                    <!-- Bitola 5 Pinus -->
+                    <div class="row mb-3">
+                      <div class="col-md-5">
+                        <label class="form-label">Bitola</label>
+                        <input type="text" name="pinusBitolaId5" value="Madeira Serrada" disabled
+                          class="form-control {% if 'pinusBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                      <div class="col-md-7">
+                        <label class="form-label">Preço Custo Frete
+                          (Ton.)</label>
+                        <input type="text" name="pinusPrecoCusto5" value="{{ dados_corretos['pinusPrecoCusto5'] }}"
+                          class="form-control campo-moeda-brl {% if 'pinusPrecoCusto5' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              <!-- Biomassa -->
+              <div class="col-md-4">
+                <div class="card border-0 shadow-sm mb-4">
+                  <div class="card-header text-dark">
+                    <strong>Biomassa</strong>
+                  </div>
+                  <div class="card-body">
+
+                    <!-- Bitola 1 Pinus -->
+                    <div class="row mb-3">
+                      <div class="col-md-4">
+                        <label class="form-label">Tipo</label>
+                        <input type="text" name="bioBitolaId5" value="Cavaco" disabled
+                          class="form-control {% if 'bioBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                      <div class="col-md-8">
+                        <label class="form-label">Preço Custo (Ton.)</label>
+                        <input type="text" name="bioPrecoCusto5" value="{{ dados_corretos['bioPrecoCusto5'] }}"
+                          class="form-control campo-moeda-brl {% if 'bioPrecoCusto5' in campos_obrigatorios %}is-invalid{% endif %}">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="{{ url_for('listar_rotas') }}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+
+</div>
+
+{% endblock conteudo %}

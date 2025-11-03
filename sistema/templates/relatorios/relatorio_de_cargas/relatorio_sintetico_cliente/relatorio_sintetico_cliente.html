@@ -1,0 +1,232 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<link href="{{ url_for('static', filename='css/relatorio-cargas.css') }}" rel="stylesheet">
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">RELATÓRIOS</div>
+          <h2 class="page-title">Relatório Sintético por Cliente</h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <form action="{{ url_for('relatorio_sintetico_cliente') }}" method="POST" id="exportPdfForm" target="_blank">
+              {% for key, value in dados_corretos.items() %}
+              {% if key not in ['exportar_pdf', 'exportar_excel'] %}
+              <input type="hidden" name="{{ key }}" value="{{ value }}">
+              {% endif %}
+              {% endfor %}
+              <input type="hidden" name="exportar_pdf" value="1">
+              <button type="submit" class="btn btn-outline-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
+                  <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
+                  <path d="M17 18h2" />
+                  <path d="M20 15h-3v6" />
+                  <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" />
+                </svg>
+                Exportar em PDF
+              </button>
+            </form>
+            <form action="{{ url_for('relatorio_sintetico_cliente') }}" method="POST" id="exportExcelForm">
+              {% for key, value in dados_corretos.items() %}
+              {% if key not in ['exportar_pdf', 'exportar_excel'] %}
+              <input type="hidden" name="{{ key }}" value="{{ value }}">
+              {% endif %}
+              {% endfor %}
+              <input type="hidden" name="exportar_excel" value="1">
+              <button type="submit" class="btn btn-outline-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-spreadsheet">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                  <path d="M8 11h8v7h-8z" />
+                  <path d="M8 15h8" />
+                  <path d="M11 11v7" />
+                </svg> Exportar em Excel
+              </button>
+            </form>
+
+            <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+      <div class="col-12">
+        <div class="card" id="registrosOperacionais">
+          <div class="card-body p-0">
+            {% if registros %}
+            <div class="table-responsive">
+              <table class="table table-vcenter ">
+                <thead class="bg-light">
+                  <tr>
+                    <th class="text-center text-primary">Cliente</th>
+                    <th class="text-center">Total de
+                      Cargas</th>
+                    <th class="text-center">Peso Total
+                      (Ton)</th>
+                    <th class="text-center">Valor Total NF's
+                      (R$)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for cliente_group in registros|groupby('cliente') %}
+                  <tr>
+                    <td class="text-center fw-bold text-primary">
+                      {{ cliente_group.grouper }}
+                    </td>
+                    <td class="text-center">
+                      {{ cliente_group.list | length }}
+                    </td>
+                    <td class="text-center">
+                      {{
+                      cliente_group.list
+                      | map(attribute='registro.peso_liquido_ticket')
+                      | select
+                      | sum
+                      | round(2)
+                      }}
+
+                    </td>
+                    <td class="text-center">
+                      <span class="badge bg-green-lt p-2">{{
+                        cliente_group.list
+                        |
+                        map(attribute='registro.valor_total_nota_100')
+                        | select
+                        | sum
+                        | formatar_float_para_brl
+                        }}</span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="area-info-card"
+              style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">
+              <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
+              <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">
+                Nenhum dado disponível
+              </h2>
+              <p style="color: #777;">No momento não há registros
+                para exibir.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
+      <form action="{{ url_for('relatorio_sintetico_cliente') }}" method="GET">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar Relatório Sintético</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <!-- Linha 1: Datas -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="dataInicio" class="form-control"
+                  value="{{ dados_corretos.get('dataInicio', '') }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="dataFim" class="form-control" value="{{ dados_corretos.get('dataFim', '') }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="clienteFiltro" class="form-control"
+                  value="{{ dados_corretos.get('clienteFiltro', '') }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Fornecedor</label>
+                <input type="text" name="fornecedorFiltro" class="form-control"
+                  value="{{ dados_corretos.get('fornecedorFiltro', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Transportadora</label>
+                <input type="text" name="transportadoraFiltro" class="form-control"
+                  value="{{ dados_corretos.get('transportadoraFiltro', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Produto</label>
+                <select name="produtoFiltro" class="form-select">
+                  <option value="">Selecione...</option>
+                  {% for p in produto %}
+                  <option value="{{ p.nome }}" {% if p.nome==dados_corretos.get('produtoFiltro', '' ) %}selected{% endif
+                    %}>
+                    {{ p.nome }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Bitola</label>
+                <select name="bitolaFiltro" class="form-select">
+                  <option value="">Selecione...</option>
+                  {% for b in bitola %}
+                  <option value="{{ b.bitola }}" {% if b.bitola==dados_corretos.get('bitolaFiltro', '' ) %}selected{%
+                    endif %}>
+                    {{ b.bitola }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <a href="{{ url_for('relatorio_sintetico_cliente') }}" class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

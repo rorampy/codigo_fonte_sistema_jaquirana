@@ -1,0 +1,157 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            SALDO EXTRATORES
+          </div>
+          <h2 class="page-title">
+            Listagem
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <div class="card">
+
+          <!-- Início Tabela -->
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: center;">Identificação</th>
+                  <th style="text-align: center;">Número Documento</th>
+                  <th style="text-align: center;">Telefone</th>
+                  <th style="text-align: center;">Crédito (R$)</th>
+                  <th class="w-1" style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in extratores %}
+                <tr>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ e.identificacao[:40] }}
+                    {% if e.identificacao | length > 40 %}
+                    ...
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary {%if e.tipo_cadastro == 1%}cpfMask{%else%}cnpjMask{%endif%}"
+                    style="text-align: center;">
+                    {{ e.numero_documento }}
+                  </td>
+                  <td class="text-secondary {% if e.telefone | length == 11%} celular {%else%}telefone{%endif%}"
+                    style="text-align: center;">
+                    {{ e.telefone }}
+                  </td>
+                  <td class="text-secondary text-center">
+                    <span class="badge bg-green-lt p-2">{{ e.valor_credito_100 | formatar_float_para_brl }}</span>
+                  </td>
+                  <td>
+                    <div class="btn-list flex-nowrap">
+                      <a href="{{url_for('extrato_extrator', id=e.id)}}" class="btn btn-icon btn-outline-primary"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Extrato fornecedor">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-text-scan-2">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M4 8v-2a2 2 0 0 1 2 -2h2" />
+                          <path d="M4 16v2a2 2 0 0 0 2 2h2" />
+                          <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+                          <path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
+                          <path d="M8 12h8" />
+                          <path d="M8 9h6" />
+                          <path d="M8 15h4" />
+                        </svg>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <form action="{{url_for('saldo_extratores')}}" method="GET">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar extratores</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Identificação</label>
+                <input type="text" name="identificacao" class="form-control"
+                  value="{{ dados_corretos.get('identificacao', '') }}" placeholder="Nome ou razão social">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Número documento</label>
+                <input type="text" id="cpfCnpj" name="numeroDocumento" class="form-control"
+                  value="{{ dados_corretos.get('numeroDocumento', '') }}">
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Tefone</label>
+                <input type="text" name="telefone" class="form-control celular"
+                  value="{{ dados_corretos.get('telefone', '') }}" placeholder="Insira o telefone">
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <a href="{{ url_for('saldo_extratores') }}" class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-2">
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

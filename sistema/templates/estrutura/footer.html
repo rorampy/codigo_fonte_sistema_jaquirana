@@ -1,0 +1,40 @@
+<footer class="footer footer-transparent d-print-none">
+    <div class="container-xl">
+      <div class="row text-center align-items-center flex-row-reverse">
+        <div class="col-lg-auto ms-lg-auto">
+          <ul class="list-inline list-inline-dots mb-0">
+            <li class="list-inline-item">
+              <a href="#" target="_blank" class="link-secondary" rel="noopener" style="text-decoration: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-eye" 
+                    width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
+                    fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"></path>
+                        <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"></path>
+                </svg>
+                WR Software
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+          <ul class="list-inline list-inline-dots mb-0">
+            <li class="list-inline-item">
+                Copy &copy; <span id="anoAtual"></span>
+            </li>
+            <li class="list-inline-item">
+                <a href="" class="link-secondary" rel="noopener">
+                versão {{ versao_atual }} - {{ data_versao }}
+                </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const anoAtual = new Date().getFullYear();
+      document.getElementById("anoAtual").textContent = anoAtual;
+    </script>
+
+  </footer>

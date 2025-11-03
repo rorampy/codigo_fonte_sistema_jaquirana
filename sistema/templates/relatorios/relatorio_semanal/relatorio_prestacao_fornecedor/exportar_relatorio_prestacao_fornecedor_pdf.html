@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório Prestação Contas Fornecedor</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      font-size: 14px;
+      margin: 20px;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    .no-break {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .section-break {
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    .group-break {
+      page-break-before: auto;
+      break-before: auto;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    .header {
+      border-bottom: 2px solid #1c5f20;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+
+    .header table {
+      width: 100%;
+      border: none;
+    }
+
+    .header img {
+      width: 120px;
+    }
+
+    .system-info {
+      text-align: right;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .relatorio-title {
+      text-align: center;
+      font-size: 18px;
+      color: #1c5f20;
+      font-weight: bold;
+      margin: 20px 0;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      color: #1c5f20;
+      font-weight: bold;
+      font-size: 14px;
+      margin: 20px 0 10px 0;
+      padding: 8px 10px;
+      background-color: #f0f8f0;
+      border-left: 4px solid #1c5f20;
+      page-break-after: avoid;
+      break-after: avoid;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0 20px 0;
+      border: 1px solid #ddd;
+      page-break-inside: auto;
+      break-inside: auto;
+    }
+
+    thead {
+      display: table-header-group;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    tbody {
+      page-break-inside: auto;
+      break-inside: auto;
+    }
+
+    tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      page-break-after: auto;
+      break-after: auto;
+    }
+
+    /* Evita quebra entre título da seção e sua tabela */
+    .section-title+table {
+      page-break-before: avoid;
+      break-before: avoid;
+    }
+
+    /* Mantém subtotais sempre com a tabela */
+    .subtotal {
+      background-color: #e8f5e8;
+      font-weight: bold;
+      color: #1c5f20;
+      page-break-before: avoid;
+      break-before: avoid;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    th {
+      background-color: #1c5f20;
+      color: white;
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    td:first-child {
+      text-align: left;
+      font-weight: bold;
+      background-color: #f8f9fa;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .valor-destaque {
+      color: #1c5f20;
+      font-weight: bold;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 10px;
+      color: #777;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+
+    .detalhes-registro {
+      font-size: 10px;
+    }
+
+    .filtros-aplicados {
+      background-color: #f0f8f0;
+      padding: 8px 12px;
+      margin: 8px 0;
+      border-radius: 4px;
+      border-left: 3px solid #1c5f20;
+      border: 1px solid #c3e6c3;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    .filtros-title {
+      color: #1c5f20;
+      font-weight: bold;
+      font-size: 11px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .filtros-linha {
+      display: block;
+      margin: 0;
+    }
+
+    .filtro-item {
+      display: block;
+      margin: 3px 0;
+    }
+
+    .filtro-label {
+      color: #1c5f20;
+      font-weight: 600;
+      font-size: 10px;
+      margin-right: 4px;
+    }
+
+    .filtro-valor {
+      color: #333;
+      font-size: 10px;
+    }
+
+    .info-bancaria {
+      background-color: #f8f9fa;
+      padding: 8px 12px;
+      margin: 10px 0 5px 0;
+      border-radius: 4px;
+      border-left: 3px solid #1c5f20;
+      border: 1px solid #dee2e6;
+      font-size: 13px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .info-bancaria-titulo {
+      color: #1c5f20;
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .dados-bancarios {
+      display: block;
+      margin: 0;
+    }
+
+    .dado-bancario {
+      display: block;
+      margin: 3px 0;
+    }
+
+    .dado-label {
+      color: #1c5f20;
+      font-weight: 600;
+      font-size: 13px;
+      margin-right: 3px;
+    }
+
+    .dado-valor {
+      color: #333;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <table>
+      <tr>
+        <td style="width: 200px;">
+          <img src="{{ logo_path }}" alt="Logo MBR Extração" />
+        </td>
+        <td class="system-info">
+          <div><strong>Sistema de Gestão MBR</strong></div>
+          {% if changelog %}
+          <div><strong>Versão:</strong> {{ changelog.versao }}</div>
+          <div><strong>Data:</strong> {{ changelog.data_lancamento }}</div>
+          {% else %}
+          <div><strong>Relatório gerado em:</strong> {{ data_geracao or 'N/A' }}</div>
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="relatorio-title">Relatório Prestação Contas Fornecedor</div>
+
+  <!-- Filtros aplicados se existirem -->
+  {% if dados_corretos %}
+  <div class="filtros-aplicados">
+    <div class="filtros-title">Filtros Aplicados</div>
+    <div class="filtros-linha">
+      <div class="filtro-item">
+        <span class="filtro-label">Semana:</span>
+        <span class="filtro-valor">
+          {% for semana in semanas_disponiveis %}
+          {% if semana.valor == dados_corretos.get('semanaSelecionada') %}
+          {{ semana.texto }}{% if semana.is_atual %} (Atual){% endif %}
+          {% endif %}
+          {% endfor %}
+        </span>
+      </div>
+      {% if dados_corretos.get('fornecedorCargaCliente') %}
+      <div class="filtro-item">
+        <span class="filtro-label">Fornecedor:</span>
+        <span class="filtro-valor">{{ dados_corretos.get('fornecedorCargaCliente', 'Todos') or 'Todos' }}</span>
+      </div>
+      {% endif %}
+      {% if dados_corretos.get('numeroNfCliente') %}
+      <div class="filtro-item">
+        <span class="filtro-label">NF:</span>
+        <span class="filtro-valor">{{ dados_corretos.get('numeroNfCliente', 'Todos') or 'Todos' }}</span>
+      </div>
+      {% endif %}
+      {% if dados_corretos.get('produtoFiltro') %}
+      <div class="filtro-item">
+        <span class="filtro-label">Produto:</span>
+        <span class="filtro-valor">{{ dados_corretos.get('produtoFiltro', 'Todos') or 'Todos' }}</span>
+      </div>
+      {% endif %}
+      {% if dados_corretos.get('clienteFiltro') %}
+      <div class="filtro-item">
+        <span class="filtro-label">Cliente:</span>
+        <span class="filtro-valor">{{ dados_corretos.get('clienteFiltro', 'Todos') or 'Todos' }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if registros %}
+  {% for origem_group in registros|groupby('origem') %}
+  {% set origem = origem_group.grouper %}
+  {% set registros_origem = origem_group.list %}
+
+  <!-- Seção da Origem (Fornecedor/Floresta) -->
+  <div class="section-title no-break">Fornecedor: {{ origem }}</div>
+
+  <!-- Informações Bancárias do Fornecedor -->
+  {% if registros_origem and registros_origem[0].fornecedor_obj %}
+  {% set fornecedor = registros_origem[0].fornecedor_obj %}
+  {% if fornecedor.conta_bancaria or fornecedor.chave_pix %}
+  <div class="info-bancaria">
+    <div class="info-bancaria-titulo">Dados para Pagamento</div>
+    <div class="dados-bancarios">
+      {% if fornecedor.instituicao_financeira %}
+      <div class="dado-bancario">
+        <span class="dado-label">Banco:</span>
+        <span class="dado-valor">{{ fornecedor.instituicao_financeira.nome }}</span>
+      </div>
+      {% endif %}
+      {% if fornecedor.agencia_bancaria %}
+      <div class="dado-bancario">
+        <span class="dado-label">Agência:</span>
+        <span class="dado-valor">{{ fornecedor.agencia_bancaria }}</span>
+      </div>
+      {% endif %}
+      {% if fornecedor.conta_bancaria %}
+      <div class="dado-bancario">
+        <span class="dado-label">Conta:</span>
+        <span class="dado-valor">{{ fornecedor.conta_bancaria }}</span>
+      </div>
+      {% endif %}
+      {% if fornecedor.chave_pix %}
+      <div class="dado-bancario">
+        <span class="dado-label">PIX:</span>
+        <span class="dado-valor pix-destaque">{{ fornecedor.chave_pix }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {% for produto_group in registros_origem|groupby('produto')%}
+  {% set produto = produto_group.grouper %}
+  {% set registros_produto = produto_group.list %}
+
+  <!-- Produto dentro da Origem -->
+  <div class="group-break">
+    <div class="section-title">
+      Produto: {{ produto }}
+      <span style="float: right; font-weight: normal; font-size: 12px;">
+        Total de cargas: {{ registros_produto|length }}
+      </span>
+    </div>
+
+    <!-- Tabela de cargas para este produto -->
+    <table class="no-break">
+      <thead>
+        <tr>
+          <th>Data Entrega</th>
+          <th>Placa</th>
+          <th>Transportadora</th>
+          <th>Cliente</th>
+          <th>Produto/Bitola</th>
+          <th>NF</th>
+          <th>Peso Liquido</th>
+          <th>Valor/Ton</th>
+          <th>Total Fornecedor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in registros_produto %}
+        <tr class="detalhes-registro">
+          <td>
+            {% if item.registro.data_entrega_ticket %}
+            {{ item.registro.data_entrega_ticket | formatar_data_para_brl }}
+            {% else %}-{% endif %}
+          </td>
+          <td>
+            {% if item.registro.solicitacao.veiculo.placa_veiculo %}
+            {{ item.registro.solicitacao.veiculo.placa_veiculo }}
+            {% else %}-{% endif %}
+          </td>
+          <td>{{ (item.transportadora or '') | truncate(20, True, '...') }}</td>
+          <td>{{ (item.cliente.identificacao or '') | truncate(20, True, '...') }}</td>
+          <td>
+            {{ item.registro.solicitacao.produto.nome | truncate(15, True, '...') }} |
+            {{ item.registro.solicitacao.bitola.bitola | truncate(15, True, '...') }}
+          </td>
+          <td>
+            {% if item.registro.estorno_nf%}
+            {{ item.registro.numero_nota_fiscal_estorno }} *
+            {% elif item.registro.numero_nota_fiscal %}
+            {{ item.registro.numero_nota_fiscal }}
+            {%else%}
+            -
+            {% endif %}
+          </td>
+          <td>
+            {% if item.registro.peso_liquido_ticket %}
+            {{ item.registro.peso_liquido_ticket }} Ton.
+            {% else %}
+            Sem peso
+            {% endif %}
+          </td>
+          <td>
+            {% if item.valor_ton %}
+            {{ item.valor_ton | formatar_float_para_brl}}
+            {% else %}-{% endif %}
+          </td>
+          <td class="valor-destaque">
+            {% if item.valor_pagar %}
+            {{ item.valor_pagar | formatar_float_para_brl }}
+            {% else %}-{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+
+        <!-- Linhas de Total da Origem - só aparece na última tabela de produto -->
+        {% if loop.last %}
+        <tr class="subtotal">
+          <td colspan="5"><strong>Total de cargas: {{ registros_origem|length }}</strong></td>
+          <td class="valor-destaque"><strong>{{ registros_origem | selectattr('registro.peso_liquido_ticket') |
+              map(attribute='registro.peso_liquido_ticket') | map('float') | sum | round(2) }} Ton.</strong></td>
+          <td colspan="3"></td>
+        </tr>
+        <tr class="subtotal">
+          <td colspan="8"><strong>Total a pagar</strong></td>
+          <td class="valor-destaque">
+            <strong>
+              {{ registros_origem | selectattr('valor_pagar') | map(attribute='valor_pagar') | map('float') | sum |
+              formatar_float_para_brl }}
+            </strong>
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div> <!-- Fecha group-break -->
+  {% endfor %}
+
+  {% endfor %}
+
+  {% else %}
+  <!-- Estado vazio -->
+  <div style="text-align: center; padding: 50px 0;">
+    <h3 style="color: #666;">Nenhum registro encontrado</h3>
+    <p style="color: #999;">Não há registros de cargas disponíveis para os filtros selecionados.</p>
+  </div>
+  {% endif %}
+
+  <div class="footer">
+    <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão MBR - Módulo Financeiro</strong></p>
+    <p>Relatório de Prestação de Contas gerado automaticamente pelo Sistema de Gestão MBR</p>
+  </div>
+</body>
+
+</html>

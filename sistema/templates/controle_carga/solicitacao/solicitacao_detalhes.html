@@ -1,0 +1,156 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">Controle de Cargas</div>
+          <h2 class="page-title">Detalhes da Solicitação</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      {% if solicitacao %}
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="card border border-primary shadow-sm">
+            <div class="card-body">
+              <h3 class="card-title mb-3 text-primary">Dados da Solicitação</h3>
+              <div class="row">
+
+                <!-- Primeira linha com os principais -->
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">Cliente</label>
+                    <input type="text" class="form-control"
+                      value="{{ solicitacao.cliente.identificacao }}" disabled>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Placa</label>
+                    <input type="text" class="form-control"
+                      value="{{ solicitacao.veiculo.placa_veiculo }}" disabled>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">Motorista</label>
+                    <input type="text" class="form-control"
+                      value="{{ solicitacao.motorista.nome_completo }}"
+                      disabled>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Peso Médio do Veículo</label>
+                    <input type="text" class="form-control"
+                      value="{{ solicitacao.veiculo.capacidade_ton }}" disabled>
+                  </div>
+                </div>
+
+                <!-- Outras informações -->
+                {% if solicitacao.floresta %}
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Origem - Floresta</label>
+                    <input type="text" class="form-control"
+                      value="{{ solicitacao.floresta.identificacao }}" disabled>
+                  </div>
+                </div>
+                {% elif solicitacao.fornecedor %}
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Origem - Fornecedor</label>
+                    <input type="text" class="form-control"
+                      value="{{ solicitacao.fornecedor.identificacao }}"
+                      disabled>
+                  </div>
+                </div>
+                {% endif %}
+
+                <div class="col-md-1">
+                  <div class="mb-3">
+                    <label class="form-label">Bitola</label>
+                    <input type="text" class="form-control"
+                      value="{{ solicitacao.bitola.bitola }}" disabled>
+                  </div>
+                </div>
+
+                {% if solicitacao.grupo_whats_id %}
+                <div class="col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Grupo WhatsApp</label>
+                    <input type="text" class="form-control"
+                      value="{{ solicitacao.grupo_whats.nome_grupo_whats }}"
+                      disabled>
+                  </div>
+                </div>
+                {% endif %}
+
+                {%if solicitacao.data_hora_msg_whats%}
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Data da Mensagem WhatsApp</label>
+                    <input type="text" class="form-control"
+                      value="{{ solicitacao.data_hora_msg_whats | formatar_data_hora if solicitacao.data_hora_msg_whats else '' }}"
+                      disabled>
+                  </div>
+                </div>
+                {%endif%}
+
+                <div class="col-sm-2 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">NF Emitida?</label>
+                    <input type="text" class="form-control"
+                      value="{{ 'Sim' if solicitacao.nf_emitida else 'Não' }}"
+                      disabled>
+                  </div>
+                </div>
+
+                <div class="col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Ticket Emitido?</label>
+                    <input type="text" class="form-control"
+                      value="{{ 'Sim' if solicitacao.ticket_emitido else 'Não' }}"
+                      disabled>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="text-end">
+        <a href="javascript:history.back()"
+          class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg"
+            class="icon icon-tabler icon-tabler-arrow-left"
+            width="24"
+            height="24" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor" fill="none"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z"
+              fill="none"></path>
+            <path d="M5 12l14 0"></path>
+            <path d="M5 12l6 6"></path>
+            <path d="M5 12l6 -6"></path>
+          </svg>Voltar</a>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

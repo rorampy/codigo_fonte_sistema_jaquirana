@@ -1,0 +1,407 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">REGISTRO OPERACIONAL</div>
+          <h2 class="page-title">Split de Carga</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      {% if registro %}
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="card border border-primary shadow-sm">
+            <div class="card-body">
+              <h3 class="card-title mb-3 text-primary">Informações da Solicitação</h3>
+              <div class="row">
+
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Cliente</label>
+                    <input type="text" class="form-control" value="{{ registro.solicitacao.cliente.identificacao }}"
+                      disabled>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Produto Atual</label>
+                    <input type="text" class="form-control" value="{{ registro.solicitacao.produto.nome }}" disabled>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Bitola Atual</label>
+                    <input type="text" class="form-control" value="{{ registro.solicitacao.bitola.bitola }}" disabled>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Motorista</label>
+                    <input type="text" class="form-control" value="{{ registro.solicitacao.motorista.nome_completo }}"
+                      disabled>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-2">
+                  <div class="mb-3">
+                    <label class="form-label">Veículo</label>
+                    <input type="text" class="form-control" value="{{ registro.solicitacao.veiculo.placa_veiculo }}"
+                      disabled>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="col-12">
+        <form class="card" action="{{ url_for('split_carga', id=registro.id) }}" method="POST">
+          <div class="card-body">
+
+            <!-- Informações do Registro Atual -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h3 class="text-primary mb-3">
+                  Ajustar Registro Atual
+                </h3>
+              </div>
+
+              {% if registro.peso_ton_nf_excesso %}
+              <div class="col-sm-12 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Peso Normal Atual (Ton.)</label>
+                  <input type="text" name="peso_normal_atual"
+                    value="{{ dados_corretos['peso_normal_atual'] or registro.peso_ton_nf or '' }}"
+                    class="form-control campo-float {% if 'peso_normal_atual' in campos_obrigatorios %}is-invalid{% endif %}"
+                    id="pesoNormalAtual">
+                  <div class="invalid-feedback">
+                    {% if 'peso_normal_atual' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['peso_normal_atual'] }}
+                    {% elif 'peso_normal_atual' in campos_erros %}
+                    {{ campos_erros['peso_normal_atual'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-12 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">Peso Excesso Atual (Ton.)</label>
+                  <input type="text" name="peso_excesso_atual"
+                    value="{{ dados_corretos['peso_excesso_atual'] or registro.peso_ton_nf_excesso or '' }}"
+                    class="form-control campo-float" id="pesoExcessoAtual">
+                </div>
+              </div>
+
+              <div class="col-sm-12 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">Peso Total Atual (Ton.)</label>
+                  <input type="text" class="form-control campo-float" id="pesoTotalAtual"
+                    value="{{ (registro.peso_ton_nf or 0) + (registro.peso_ton_nf_excesso or 0) }}" disabled>
+                </div>
+              </div>
+              {% else %}
+              <div class="col-sm-12 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label required">Peso Atual (Ton.)</label>
+                  <input type="text" name="peso_atual"
+                    value="{{ dados_corretos['peso_atual'] or registro.peso_ton_nf or '' }}"
+                    class="form-control campo-float {% if 'peso_atual' in campos_obrigatorios %}is-invalid{% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'peso_atual' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['peso_atual'] }}
+                    {% elif 'peso_atual' in campos_erros %}
+                    {{ campos_erros['peso_atual'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+
+            </div>
+
+            <!-- Informações do Novo Registro -->
+            <div class="row">
+              <div class="col-12">
+                <h3 class="text-primary mb-3">
+                  Novo Registro
+                </h3>
+              </div>
+
+              <div class="col-sm-12 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Produto</label>
+                  <select name="produto_novo"
+                    class="form-select {% if 'produto_novo' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <option value="">Selecione...</option>
+                    {% for produto in produtos %}
+                    <option value="{{ produto.id }}" {% if dados_corretos['produto_novo']==produto.id|string
+                      %}selected{% endif %}>
+                      {{ produto.nome }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {% if 'produto_novo' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['produto_novo'] }}
+                    {% elif 'produto_novo' in campos_erros %}
+                    {{ campos_erros['produto_novo'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-12 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Bitola</label>
+                  <select name="bitola_nova"
+                    class="form-select {% if 'bitola_nova' in campos_obrigatorios %}is-invalid{% endif %}">
+                    <option value="">Selecione...</option>
+                    {% for bitola in bitolas %}
+                    <option value="{{ bitola.id }}" {% if dados_corretos['bitola_nova']==bitola.id|string %}selected{%
+                      endif %}>
+                      {{ bitola.bitola }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {% if 'bitola_nova' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['bitola_nova'] }}
+                    {% elif 'bitola_nova' in campos_erros %}
+                    {{ campos_erros['bitola_nova'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-12 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Peso Normal Novo (Ton.)</label>
+                  <input type="text" name="peso_normal_novo" value="{{ dados_corretos['peso_normal_novo'] or '' }}"
+                    class="form-control campo-float {% if 'peso_normal_novo' in campos_obrigatorios %}is-invalid{% endif %}"
+                    id="pesoNormalNovo">
+                  <div class="invalid-feedback">
+                    {% if 'peso_normal_novo' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['peso_normal_novo'] }}
+                    {% elif 'peso_normal_novo' in campos_erros %}
+                    {{ campos_erros['peso_normal_novo'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              {% if registro.peso_ton_nf_excesso %}
+              <div class="col-sm-12 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Peso Excesso Novo (Ton.)</label>
+                  <input type="text" name="peso_excesso_novo" value="{{ dados_corretos['peso_excesso_novo'] or '' }}"
+                    class="form-control campo-float {% if 'peso_excesso_novo' in campos_obrigatorios %}is-invalid{% endif %}" id="pesoExcessoNovo">
+                  <div class="invalid-feedback">
+                    {% if 'peso_excesso_novo' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['peso_excesso_novo'] }}
+                    {% elif 'peso_excesso_novo' in campos_erros %}
+                    {{ campos_erros['peso_excesso_novo'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+
+            </div>
+
+            <!-- Resumo de Pesos -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="alert alert-info">
+                  <h4 class="alert-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="me-2">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                      <path d="M12 9h.01" />
+                      <path d="M11 12h1v4h1" />
+                    </svg>
+                    Resumo dos Pesos
+                  </h4>
+                  <div class="row">
+                    <div class="col-md-4">
+                      <strong>Peso Original:</strong>
+                      <span id="pesoOriginal">{{ (registro.peso_ton_nf or 0) +
+                        (registro.peso_ton_nf_excesso or 0) }}</span> Ton.
+                    </div>
+                    <div class="col-md-4">
+                      <strong>Peso Atual:</strong>
+                      <span id="pesoAtualResumo">0</span> Ton.
+                    </div>
+                    <div class="col-md-4">
+                      <strong>Peso Novo:</strong>
+                      <span id="pesoNovoResumo">0</span> Ton.
+                    </div>
+                  </div>
+                  <div class="row mt-2">
+                    <div class="col-md-4">
+                      <strong>Total Split:</strong>
+                      <span id="pesoTotalSplit">0</span> Ton.
+                    </div>
+                    <div class="col-md-4">
+                      <strong>Diferença:</strong>
+                      <span id="pesoDiferenca" class="fw-bold">0</span> Ton.
+                    </div>
+                    <div class="col-md-4">
+                      <span id="statusDiferenca" class="badge"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="card-footer text-center text-md-end">
+            <a href="{{ url_for('listagem_registros_operacionais') }}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary" id="btnSplit">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-arrows-split-2">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M21 17h-5.397a5 5 0 0 1 -4.096 -2.133l-.514 -.734a5 5 0 0 0 -4.096 -2.133h-3.897" />
+                <path d="M21 7h-5.395a5 5 0 0 0 -4.098 2.135l-.51 .73a5 5 0 0 1 -4.097 2.135h-3.9" />
+                <path d="M18 10l3 -3l-3 -3" />
+                <path d="M18 20l3 -3l-3 -3" />
+              </svg>
+              Executar Split
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const pesoOriginal = parseFloat(document.getElementById('pesoOriginal').textContent) || 0;
+      const hasExcesso = {{ 'true' if registro.peso_ton_nf_excesso else 'false' }};
+
+      // Elementos dos campos
+      const pesoAtualInput = document.querySelector('input[name="peso_atual"]');
+      const pesoNormalAtualInput = document.querySelector('input[name="peso_normal_atual"]');
+      const pesoExcessoAtualInput = document.querySelector('input[name="peso_excesso_atual"]');
+      const pesoNormalNovoInput = document.querySelector('input[name="peso_normal_novo"]');
+      const pesoExcessoNovoInput = document.querySelector('input[name="peso_excesso_novo"]');
+
+      // Elementos do resumo
+      const pesoAtualResumo = document.getElementById('pesoAtualResumo');
+      const pesoNovoResumo = document.getElementById('pesoNovoResumo');
+      const pesoTotalSplit = document.getElementById('pesoTotalSplit');
+      const pesoDiferenca = document.getElementById('pesoDiferenca');
+      const statusDiferenca = document.getElementById('statusDiferenca');
+      const btnSplit = document.getElementById('btnSplit');
+
+      function calcularResumo() {
+        let pesoAtual = 0;
+        let pesoNovo = 0;
+
+        if (hasExcesso) {
+          const normalAtual = parseFloat(pesoNormalAtualInput.value) || 0;
+          const excessoAtual = parseFloat(pesoExcessoAtualInput.value) || 0;
+          pesoAtual = normalAtual + excessoAtual;
+        } else {
+          pesoAtual = parseFloat(pesoAtualInput.value) || 0;
+        }
+
+        const normalNovo = parseFloat(pesoNormalNovoInput.value) || 0;
+        // Só considera peso excesso novo se o registro atual tem excesso
+        const excessoNovo = hasExcesso ? (parseFloat(pesoExcessoNovoInput?.value) || 0) : 0;
+        pesoNovo = normalNovo + excessoNovo;
+
+        const totalSplit = pesoAtual + pesoNovo;
+        const diferenca = totalSplit - pesoOriginal;
+
+        // Atualizar displays
+        pesoAtualResumo.textContent = pesoAtual.toFixed(2);
+        pesoNovoResumo.textContent = pesoNovo.toFixed(2);
+        pesoTotalSplit.textContent = totalSplit.toFixed(2);
+        pesoDiferenca.textContent = Math.abs(diferenca).toFixed(2);
+
+        // Status da diferença
+        if (Math.abs(diferenca) < 0.01) {
+          statusDiferenca.textContent = 'Pesos conferem';
+          statusDiferenca.className = 'badge badge-outline text-green';
+          btnSplit.disabled = false;
+        } else if (diferenca > 0) {
+          statusDiferenca.textContent = 'Peso excedente';
+          statusDiferenca.className = 'badge badge-outline text-danger';
+          btnSplit.disabled = true;
+        } else {
+          statusDiferenca.textContent = 'Peso faltante';
+          statusDiferenca.className = 'badge badge-outline text-warning';
+          btnSplit.disabled = true;
+        }
+      }
+
+      // Event listeners para todos os campos de peso
+      [pesoAtualInput, pesoNormalAtualInput, pesoExcessoAtualInput, pesoNormalNovoInput, pesoExcessoNovoInput]
+        .filter(input => input) // Remove nulls
+        .forEach(input => {
+          input.addEventListener('input', calcularResumo);
+        });
+
+      // Máscara para campos numéricos
+      document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('input', function (e) {
+          let value = e.target.value;
+          value = value.replace(/[^\d.,]/g, '');
+          value = value.replace(',', '.');
+          e.target.value = value;
+        });
+      });
+
+      // Calcular resumo inicial
+      calcularResumo();
+
+      // Inicializar Tom Select nos selects
+      document.querySelectorAll('select.form-select').forEach(function (select) {
+        new TomSelect(select, {
+          create: false,
+          allowEmptyOption: false,
+          sortField: {
+            field: "text",
+            direction: "asc"
+          }
+        });
+      });
+    });
+  </script>
+
+</div>
+{% endblock conteudo %}

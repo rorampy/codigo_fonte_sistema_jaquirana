@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>DFC Analítico - {{ data_inicio.strftime('%d/%m/%Y') }} a {{ data_fim.strftime('%d/%m/%Y') }}</title>
+  <style>
+    @page {
+      size: landscape;
+      margin: 15mm;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 11px;
+      margin: 0;
+      color: #2d3748;
+      line-height: 1.4;
+      background-color: #ffffff;
+    }
+
+    .header {
+      border-bottom: 2px solid #334155;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+
+    .header table {
+      width: 100%;
+      border: none;
+    }
+
+    .header img {
+      width: 100px;
+    }
+
+    .system-info {
+      text-align: right;
+      font-size: 10px;
+      color: #4a5568;
+      font-family: 'Segoe UI', sans-serif;
+      font-weight: 500;
+    }
+
+    .relatorio-title {
+      text-align: center;
+      font-size: 18px;
+      color: #1a202c;
+      font-weight: 600;
+      margin: 15px 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .period-badge {
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    .period-badge .badge {
+      background-color: #f8f9fa;
+      color: #495057;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 10px;
+      border: 1px solid #dee2e6;
+    }
+
+    .section-badge {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 25px;
+      font-size: 12px;
+      font-weight: 600;
+      margin: 10px 0 8px 0;
+      border: 1px solid;
+      font-family: 'Segoe UI', sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    .section-receitas {
+      background-color: #f1f5f9;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+
+    .section-custos {
+      background-color: #f1f5f9;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+
+    .section-despesas {
+      background-color: #f8fafc;
+      color: #475569;
+      border-color: #e2e8f0;
+    }
+
+    .section-investimento {
+      background-color: #f1f5f9;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+
+    .section-financiamento {
+      background-color: #f1f5f9;
+      color: #475569;
+      border-color: #cbd5e1;
+    }
+
+    .simple-info {
+      margin: 8px 0;
+      font-size: 12px;
+      padding: 5px 0;
+    }
+
+    .simple-info strong {
+      color: #334155;
+      display: inline-block;
+      min-width: 150px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 5px 0 15px 0;
+      border: none;
+    }
+
+    .table-borderless {
+      border: none !important;
+    }
+
+    .table-borderless td {
+      border: none !important;
+      padding: 6px 8px;
+      font-size: 10px;
+    }
+
+    .table-borderless td:first-child {
+      text-align: left;
+      font-weight: normal;
+    }
+
+    .table-borderless td:last-child {
+      text-align: right;
+      font-weight: 600;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* Categoria Pai - fundo azul claro */
+    .bg-light-blue {
+      background-color: #f1f5f9 !important;
+      color: #334155 !important;
+      font-weight: bold;
+    }
+
+    /* Sub-itens com indentação */
+    .ps-4 {
+      padding-left: 20px !important;
+    }
+
+    .ps-6 {
+      padding-left: 35px !important;
+    }
+
+    /* Total de seção */
+    .border-top-section {
+      border-top: 2px solid #cbd5e1 !important;
+      background-color: #f8fafc !important;
+      font-weight: bold !important;
+      color: #334155 !important;
+    }
+
+    .valor-destaque {
+      color: #334155;
+      font-weight: bold;
+    }
+
+    .valor-positivo {
+      color: #059669;
+      font-weight: bold;
+    }
+
+    .valor-negativo {
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    .resumo-financeiro {
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+    }
+
+    .resumo-financeiro .simple-info {
+      margin: 10px 0;
+      font-size: 13px;
+    }
+
+    .valor-total-destaque {
+      font-size: 14px;
+      color: #334155;
+      font-weight: bold;
+      margin: 15px 0;
+      padding: 8px 0;
+      border-top: 1px solid #cbd5e1;
+    }
+
+    .info-periodo {
+      background-color: #f8f9fa;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 5px;
+      border: 1px solid #dee2e6;
+    }
+
+    .info-periodo .simple-info {
+      margin: 5px 0;
+    }
+
+    /* Cards para indicadores principais */
+    .highlight-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 15px 0;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .highlight-card .title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .highlight-card .value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a202c;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .highlight-card .formula {
+      font-size: 9px;
+      color: #64748b;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    /* Total principal - exatamente como na web */
+    .total-principal-card {
+      background: linear-gradient(135deg, #334155 0%, #475569 100%);
+      color: white !important;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .total-principal-card .title {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .total-principal-card .value {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .total-valor {
+      font-size: 15px !important;
+      font-weight: bold !important;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 10px;
+      color: #777;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+
+    .detalhes-registro {
+      font-size: 10px;
+    }
+
+    .grupo-titulo {
+      background-color: #334155;
+      color: white;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .grupo-titulo td {
+      background-color: #334155 !important;
+      color: white !important;
+      padding: 8px !important;
+    }
+
+    .subtotal {
+      background-color: #f1f5f9;
+      font-weight: bold;
+      color: #334155;
+    }
+
+    .categoria-pai {
+      background-color: #e2e8f0;
+      font-weight: bold;
+      color: #475569;
+    }
+
+    .categoria-pai td {
+      background-color: #e2e8f0 !important;
+      color: #475569 !important;
+      font-weight: bold;
+      padding: 10px 8px !important;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <table>
+      <tr>
+        <td style="width: 200px;">
+          <img src="{{ logo_path }}" alt="Logo MBR Extração" />
+        </td>
+        <td class="system-info">
+          <div><strong>Sistema de Gestão MBR</strong></div>
+          <div><strong>Relatório gerado em:</strong> {{ dataHoje.strftime('%d/%m/%Y às %H:%M') }}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="relatorio-title">Demonstrativo de Fluxo de Caixa - Analítico</div>
+
+  <!-- Período do Relatório -->
+  <div class="period-badge">
+    <span class="badge">Período: {{ data_inicio.strftime('%d/%m/%Y') }} a {{ data_fim.strftime('%d/%m/%Y') }}</span>
+  </div>
+
+  <!-- RECEITAS - Estrutura idêntica à web -->
+  
+  <!-- Definir variáveis globais para evitar erros -->
+  {% set total_nao_op_sem_aplicacoes = [] %}
+  {% for item in dfc_dados['receitas']['nao_operacionais']['detalhes'] %}
+    {% if not item.codigo.startswith('1.02.01') %}
+      {% set _ = total_nao_op_sem_aplicacoes.append(item) %}
+    {% endif %}
+  {% endfor %}
+  
+  {% set total_custos_sem_floresta = [] %}
+  {% for item in dfc_dados['custos']['operacionais']['detalhes'] %}
+    {% if not item.codigo.startswith('2.01.11') and not item.codigo.startswith('2.02.05') %}
+      {% set _ = total_custos_sem_floresta.append(item) %}
+    {% endif %}
+  {% endfor %}
+  
+  {% set total_receitas_sem_aplicacoes = (dfc_dados['receitas']['operacionais']['total'] or 0) + (total_nao_op_sem_aplicacoes | sum(attribute='valor')) %}
+  
+  {% set categorias_agrupadas = {} %}
+  {% for item in dfc_dados['receitas']['operacionais']['detalhes'] %}
+    {% if item.valor != 0 %}
+      {% set categoria_principal = item.hierarquia_completa.split(' > ')[0] %}
+      {% if categoria_principal not in categorias_agrupadas %}
+        {% set _ = categorias_agrupadas.update({categoria_principal: []}) %}
+      {% endif %}
+      {% set _ = categorias_agrupadas[categoria_principal].append(item) %}
+    {% endif %}
+  {% endfor %}
+
+  {% set grupos_ordenados = [] %}
+  {% for categoria_principal, itens in categorias_agrupadas.items() %}
+    {% set _ = grupos_ordenados.append((itens[0].codigo[:7], categoria_principal, itens)) %}
+  {% endfor %}
+  {% set _ = grupos_ordenados.sort() %}
+
+  <!-- Receitas Não-Operacionais (exceto aplicações financeiras) -->
+  {% set categorias_agrupadas_nao_op = {} %}
+  {% for item in dfc_dados['receitas']['nao_operacionais']['detalhes'] %}
+    {% if item.valor != 0 and not item.codigo.startswith('1.02.01') %}
+      {% set categoria_principal = item.hierarquia_completa.split(' > ')[0] %}
+      {% if categoria_principal not in categorias_agrupadas_nao_op %}
+        {% set _ = categorias_agrupadas_nao_op.update({categoria_principal: []}) %}
+      {% endif %}
+      {% set _ = categorias_agrupadas_nao_op[categoria_principal].append(item) %}
+    {% endif %}
+  {% endfor %}
+
+  {% set grupos_ordenados_nao_op = [] %}
+  {% for categoria_principal, itens in categorias_agrupadas_nao_op.items() %}
+    {% set _ = grupos_ordenados_nao_op.append((itens[0].codigo[:7], categoria_principal, itens)) %}
+  {% endfor %}
+  {% set _ = grupos_ordenados_nao_op.sort() %}
+
+  {% if grupos_ordenados|length > 0 or grupos_ordenados_nao_op|length > 0 %}
+  <!-- SEÇÃO RECEITAS -->
+  <div class="section-badge section-receitas">RECEITAS</div>
+  
+  <table class="table-borderless">
+    {% if grupos_ordenados|length > 1 or (grupos_ordenados|length == 1 and grupos_ordenados[0][2]|length > 1) %}
+    <tr class="bg-light-blue">
+      <td><strong>RECEITAS OPERACIONAIS</strong></td>
+      <td class="valor-positivo"><strong>{{ dfc_dados['receitas']['operacionais']['total'] | formatar_float_para_brl }}</strong></td>
+    </tr>
+    {% endif %}
+
+    {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados %}
+    {% if grupos_ordenados|length > 1 or itens|length > 1 %}
+    <tr class="bg-light-blue">
+      <td class="ps-4"><strong>{{ categoria_principal }}</strong></td>
+      <td class="valor-positivo"><strong>{{ itens | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
+    </tr>
+    {% endif %}
+    
+    {% for item in itens | sort(attribute='codigo') %}
+    <tr>
+      <td class="ps-6">{{ item.hierarquia_completa.split(' > ')[-1] if ' > ' in item.hierarquia_completa else item.hierarquia_completa }}</td>
+      <td class="valor-positivo">{{ item.valor | formatar_float_para_brl }}</td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+
+    <!-- Receitas Não-Operacionais -->
+    {% if grupos_ordenados_nao_op|length > 0 %}
+    <tr class="bg-light-blue">
+      <td><strong>RECEITAS NÃO-OPERACIONAIS</strong></td>
+      <td class="valor-positivo"><strong>{{ total_nao_op_sem_aplicacoes | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
+    </tr>
+
+    {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_nao_op %}
+    {% if grupos_ordenados_nao_op|length > 1 or itens|length > 1 %}
+    <tr class="bg-light-blue">
+      <td class="ps-4"><strong>{{ categoria_principal }}</strong></td>
+      <td class="valor-positivo"><strong>{{ itens | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
+    </tr>
+    {% endif %}
+    
+    {% for item in itens | sort(attribute='codigo') %}
+    <tr>
+      <td class="ps-6">{{ item.hierarquia_completa.split(' > ')[-1] if ' > ' in item.hierarquia_completa else item.hierarquia_completa }}</td>
+      <td class="valor-positivo">{{ item.valor | formatar_float_para_brl }}</td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+    {% endif %}
+
+    <!-- Total Receitas -->
+    <tr class="border-top-section">
+      <td><strong>TOTAL DE RECEITAS</strong></td>
+      <td class="valor-positivo"><strong>{{ total_receitas_sem_aplicacoes | formatar_float_para_brl }}</strong></td>
+    </tr>
+  </table>
+  {% endif %}
+
+  <!-- CUSTOS - Estrutura idêntica à web -->
+  {% set categorias_agrupadas_custos = {} %}
+  {% for item in dfc_dados['custos']['operacionais']['detalhes'] %}
+    {% if item.valor != 0 and not item.codigo.startswith('2.01.11') and not item.codigo.startswith('2.02.05') %}
+      {% set categoria_principal = item.hierarquia_completa.split(' > ')[0] %}
+      {% if categoria_principal not in categorias_agrupadas_custos %}
+        {% set _ = categorias_agrupadas_custos.update({categoria_principal: []}) %}
+      {% endif %}
+      {% set _ = categorias_agrupadas_custos[categoria_principal].append(item) %}
+    {% endif %}
+  {% endfor %}
+
+  {% set grupos_ordenados_custos = [] %}
+  {% for categoria_principal, itens in categorias_agrupadas_custos.items() %}
+    {% set _ = grupos_ordenados_custos.append((itens[0].codigo[:7], categoria_principal, itens)) %}
+  {% endfor %}
+  {% set _ = grupos_ordenados_custos.sort() %}
+
+  {% if grupos_ordenados_custos|length > 0 %}
+  <!-- SEÇÃO CUSTOS -->
+  <div class="section-badge section-custos">CUSTOS OPERACIONAIS</div>
+  
+  <table class="table-borderless">
+    {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_custos %}
+    {% if grupos_ordenados_custos|length > 1 or itens|length > 1 %}
+    <tr class="bg-light-blue">
+      <td><strong>{{ categoria_principal }}</strong></td>
+      <td class="valor-negativo"><strong>-{{ itens | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
+    </tr>
+    {% endif %}
+    
+    {% for item in itens | sort(attribute='codigo') %}
+    <tr>
+      <td class="ps-4">{{ item.hierarquia_completa.split(' > ')[-1] if ' > ' in item.hierarquia_completa else item.hierarquia_completa }}</td>
+      <td class="valor-negativo">-{{ item.valor | formatar_float_para_brl }}</td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+
+    <!-- Total Custos (excluindo compra de floresta e retirada de capital) -->
+    <tr class="border-top-section">
+      <td><strong>TOTAL CUSTOS OPERACIONAIS</strong></td>
+      <td class="valor-negativo"><strong>-{{ total_custos_sem_floresta | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
+    </tr>
+  </table>
+  {% endif %}
+
+  <!-- MARGEM DE CONTRIBUIÇÃO - Card como na web com cálculos filtrados -->
+  {% set margem_contribuicao_pdf = total_receitas_sem_aplicacoes - (total_custos_sem_floresta | sum(attribute='valor')) %}
+  {% set margem_percentual_pdf = (margem_contribuicao_pdf / total_receitas_sem_aplicacoes * 100) if total_receitas_sem_aplicacoes != 0 else 0 %}
+  <div class="highlight-card">
+    <div class="title">MARGEM DE CONTRIBUIÇÃO</div>
+    <div class="value">{{ margem_contribuicao_pdf | formatar_float_para_brl }}</div>
+    <div class="formula">Receitas Operacionais - Custos Operacionais ({{ "%.0f"|format(margem_percentual_pdf) }}%)</div>
+  </div>
+
+  <!-- DESPESAS - Estrutura idêntica à web -->
+  {% set categorias_agrupadas_despesas = {} %}
+  {% for item in dfc_dados['despesas']['operacionais']['detalhes'] %}
+    {% if item.valor != 0 and not item.codigo.startswith('2.02.05') %}
+      {% set categoria_principal = item.hierarquia_completa.split(' > ')[0] %}
+      {% if categoria_principal not in categorias_agrupadas_despesas %}
+        {% set _ = categorias_agrupadas_despesas.update({categoria_principal: []}) %}
+      {% endif %}
+      {% set _ = categorias_agrupadas_despesas[categoria_principal].append(item) %}
+    {% endif %}
+  {% endfor %}
+
+  {% set grupos_ordenados_despesas = [] %}
+  {% for categoria_principal, itens in categorias_agrupadas_despesas.items() %}
+    {% set _ = grupos_ordenados_despesas.append((itens[0].codigo[:7], categoria_principal, itens)) %}
+  {% endfor %}
+  {% set _ = grupos_ordenados_despesas.sort() %}
+
+  {% if grupos_ordenados_despesas|length > 0 %}
+  <!-- SEÇÃO DESPESAS -->
+  <div class="section-badge section-despesas">DESPESAS OPERACIONAIS</div>
+  
+  <table class="table-borderless">
+    {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_despesas %}
+    {% if grupos_ordenados_despesas|length > 1 or itens|length > 1 %}
+    <tr class="bg-light-blue">
+      <td><strong>{{ categoria_principal }}</strong></td>
+      <td class="valor-negativo"><strong>-{{ itens | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
+    </tr>
+    {% endif %}
+    
+    {% for item in itens | sort(attribute='codigo') %}
+    <tr>
+      <td class="ps-4">{{ item.hierarquia_completa.split(' > ')[-1] if ' > ' in item.hierarquia_completa else item.hierarquia_completa }}</td>
+      <td class="valor-negativo">-{{ item.valor | formatar_float_para_brl }}</td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+
+    <!-- Total Despesas (excluindo retirada de capital) -->
+    {% set total_despesas_sem_retirada = [] %}
+    {% for item in dfc_dados['despesas']['operacionais']['detalhes'] %}
+      {% if not item.codigo.startswith('2.02.05') %}
+        {% set _ = total_despesas_sem_retirada.append(item) %}
+      {% endif %}
+    {% endfor %}
+    <tr class="border-top-section">
+      <td><strong>TOTAL DESPESAS OPERACIONAIS</strong></td>
+      <td class="valor-negativo"><strong>-{{ total_despesas_sem_retirada | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
+    </tr>
+  </table>
+  {% endif %}
+
+  <!-- RESULTADO OPERACIONAL - Card como na web com cálculos filtrados -->
+  {% set resultado_operacional_pdf = margem_contribuicao_pdf - dfc_dados['despesas']['operacionais']['total'] %}
+  <div class="highlight-card">
+    <div class="title">RESULTADO OPERACIONAL</div>
+    <div class="value">{{ resultado_operacional_pdf | formatar_float_para_brl }}</div>
+    <div class="formula">Margem de Contribuição - Despesas Operacionais</div>
+  </div>
+
+  <!-- ATIVIDADES DE INVESTIMENTO - só mostra se há compra de floresta -->
+  {% set compra_floresta = [] %}
+  {% for item in dfc_dados['custos']['operacionais']['detalhes'] %}
+    {% if item.codigo.startswith('2.01.11') and item.valor != 0 %}
+      {% set _ = compra_floresta.append(item) %}
+    {% endif %}
+  {% endfor %}
+
+  {% if compra_floresta|length > 0 %}
+  <div class="section-badge section-investimento">ATIVIDADES DE INVESTIMENTO</div>
+  
+  <table class="table-borderless">
+    {% set categorias_agrupadas_inv = {} %}
+    {% for item in compra_floresta %}
+      {% set categoria_principal = item.hierarquia_completa.split(' > ')[0] %}
+      {% if categoria_principal not in categorias_agrupadas_inv %}
+        {% set _ = categorias_agrupadas_inv.update({categoria_principal: []}) %}
+      {% endif %}
+      {% set _ = categorias_agrupadas_inv[categoria_principal].append(item) %}
+    {% endfor %}
+
+    {% set grupos_ordenados_inv = [] %}
+    {% for categoria_principal, itens in categorias_agrupadas_inv.items() %}
+      {% set _ = grupos_ordenados_inv.append((itens[0].codigo[:7], categoria_principal, itens)) %}
+    {% endfor %}
+    {% set _ = grupos_ordenados_inv.sort() %}
+
+    {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_inv %}
+    {% if grupos_ordenados_inv|length > 1 or itens|length > 1 %}
+    <tr class="bg-light-blue">
+      <td><strong>{{ categoria_principal }}</strong></td>
+      <td class="valor-negativo"><strong>-{{ itens | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
+    </tr>
+    {% endif %}
+    
+    {% for item in itens | sort(attribute='codigo') %}
+    <tr>
+      <td class="ps-4">{{ item.hierarquia_completa.split(' > ')[-1] if ' > ' in item.hierarquia_completa else item.hierarquia_completa }}</td>
+      <td class="valor-negativo">-{{ item.valor | formatar_float_para_brl }}</td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+
+    <tr class="border-top-section">
+      <td><strong>TOTAL ATIVIDADES DE INVESTIMENTO</strong></td>
+      <td class="valor-negativo"><strong>-{{ compra_floresta | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
+    </tr>
+  </table>
+  {% endif %}
+
+  <!-- ATIVIDADES DE FINANCIAMENTO - só mostra se há aplicações ou retiradas -->
+  {% set aplicacoes_financeiras = [] %}
+  {% set retirada_capital = [] %}
+  
+  {% for item in dfc_dados['receitas']['nao_operacionais']['detalhes'] %}
+    {% if item.codigo.startswith('1.02.01') and item.valor != 0 %}
+      {% set _ = aplicacoes_financeiras.append(item) %}
+    {% endif %}
+  {% endfor %}
+  
+  {% for item in dfc_dados['custos']['operacionais']['detalhes'] %}
+    {% if item.codigo.startswith('2.02.05') and item.valor != 0 %}
+      {% set _ = retirada_capital.append(item) %}
+    {% endif %}
+  {% endfor %}
+
+  {% if aplicacoes_financeiras|length > 0 or retirada_capital|length > 0 %}
+  <div class="section-badge section-financiamento">ATIVIDADES DE FINANCIAMENTO</div>
+  
+  <table class="table-borderless">
+    <!-- Receitas Não-Operacionais (se há aplicações financeiras) -->
+    {% if aplicacoes_financeiras|length > 0 %}
+    <tr class="bg-light-blue">
+      <td><strong>Receitas Não-Operacionais</strong></td>
+      <td class="valor-positivo"><strong>{{ aplicacoes_financeiras | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
+    </tr>
+    
+    {% for item in aplicacoes_financeiras | sort(attribute='codigo') %}
+    <tr>
+      <td class="ps-4">{{ item.hierarquia_completa.split(' > ')[-1] if ' > ' in item.hierarquia_completa else item.hierarquia_completa }}</td>
+      <td class="valor-positivo">{{ item.valor | formatar_float_para_brl }}</td>
+    </tr>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Despesas (se há retirada de capital) -->
+    {% if retirada_capital|length > 0 %}
+    <tr class="bg-light-blue">
+      <td><strong>Despesas</strong></td>
+      <td class="valor-negativo"><strong>-{{ retirada_capital | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
+    </tr>
+    
+    {% for item in retirada_capital | sort(attribute='codigo') %}
+    <tr>
+      <td class="ps-4">{{ item.hierarquia_completa.split(' > ')[-1] if ' > ' in item.hierarquia_completa else item.hierarquia_completa }}</td>
+      <td class="valor-negativo">-{{ item.valor | formatar_float_para_brl }}</td>
+    </tr>
+    {% endfor %}
+    {% endif %}
+
+    {% set total_financiamento = (aplicacoes_financeiras | sum(attribute='valor')) - (retirada_capital | sum(attribute='valor')) %}
+    <tr class="border-top-section">
+      <td><strong>TOTAL ATIVIDADES DE FINANCIAMENTO</strong></td>
+      <td class="{% if total_financiamento >= 0 %}valor-positivo{% else %}valor-negativo{% endif %}">
+        <strong>
+          {% if total_financiamento >= 0 %}
+            {{ total_financiamento | formatar_float_para_brl }}
+          {% else %}
+            -{{ (total_financiamento * -1) | formatar_float_para_brl }}
+          {% endif %}
+        </strong>
+      </td>
+    </tr>
+  </table>
+  {% endif %}
+
+  <!-- VARIAÇÃO DE CAIXA - Card como na web com cálculos filtrados -->
+  {% set total_atividades_investimento_pdf = -(compra_floresta | sum(attribute='valor')) %}
+  {% set total_atividades_financiamento_pdf = (aplicacoes_financeiras | sum(attribute='valor')) - (retirada_capital | sum(attribute='valor')) %}
+  {% set variacao_caixa_pdf = resultado_operacional_pdf + total_atividades_investimento_pdf + total_atividades_financiamento_pdf %}
+  <div class="highlight-card">
+    <div class="title">VARIAÇÃO DE CAIXA</div>
+    <div class="value">{{ variacao_caixa_pdf | formatar_float_para_brl }}</div>
+    <div class="formula">Resultado Operacional + Atividades Investimento + Atividades Financiamento</div>
+  </div>
+
+  <div class="footer">
+    <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão MBR - Módulo Financeiro</strong></p>
+    <p>Demonstrativo de Resultado do Exercício gerado automaticamente pelo Sistema de Gestão MBR</p>
+  </div>
+</body>
+
+</html>

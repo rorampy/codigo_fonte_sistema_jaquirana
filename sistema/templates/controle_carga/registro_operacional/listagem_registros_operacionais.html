@@ -1,0 +1,564 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">
+            REGISTROS OPERACIONAIS
+          </div>
+          <h2 class="page-title">
+            Listagem
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <div class="ms-auto">
+              <div class="input-icon">
+                <input type="text" class="form-control" placeholder="Pesquisa rápida" id="tabela-search">
+                <span class="input-icon-addon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-1">
+                    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path>
+                    <path d="M21 21l-6 -6"></path>
+                  </svg>
+                </span>
+              </div>
+            </div>
+            <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar </a>
+            {%if current_user.role_id == 1 %}
+            <a href="#"
+              class="btn btn-outline-danger {%if current_user.role_id != 1 %} disabled {%endif%}"
+              data-bs-toggle="modal" data-bs-target="#modal-atualizacao-precos">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-refresh" aria-hidden="true">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+              </svg>
+              Atualizar preços unitários
+            </a>
+            {%endif%}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <div class="card">
+          <div class="table-responsive">
+            <table id="tabela-informacao-ro" class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: center;">Data ticket</th>
+                  <th style="text-align: center;">Número NF</th>
+                  <th style="text-align: center;">Placa/Motorista</th>
+                  <th style="text-align: center;">Transportadora</th>
+                  <th style="text-align: center;">Floresta/Fornecedor</th>
+                  <th style="text-align: center;">Cliente</th>
+                  <th style="text-align: center;">Peso Ticket (Ton.)</th>
+                  <th style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for registro in registros %}
+                <tr>
+                  <td class="text-secondary text-center"
+                    style="color: {{ '#2ea44f !important' if registro.solicitacao.ticket_emitido == 1 }}">
+                    {% if registro.data_entrega_ticket %}
+                    {{ registro.data_entrega_ticket |
+                    formatar_data_para_brl }}
+                    {% else %}
+                    -
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary text-center"
+                    style="color: {{ '#2ea44f !important' if registro.solicitacao.ticket_emitido == 1 }}">
+                    {% if registro.estorno_nf%}
+                    {{ registro.numero_nota_fiscal_estorno }} *
+                    {% elif registro.numero_nota_fiscal %}
+                    {{ registro.numero_nota_fiscal }}
+                    {%else%}
+                    -
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary text-center"
+                    style="color: {{ '#2ea44f !important' if registro.solicitacao.ticket_emitido == 1 }}">
+                    {%if registro.solicitacao.veiculo.placa_veiculo %}
+                    {{ registro.solicitacao.veiculo.placa_veiculo }}
+                    {%else%}-{%endif%} |
+                    {% set nome_split =
+                    registro.solicitacao.motorista.nome_completo.split() %}
+                    {% if nome_split|length > 1 %}
+                    {{ nome_split[0] }} {{ nome_split[1][0] }}.
+                    {% elif nome_split|length >= 0 %} {{ nome_split[0] }}
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary text-center"
+                    style="color: {{ '#2ea44f !important' if registro.solicitacao.ticket_emitido == 1 }}">
+                    {{ (registro.solicitacao.transportadora_exibicao.identificacao if
+                    registro.solicitacao.transportadora_exibicao else '-') | truncate(20, true, '...') }}
+                  </td>
+
+                  <td class="text-secondary text-center"
+                    style="color: {{ '#2ea44f !important' if registro.solicitacao.ticket_emitido == 1 }}">
+                    {% if registro.solicitacao.floresta_id %}
+                    {{ registro.solicitacao.floresta.identificacao[:15] }}
+                    {% if registro.solicitacao.floresta.identificacao | length >
+                    15 %}...{% endif %}
+                    {% elif registro.solicitacao.fornecedor_id %}
+                    {{ registro.solicitacao.fornecedor.identificacao[:15] }}
+                    {% if registro.solicitacao.fornecedor.identificacao | length
+                    > 15 %}...{% endif %}
+                    {% else %}
+                    -
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary text-center"
+                    style="color: {{ '#2ea44f !important' if registro.solicitacao.ticket_emitido == 1 }}">
+                    {% if registro.solicitacao.cliente_id %}
+                    {{ registro.solicitacao.cliente.identificacao[:15] }}
+                    {% if registro.solicitacao.cliente.identificacao | length >
+                    15 %}...{%endif%}
+                    {% else %}
+                    -
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary text-center campo-float"
+                    style="color: {{ '#2ea44f !important' if registro.solicitacao.ticket_emitido == 1 }}">
+                    {%if registro.peso_liquido_ticket %}
+                    {{ registro.peso_liquido_ticket }}
+                    {% else %}
+                    -
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-list flex-nowrap justify-content-center">
+                      <a href="{{url_for('detalhe_registro_operacional', id=registro.id)}}"
+                        class="btn btn-icon btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Ver detalhes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-eye">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                          <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                        </svg>
+                      </a>
+                      <a href="{{url_for('split_carga', id=registro.id)}}"
+                        class="btn btn-icon btn-outline-warning {% if registro.solicitacao.nf_emitida != 1 or registro.realizado_split == True %}disabled{% endif %}"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Realizar Split">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-arrows-split-2">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M21 17h-5.397a5 5 0 0 1 -4.096 -2.133l-.514 -.734a5 5 0 0 0 -4.096 -2.133h-3.897" />
+                          <path d="M21 7h-5.395a5 5 0 0 0 -4.098 2.135l-.51 .73a5 5 0 0 1 -4.097 2.135h-3.9" />
+                          <path d="M18 10l3 -3l-3 -3" />
+                          <path d="M18 20l3 -3l-3 -3" />
+                        </svg>
+                      </a>
+                      <a href="{{url_for('cadastrar_ticket', id=registro.solicitacao.id)}}"
+                        class="btn btn-icon btn-outline-info {% if registro.solicitacao.ticket_emitido == 1 %}disabled{% endif %}"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Lançar Ticket">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-ticket" width="24"
+                          height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                          <path d="M15 5l0 2"></path>
+                          <path d="M15 11l0 2"></path>
+                          <path d="M15 17l0 2"></path>
+                          <path
+                            d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2">
+                          </path>
+                        </svg>
+                      </a>
+                      {% if registro.deletado == 0%}
+                      <a href="{{url_for('excluir_registro_operacional', id=registro.id)}}"
+                        class="btn btn-icon btn-outline-danger excluir {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%}"
+                        data-bs-toggle="modal" data-bs-target="#modal-cancelar-{{registro.id}}"
+                        title="Cancelar Solicitação">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24"
+                          height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                          <path d="M18 6l-12 12"></path>
+                          <path d="M6 6l12 12"></path>
+                        </svg>
+                      </a>
+
+                      <div class="modal modal-blur fade" id="modal-cancelar-{{registro.id}}" tabindex="-1" role="dialog"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                          <div class="modal-content">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-status bg-danger"></div>
+                            <div class="modal-body text-center py-4">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-danger icon-lg" width="24"
+                                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M12 9v4"></path>
+                                <path
+                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z">
+                                </path>
+                                <path d="M12 16h.01"></path>
+                              </svg>
+                              <div class="text-secondary">
+                                Você realmente deseja cancelar solicitação?
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <div class="w-100">
+                                <div class="row">
+                                  <div class="col">
+                                    <a href="#" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal">
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x"
+                                        width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+                                        stroke="currentColor" fill="none" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                        <path d="M18 6l-12 12"></path>
+                                        <path d="M6 6l12 12"></path>
+                                      </svg>
+                                      Fechar
+                                    </a>
+                                  </div>
+                                  <div class="col">
+                                    <a href="{{url_for('excluir_registro_operacional', id=registro.id)}}"
+                                      class="btn btn-danger w-100">
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check"
+                                        width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+                                        stroke="currentColor" fill="none" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                        <path d="M5 12l5 5l10 -10"></path>
+                                      </svg>
+                                      Sim
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+
+            </table>
+          </div>
+          <div class="card-footer">
+            <div class="row">
+              <div class="col-sm-6 col-md-6 d-flex justify-content-center justify-content-md-start">
+                <div class="mb-3">
+                  <p class="m-0 text-secondary">
+                    Página
+                    <span>{{ registros.page }}</span>
+                    de
+                    <span>{{ registros.pages }}</span>
+                    (total de
+                    <span>{{ registros.total }}</span>
+                    registros)
+                  </p>
+                </div>
+              </div>
+              <div class="col-sm-6 col-md-6 d-flex justify-content-center justify-content-md-end">
+                <div class="mb-3">
+                  <ul class="pagination m-0 ms-auto">
+                    {% if registros.has_prev %}
+                    <li class="page-item">
+                      <a class="badge bg-blue-lt" href="{{ url_for('listagem_registros_operacionais',
+                                page=registros.prev_num,
+                                dataInicio=dados_corretos.get('dataInicio'),
+                                dataFim=dados_corretos.get('dataFim'),
+                                numeroNfOperacao=dados_corretos.get('numeroNfOperacao'),
+                                transportadoraOperacao=dados_corretos.get('transportadoraOperacao'),
+                                motoristaOperacao=dados_corretos.get('motoristaOperacao'),
+                                origemOperacao=dados_corretos.get('origemOperacao'),
+                                clienteOperacao=dados_corretos.get('clienteOperacao'),
+                                placaOperacao=dados_corretos.get('placaOperacao')
+                              ) }}" tabindex="-1" aria-disabled="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                          stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M15 6l-6 6l6 6" />
+                        </svg>
+                      </a>
+                    </li>
+                    {% endif %}
+
+                    {% for p in registros.iter_pages(left_edge=1,
+                    left_current=1, right_current=1, right_edge=1) %}
+                    {% if p %}
+                    <li class="page-item {% if p == registros.page %}active{% endif %}">
+                      <a class="page-link" href="{{ url_for('listagem_registros_operacionais',
+                                  page=p,
+                                  dataInicio=dados_corretos.get('dataInicio'),
+                                  dataFim=dados_corretos.get('dataFim'),
+                                  numeroNfOperacao=dados_corretos.get('numeroNfOperacao'),
+                                  transportadoraOperacao=dados_corretos.get('transportadoraOperacao'),
+                                  motoristaOperacao=dados_corretos.get('motoristaOperacao'),
+                                  origemOperacao=dados_corretos.get('origemOperacao'),
+                                  clienteOperacao=dados_corretos.get('clienteOperacao'),
+                                  placaOperacao=dados_corretos.get('placaOperacao')
+                                ) }}">
+                        {{ p }}
+                      </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if registros.has_next %}
+                    <li class="page-item">
+                      <a class="badge bg-blue-lt" href="{{ url_for('listagem_registros_operacionais',
+                                page=registros.next_num,
+                                dataInicio=dados_corretos.get('dataInicio'),
+                                dataFim=dados_corretos.get('dataFim'),
+                                numeroNfOperacao=dados_corretos.get('numeroNfOperacao'),
+                                transportadoraOperacao=dados_corretos.get('transportadoraOperacao'),
+                                motoristaOperacao=dados_corretos.get('motoristaOperacao'),
+                                origemOperacao=dados_corretos.get('origemOperacao'),
+                                clienteOperacao=dados_corretos.get('clienteOperacao'),
+                                placaOperacao=dados_corretos.get('placaOperacao')
+                              ) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                          stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M9 6l6 6l-6 6" />
+                        </svg>
+                      </a>
+                    </li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal modal-blur fade" id="modal-atualizacao-precos" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <form id="form-atualizacao-precos-unitarios" method="POST" action="{{ url_for('atualiza_preco_un_nf') }}">
+          <div class="modal-header">
+            <h5 class="modal-title">Atualizar Preços Unitários</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-status bg-danger"></div>
+          </div>
+          <div class="modal-body text-center py-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon mb-2 text-danger icon-lg">
+              <path d="M12 9v4" />
+              <path
+                d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+              <path d="M12 16h.01" />
+            </svg>
+            <div class="text-secondary">Deseja realmente prosseguir com a atualização dos preços unitários?</div>
+          </div>
+
+          <div class="modal-footer">
+            <div class="w-100">
+              <div class="row">
+                <div class="col"> <button type="button" class="btn btn-3 w-100 btn-outline-secondary"
+                    data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon icon-tabler icon-tabler-x">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M18 6l-12 12" />
+                      <path d="M6 6l12 12" />
+                    </svg>
+                    Cancelar
+                  </button>
+                </div>
+                <div class="col">
+                  <button type="submit" class="btn btn-4 w-100 btn-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon icon-tabler icon-tabler-refresh">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                      <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                    </svg>
+                    Atualizar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal modal-blur fade" id="modal-loading-precos-unitarios" tabindex="-1" role="dialog" aria-hidden="true"
+    data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-body text-center py-5">
+          <div class="mb-3">
+            <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+          </div>
+          <h4 class="mb-2">Atualizando preços unitários</h4>
+          <p class="text-muted mb-0">
+            Aguarde enquanto os preços unitários estão sendo atualizados...
+          </p>
+          <div class="progress mt-3" style="height: 6px;">
+            <div class="progress-bar progress-bar-indeterminate bg-danger"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
+      <form action="{{ url_for('listagem_registros_operacionais') }}" method="GET">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar Registros Operacionais</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="dataInicio" class="form-control"
+                  value="{{dados_corretos.get('dataInicio', '')}}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="dataFim" class="form-control" value="{{ dados_corretos.get('dataFim', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Número NF</label>
+                <input type="text" name="numeroNfOperacao" class="form-control"
+                  value="{{ dados_corretos.get('numeroNfOperacao', '') }}">
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Produto</label>
+                <select name="produtoEmissao" class="form-select">
+                  <option value="{{ dados_corretos.get('produtoEmissao', '') }}" selected>{{
+                    dados_corretos.get('produtoEmissao',
+                    'Selecione..') }}</option>
+                  {% for p in produtos %}
+                  <option value="{{ p.nome }}">{{ p.nome }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Bitola</label>
+                <select name="bitolaEmissao" class="form-select">
+                  <option value selected>{{ dados_corretos.get('bitolaEmissao',
+                    'Selecione...') }}</option>
+                  {% for b in bitolas %}
+                  <option value="{{ b.bitola }}">{{ b.bitola }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Transportadora</label>
+                <input type="text" name="transportadoraOperacao" class="form-control"
+                  value="{{ dados_corretos.get('transportadoraOperacao', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Motorista</label>
+                <input type="text" name="motoristaOperacao" class="form-control"
+                  value="{{ dados_corretos.get('motoristaOperacao', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Placa</label>
+                <input type="text" name="placaOperacao" class="form-control"
+                  value="{{ dados_corretos.get('placaOperacao', '') }}">
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="clienteOperacao" class="form-control"
+                  value="{{ dados_corretos.get('clienteOperacao', '') }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Origem</label>
+                <input type="text" name="origemOperacao" class="form-control"
+                  value="{{ dados_corretos.get('origemOperacao', '') }}" placeholder="Fornecedor/floresta">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <a href="{{ url_for('listagem_registros_operacionais') }}" class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const formAtualizacaoPrecosUnitarios = document.getElementById('form-atualizacao-precos-unitarios');
+    if (formAtualizacaoPrecosUnitarios) {
+      formAtualizacaoPrecosUnitarios.addEventListener('submit', function (e) {
+        const modalConfirmacao = bootstrap.Modal.getInstance(document.getElementById('modal-atualizacao-precos'));
+        if (modalConfirmacao) {
+          modalConfirmacao.hide();
+        }
+
+        setTimeout(() => {
+          const modalLoading = new bootstrap.Modal(document.getElementById('modal-loading-precos-unitarios'));
+          modalLoading.show();
+        }, 300);
+      });
+    }
+  });
+</script>
+
+{% endblock conteudo %}

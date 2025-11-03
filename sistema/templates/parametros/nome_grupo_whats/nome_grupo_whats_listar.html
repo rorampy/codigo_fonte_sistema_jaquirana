@@ -1,0 +1,158 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            Grupos
+          </div>
+          <h2 class="page-title">
+            Listagem
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex">
+            <a href="{{ url_for('cadastrar_grupo') }}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Cadastrar Grupo
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <div  class="card">
+
+          <!-- Início Tabela -->
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: center;">Nome Grupo</th>
+                  <th style="text-align: center;">Ativo</th>
+                  <th style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for g in grupos %}
+                <tr>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ g.nome_grupo_whats[:40] }}
+                    {% if g.nome_grupo_whats | length > 40 %}
+                    ...
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {%if g.ativo == 1%}<span class="badge badge-outline text-green">Sim</span>{%else%}<span
+                      class="badge badge-outline text-danger">Não</span>{%endif%}
+                  </td>
+                  <td>
+                    <div class="btn-list flex-nowrap" style="justify-content: center;">
+                      <!-- Botão: Editar grupo -->
+                      <a href="{{ url_for('editar_grupo', id=g.id) }}" class="btn btn-icon btn-outline-warning"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Editar grupo">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="24"
+                          height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                          <path d="M13.5 6.5l4 4" />
+                        </svg>
+                      </a>
+                      {%if g.ativo == 1%}
+                      <!-- Botão: Desativar grupo -->
+                      <a href="#" class="btn btn-icon btn-outline-danger {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%} excluir" data-bs-toggle="modal"
+                        data-bs-target="#modal-desativar-{{ g.id }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24"
+                          height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M18 6l-12 12" />
+                          <path d="M6 6l12 12" />
+                        </svg>
+                      </a>
+                      <div class="modal modal-blur fade" id="modal-desativar-{{g.id}}" tabindex="-1" role="dialog"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                          <div class="modal-content">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-status bg-danger"></div>
+                            <div class="modal-body text-center py-4">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/alert-triangle -->
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
+                                <path d="M12 9v4" />
+                                <path
+                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                                <path d="M12 16h.01" />
+                              </svg>
+                              <div class="text-secondary">
+                                Você realmente deseja desativar este grupo?
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <div class="w-100">
+                                <div class="row">
+                                  <div class="col">
+                                    <a href="#" class="btn btn-3 w-100" data-bs-dismiss="modal">
+                                      Fechar
+                                    </a>
+                                  </div>
+                                  <div class="col">
+                                    <a href="{{url_for('desativar_grupo', id=g.id)}}"
+                                      class="btn btn-danger btn-4 w-100">
+                                      Desativar
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {%else%}
+                      <!-- Botão: Ativar grupo -->
+                      <a href="{{ url_for('ativar_grupo', id=g.id) }}" class="btn btn-icon btn-outline-success {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%} ativar"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Ativar grupo">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" width="24"
+                          height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M5 12l5 5l10 -10" />
+                        </svg>
+                      </a>
+                      {%endif%}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

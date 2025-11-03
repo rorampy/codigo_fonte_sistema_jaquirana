@@ -1,0 +1,280 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">RELATÓRIOS</div>
+          <h2 class="page-title">Controle de emissão</h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <form action="{{ url_for('relatorio_controle_emissao') }}"
+              method="POST" id="exportPdfForm" target="_blank">
+              <input type="hidden" name="dataInicio"
+                value="{{ dados_corretos.get('dataInicio', '') }}">
+              <input type="hidden" name="dataFim"
+                value="{{ dados_corretos.get('dataFim', '') }}">
+              <input type="hidden" name="exportar_pdf" value="1">
+              <button type="submit" class="btn btn-outline-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf"><path
+                    stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+                    d="M14 3v4a1 1 0 0 0 1 1h4" /><path
+                    d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" /><path
+                    d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" /><path
+                    d="M17 18h2" /><path d="M20 15h-3v6" /><path
+                    d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" /></svg>
+                Exportar em PDF
+              </button>
+            </form>
+            <form action="{{ url_for('relatorio_controle_emissao') }}"
+              method="POST" id="exportExcelForm">
+              <input type="hidden" name="dataInicio"
+                value="{{ dados_corretos.get('dataInicio', '') }}">
+              <input type="hidden" name="dataFim"
+                value="{{ dados_corretos.get('dataFim', '') }}">
+              <input type="hidden" name="exportar_excel" value="1">
+              <button type="submit" class="btn btn-outline-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-spreadsheet"><path
+                    stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+                    d="M14 3v4a1 1 0 0 0 1 1h4" /><path
+                    d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path
+                    d="M8 11h8v7h-8z" /><path d="M8 15h8" /><path
+                    d="M11 11v7" /></svg> Exportar em Excel
+              </button>
+            </form>
+            <a href="#" class="btn" data-bs-toggle="modal"
+              data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="card">
+        {% if registrosOperacionais %}
+        <div class="table-responsive">
+          <table id="tabela-informacao" style="margin-bottom: 0px !important;"
+            class="table table-selectable card-table table-vcenter text-nowrap datatable">
+            <thead>
+              <tr>
+                <th style="text-align: center;"><strong>Data NF</strong></th>
+                <th
+                  style="text-align: center;"><strong>Produto/Bitola</strong></th>
+                <th
+                  style="text-align: center;"><strong>Transportadora</strong></th>
+                <th
+                  style="text-align: center;"><strong>Placa/Motorista</strong></th>
+                <th style="text-align: center;"><strong>Cliente</strong></th>
+                <th style="text-align: center;"><strong>Peso NF
+                    (Ton.)</strong></th>
+                <th style="text-align: center;"><strong>Número NF</strong></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in registrosOperacionais %}
+              <tr>
+                <td style="text-align: center;">{{ r.destinatario_data_emissao |
+                  formatar_data_para_brl}}</td>
+                <td style="text-align: center;">
+                  {%if r.solicitacao.produto.nome %}
+                  {{ r.solicitacao.produto.nome }}
+                  {%else%}-{%endif%} | {%if r.solicitacao.bitola.bitola %}
+                  {{ r.solicitacao.bitola.bitola }}
+                  {%else%}-{%endif%}
+                </td>
+                <td style="text-align: center;">
+                  {%if r.solicitacao.transportadora_exibicao %}
+                  {{ r.solicitacao.transportadora_exibicao.identificacao }}
+                  {%else%}-{%endif%}
+                </td>
+                <td style="text-align: center;">
+                  {%if r.solicitacao.veiculo.placa_veiculo %}
+                  {{ r.solicitacao.veiculo.placa_veiculo }}
+                  {%else%}-{%endif%} |
+                  {% set nome_split =
+                  r.solicitacao.motorista.nome_completo.split() %}
+                  {% if nome_split|length > 1 %}
+                  {{ nome_split[0] }} {{ nome_split[1][0] }}.
+                  {% elif nome_split|length >= 0 %} {{ nome_split[0] }}
+                  {% endif %}
+                </td>
+                <td style="text-align: center;">
+                  {%if r.solicitacao.cliente.identificacao %}
+                  {{ r.solicitacao.cliente.identificacao | truncate(20, true,
+                  '...') }}
+                  {%else%}-{%endif%}
+                </td>
+                <td style="text-align: center;">
+                  {%if r.peso_ton_nf %}
+                  {{ r.peso_ton_nf }}
+                  {%else%}-{%endif%}
+                </td>
+                <td style="text-align: center;">
+                  <span class="badge bg-warning-lt p-2">
+                    {% if r.estorno_nf%}
+                    {{ r.numero_nota_fiscal_estorno }} *
+                    {% elif r.numero_nota_fiscal %}
+                    {{ r.numero_nota_fiscal }}
+                    {%else%}
+                    -
+                    {% endif %}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {%else%}
+        <div class="area-info-card" style="
+          padding: 30px;
+          border-radius: 10px;
+          text-align: center;
+          box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+          background-color: white;
+        ">
+          <div class="icon-extrato"
+            style="font-size: 70px; color: #fc7801; margin-bottom: 15px">
+            ❌
+          </div>
+          <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">
+            Nenhum dado disponível
+          </h2>
+          <p style="color: #777;">
+            No momento não há registros para exibir.
+          </p>
+        </div>
+
+        {%endif%}
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Filtro -->
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1"
+    role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document"
+      style="display: grid;">
+      <form action="{{ url_for('relatorio_controle_emissao') }}"
+        method="POST">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar Controle de Emissões</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"
+              aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="dataInicio" class="form-control"
+                  value="{{ dados_corretos.get('dataInicio', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="dataFim" class="form-control"
+                  value="{{ dados_corretos.get('dataFim', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Número NF</label>
+                <input type="text" name="numeroNfEmissao" class="form-control"
+                  value="{{ dados_corretos.get('numeroNfEmissao', '') }}">
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Produto</label>
+                <select name="produtoEmissao" class="form-select">
+                  <option value="{{ dados_corretos.get('produtoEmissao', '') }}"
+                    selected>{{ dados_corretos.get('produtoEmissao',
+                    'Selecione..') }}</option>
+                  {% for p in produtos %}
+                  <option value="{{ p.nome }}">{{ p.nome }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Bitola</label>
+                <select name="bitolaEmissao" class="form-select">
+                  <option value selected>{{ dados_corretos.get('bitolaEmissao',
+                    'Selecione...') }}</option>
+                  {% for b in bitolas %}
+                  <option value="{{ b.bitola }}">{{ b.bitola }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Transportadora</label>
+                <input type="text" name="transportadoraEmissao"
+                  class="form-control"
+                  value="{{ dados_corretos.get('transportadoraEmissao', '') }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Motorista</label>
+                <input type="text" name="motoristaEmissao" class="form-control"
+                  value="{{ dados_corretos.get('motoristaEmissao', '') }}">
+              </div>
+
+              <div class="col-md-8 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="clienteEmissao" class="form-control"
+                  value="{{ dados_corretos.get('clienteEmissao', '') }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Placa</label>
+                <input type="text" name="placaEmissao" class="form-control"
+                  value="{{ dados_corretos.get('placaEmissao', '') }}">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <a href="{{ url_for('relatorio_controle_emissao') }}"
+              class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto"
+              data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter"><path stroke="none"
+                  d="M0 0h24v24H0z" fill="none" /><path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" /></svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

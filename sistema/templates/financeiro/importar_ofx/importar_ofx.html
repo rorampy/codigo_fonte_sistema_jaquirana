@@ -1,0 +1,303 @@
+{% extends 'estrutura/base.html' %}
+
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<link rel="stylesheet" href="{{url_for('static', filename='css/upload-card.css')}}">
+
+<div class="page-wrapper">
+  <div class="page-body py-4">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="row justify-content-center">
+        <div class="col-lg-12">
+          <div class="import-card">
+            <div class="import-header">
+              <div class="import-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" stroke-width="1.5"
+                  stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+                  <path d="M5 13v-8a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5.5m-9.5 -2h7m-3 -3l3 3l-3 3"></path>
+                </svg>
+              </div>
+              <h3 class="import-title">Importar arquivo OFX</h3>
+              <p class="import-subtitle">
+                Faça upload do arquivo baixado do seu banco para sincronizar suas transações automaticamente
+              </p>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="form-upload-ofx">
+              <div class="upload-zone" id="upload-area">
+                <input type="file" class="upload-input" id="arquivo_ofx" name="arquivo_ofx" accept=".ofx,.qfx" required>
+
+                <div id="upload-default" class="upload-content">
+                  <div class="upload-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1"
+                      stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                      <path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-12"></path>
+                      <path d="M9 15l3 -3l3 3"></path>
+                      <path d="M12 12l0 9"></path>
+                    </svg>
+                  </div>
+                  <h4 class="upload-title">Arraste seu arquivo aqui</h4>
+                  <p class="upload-text">
+                    ou <span class="upload-link">clique para selecionar</span>
+                  </p>
+                  <div class="upload-info">
+                    Formatos aceitos: <strong>.ofx, .qfx</strong> • Máximo: <strong>10MB</strong>
+                  </div>
+                </div>
+
+                <div id="upload-selected" class="upload-content upload-success d-none">
+                  <div class="upload-success-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" stroke-width="2"
+                      stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                      <path d="M5 12l5 5l10 -10"></path>
+                    </svg>
+                  </div>
+                  <h4 class="upload-title" id="file-name">Arquivo selecionado</h4>
+                  <p class="upload-text" id="file-size">0 KB</p>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <a href="{{url_for('conciliacao_contas_bancarias')}}" class="btn btn-secondary">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M5 12l14 0"></path>
+                    <path d="M5 12l6 6"></path>
+                    <path d="M5 12l6 -6"></path>
+                  </svg>
+                  Voltar
+                </a>
+
+                <button type="submit" class="btn btn-primary" id="btn-importar">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-12"></path>
+                    <path d="M9 15l3 -3l3 3"></path>
+                    <path d="M12 12l0 9"></path>
+                  </svg>
+                  Importar arquivo
+                </button>
+              </div>
+            </form>
+
+            <div class="progress-section d-none" id="progress-area">
+              <div class="progress-content">
+                <div class="progress-icon">
+                  <div class="spinner"></div>
+                </div>
+                <h5 class="progress-title">Processando arquivo...</h5>
+                <p class="progress-text">Aguarde enquanto importamos suas transações</p>
+                <div class="progress-bar">
+                  <div class="progress-fill"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+<!-- Modais -->
+<div class="modal modal-blur fade" id="modal-arquivo-grande" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content modern-modal">
+      <div class="modal-body">
+        <div class="modal-icon error">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+            <path d="M12 9v2m0 4v.01"></path>
+            <path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"></path>
+          </svg>
+        </div>
+        <div class="modal-text">
+          <h3>Arquivo muito grande!</h3>
+          <p>O arquivo selecionado excede o tamanho máximo permitido de 10MB.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary w-100" data-bs-dismiss="modal">Entendi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal modal-blur fade" id="modal-formato-invalido" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content modern-modal">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-icon error">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+            <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5.5" />
+            <path d="M3 15h4l2 2l-2 2h-4z" />
+            <path d="M9 15v6" />
+          </svg>
+        </div>
+
+        <div class="modal-text">
+          <h3>Formato não suportado!</h3>
+          <p>O arquivo selecionado não possui uma extensão válida para importação bancária.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
+            onclick="document.getElementById('arquivo_ofx').click()">
+            Escolher arquivo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal modal-blur fade" id="modal-sem-arquivo" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content modern-modal">
+      <div class="modal-body">
+        <div class="modal-icon info">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+            <path d="M12 8v4"></path>
+            <path d="M12 16h.01"></path>
+            <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z"></path>
+          </svg>
+        </div>
+        <div class="modal-text">
+          <h3>Arquivo necessário</h3>
+          <p>Por favor, selecione um arquivo OFX antes de prosseguir com a importação.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary w-100" data-bs-dismiss="modal">Entendi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('form-upload-ofx');
+    const btnImportar = document.getElementById('btn-importar');
+    const progressArea = document.getElementById('progress-area');
+    const arquivoInput = document.getElementById('arquivo_ofx');
+    const uploadArea = document.getElementById('upload-area');
+    const uploadDefault = document.getElementById('upload-default');
+    const uploadSelected = document.getElementById('upload-selected');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+
+    uploadArea.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      this.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', function (e) {
+      e.preventDefault();
+      this.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', function (e) {
+      e.preventDefault();
+      this.classList.remove('dragover');
+
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        arquivoInput.files = files;
+        handleFileSelect(files[0]);
+      }
+    });
+
+    arquivoInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (file) {
+        handleFileSelect(file);
+      } else {
+        resetUploadArea();
+      }
+    });
+
+    function handleFileSelect(file) {
+      const fileSize_MB = file.size / 1024 / 1024;
+      const allowedExtensions = ['ofx', 'qfx'];
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+
+      if (fileSize_MB > 10) {
+        const modalArquivoGrande = new bootstrap.Modal(document.getElementById('modal-arquivo-grande'));
+        modalArquivoGrande.show();
+        resetUploadArea();
+        return;
+      }
+
+      if (!allowedExtensions.includes(fileExtension)) {
+        const modalFormatoInvalido = new bootstrap.Modal(document.getElementById('modal-formato-invalido'));
+        modalFormatoInvalido.show();
+        resetUploadArea();
+        return;
+      }
+
+      fileName.textContent = file.name;
+      fileSize.textContent = formatFileSize(file.size);
+      uploadDefault.classList.add('d-none');
+      uploadSelected.classList.remove('d-none');
+      uploadArea.classList.add('selected');
+    }
+
+    function resetUploadArea() {
+      uploadDefault.classList.remove('d-none');
+      uploadSelected.classList.add('d-none');
+      uploadArea.classList.remove('selected');
+      arquivoInput.value = '';
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    form.addEventListener('submit', function (e) {
+      if (!arquivoInput.files[0]) {
+        e.preventDefault();
+        const modalSemArquivo = new bootstrap.Modal(document.getElementById('modal-sem-arquivo'));
+        modalSemArquivo.show();
+        return;
+      }
+
+      btnImportar.disabled = true;
+      btnImportar.innerHTML = `
+        <div class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>
+        Importando...
+      `;
+      progressArea.classList.remove('d-none');
+    });
+  });
+</script>
+
+{% endblock conteudo %}

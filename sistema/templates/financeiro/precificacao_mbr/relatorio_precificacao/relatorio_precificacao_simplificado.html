@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório Simplificado - Precificação MBR</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      margin: 20px;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    .header {
+      border-bottom: 2px solid #1e5631;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+
+    .header table {
+      width: 100%;
+      border: none;
+    }
+
+    .header img {
+      width: 120px;
+    }
+
+    .system-info {
+      text-align: right;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .relatorio-title {
+      text-align: center;
+      font-size: 18px;
+      color: #1e5631;
+      font-weight: bold;
+      margin: 20px 0;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      color: #1e5631;
+      font-weight: bold;
+      font-size: 14px;
+      margin: 20px 0 10px 0;
+      padding: 8px 10px;
+      background-color: #f0f8f0;
+      border-left: 4px solid #1e5631;
+    }
+
+    .simple-info {
+      margin: 8px 0;
+      font-size: 12px;
+      padding: 5px 0;
+    }
+
+    .simple-info strong {
+      color: #1e5631;
+      display: inline-block;
+      min-width: 150px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0 20px 0;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #1e5631;
+      color: white;
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    td:first-child {
+      text-align: left;
+      font-weight: bold;
+      background-color: #f8f9fa;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .valor-destaque {
+      color: #1e5631;
+      font-weight: bold;
+    }
+
+    .status-sim {
+      background-color: #d4edda;
+      color: #155724;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .status-nao {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .resultado-final {
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f0f8f0;
+      border: 1px solid #c3e6c3;
+      border-radius: 5px;
+    }
+
+    .resultado-final .simple-info {
+      margin: 10px 0;
+      font-size: 13px;
+    }
+
+    .margem-destaque {
+      font-size: 14px;
+      color: #1e5631;
+      font-weight: bold;
+      margin: 15px 0;
+      padding: 8px 0;
+      border-top: 1px solid #c3e6c3;
+    }
+
+    .info-produto {
+      background-color: #f8f9fa;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 5px;
+      border: 1px solid #dee2e6;
+    }
+
+    .info-produto .simple-info {
+      margin: 5px 0;
+    }
+
+    .highlight-box {
+      background-color: #e8f5e8;
+      border: 1px solid #c3e6c3;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+
+    .margem-principal {
+      background-color: #1e5631 !important;
+      color: white !important;
+    }
+
+    .margem-principal td {
+      background-color: #1e5631 !important;
+      color: white !important;
+      font-size: 13px !important;
+      padding: 12px 8px !important;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .margem-valor {
+      font-size: 15px !important;
+      font-weight: bold !important;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 10px;
+      color: #777;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+
+    .conclusao {
+      background-color: #f0f8f0;
+      border: 1px solid #c3e6c3;
+      padding: 15px;
+      margin: 25px 0;
+      border-radius: 5px;
+    }
+
+    .conclusao h4 {
+      color: #1e5631;
+      margin: 0 0 10px 0;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <table>
+      <tr>
+        <td style="width: 200px;">
+          <img src="{{logo_path}}" alt="Logo MBR Extração" />
+        </td>
+        <td class="system-info">
+          <div><strong>Sistema de Gestão MBR</strong></div>
+          <div><strong>Versão</strong> {{changelog.versao}}</div>
+          <div><strong>Data última atualização:</strong> {{changelog.data_lancamento if changelog else '22/08/2025'}}
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="relatorio-title">Relatório Simplificado - Precificação</div>
+
+  <!-- Dados do Produto -->
+  <div class="section-title">DADOS DO PRODUTO</div>
+  <div class="simple-info">
+    <strong>Produto:</strong> {{ dados.produto or '-' }}
+  </div>
+  <div class="simple-info">
+    <strong>Bitola:</strong> {{ dados.bitola or '-' }}
+  </div>
+  <div class="simple-info">
+    <strong>Madeira Posta:</strong>
+    {% if dados.madeira_posta == 'sim' %}
+    <span class="status-sim">Sim</span>
+    {% else %}
+    <span class="status-nao">Não</span>
+    {% endif %}
+  </div>
+
+
+  <!-- Receitas -->
+  <div class="section-title">RECEITAS</div>
+  <div class="simple-info">
+    <strong>Quantidade Ton:</strong> <span class="valor-destaque">{{ dados.quantidade }} Ton</span>
+  </div>
+  <div class="simple-info">
+    <strong>Preço Venda Ton:</strong> <span class="valor-destaque">{{ dados.valor_unitario | formatar_float_para_brl
+      }}</span>
+  </div>
+  <div class="simple-info">
+    <strong>Total Receitas:</strong> <span class="valor-destaque">{{ calculo.receita_bruta | formatar_float_para_brl
+      }}</span>
+  </div>
+
+  <!-- Custos -->
+  <div class="section-title">CUSTOS</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Produto/Serviço</th>
+        <th>Compra</th>
+        <th>Acréscimos</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Compra Madeira</td>
+        <td class="valor-destaque">{{ calculo.operacoes.compra.valor_base | formatar_float_para_brl }}</td>
+        <td>{{ (calculo.operacoes.compra.icms + calculo.operacoes.compra.pis + calculo.operacoes.compra.cofins +
+          calculo.operacoes.compra.acrescimos) | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ calculo.operacoes.compra.total | formatar_float_para_brl }}</td>
+      </tr>
+      {% if dados.madeira_posta == 'nao' %}
+      <tr>
+        <td>Frete</td>
+        <td class="valor-destaque">{{ calculo.operacoes.frete.valor_base | formatar_float_para_brl }}</td>
+        <td>{{ (calculo.operacoes.frete.icms + calculo.operacoes.frete.pis + calculo.operacoes.frete.cofins +
+          calculo.operacoes.frete.acrescimos) | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ calculo.operacoes.frete.total | formatar_float_para_brl }}</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td>Extração</td>
+        <td class="valor-destaque">{{ calculo.operacoes.extracao.valor_base | formatar_float_para_brl }}</td>
+        <td>{{ (calculo.operacoes.extracao.icms + calculo.operacoes.extracao.pis + calculo.operacoes.extracao.cofins +
+          calculo.operacoes.extracao.acrescimos) | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ calculo.operacoes.extracao.total | formatar_float_para_brl }}</td>
+      </tr>
+      <tr>
+        <td>Comissão</td>
+        <td class="valor-destaque">{{ calculo.operacoes.comissao.valor_base | formatar_float_para_brl }}</td>
+        <td>{{ (calculo.operacoes.comissao.icms + calculo.operacoes.comissao.pis + calculo.operacoes.comissao.cofins +
+          calculo.operacoes.comissao.acrescimos) | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ calculo.operacoes.comissao.total | formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Relação Fiscal -->
+  <div class="section-title">RELAÇÃO FISCAL</div>
+  {% set total_creditos = calculo.operacoes.compra.icms + calculo.operacoes.frete.icms + calculo.operacoes.extracao.icms
+  + calculo.operacoes.comissao.icms + calculo.operacoes.compra.pis + calculo.operacoes.frete.pis +
+  calculo.operacoes.extracao.pis + calculo.operacoes.comissao.pis + calculo.operacoes.compra.cofins +
+  calculo.operacoes.frete.cofins + calculo.operacoes.extracao.cofins + calculo.operacoes.comissao.cofins %}
+  {% set total_debitos = calculo.impostos_venda.total %}
+  {% set diferenca_liquida = total_debitos - total_creditos %}
+
+  <div class="simple-info">
+    <strong>Total Débitos:</strong> <span class="valor-destaque">{{ total_debitos | formatar_float_para_brl }}</span>
+  </div>
+  <div class="simple-info">
+    <strong>Total Créditos:</strong> <span class="valor-destaque">{{ total_creditos | formatar_float_para_brl }}</span>
+  </div>
+  <div class="simple-info">
+    <strong>Diferença Liquida</strong> <span class="valor-destaque">{{ diferenca_liquida | formatar_float_para_brl }} {% if diferenca_liquida > 0 %} | Imposto a Pagar{% else %} | Imposto a Restituir{% endif %}</span>
+  </div>
+
+  <!-- Resultado -->
+  <div class="section-title">RESULTADO</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Descrição</th>
+        <th>Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Receita Bruta</td>
+        <td class="valor-destaque">{{ calculo.receita_bruta | formatar_float_para_brl }}</td>
+      </tr>
+      <tr>
+        <td>Receita Líquida</td>
+        <td class="valor-destaque">{{ calculo.receita_liquida | formatar_float_para_brl }}</td>
+      </tr>
+      <tr>
+        <td>Despesas Totais (CMV)</td>
+        <td class="valor-destaque">{{ calculo.cmv | formatar_float_para_brl }}</td>
+      </tr>
+      <tr>
+        <td>Lucro Bruto</td>
+        <td class="valor-destaque">{{ calculo.lucro_bruto | formatar_float_para_brl }}</td>
+      </tr>
+      <tr>
+        <td>Lucro Líquido Final</td>
+        <td class="valor-destaque">{{ calculo.lucro_liquido | formatar_float_para_brl }}</td>
+      </tr>
+      {% set margem_por_tonelada = calculo.lucro_liquido / dados.quantidade if dados.quantidade > 0 else 0 %}
+      {% set margem_percentual = (margem_por_tonelada / dados.valor_unitario * 100) if dados.valor_unitario > 0 else 0
+      %}
+      <tr class="margem-principal">
+        <td><strong>MARGEM POR TONELADA</strong></td>
+        <td class="margem-valor"><strong>{{ margem_por_tonelada | formatar_float_para_brl }}</strong></td>
+      </tr>
+      <tr class="margem-principal">
+        <td><strong>MARGEM POR TONELADA (%)</strong></td>
+        <td class="margem-valor"><strong>{{ "%.2f"|format((margem_por_tonelada / dados.valor_unitario * 100) if dados.valor_unitario > 0 else 0) }}%</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão MBR - Módulo de Precificação</strong></p>
+    <p>Relatório Simplificado gerado automaticamente pelo Sistema de Gestão MBR</p>
+  </div>
+</body>
+
+</html>

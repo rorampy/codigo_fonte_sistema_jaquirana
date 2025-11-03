@@ -1,0 +1,1091 @@
+:root {
+  --primary-color: #205038;
+  --primary-light: #2d6b48;
+  --primary-lighter: #f0f8f4;
+  --white: #FFFFFF;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #3b82f6;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 5px;
+  --radius-xl: 20px;
+}
+
+
+/* Informações da Conta */
+.account-info-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-100);
+  animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.account-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--primary-lighter);
+  color: var(--primary-color);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.account-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.detail-item {
+  margin-bottom: 20px;
+}
+
+.detail-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.detail-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ========================================
+     ELEMENTOS BÁSICOS E NAVEGAÇÃO (OTIMIZADO)
+  ======================================== */
+.nav-tabs .nav-link {
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.card-header h5 {
+  font-weight: 600;
+}
+
+/* Performance: usar transform ao invés de mudanças de layout */
+.performance-hover {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.performance-hover:hover {
+  transform: translateY(-2px);
+}
+
+/* ========================================
+     ITENS DE TRANSAÇÃO (OTIMIZADO)
+  ======================================== */
+.transaction-item {
+  cursor: pointer;
+  /* Otimização: usar apenas transform e opacity para transições */
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent !important;
+  /* Promover para camada de composição para melhor performance */
+  will-change: transform;
+}
+
+.transaction-item:hover {
+  background-color: var(--tblr-bg-surface-secondary) !important;
+  transform: translateY(-1px) translateZ(0); /* translateZ força aceleração por hardware */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.transaction-item.border-primary {
+  border-color: var(--tblr-primary) !important;
+}
+
+/* ========================================
+     ESTADOS VAZIOS
+  ======================================== */
+.empty-state {
+  opacity: 0.8;
+}
+
+.empty-state .icon {
+  opacity: 0.6;
+}
+
+/* ========================================
+     ANIMAÇÕES E TRANSIÇÕES
+  ======================================== */
+@keyframes highlight {
+  0% {
+    background-color: transparent;
+  }
+
+  50% {
+    background-color: rgba(51, 91, 69, 0.3);
+  }
+
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* ========================================
+     TRANSAÇÕES CONCILIADAS
+  ======================================== */
+.transaction-item.reconciled {
+  background-color: rgba(32, 201, 151, 0.05) !important;
+  border-color: rgba(32, 201, 151, 0.2) !important;
+}
+
+/* ========================================
+     SUGESTÕES E CARDS DE CONTEÚDO (OTIMIZADO)
+  ======================================== */
+.suggestion-content .card {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.suggestion-content .card:hover {
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Otimização para tabelas com muitas linhas */
+.table-hover > tbody > tr:hover {
+  /* Usar background-color ao invés de box-shadow para melhor performance */
+  background-color: rgba(51, 91, 69, 0.05) !important;
+  transition: background-color 0.15s ease;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+
+
+/* Melhor feedback visual para ações */
+/* ========================================
+     NOTIFICAÇÕES E ALERTAS
+  ======================================== */
+.alert.position-fixed {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ========================================
+     SCROLLBARS PERSONALIZADAS
+  ======================================== */
+
+
+/* ========================================
+     ACESSIBILIDADE E FOCO
+  ======================================== */
+.transaction-item:focus {
+  outline: 2px solid var(--tblr-primary);
+  outline-offset: 2px;
+}
+
+/* ========================================
+     INDICADORES VISUAIS E GRADIENTES
+  ======================================== */
+.card-header.bg-primary,
+.card-header.bg-success {
+  background: linear-gradient(135deg, #335B45 0%, #4a7c59 100%) !important;
+}
+
+/* ========================================
+     ESTILOS MODERNOS PARA LISTA DE FATURAMENTOS
+  ======================================== */
+.faturamentos-container {
+  background: #fafbfc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e9ecef;
+  margin-top: 1rem;
+}
+
+.faturamentos-header {
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.results-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #335B45, #4a7c59);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.faturamentos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.faturamentos-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.faturamentos-list::-webkit-scrollbar-track {
+  background: #f1f3f4;
+  border-radius: 3px;
+}
+
+.faturamentos-list::-webkit-scrollbar-thumb {
+  background: #c1c8cd;
+  border-radius: 3px;
+}
+
+.faturamentos-list::-webkit-scrollbar-thumb:hover {
+  background: #a8b2ba;
+}
+
+.faturamento-card {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.faturamento-card:hover {
+  border-color: #335B45;
+  box-shadow: 0 4px 12px rgba(51, 91, 69, 0.15);
+  transform: translateY(-1px);
+}
+
+.faturamento-card.selected {
+  border-color: #335B45;
+  background: #f8fbf9;
+  box-shadow: 0 2px 8px rgba(51, 91, 69, 0.2);
+}
+
+.faturamento-card-body {
+  padding: 1rem;
+}
+
+.faturamento-card .form-check {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+
+.faturamento-card .form-check-input {
+  margin-top: 0.25rem;
+  margin-right: 0.75rem;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #dee2e6;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.faturamento-card .form-check-input:checked {
+  background-color: #335B45;
+  border-color: #335B45;
+}
+
+.faturamento-card .form-check-input:focus {
+  border-color: #335B45;
+  box-shadow: 0 0 0 0.2rem rgba(51, 91, 69, 0.25);
+}
+
+.faturamento-card .form-check-label {
+  cursor: pointer;
+  width: 100%;
+}
+
+.faturamento-info {
+  width: 100%;
+}
+
+.faturamento-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.faturamento-codigo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.codigo-badge {
+  background: linear-gradient(135deg, #335B45, #4a7c59);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: inline-block;
+  max-width: fit-content;
+}
+
+
+
+.faturamento-valor {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.valor-principal {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #335B45;
+  display: block;
+}
+
+.valor-data {
+  font-size: 0.8rem;
+  color: #6c757d;
+  display: block;
+}
+
+.faturamento-footer {
+  border-top: 1px solid #f1f3f4;
+  padding-top: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.usuario-info {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.usuario-info svg {
+  opacity: 0.7;
+}
+
+/* ========================================
+     SEÇÃO DE INFORMAÇÕES DOS SELECIONADOS
+  ======================================== */
+.alert-info {
+  background: linear-gradient(135deg, #335B45, #4F7F66);
+  border: 1px solid #bbdefb;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.selecionados-info {
+  position: sticky;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid #dee2e6;
+  padding: 1rem 1.5rem;
+  margin-top: 1rem;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.info-badge {
+  background: linear-gradient(45deg, #335B45, #4a7c59);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.valor-badge {
+  background: linear-gradient(45deg, #28a745, #20c997);
+  color: white;
+  padding: 0.35rem 1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.status-info {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.btn-conciliar-selecionados {
+  background: linear-gradient(45deg, #335B45, #4a7c59);
+  border: none;
+  color: white;
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  border-radius: 25px;
+  box-shadow: 0 4px 8px rgba(51, 91, 69, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-conciliar-selecionados:hover {
+  background: linear-gradient(45deg, #2a4d3a, #335B45);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(51, 91, 69, 0.4);
+  color: white;
+}
+
+/* Responsividade para faturamentos */
+@media (max-width: 768px) {
+  .faturamentos-container {
+    padding: 1rem;
+  }
+
+  .faturamento-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .faturamento-valor {
+    text-align: left;
+    margin-top: 0.5rem;
+  }
+
+  .alert-info {
+    padding: 1rem;
+  }
+}
+
+/* ========================================
+     ESTADO VAZIO MELHORADO
+  ======================================== */
+.empty-search-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, #f8f9fa, #ffffff);
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  margin: 1rem 0;
+  transition: all 0.3s ease;
+}
+
+.empty-search-state:hover {
+  border-color: #335B45;
+  background: linear-gradient(135deg, #f8fbf9, #ffffff);
+}
+
+.empty-search-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #e9ecef, #f8f9fa);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  color: #6c757d;
+  transition: all 0.3s ease;
+}
+
+.empty-search-state:hover .empty-search-icon {
+  background: linear-gradient(135deg, #335B45, #4a7c59);
+  color: white;
+  transform: scale(1.05);
+}
+
+.empty-search-content {
+  max-width: 400px;
+}
+
+.empty-search-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.75rem;
+}
+
+.empty-search-description {
+  color: #6c757d;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.empty-search-tip {
+  display: inline-flex;
+  align-items: center;
+  background: #e3f2fd;
+  color: #335B45;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 1px solid #bbdefb;
+}
+
+.empty-search-tip svg {
+  color: #335B45;
+}
+
+/* Responsividade para estado vazio */
+@media (max-width: 768px) {
+  .empty-search-state {
+    padding: 2rem 1rem;
+  }
+
+  .empty-search-icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 1rem;
+  }
+
+  .empty-search-title {
+    font-size: 1.1rem;
+  }
+
+  .empty-search-description {
+    font-size: 0.9rem;
+  }
+
+  .empty-search-tip {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* Melhorias visuais para as colunas */
+.card {
+  border: 0;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border-radius: 0.5rem;
+}
+
+.card-header {
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+  padding: 1rem 1.25rem;
+}
+
+.list-group-item {
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+
+.list-group-item:first-child {
+  border-top: 0 !important;
+}
+
+.list-group-item:last-child {
+  border-bottom: 0 !important;
+}
+
+
+/* ACCORDION MODERNO OTIMIZADO */
+.modern-accordion-item {
+  border: none;
+  border-radius: 12px !important;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(51, 91, 69, 0.1);
+  overflow: hidden;
+  /* Otimização: transições específicas ao invés de 'all' */
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.modern-accordion-item:hover {
+  box-shadow: 0 4px 20px rgba(51, 91, 69, 0.15);
+  transform: translateZ(0); /* Forçar aceleração por hardware */
+}
+
+.modern-accordion-btn {
+  border: none !important;
+  padding: 20px 24px !important;
+  font-weight: 500;
+  border-radius: 12px !important;
+}
+
+/* Estado fechado (collapsed) - fundo branco */
+.modern-accordion-btn.collapsed {
+  background: white !important;
+  color: #212529 !important;
+}
+
+/* Estado aberto (não collapsed) - fundo verde */
+.modern-accordion-btn:not(.collapsed) {
+  color: white !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+/* Hover para estado fechado */
+.modern-accordion-btn.collapsed:hover {
+  background: #f8f9fa !important;
+  color: #212529 !important;
+}
+
+
+.modern-accordion-btn::after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23335B45'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
+  transition: all 0.3s ease;
+}
+
+.modern-accordion-btn:not(.collapsed)::after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
+}
+
+.modern-accordion-body {
+  background: white;
+  padding: 24px;
+  border-top: 1px solid rgba(51, 91, 69, 0.1);
+}
+
+/* Estilo das abas modernas */
+.modern-nav-pills {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.modern-nav-pills .nav-link {
+  border-radius: 8px;
+  border: none;
+  color: #6c757d;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  margin: 0 4px;
+}
+
+.modern-nav-pills .nav-link.active {
+  background: #335B45 !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(51, 91, 69, 0.3);
+}
+
+.modern-nav-pills .nav-link:hover:not(.active) {
+  background: white;
+  color: #335B45;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Conteúdo das abas */
+.modern-tab-content {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e9ecef;
+}
+
+/* Formulários modernos */
+.modern-form .form-label {
+  color: #335B45;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.modern-input {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+}
+
+.modern-input:focus {
+  border-color: #335B45;
+  box-shadow: 0 0 0 3px rgba(51, 91, 69, 0.1);
+}
+
+.modern-select {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+}
+
+.modern-select:focus {
+  border-color: #335B45;
+  box-shadow: 0 0 0 3px rgba(51, 91, 69, 0.1);
+}
+
+/* Botões modernos */
+.modern-btn-primary {
+  background: linear-gradient(135deg, #335B45 0%, #4a7c59 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 600;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.modern-btn-primary:hover {
+  background: linear-gradient(135deg, #4a7c59 0%, #335B45 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(51, 91, 69, 0.3);
+  color: white;
+}
+
+.modern-btn-secondary {
+  background: white;
+  border: 2px solid #335B45;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 600;
+  color: #335B45;
+  transition: all 0.3s ease;
+}
+
+.modern-btn-secondary:hover {
+  background: #335B45;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(51, 91, 69, 0.2);
+}
+
+/* Badges personalizados */
+.badge[style*="#335B45"] {
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Cards de informações */
+.card.border-0.bg-light {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+
+
+/* Estados de hover e focus aprimorados (OTIMIZADO) */
+.modern-accordion-item:focus-within {
+  box-shadow: 0 4px 20px rgba(51, 91, 69, 0.2);
+}
+
+/* ========================================
+     OTIMIZAÇÕES DE PERFORMANCE ESPECÍFICAS
+  ======================================== */
+
+/* Evitar reflow/repaint em animações */
+.loading-spinner {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Otimizar scrolling */
+.table-responsive {
+  transform: translateZ(0);
+}
+
+/* Reduzir cálculos CSS durante scroll */
+.suggestion-row,
+.busca-row {
+  contain: layout style;
+}
+
+/* Minimizar repaints em hover states */
+.btn:hover {
+  transform: translateZ(0);
+}
+
+/* Usar GPU para elementos que mudam frequentemente */
+.accordion-button,
+.summary-card,
+.faturamento-card {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Estilos para alertas de sucesso */
+.alert-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border: 1px solid #335B45;
+  border-radius: 12px;
+}
+
+/* Estilo para o código FITID */
+code {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: #335B45;
+}
+
+
+
+/* ESTILOS PARA CARDS DE RESUMO */
+.summary-card {
+  background: white;
+  border: 2px solid rgba(51, 91, 69, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(51, 91, 69, 0.08);
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #335B45 0%, #4a7c59 100%);
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(51, 91, 69, 0.15);
+  border-color: rgba(51, 91, 69, 0.2);
+}
+
+.summary-card.success::before {
+  background: linear-gradient(90deg, #335B45 0%, #4a7c59 100%);
+}
+
+.summary-card.danger::before {
+  background: linear-gradient(90deg, #335B45 0%, #4a7c59 100%);
+}
+
+.summary-card.primary::before {
+  background: linear-gradient(90deg, #335B45 0%, #4a7c59 100%);
+}
+
+.summary-card.info::before {
+  background: linear-gradient(90deg, #335B45 0%, #4a7c59 100%);
+}
+
+.summary-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.summary-card.success .summary-icon {
+  background: linear-gradient(135deg, rgba(51, 91, 69, 0.15) 0%, rgba(51, 91, 69, 0.08) 100%);
+  color: #335B45;
+  border: 2px solid rgba(51, 91, 69, 0.1);
+}
+
+.summary-card.danger .summary-icon {
+  background: linear-gradient(135deg, rgba(51, 91, 69, 0.15) 0%, rgba(51, 91, 69, 0.08) 100%);
+  color: #335B45;
+  border: 2px solid rgba(51, 91, 69, 0.1);
+}
+
+.summary-card.primary .summary-icon {
+  background: linear-gradient(135deg, rgba(51, 91, 69, 0.15) 0%, rgba(51, 91, 69, 0.08) 100%);
+  color: #335B45;
+  border: 2px solid rgba(51, 91, 69, 0.1);
+}
+
+.summary-card.info .summary-icon {
+  background: linear-gradient(135deg, rgba(51, 91, 69, 0.15) 0%, rgba(51, 91, 69, 0.08) 100%);
+  color: #335B45;
+  border: 2px solid rgba(51, 91, 69, 0.1);
+}
+
+.summary-content {
+  margin-left: 16px;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #335B45;
+  line-height: 1.2;
+}
+
+
+
+/* ESTILOS PARA CARD PRINCIPAL DE CONCILIAÇÃO */
+.modern-main-card {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(51, 91, 69, 0.1);
+  overflow: hidden;
+}
+
+.modern-card-header {
+  background: linear-gradient(135deg, #335B45 0%, #4a7c59 100%);
+  border: none;
+  padding: 24px 32px;
+  border-radius: 16px 16px 0 0;
+}
+
+.modern-main-card .card-body {
+  background: white;
+  border-radius: 0 0 16px 16px;
+}
+
+/* ========================================
+     RESPONSIVIDADE
+  ======================================== */
+
+
+
+/* Responsividade para accordion */
+@media (max-width: 768px) {
+  .modern-accordion-btn {
+    padding: 16px 20px !important;
+  }
+
+  .modern-accordion-body {
+    padding: 20px 16px;
+  }
+
+  .modern-nav-pills .nav-link {
+    padding: 10px 16px;
+    margin: 0 2px;
+    font-size: 0.875rem;
+  }
+}
+
+/* Responsividade para cards */
+@media (max-width: 768px) {
+  .summary-card {
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .summary-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .summary-value {
+    font-size: 1.25rem;
+  }
+
+  .modern-card-header {
+    padding: 20px 24px;
+  }
+}
+
+/* ========================================
+     ESTILOS PARA SELEÇÃO DE FATURAMENTOS
+  ======================================== */
+.faturamento-item {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.faturamento-item:hover {
+  background-color: #f8f9fa !important;
+  border-color: #335B45 !important;
+}
+
+.faturamento-item.bg-light {
+  background-color: #e8f5e8 !important;
+}
+
+.form-check-input:checked {
+  background-color: #335B45;
+  border-color: #335B45;
+}
+
+.spinner-border-sm {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-width: 0.1em;
+}
+
+/* Responsividade geral */
+@media (max-width: 992px) {
+  .col-12.col-lg-6:first-child {
+    margin-bottom: 1rem;
+  }
+
+  .nav-tabs .nav-link {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.5rem;
+  }
+
+  .card-header h5 {
+    font-size: 1rem;
+  }
+
+  .card-header small {
+    font-size: 0.75rem;
+  }
+
+  .row.g-3.g-lg-4>.col-12.col-lg-6 {
+    margin-bottom: 0;
+  }
+
+  .card-body {
+    max-height: 400px;
+  }
+}

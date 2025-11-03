@@ -1,0 +1,1955 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">
+            FATURAMENTOS
+          </div>
+          <h2 class="page-title">
+            Listagem
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <!-- Botões de filtro rápido -->
+            <a href="{{ url_for('listagem_faturamentos_cargas_a_receber', situacaoFaturamento='') }}"
+              class="btn btn-outline-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-list">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M9 6l11 0" />
+                <path d="M9 12l11 0" />
+                <path d="M9 18l11 0" />
+                <path d="M5 6l0 .01" />
+                <path d="M5 12l0 .01" />
+                <path d="M5 18l0 .01" />
+              </svg>
+              Todos
+            </a>
+            <a href="{{ url_for('listagem_faturamentos_cargas_a_receber', situacaoFaturamento=6) }}"
+              class="btn btn-outline-success">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-circle-check">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                <path d="m9 12 2 2 4 -4" />
+              </svg>
+              Categorizados
+            </a>
+            <a href="{{ url_for('listagem_faturamentos_cargas_a_receber', situacaoFaturamento=7) }}"
+              class="btn btn-outline-warning">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-clock">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                <path d="M12 7v5l3 3" />
+              </svg>
+              Não Categorizado
+            </a>
+            <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <!-- Indicador dos filtros aplicados -->
+      <div class="col-12 mb-3">
+        <div class="alert alert-info d-flex align-items-center bg-white" role="alert">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="icon icon-tabler me-2">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path
+              d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+          </svg>
+          <div>
+            <strong>Visualização atual:</strong>
+            {% if dados_corretos.get('beneficiario') %}
+            {% for b in beneficiarios %}
+            {% if b.id == dados_corretos.get('beneficiario')|int %}
+            Beneficiário: {{ b.identificacao }}
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+
+            {% if dados_corretos.get('situacaoFaturamento') %}
+            {% for s in situacoes_faturamento %}
+            {% if s.id == dados_corretos.get('situacaoFaturamento')|int %}
+            {% if dados_corretos.get('beneficiario') %} | {% endif %}{{ s.situacao }}
+            {% endif %}
+            {% endfor %}
+            {% elif 'situacaoFaturamento' in dados_corretos and dados_corretos.get('situacaoFaturamento') == '' %}
+            {% if dados_corretos.get('beneficiario') %} | {% endif %}Todos os Faturamentos
+            {% elif not dados_corretos %}
+            Não Categorizados (padrão)
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtro -->
+      <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered" role="document" style="display: grid;">
+          <form action="" method="GET">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Filtrar Faturamentos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Beneficiário</label>
+                    <select class="form-select" name="beneficiario" id="beneficiario">
+                      <option value="">Todos os Beneficiários</option>
+                      {% for b in beneficiarios %}
+                      <option value="{{ b.id }}" {% if dados_corretos.get('beneficiario')==b.id|string %}selected{%
+                        endif %}>
+                        {{ b.identificacao }}
+                      </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Situação Faturamento</label>
+                    <select class="form-select" name="situacaoFaturamento" id="situacaoFaturamento">
+                      <option value="">Todas as Situações</option>
+                      {% for s in situacoes_faturamento %}
+                      <option value="{{ s.id }}" {% if dados_corretos.get('situacaoFaturamento')==s.id|string
+                        %}selected{% endif %}>
+                        {{ s.situacao }}
+                      </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+
+              </div>
+              <div class="modal-footer">
+                <a href="{{ url_for('listagem_faturamentos_cargas_a_receber') }}"
+                  class="btn btn-link link-secondary btn-3">
+                  Limpar Filtros
+                </a>
+                <button type="submit" class="btn btn-primary btn-5 ms-auto">
+                  <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-2">
+                    <path d="M12 5l0 14" />
+                    <path d="M5 12l14 0" />
+                  </svg>
+                  Filtrar
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-12">
+        {% if faturamentos%}
+        <div class="card">
+          <div class="table-responsive">
+            <table id="tabela-faturamentos" class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: center;">Cód. Faturamento</th>
+                  <th style="text-align: center;">Data/Hora</th>
+                  <th style="text-align: center;">Valor Bruto</th>
+                  <th style="text-align: center;">Crédito Aplicado</th>
+                  <th style="text-align: center;">Valor Total</th>
+                  <!-- <th style="text-align: center;">Utilizou Crédito</th>-->
+                  <th style="text-align: center;">Situação</th>
+                  <th style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for faturamento in faturamentos %}
+                <tr>
+                  <td class="text-secondary text-center">
+                    <span class="text-muted">{{ faturamento.codigo_faturamento }}</span>
+                  </td>
+                  <td class="text-secondary text-center">
+                    {% if faturamento.data_cadastro %}
+                    {{ faturamento.data_cadastro.strftime('%d/%m/%Y %H:%M') }}
+                    {% else %}
+                    N/A
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary text-center">
+                    {% if faturamento.valor_bruto_total %}
+                    {{ faturamento.valor_bruto_total | formatar_float_para_brl }}
+                    {% else %}
+                    -
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary text-center">
+                    {% if faturamento.valor_credito_aplicado %}
+                    <span>
+                      {{ faturamento.valor_credito_aplicado | formatar_float_para_brl }}
+                    </span>
+                    {% else %}
+                    -
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary text-center">
+                    <span>
+                      {% if faturamento.valor_total %}
+                      {{ faturamento.valor_total | formatar_float_para_brl }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </span>
+                  </td>
+                  <td class="text-secondary text-center">
+                    {% if faturamento.situacao %}
+                    {% if faturamento.situacao.id == 6 %}
+                    <span class="badge badge-outline text-success">{{ faturamento.situacao.situacao }}</span>
+                    {% else %}
+                    <span class="badge badge-outline text-warning">{{ faturamento.situacao.situacao }}</span>
+                    {% endif %}
+                    {% else %}
+                    <span class="badge badge-outline text-warning">Pendente</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-list flex-nowrap justify-content-center">
+                      <button type="button" class="btn btn-icon btn-outline-primary" data-bs-toggle="tooltip"
+                        data-bs-placement="top" title="Visualizar detalhes" data-faturamento-id="{{ faturamento.id }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-eye">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                          <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                        </svg>
+                      </button>
+
+                      {% if faturamento.situacao_pagamento_id == 6 or faturamento.situacao_pagamento_id == 8 %}
+                      <!-- Botão para ver categorização (já categorizado) -->
+                      <button type="button" class="btn btn-icon btn-outline-dark" data-bs-toggle="modal"
+                        data-bs-target="#modal-categorizacao" onclick="carregarCategorizacao({{ faturamento.id }})"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Visualizar Categorização">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-check-circle">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                          <path d="m9 12 2 2 4 -4" />
+                        </svg>
+                      </button>
+                      {% else %}
+                      <!-- Botão para categorizar (não categorizado) -->
+                      <a href="{{ url_for('categorizar_fatura', id=faturamento.id, tipo='receita') }}"
+                        class="btn btn-icon btn-outline-orange" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Categorizar Fatura">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-category">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M4 4h6v6h-6z" />
+                          <path d="M14 4h6v6h-6z" />
+                          <path d="M4 14h6v6h-6z" />
+                          <path d="M17 17m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                        </svg>
+                      </a>
+                      {% endif %}
+                      <a href="{{url_for('exportar_faturamento_cargas_a_receber_pdf', faturamento_id=faturamento.id)}}"
+                        class="btn btn-icon btn-outline-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Exportar para PDF" target="_blank">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-pdf">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M10 8v8h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-2z" />
+                          <path d="M3 12h2a2 2 0 1 0 0 -4h-2v8" />
+                          <path d="M17 12h3" />
+                          <path d="M21 8h-4v8" />
+                        </svg>
+                      </a>
+
+                      <a href="{{url_for('exportar_faturamento_cargas_a_receber_imagem', faturamento_id=faturamento.id)}}"
+                        class="btn btn-icon btn-outline-warning" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Exportar como Imagem" target="_blank">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-photo-scan">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M15 8h.01" />
+                          <path d="M6 13l2.644 -2.644a1.21 1.21 0 0 1 1.712 0l3.644 3.644" />
+                          <path d="M13 13l1.644 -1.644a1.21 1.21 0 0 1 1.712 0l1.644 1.644" />
+                          <path d="M4 8v-2a2 2 0 0 1 2 -2h2" />
+                          <path d="M4 16v2a2 2 0 0 0 2 2h2" />
+                          <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+                          <path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
+                        </svg>
+                      </a>
+                      <a href="#"
+                        class="btn btn-icon btn-outline-danger excluir  {%if faturamento.situacao_pagamento_id == 6%} disabled {%endif%}"
+                        data-bs-toggle="modal" data-bs-target="#modal-desativar-{{faturamento.id}}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M4 7l16 0" />
+                          <path d="M10 11l0 6" />
+                          <path d="M14 11l0 6" />
+                          <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                          <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                        </svg>
+                      </a>
+                      <div class="modal modal-blur fade" id="modal-desativar-{{faturamento.id}}" tabindex="-1"
+                        role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                          <div class="modal-content">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-status bg-danger"></div>
+                            <div class="modal-body text-center py-4">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/alert-triangle -->
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
+                                <path d="M12 9v4" />
+                                <path
+                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                                <path d="M12 16h.01" />
+                              </svg>
+                              <div class="text-secondary">
+                                Você realmente deseja excluir este faturamento?
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <div class="w-100">
+                                <div class="row">
+                                  <div class="col">
+                                    <a href="#" class="btn btn-3 w-100" data-bs-dismiss="modal">
+                                      Fechar
+                                    </a>
+                                  </div>
+                                  <div class="col">
+                                    <a href="{{url_for('excluir_faturamento_a_receber', faturamento_id=faturamento.id)}}"
+                                      class="btn btn-danger btn-4 w-100">
+                                      Excluir
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% else %}
+        <div class="area-info-card"
+          style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">
+          <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
+          <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">Nenhum faturamento disponível</h2>
+          <p style="color: #777;">No momento não há faturamentos para serem exibidos.</p>
+        </div>
+        {%endif%}
+      </div>
+    </div>
+  </div>
+
+  <div class="modal modal-blur fade" id="modal-dados-bancarios" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header border-0"
+          style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 1.5rem 2rem;">
+          <h4 class="modal-title text-white fw-bold">
+            Dados Bancários
+          </h4>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-0">
+          <div id="loading-dados-bancarios" class="text-center py-5" style="display: none;">
+            <div class="spinner-border" style="color: #28a745;" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+            <div class="mt-3 text-muted">Carregando dados bancários...</div>
+          </div>
+
+          <div id="conteudo-dados-bancarios" class="p-4">
+            <!-- Conteúdo será preenchido dinamicamente -->
+          </div>
+        </div>
+
+        <div class="modal-footer border-0" style="background: #f8f9fa; padding: 1rem 2rem;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="20" height="20" viewBox="0 0 24 24"
+              stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M18 6l-12 12" />
+              <path d="M6 6l12 12" />
+            </svg>
+            Fechar
+          </button>
+          <button type="button" class="btn btn-secondary" id="btn-copiar-todos">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="20" height="20" viewBox="0 0 24 24"
+              stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path
+                d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+              <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+            </svg>
+            Copiar Todos
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal modal-blur fade" id="modal-faturamento" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header border-0"
+          style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 1.5rem 2rem;">
+          <h4 class="modal-title text-white fw-bold">
+            <span id="modal-faturamento-id"></span>
+          </h4>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-0">
+          <div id="loading-faturamento" class="text-center py-5">
+            <div class="spinner-border" style="color: #1B5E20;" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+            <div class="mt-3 text-muted">Carregando detalhes do faturamento...</div>
+          </div>
+
+          <div id="conteudo-faturamento" style="display: none;">
+
+            <!-- Resumo Financeiro Destacado -->
+            <div class="p-4"
+              style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-bottom: 1px solid #dee2e6;">
+              <div class="row g-4">
+                <div class="col-md-4 text-center">
+                  <div class="mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                      stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    </svg>
+                  </div>
+                  <div class="text-muted small fw-medium text-uppercase">Valor Bruto</div>
+                  <div class="mb-0" id="info-valor-bruto">-</div>
+                </div>
+                <div class="col-md-4 text-center">
+                  <div class="mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                      stroke="#1B5E20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon-tabler icons-tabler-outline icon-tabler-basket-dollar">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M17 10l-2 -6" />
+                      <path d="M7 10l2 -6" />
+                      <path
+                        d="M13 20h-5.756a3 3 0 0 1 -2.965 -2.544l-1.255 -7.152a2 2 0 0 1 1.977 -2.304h13.999a2 2 0 0 1 1.977 2.304" />
+                      <path d="M10 14a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                      <path d="M21 15h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5" />
+                      <path d="M19 21v1m0 -8v1" />
+                    </svg>
+                  </div>
+                  <div class="text-muted small fw-medium text-uppercase">Valor Final</div>
+                  <div class="mb-0" id="info-valor-total">-</div>
+                </div>
+                <div class="col-md-4 text-center">
+                  <div class="mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                      stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  </div>
+                  <div class="text-muted small fw-medium text-uppercase">Data</div>
+                  <div id="info-data">-</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4">
+              <!-- Carga a receber -->
+              <div id="secao-cargas-a-receber">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                  <div class="d-flex align-items-center">
+                    <div>
+                      <h5 class="mb-1 fw-bold" style="color: #1B5E20;">Cargas a Receber</h5>
+                      <div class="text-muted">
+                        <span id="total-cargas-a-receber">0</span> registro(s) •
+                        <span style="color: #1B5E20; border-color: #1B5E20;" id="total-valor-cargas-a-receber">R$
+                          0,00</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="lista-cargas-a-receber"></div>
+              </div>
+
+              <!-- NFs Complementares -->
+              <div id="secao-nfs-complementares" style="display: none;">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                  <div class="d-flex align-items-center">
+                    <div>
+                      <h5 class="mb-1 fw-bold" style="color: #1B5E20;">NFs Complementares</h5>
+                      <div class="text-muted">
+                        <span id="total-nfs-complementares">0</span> NF(s) complementar(es) •
+                        <span style="color: #1B5E20; border-color: #1B5E20;" id="total-valor-nfs-complementares">R$ 0,00</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="lista-nfs-complementares"></div>
+              </div>
+
+              <!-- NFs de Serviço -->
+              <div id="secao-nfs-servico" style="display: none;">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                  <div class="d-flex align-items-center">
+                    <div>
+                      <h5 class="mb-1 fw-bold" style="color: #2E7D32;">NFs de Serviço</h5>
+                      <div class="text-muted">
+                        <span id="total-nfs-servico">0</span> NFS-e(s) •
+                        <span style="color: #2E7D32; border-color: #2E7D32;" id="total-valor-nfs-servico">R$ 0,00</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="lista-nfs-servico"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0" style="background: #f8f9fa; padding: 1rem 2rem;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="20" height="20" viewBox="0 0 24 24"
+              stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M18 6l-12 12" />
+              <path d="M6 6l12 12" />
+            </svg>
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Exportar PDF -->
+  <div class="modal modal-blur fade" id="modal-exportar-pdf" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header border-0"
+          style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 1.5rem 2rem;">
+          <h4 class="modal-title text-white fw-bold">
+            Exportar Faturamento para PDF
+          </h4>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <div class="mb-4">
+            <h6 class="mb-3 fw-bold text-muted">Selecione as informações que deseja OCULTAR no PDF:</h6>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="ocultar-fornecedores">
+              <label class="form-check-label d-flex align-items-center" for="ocultar-fornecedores">
+                <span class="fw-medium">Ocultar Informações dos Fornecedores</span>
+              </label>
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="ocultar-transportadoras">
+              <label class="form-check-label d-flex align-items-center" for="ocultar-transportadoras">
+                <span class="fw-medium">Ocultar Informações das Transportadoras</span>
+              </label>
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="ocultar-cliente">
+              <label class="form-check-label d-flex align-items-center" for="ocultar-cliente">
+                <span class="fw-medium">Ocultar Informações do Cliente</span>
+              </label>
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="ocultar-receitas-avulsas">
+              <label class="form-check-label d-flex align-items-center" for="ocultar-receitas-avulsas">
+                <span class="fw-medium">Ocultar Receitas Avulsas</span>
+              </label>
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="ocultar-despesas-avulsas">
+              <label class="form-check-label d-flex align-items-center" for="ocultar-despesas-avulsas">
+                <span class="fw-medium">Ocultar Despesas Avulsas</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0" style="background: #f8f9fa; padding: 1rem 2rem;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-secondary" id="btn-gerar-pdf">
+            Gerar PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+{% include 'estrutura/footer.html' %}
+</div>
+
+<script>
+   document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('select.form-select').forEach(function (select) {
+      new TomSelect(select, {
+        create: false,
+        allowEmptyOption: false,
+        sortField: { field: "text", direction: "asc" }
+      });
+    });
+  });
+  // Variável global para o modal PDF
+  let faturamentoParaPDF = null;
+  let faturamentoParaImagem = null;
+
+  // Inicialização quando DOM carregar
+  document.addEventListener('DOMContentLoaded', function () {
+    // Event listeners para visualizar faturamentos
+    document.querySelectorAll('[data-faturamento-id]').forEach(button => {
+      button.addEventListener('click', function () {
+        const faturamentoId = this.getAttribute('data-faturamento-id');
+        visualizarFaturamento(faturamentoId);
+      });
+    });
+
+  });
+
+  // ===== FUNÇÕES PRINCIPAIS =====
+
+  function visualizarFaturamento(id) {
+    const modal = new bootstrap.Modal(document.getElementById('modal-faturamento'));
+    modal.show();
+
+    document.getElementById('loading-faturamento').style.display = 'block';
+    document.getElementById('conteudo-faturamento').style.display = 'none';
+
+    fetch(`/financeiro/operacional/cargas-a-receber/detalhes/${id}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.erro) {
+          alert('Erro: ' + data.erro);
+          modal.hide();
+          return;
+        }
+
+        // Preencher informações
+        document.getElementById('info-data').textContent = data.faturamento.data_cadastro;
+        document.getElementById('info-valor-bruto').textContent = data.faturamento.valor_bruto_total;
+        document.getElementById('info-valor-total').textContent = data.faturamento.valor_total;
+        document.getElementById('modal-faturamento-id').textContent = data.faturamento.codigo_faturamento;
+
+        // Processar dados
+        processarCargasAReceber(data.cargas_a_receber || []);
+        processarNfsComplementares(data.nf_complementar || []);
+        processarNfsServico(data.nf_servico || []);
+
+        // Verificar se não há dados para mostrar mensagem informativa
+        verificarDadosVazios(data.cargas_a_receber || [], data.nf_complementar || [], data.nf_servico || []);
+
+        // Contadores
+        document.getElementById('total-cargas-a-receber').textContent = data.faturamento.total_cargas_a_receber;
+        
+        // Atualizar contador de NFs de Serviço se o elemento existir
+        const totalNfsServico = document.getElementById('total-nfs-servico');
+        if (totalNfsServico && data.faturamento.total_nfs_servico) {
+          totalNfsServico.textContent = data.faturamento.total_nfs_servico;
+        }
+
+        document.getElementById('loading-faturamento').style.display = 'none';
+        document.getElementById('conteudo-faturamento').style.display = 'block';
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao carregar os detalhes do faturamento');
+        modal.hide();
+      });
+  }
+
+  function processarCargasAReceber(cargas) {
+    const container = document.getElementById('lista-cargas-a-receber');
+    const secaoCargas = document.getElementById('secao-cargas-a-receber');
+
+    container.innerHTML = '';
+
+    if (!cargas.length) {
+      // Esconder a seção inteira quando não há cargas a receber
+      secaoCargas.style.display = 'none';
+      document.getElementById('total-valor-cargas-a-receber').textContent = 'R$ 0,00';
+      return;
+    }
+
+    // Mostrar a seção quando há cargas a receber
+    secaoCargas.style.display = 'block';
+
+    // Agrupar e processar
+    const grupos = {};
+    let totalGeral = 0;
+
+    cargas.forEach(item => {
+      const nome = item.cliente;
+      if (!grupos[nome]) {
+        grupos[nome] = { registros: [], total: 0 };
+      }
+      grupos[nome].registros.push(item);
+      const valor = parseFloat(item.valor_faturado.replace(/[R$\s.]/g, '').replace(',', '.'));
+      grupos[nome].total += valor;
+      totalGeral += valor;
+    });
+
+    document.getElementById('total-valor-cargas-a-receber').textContent =
+      new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
+
+    // Criar grupos
+    Object.entries(grupos).forEach(([nome, grupo]) => {
+      const card = document.createElement('div');
+      card.className = 'card mb-4 shadow-sm';
+      card.style.borderRadius = '12px';
+      card.style.border = '1px solid #e3e6f0';
+
+      card.innerHTML = `
+        <div class="card-header py-3" style="background: #f8f9fa; border-bottom: 1px solid #e3e6f0;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <div>
+                <h6 class="mb-0 fw-bold">${nome}</h6>
+                <small class="text-muted">${grupo.registros.length} registro(s)</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead style="background: #f8f9fa;">
+                <tr>
+                  <th class="fw-semibold text-center">Data Entrega</th>
+                  <th class="fw-semibold text-center">Produto | Bitola</th>
+                  <th class="fw-semibold text-center">NF</th>
+                  <th class="fw-semibold text-center">Peso Ticket (Ton.)</th>
+                  <th class="fw-semibold text-center text-end">Preço Custo</th>
+                  <th class="fw-semibold text-center text-end">Valor Bruto</th>
+                  <th class="fw-semibold text-center text-end">Valor Final</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${grupo.registros.map(r => `
+                  <tr>
+                    <td class="text-center">${r.data_entrega}</td>
+                    <td class="text-center">${r.produto} | ${r.bitola}</td>
+                    <td class="text-center">${r.nota_fiscal}</td>
+                    <td class="text-center">${r.peso_ticket}</td>
+                    <td class="text-center">${r.preco_custo}</td>
+                    <td class="text-center">${r.valor_bruto}</td>
+                    <td class="text-center">
+                      <span class="badge badge-outline" style="color: #1B5E20; border-color: #1B5E20;">${r.valor_faturado}</span>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function formatarDataBrasil(dataString) {
+    if (!dataString) return '-';
+    
+    try {
+      // Se a data já está no formato brasileiro (DD/MM/YYYY), retornar como está
+      if (dataString.includes('/')) {
+        return dataString;
+      }
+      
+      // Se a data está no formato ISO (YYYY-MM-DD), converter para brasileiro
+      if (dataString.includes('-')) {
+        const [ano, mes, dia] = dataString.split('-');
+        return `${dia}/${mes}/${ano}`;
+      }
+      
+      // Tentar criar um objeto Date e formatar
+      const data = new Date(dataString);
+      if (isNaN(data.getTime())) {
+        return dataString; // Se não conseguir converter, retornar original
+      }
+      
+      return data.toLocaleDateString('pt-BR');
+    } catch (error) {
+      console.error('Erro ao formatar data:', error);
+      return dataString || '-';
+    }
+  }
+
+  function processarNfsComplementares(nfs) {
+    const container = document.getElementById('lista-nfs-complementares');
+    const secaoNfs = document.getElementById('secao-nfs-complementares');
+
+    if (!container || !secaoNfs) return; // Se não existir os elementos, não processar
+
+    container.innerHTML = '';
+
+    if (!nfs.length) {
+      secaoNfs.style.display = 'none';
+      return;
+    }
+
+    secaoNfs.style.display = 'block';
+
+    // Agrupar NFs por cliente
+    const grupos = {};
+    let totalGeral = 0;
+
+    nfs.forEach(nf => {
+      const cliente = nf.cliente || 'Cliente não identificado';
+      if (!grupos[cliente]) {
+        grupos[cliente] = { nfs: [], total: 0 };
+      }
+      grupos[cliente].nfs.push(nf);
+      const valor = parseFloat(nf.valor_total_nota_100) / 100 || 0;
+      grupos[cliente].total += valor;
+      totalGeral += valor;
+    });
+
+    document.getElementById('total-valor-nfs-complementares').textContent =
+      new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
+
+    document.getElementById('total-nfs-complementares').textContent = nfs.length;
+
+    // Criar grupos de NFs complementares
+    Object.entries(grupos).forEach(([cliente, grupo]) => {
+      const card = document.createElement('div');
+      card.className = 'card mb-4 shadow-sm';
+      card.style.borderRadius = '12px';
+      card.style.border = '1px solid #e3e6f0';
+
+      card.innerHTML = `
+        <div class="card-header py-3" style="background: #f8f9fa; border-bottom: 1px solid #e3e6f0;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <div>
+                <h6 class="mb-0 fw-bold">${cliente}</h6>
+                <small class="text-muted">${grupo.nfs.length} NF(s) complementar(es)</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          ${grupo.nfs.map(nf => `
+            <div class="card mb-3 border-light mx-3 mt-3">
+              <div class="card-header bg-light">
+                <div class="row align-items-center">
+                  <div class="col">
+                    <h6 class="fw-bold mb-0">NF Complementar: ${nf.numero_nf || '-'}</h6>
+                    <small class="text-muted">
+                      ${formatarDataBrasil(nf.destinatario_data_emissao) || '-'} | 
+                      <span class="badge bg-warning-lt ms-2">${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((nf.valor_total_nota_100 || 0) / 100)}</span>
+                    </small>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body p-0" id="registros-operacionais-${nf.nf_complementar_id}">
+                <div class="text-center py-3">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando registros operacionais...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      container.appendChild(card);
+
+      // Carregar registros operacionais para cada NF complementar
+      grupo.nfs.forEach(nf => {
+        carregarRegistrosOperacionais(nf.nf_complementar_id);
+      });
+    });
+  }
+
+  function processarNfsServico(nfs) {
+    const container = document.getElementById('lista-nfs-servico');
+    const secaoNfs = document.getElementById('secao-nfs-servico');
+
+    if (!container || !secaoNfs) return; // Se não existir os elementos, não processar
+
+    container.innerHTML = '';
+
+    if (!nfs.length) {
+      secaoNfs.style.display = 'none';
+      return;
+    }
+
+    secaoNfs.style.display = 'block';
+
+    // Agrupar NFs por cliente
+    const grupos = {};
+    let totalGeral = 0;
+
+    nfs.forEach(nf => {
+      const cliente = nf.cliente || 'Cliente não identificado';
+      if (!grupos[cliente]) {
+        grupos[cliente] = { nfs: [], total: 0 };
+      }
+      grupos[cliente].nfs.push(nf);
+      const valor = parseFloat(nf.valor_total) / 100 || 0;
+      grupos[cliente].total += valor;
+      totalGeral += valor;
+    });
+
+    document.getElementById('total-valor-nfs-servico').textContent =
+      new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
+
+    document.getElementById('total-nfs-servico').textContent = nfs.length;
+
+    // Criar grupos de NFs de Serviço
+    Object.entries(grupos).forEach(([cliente, grupo]) => {
+      const card = document.createElement('div');
+      card.className = 'card mb-4 shadow-sm';
+      card.style.borderRadius = '12px';
+      card.style.border = '1px solid #e3e6f0';
+
+      card.innerHTML = `
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <div>
+            <strong>${cliente}</strong>
+            <span class="badge bg-blue-lt ms-2">${grupo.nfs.length} NF(s) de Serviço</span>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+              <thead class="bg-light text-center">
+                <tr>
+                  <th>Data Emissão</th>
+                  <th>Discriminação</th>
+                  <th>Valor Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${grupo.nfs.map(nf => `
+                  <tr>
+                    <td class="text-center">${formatarDataBrasil(nf.data_emissao) || '-'}</td>
+                    <td class="text-center">${(nf.discriminacao || '-').substring(0, 50)}${(nf.discriminacao || '').length > 50 ? '...' : ''}</td>
+                    <td class="text-center">
+                      <span class="badge bg-success-lt">
+                        ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((parseFloat(nf.valor_total) / 100) || 0)}
+                      </span>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function carregarRegistrosOperacionais(nfComplementarId) {
+    const container = document.getElementById(`registros-operacionais-${nfComplementarId}`);
+    if (!container) return;
+
+    // Fazer requisição para buscar os registros operacionais reais
+    fetch(`/financeiro/operacional/cargas-a-receber/nf-complementar/${nfComplementarId}/registros-operacionais`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.erro) {
+          container.innerHTML = `
+            <div class="alert alert-warning m-3">
+              <strong>Aviso:</strong> ${data.erro}
+            </div>
+          `;
+          return;
+        }
+
+        const registrosOperacionais = data.registros_operacionais || [];
+
+        if (registrosOperacionais.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-3 text-muted">
+              <small>Nenhum registro operacional encontrado para esta NF complementar.</small>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th class="text-center">Data Entrega</th>
+                  <th class="text-center">Fornecedor</th>
+                  <th class="text-center">Transportadora</th>
+                  <th class="text-center">Cliente</th>
+                  <th class="text-center">Placa/Motorista</th>
+                  <th class="text-center">Produto/Bitola</th>
+                  <th class="text-center">Peso Ticket</th>
+                  <th class="text-center">Número NF</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${registrosOperacionais.map(reg => `
+                  <tr>
+                    <td class="text-center fw-bold text-primary">${reg.data_entrega_ticket || '-'}</td>
+                    <td class="text-center">${reg.fornecedor || '-'}</td>
+                    <td class="text-center">${reg.transportadora || '-'}</td>
+                    <td class="text-center">${reg.cliente || '-'}</td>
+                    <td class="text-center">${reg.placa_veiculo || '-'} | ${reg.motorista || '-'}</td>
+                    <td class="text-center">${reg.produto || '-'} | ${reg.bitola || '-'}</td>
+                    <td class="text-center">
+                      <span class="badge bg-cyan-lt">${reg.peso_liquido_ticket || 0} Ton.</span>
+                    </td>
+                    <td class="text-center">
+                      ${reg.numero_nota_fiscal && reg.numero_nota_fiscal !== '-' ? `<span class="badge bg-warning-lt">${reg.numero_nota_fiscal}</span>` : '-'}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      })
+      .catch(error => {
+        console.error('Erro ao carregar registros operacionais:', error);
+        container.innerHTML = `
+          <div class="alert alert-danger m-3">
+            <strong>Erro:</strong> Não foi possível carregar os registros operacionais.
+          </div>
+        `;
+      });
+  }
+
+  // ===== FUNÇÕES DE EXPORTAR PDF =====
+
+  function abrirModalExportarPDF(faturamentoId) {
+    faturamentoParaPDF = faturamentoId;
+    faturamentoParaImagem = null;
+
+    const modalElement = document.getElementById('modal-exportar-pdf');
+    if (!modalElement) {
+      console.error('Modal de exportar PDF não encontrado');
+      return;
+    }
+
+    // Restaurar título original do modal
+    const modalTitle = modalElement.querySelector('.modal-title');
+    modalTitle.innerHTML = `
+    Exportar Faturamento para PDF
+  `;
+
+    // Restaurar texto do botão e limpar event listeners
+    const btnGerar = document.getElementById('btn-gerar-pdf');
+    btnGerar.innerHTML = `
+    Gerar PDF
+  `;
+
+    // Limpar todos os event listeners e definir apenas um
+    btnGerar.replaceWith(btnGerar.cloneNode(true));
+    const newBtnGerar = document.getElementById('btn-gerar-pdf');
+    newBtnGerar.onclick = function () {
+      gerarPDFFaturamento();
+    };
+
+    try {
+      if (window.bootstrap && window.bootstrap.Modal) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+      } else {
+        // Fallback manual
+        modalElement.style.display = 'block';
+        modalElement.classList.add('show');
+        document.body.classList.add('modal-open');
+
+        // Criar backdrop
+        if (!document.querySelector('.modal-backdrop')) {
+          const backdrop = document.createElement('div');
+          backdrop.className = 'modal-backdrop fade show';
+          document.body.appendChild(backdrop);
+        }
+      }
+    } catch (error) {
+      console.log('Erro ao abrir modal PDF:', error);
+      // Fallback final
+      modalElement.style.display = 'block';
+      modalElement.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+  }
+
+  function gerarPDFFaturamento() {
+    if (!faturamentoParaPDF) {
+      mostrarNotificacao('Erro: Nenhum faturamento selecionado.', 'error');
+      return;
+    }
+
+    // Coletar opções do modal
+    const opcoes = {
+      ocultar_fornecedores: document.getElementById('ocultar-fornecedores')?.checked || false,
+      ocultar_transportadoras: document.getElementById('ocultar-transportadoras')?.checked || false,
+      ocultar_cliente: document.getElementById('ocultar-cliente')?.checked || false,
+      ocultar_receitas_avulsas: document.getElementById('ocultar-receitas-avulsas')?.checked || false,
+      ocultar_despesas_avulsas: document.getElementById('ocultar-despesas-avulsas')?.checked || false
+    };
+
+    // Criar formulário para enviar via POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/financeiro/cargas-a-pagar/exportar-pdf/${faturamentoParaPDF}`;
+    form.target = '_blank'; // Abrir em nova aba
+
+    // Adicionar dados das opções
+    Object.keys(opcoes).forEach(key => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = opcoes[key];
+      form.appendChild(input);
+    });
+
+    // Adicionar CSRF token se necessário
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'csrf_token';
+      input.value = csrfToken.getAttribute('content');
+      form.appendChild(input);
+    }
+
+    // Enviar formulário
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+
+    // Fechar modal
+    fecharModalSeguro('modal-exportar-pdf');
+
+    mostrarNotificacao('PDF sendo gerado...', 'info');
+  }
+
+  // ===== FUNÇÕES AUXILIARES =====
+
+  function fecharModalSeguro(modalId) {
+    const modalElement = document.getElementById(modalId);
+    if (!modalElement) return;
+
+    try {
+      // Tentar Bootstrap Modal
+      if (window.bootstrap && window.bootstrap.Modal) {
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+          modalInstance.hide();
+        } else {
+          const modal = new bootstrap.Modal(modalElement);
+          modal.hide();
+        }
+        return;
+      }
+
+      // Fallback manual
+      modalElement.style.display = 'none';
+      modalElement.classList.remove('show');
+      document.body.classList.remove('modal-open');
+
+      // Remover backdrop se existir
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) {
+        backdrop.remove();
+      }
+
+    } catch (error) {
+      console.log('Erro ao fechar modal:', error);
+      // Fallback final
+      modalElement.style.display = 'none';
+      modalElement.classList.remove('show');
+      document.body.classList.remove('modal-open');
+
+      // Remover backdrop
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) {
+        backdrop.remove();
+      }
+    }
+  }
+
+  function mostrarNotificacao(mensagem, tipo = 'info') {
+    // Toast simples do Tabler (se não tiver, usar fallback)
+    if (typeof window.Tabler !== 'undefined' && window.Tabler.toast) {
+      window.Tabler.toast({
+        message: mensagem,
+        type: tipo
+      });
+    } else {
+      // Fallback: criar toast manual
+      const toast = document.createElement('div');
+      toast.className = `bg-white alert alert-${tipo === 'success' ? 'success' : tipo === 'warning' ? 'warning' : tipo === 'error' ? 'danger' : 'info'} alert-dismissible`;
+      toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+      toast.innerHTML = `
+        ${mensagem}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+      `;
+
+      document.body.appendChild(toast);
+
+      // Auto remover após 4 segundos
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.remove();
+        }
+      }, 4000);
+    }
+  }
+
+  // ======== FUNÇÃO DE EXPORTAR IMG ======
+
+  function abrirModalExportarImagem(faturamentoId) {
+    faturamentoParaImagem = faturamentoId;
+    faturamentoParaPDF = null; // Limpar variável de PDF
+
+    const modalElement = document.getElementById('modal-exportar-pdf'); // Reutilizar o mesmo modal
+    if (!modalElement) {
+      console.error('Modal de exportar não encontrado');
+      return;
+    }
+
+    // Alterar título do modal para imagem
+    const modalTitle = modalElement.querySelector('.modal-title');
+    modalTitle.innerHTML = `
+    Exportar Faturamento para Imagem
+  `;
+
+    // Alterar texto do botão e limpar event listeners
+    const btnGerar = document.getElementById('btn-gerar-pdf');
+    btnGerar.innerHTML = `
+    Gerar Imagem
+  `;
+
+    // Limpar todos os event listeners e definir apenas um
+    btnGerar.replaceWith(btnGerar.cloneNode(true));
+    const newBtnGerar = document.getElementById('btn-gerar-pdf');
+    newBtnGerar.onclick = function () {
+      gerarImagemFaturamento();
+    };
+
+    try {
+      if (window.bootstrap && window.bootstrap.Modal) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+      } else {
+        modalElement.style.display = 'block';
+        modalElement.classList.add('show');
+        document.body.classList.add('modal-open');
+
+        if (!document.querySelector('.modal-backdrop')) {
+          const backdrop = document.createElement('div');
+          backdrop.className = 'modal-backdrop fade show';
+          document.body.appendChild(backdrop);
+        }
+      }
+    } catch (error) {
+      console.log('Erro ao abrir modal imagem:', error);
+      modalElement.style.display = 'block';
+      modalElement.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+  }
+
+  // Gerar imagem do faturamento
+
+  function gerarImagemFaturamento() {
+    if (!faturamentoParaImagem) {
+      mostrarNotificacao('Erro: Nenhum faturamento selecionado.', 'error');
+      return;
+    }
+
+    // Coletar opções do modal (mesmo do PDF)
+    const opcoes = {
+      ocultar_fornecedores: document.getElementById('ocultar-fornecedores')?.checked || false,
+      ocultar_transportadoras: document.getElementById('ocultar-transportadoras')?.checked || false,
+      ocultar_cliente: document.getElementById('ocultar-cliente')?.checked || false,
+      ocultar_receitas_avulsas: document.getElementById('ocultar-receitas-avulsas')?.checked || false,
+      ocultar_despesas_avulsas: document.getElementById('ocultar-despesas-avulsas')?.checked || false
+    };
+
+    // Criar formulário para enviar via POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/financeiro/cargas-a-pagar/exportar-imagem/${faturamentoParaImagem}`; // Nova rota
+    form.target = '_blank';
+
+    // Adicionar dados das opções
+    Object.keys(opcoes).forEach(key => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = opcoes[key];
+      form.appendChild(input);
+    });
+
+    // Adicionar CSRF token se necessário
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'csrf_token';
+      input.value = csrfToken.getAttribute('content');
+      form.appendChild(input);
+    }
+
+    // Enviar formulário
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+
+    // Fechar modal
+    fecharModalSeguro('modal-exportar-pdf');
+
+    mostrarNotificacao('Imagem sendo gerada...', 'info');
+  }
+
+  // ===== FUNÇÃO PARA VERIFICAR DADOS VAZIOS =====
+
+  function verificarDadosVazios(cargas_a_receber, nf_complementar, nf_servico) {
+    const temCargasAReceber = cargas_a_receber && cargas_a_receber.length > 0;
+    const temNfComplementar = nf_complementar && nf_complementar.length > 0;
+    const temNfServico = nf_servico && nf_servico.length > 0;
+
+    // Se não há nenhum tipo de dados, criar mensagem informativa
+    if (!temCargasAReceber && !temNfComplementar && !temNfServico) {
+      const conteudoFaturamento = document.querySelector('#conteudo-faturamento .p-4');
+      if (conteudoFaturamento) {
+        conteudoFaturamento.innerHTML = `
+          <div class="text-center py-5 text-muted">
+            <div class="mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
+                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/>
+                <line x1="9" y1="9" x2="10" y2="9"/>
+                <line x1="9" y1="13" x2="15" y2="13"/>
+                <line x1="9" y1="17" x2="15" y2="17"/>
+              </svg>
+            </div>
+            <h5 class="fw-bold mb-2">Faturamento sem detalhes</h5>
+            <p class="text-muted mb-0">Este faturamento não possui cargas a receber, NFs complementares ou NFs de serviço associadas.</p>
+          </div>
+        `;
+      }
+    }
+  }
+
+</script>
+
+<!-- Modal de Categorização Simples -->
+<div class="modal modal-blur fade" id="modal-categorizacao" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header border-0"
+        style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 1.5rem 2rem;">
+        <h4 class="modal-title text-white fw-bold">
+          Categorização do Faturamento
+        </h4>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-0">
+        <div id="loading-categorizacao" class="text-center py-5">
+          <div class="spinner-border" style="color: #1B5E20;" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+          <div class="mt-3 text-muted">Carregando dados da categorização...</div>
+        </div>
+
+        <div id="conteudo-categorizacao" style="display: none;">
+          <!-- O conteúdo será carregado via JavaScript -->
+        </div>
+      </div>
+
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="20" height="20" viewBox="0 0 24 24"
+            stroke-width="2" stroke="currentColor" fill="none">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+            <path d="M18 6l-12 12"></path>
+            <path d="M6 6l12 12"></path>
+          </svg>
+          Fechar
+        </button>
+        <button type="button" class="btn btn-primary" onclick="editarCategorizacao()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="20" height="20" viewBox="0 0 24 24"
+            stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/>
+            <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/>
+            <path d="M16 5l3 3"/>
+          </svg>
+          Editar Categorização
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let faturamentoSelecionadoId = null;
+  let categoriaId = null;
+
+  function carregarCategorizacao(faturamentoId) {
+    faturamentoSelecionadoId = faturamentoId;
+
+    // Mostrar loading
+    document.getElementById('loading-categorizacao').style.display = 'block';
+    document.getElementById('conteudo-categorizacao').style.display = 'none';
+
+    // Fazer requisição
+    fetch(`/faturamento/categorizacao/detalhes-json/${faturamentoId}`)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data)
+        // Esconder loading
+        document.getElementById('loading-categorizacao').style.display = 'none';
+
+        if (data.error) {
+          document.getElementById('conteudo-categorizacao').innerHTML = `
+            <div class="alert alert-danger m-3">
+              <h4>Erro</h4>
+              <p>${data.error}</p>
+            </div>
+          `;
+        } else {
+          // Montar HTML com os dados
+          categoriaId = data.categorizacao_id
+          document.getElementById('conteudo-categorizacao').innerHTML = montarHtmlCategorizacao(data);
+        }
+
+        document.getElementById('conteudo-categorizacao').style.display = 'block';
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        document.getElementById('loading-categorizacao').style.display = 'none';
+        document.getElementById('conteudo-categorizacao').innerHTML = `
+        <div class="alert alert-danger m-3">
+          <h4>Erro ao Carregar</h4>
+          <p>Não foi possível carregar os dados da categorização.</p>
+        </div>
+      `;
+        document.getElementById('conteudo-categorizacao').style.display = 'block';
+      });
+  }
+
+  function montarHtmlCategorizacao(data) {
+    console.log(data)
+    // Usar valores vindos do backend
+    const valorBrutoTotal = (data.faturamento.valor_bruto_total || data.faturamento.valor_total) / 100;
+    const valorCreditoTotal = (data.faturamento.valor_credito_total || 0) / 100;
+    const valorFinalTotal = data.faturamento.valor_total / 100;
+
+    let html = `
+    <div class="p-4">
+      <!-- Resumo Superior com 4 cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-4">
+          <div class="text-center p-3" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
+            <div class="avatar bg-secondary-lt mx-auto mb-2">
+             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-moneybag"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9.5 3h5a1.5 1.5 0 0 1 1.5 1.5a3.5 3.5 0 0 1 -3.5 3.5h-1a3.5 3.5 0 0 1 -3.5 -3.5a1.5 1.5 0 0 1 1.5 -1.5" /><path d="M4 17v-1a8 8 0 1 1 16 0v1a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4" /></svg>
+            </div>
+            <div class="text-muted small text-uppercase mb-1">VALOR BRUTO</div>
+            <div class="fw-bold text-dark">R$ ${valorBrutoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="text-center p-3" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
+            <div class="avatar bg-secondary-lt mx-auto mb-2">
+              <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-moneybag"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9.5 3h5a1.5 1.5 0 0 1 1.5 1.5a3.5 3.5 0 0 1 -3.5 3.5h-1a3.5 3.5 0 0 1 -3.5 -3.5a1.5 1.5 0 0 1 1.5 -1.5" /><path d="M4 17v-1a8 8 0 1 1 16 0v1a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4" /></svg>
+            </div>
+            <div class="text-muted small text-uppercase mb-1">VALOR FINAL</div>
+            <div class="fw-bold text-dark">R$ ${valorFinalTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="text-center p-3" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
+            <div class="avatar bg-secondary-lt mx-auto mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+            <div class="text-muted small text-uppercase mb-1">DATA</div>
+            <div class="fw-bold text-dark">${data.pagamento.data_vencimento}</div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- Informações do Pagamento -->
+      <div class="mb-4">
+        <h4 class="mb-3" style="color: #277329;">
+          Informações da Categorização
+        </h4>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="text-muted small mb-1">Beneficiário</div>
+            <div class="fw-bold">${data.pagamento.beneficiario}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small mb-1">Data Vencimento</div>
+            <div class="fw-bold">${data.pagamento.data_vencimento}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small mb-1">Situação Pagamento</div>
+            <div><span class="badge badge-outline text-yellow">${data.pagamento.situacao_nome}</span></div>
+          </div>
+        </div>
+      </div>`;
+
+    // Seção de Fornecedores
+    if (data.faturamento.fornecedores && data.faturamento.fornecedores.length > 0) {
+      const totalFornecedores = data.faturamento.fornecedores.reduce((total, f) => total + (f.valor || 0), 0) / 100;
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Fornecedores</h6>
+        <div class="text-muted small mb-3">${data.faturamento.fornecedores.length} registro(s) • R$ ${totalFornecedores.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">NOME</th>
+                <th class="small text-uppercase text-center">VALOR BRUTO</th>
+                <th class="small text-uppercase text-center">CRÉDITO UTILIZADO</th>
+                <th class="small text-uppercase text-center">VALOR FINAL</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.faturamento.fornecedores.forEach(fornecedor => {
+        const valorBruto = (fornecedor.valor_bruto_total || fornecedor.valor_bruto || 0) / 100;
+        const valorCredito = (fornecedor.valor_credito_aplicado || fornecedor.valor_credito || 0) / 100;
+        const valorFinal = (fornecedor.valor || fornecedor.valor_faturado || 0) / 100;
+        const nomeFornecedor = fornecedor.identificacao || fornecedor.fornecedor_identificacao || 'N/A';
+
+        html += `
+              <tr>
+                <td class="text-center">${nomeFornecedor}</td>
+                <td class="text-center">R$ ${valorBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center"><span>R$ ${valorCredito.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></td>
+                <td class="text-center"><span>R$ ${valorFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Transportadoras
+    if (data.faturamento.transportadoras && data.faturamento.transportadoras.length > 0) {
+      const totalTransportadoras = data.faturamento.transportadoras.reduce((total, t) => total + (t.valor || 0), 0) / 100;
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Transportadoras</h6>
+        <div class="text-muted small mb-3">${data.faturamento.transportadoras.length} registro(s) • R$ ${totalTransportadoras.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">NOME</th>
+                <th class="small text-uppercase text-center">VALOR BRUTO</th>
+                <th class="small text-uppercase text-center">CRÉDITO UTILIZADO</th>
+                <th class="small text-uppercase text-center">VALOR FINAL</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.faturamento.transportadoras.forEach(transportadora => {
+        const valorBruto = (transportadora.valor_bruto_total || transportadora.valor_bruto || 0) / 100;
+        const valorCredito = (transportadora.valor_credito_aplicado || transportadora.valor_credito || 0) / 100;
+        const valorFinal = (transportadora.valor || transportadora.valor_faturado || 0) / 100;
+        const nomeTransportadora = transportadora.identificacao || transportadora.nome || 'N/A';
+
+        html += `
+              <tr>
+                <td class="text-center">${nomeTransportadora}</td>
+                <td class="text-center">R$ ${valorBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center"><span>R$ ${valorCredito.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></td>
+                <td class="text-center"><span>R$ ${valorFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Extratores
+    if (data.faturamento.extratores && data.faturamento.extratores.length > 0) {
+      const totalExtratores = data.faturamento.extratores.reduce((total, t) => total + (t.valor || 0), 0) / 100;
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Extratores</h6>
+        <div class="text-muted small mb-3">${data.faturamento.extratores.length} registro(s) • R$ ${totalExtratores.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">NOME</th>
+                <th class="small text-uppercase text-center">VALOR BRUTO</th>
+                <th class="small text-uppercase text-center">CRÉDITO UTILIZADO</th>
+                <th class="small text-uppercase text-center">VALOR FINAL</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.faturamento.extratores.forEach(extrator => {
+        const valorBruto = (extrator.valor_bruto_total || extrator.valor_bruto || 0) / 100;
+        const valorCredito = (extrator.valor_credito_aplicado || extrator.valor_credito || 0) / 100;
+        const valorFinal = (extrator.valor || extrator.valor_faturado || 0) / 100;
+        const nomeExtrator = extrator.identificacao || extrator.nome || 'N/A';
+
+        html += `
+              <tr>
+                <td class="text-center">${nomeExtrator}</td>
+                <td class="text-center">R$ ${valorBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center"><span>R$ ${valorCredito.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></td>
+                <td class="text-center"><span>R$ ${valorFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Comissionados
+    if (data.faturamento.comissionados && data.faturamento.comissionados.length > 0) {
+      const totalComissionados = data.faturamento.comissionados.reduce((total, t) => total + (t.valor || 0), 0) / 100;
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Comissionados</h6>
+        <div class="text-muted small mb-3">${data.faturamento.comissionados.length} registro(s) • R$ ${totalComissionados.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">NOME</th>
+                <th class="small text-uppercase text-center">VALOR BRUTO</th>
+                <th class="small text-uppercase text-center">CRÉDITO UTILIZADO</th>
+                <th class="small text-uppercase text-center">VALOR FINAL</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.faturamento.comissionados.forEach(comissionado => {
+        const valorBruto = (comissionado.valor_bruto_total || comissionado.valor_bruto || 0) / 100;
+        const valorCredito = (comissionado.valor_credito_aplicado || comissionado.valor_credito || 0) / 100;
+        const valorFinal = (comissionado.valor || comissionado.valor_faturado || 0) / 100;
+        const nomeComissionado = comissionado.identificacao || comissionado.nome || 'N/A';
+
+        html += `
+              <tr>
+                <td class="text-center">${nomeComissionado}</td>
+                <td class="text-center">R$ ${valorBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center"><span>R$ ${valorCredito.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></td>
+                <td class="text-center"><span>R$ ${valorFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Receitas Avulsas
+    if (data.receitas_avulsas && data.receitas_avulsas.length > 0) {
+      const totalReceitas = data.receitas_avulsas.reduce((total, r) => {
+        const valor = parseFloat(r.valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+        return total + valor;
+      }, 0);
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Receitas Avulsas</h6>
+        <div class="text-muted small mb-3">${data.receitas_avulsas.length} receita(s) • R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">DESCRIÇÃO</th>
+                <th class="small text-uppercase text-center">CONTA BANCÁRIA</th>
+                <th class="small text-uppercase text-center">DATA CADASTRO</th>
+                <th class="small text-uppercase text-center">VALOR</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.receitas_avulsas.forEach(receita => {
+        html += `
+              <tr>
+                <td class="text-center">${receita.descricao}</td>
+                <td class="text-center">${receita.conta_bancaria}</td>
+                <td class="text-center">${receita.data_cadastro}</td>
+                <td class="text-center"><span>R$ ${receita.valor}</span></td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Despesas Avulsas
+    if (data.despesas_avulsas && data.despesas_avulsas.length > 0) {
+      const totalDespesas = data.despesas_avulsas.reduce((total, d) => {
+        const valor = parseFloat(d.valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+        return total + valor;
+      }, 0);
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Despesas Avulsas</h6>
+        <div class="text-muted small mb-3">${data.despesas_avulsas.length} despesa(s) • R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">DESCRIÇÃO</th>
+                <th class="small text-uppercase text-center">CONTA BANCÁRIA</th>
+                <th class="small text-uppercase text-center">DATA CADASTRO</th>
+                <th class="small text-uppercase text-center">VALOR</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.despesas_avulsas.forEach(despesa => {
+        html += `
+              <tr>
+                <td class="text-center">${despesa.descricao}</td>
+                <td class="text-center">${despesa.conta_bancaria}</td>
+                <td class="text-center">${despesa.data_cadastro}</td>
+                <td class="text-center"><span class="text-danger">R$ ${despesa.valor}</span></td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }    // Seção de Categorização por Conta
+    if (data.categorias && data.categorias.length > 0) {
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Categorização por Conta</h6>
+        <div class="text-muted small mb-3">${data.categorias.length} categoria(s)</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">CATEGORIA</th>
+                <th class="small text-uppercase text-center">VALOR</th>
+                <th class="small text-uppercase text-center">DESCRIÇÃO</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      let totalCategorias = 0;
+      data.categorias.forEach(categoria => {
+        const valorCategoria = categoria.valor / 100;
+        totalCategorias += categoria.valor;
+        const nomeCategoria = categoria.nome || 'N/A';
+
+        html += `
+              <tr>
+                <td class="text-center">${nomeCategoria}</td>
+                <td class="text-center">R$ ${valorCategoria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center">${categoria.detalhamento || '-'}</td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+            <tfoot>
+              <tr class="table-active fw-bold">
+                <td class="text-center">TOTAL</td>
+                <td class="text-center">R$ ${(totalCategorias / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-end"></td>
+                <td class="text-end"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>`;
+    }
+    // Seção de Centros de Custo (se houver)
+    if (data.centros_custo && data.centros_custo.length > 0) {
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Centros de Custo</h6>
+        <div class="text-muted small mb-3">${data.centros_custo.length} centro(s) de custo</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">CENTRO DE CUSTO</th>
+                <th class="small text-uppercase text-center">VALOR</th>
+                <th class="small text-uppercase text-center">PERCENTUAL</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.centros_custo.forEach(centro => {
+        const valorCentro = centro.valor / 100;
+        const nomeCentro = centro.nome || centro.descricao || 'N/A';
+        const centroCustoDisplay = `${nomeCentro}`;
+        html += `
+              <tr>
+                <td class="text-center">${centroCustoDisplay}</td>
+                <td class="text-center">R$ ${valorCentro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center">${centro.percentual ? centro.percentual.toFixed(1) : '0.0'}%</td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Parcelas
+    if (data.parcelas && data.parcelas.length > 0) {
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Parcelas</h6>
+        <div class="text-muted small mb-3">${data.parcelas.length} parcela(s)</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">PARCELA</th>
+                <th class="small text-uppercase text-center">VENCIMENTO</th>
+                <th class="small text-uppercase text-center text-end">VALOR</th>
+                <th class="small text-uppercase text-center">SITUAÇÃO</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.parcelas.forEach(parcela => {
+        const valorParcela = parcela.valor_parcela / 100;
+        const situacaoNome = parcela.situacao_nome || parcela.situacao || 'Pendente';
+        html += `
+              <tr>
+                <td class="text-center">${parcela.numero_parcela}/${data.parcelas.length}</td>
+                <td class="text-center">${parcela.data_vencimento}</td>
+                <td class="text-center">R$ ${valorParcela.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center">${situacaoNome}</td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    html += '</div>';
+    return html;
+  }
+</script>
+<script>
+  function editarCategorizacao() {
+    if (!categoriaId) {
+      alert('Nenhuma categoria selecionada!');
+      return;
+    }
+
+    // Fechar o modal atual
+    const modal = document.getElementById('modal-categorizacao');
+    if (modal) {
+      const modalInstance = bootstrap.Modal.getInstance(modal);
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+    }
+
+    window.location.href = `/faturamento/editar-categorizacao/${categoriaId}/receita`;
+  }
+</script>
+{% endblock conteudo %}

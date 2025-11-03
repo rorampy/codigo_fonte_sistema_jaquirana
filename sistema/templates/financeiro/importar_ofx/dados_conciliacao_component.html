@@ -1,0 +1,155 @@
+{% if conciliar_transacao_id %}
+<div class="container-xl mt-3">
+  <div class="card border-0 shadow-sm mb-4"
+    style="background-color: #FFFFFF; border-left: 4px solid #2B5640 !important;">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle"
+              style="width: 48px; height: 48px; background-color: #2B5640;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7h1.948c1.913 0 3.705 .933 4.802 2.5a5.861 5.861 0 0 0 4.802 2.5h6.448" />
+                <path d="M3 17h1.95a5.854 5.854 0 0 0 4.798 -2.5a5.854 5.854 0 0 1 4.798 -2.5h5.454" />
+                <path d="M18 15l3 -3l-3 -3" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <h4 class="mb-1 fw-bold" style="color: #2B5640;">Conciliação de Transação</h4>
+            <p class="text-muted mb-0 fs-6">
+              Confirme os dados para conciliar com a transação OFX importada
+            </p>
+          </div>
+        </div>
+        <div>
+          <a href="{{ url_for('listagem_ofx') }}" class="btn btn-outline-success btn-md px-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+              <path d="M19 12H5m7-7-7 7 7 7" />
+            </svg>
+            Voltar ao OFX
+          </a>
+          <a href="{{ url_for('cancelar_conciliacao') }}" class="btn btn-outline-danger btn-md px-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-x">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M18 6l-12 12" />
+              <path d="M6 6l12 12" />
+            </svg>
+            Cancelar Conciliação
+          </a>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-12 col-md-2">
+          <div class="p-3 rounded-3" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <div class="d-flex align-items-center justify-content-center rounded-circle"
+                  style="width: 36px; height: 36px; background-color: rgba(43, 86, 64, 0.1);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="#2B5640" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                    <path d="M12 3v3m0 12v3" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <div class="fs-7 text-muted mb-1">VALOR</div>
+                <div class="fw-bold fs-5" style="color: #2B5640;">{{ valor_conciliar or 'R$ 0,00' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-2">
+          <div class="p-3 rounded-3" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <div class="d-flex align-items-center justify-content-center rounded-circle"
+                  style="width: 36px; height: 36px; background-color: rgba(43, 86, 64, 0.1);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-week">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
+                    <path d="M16 3v4" />
+                    <path d="M8 3v4" />
+                    <path d="M4 11h16" />
+                    <path d="M7 14h.013" />
+                    <path d="M10.01 14h.005" />
+                    <path d="M13.01 14h.005" />
+                    <path d="M16.015 14h.005" />
+                    <path d="M13.015 17h.005" />
+                    <path d="M7.01 17h.005" />
+                    <path d="M10.01 17h.005" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <div class="fs-7 text-muted mb-1">DATA</div>
+                <div class="fw-semibold">{{ data_conciliar |
+                  converte_data_para_datetime_converte_data_brl or 'N/A' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-2">
+          <div class="p-3 rounded-3" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <div class="d-flex align-items-center justify-content-center rounded-circle"
+                  style="width: 36px; height: 36px; background-color: rgba(43, 86, 64, 0.1);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="#2B5640" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                    <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                    <path d="M9 7h1" />
+                    <path d="M9 11h6" />
+                    <path d="M9 15h6" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <div class="fs-7 text-muted mb-1">FITID</div>
+                <code class="fw-semibold"
+                  style="background-color: transparent; color: #2B5640;">{{ fitid_conciliar or 'N/A' }}</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <div class="p-3 rounded-3" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
+            <div class="d-flex align-items-start">
+              <div class="me-3">
+                <div class="d-flex align-items-center justify-content-center rounded-circle"
+                  style="width: 36px; height: 36px; background-color: rgba(43, 86, 64, 0.1);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="#2B5640" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                    <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                    <path d="M9 9l1 0" />
+                    <path d="M9 13l6 0" />
+                    <path d="M9 17l6 0" />
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-fill">
+                <div class="fs-7 text-muted mb-1">DESCRIÇÃO</div>
+                <div class="fw-medium">{{ descricao_conciliar or 'Sem descrição' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}

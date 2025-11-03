@@ -1,0 +1,1155 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">
+            DESPESAS AVULSAS
+          </div>
+          <h2 class="page-title">
+            Faturamentos de Despesas Avulsas
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        {% if faturamentos%}
+        <div class="card">
+          <div class="table-responsive">
+            <table id="tabela-faturamentos" class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: center;">Cód. Faturamento</th>
+                  <th style="text-align: center;">Data/Hora</th>
+                  <th style="text-align: center;">Valor Total</th>
+                  <!-- <th style="text-align: center;">Utilizou Crédito</th>-->
+                  <th style="text-align: center;">Situação</th>
+                  <th style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for faturamento in faturamentos %}
+                <tr>
+                  <td class="text-secondary text-center">
+                    <span class="text-muted">{{ faturamento.codigo_faturamento }}</span>
+                  </td>
+                  <td class="text-secondary text-center">
+                    {% if faturamento.data_cadastro %}
+                    {{ faturamento.data_cadastro.strftime('%d/%m/%Y %H:%M') }}
+                    {% else %}
+                    N/A
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary text-center">
+                    <span>
+                      {% if faturamento.valor_total %}
+                      {{ faturamento.valor_total | formatar_float_para_brl }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </span>
+                  </td>
+                  <td class="text-secondary text-center">
+                    {% if faturamento.situacao %}
+                    {% if faturamento.situacao.id == 6 %}
+                    <span class="badge badge-outline text-success">{{ faturamento.situacao.situacao }}</span>
+                    {% else %}
+                    <span class="badge badge-outline text-warning">{{ faturamento.situacao.situacao }}</span>
+                    {% endif %}
+                    {% else %}
+                    <span class="badge badge-outline text-warning">Pendente</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-list flex-nowrap justify-content-center">
+                      <button type="button" class="btn btn-icon btn-outline-primary" data-bs-toggle="tooltip"
+                        data-bs-placement="top" title="Visualizar detalhes" data-faturamento-id="{{ faturamento.id }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-eye">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                          <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                        </svg>
+                      </button>
+
+                      {% if faturamento.situacao_pagamento_id == 6 %}
+                      <!-- Botão para ver categorização (já categorizado) -->
+                      <button type="button" class="btn btn-icon btn-outline-dark" data-bs-toggle="modal"
+                        data-bs-target="#modal-categorizacao" onclick="carregarCategorizacao({{ faturamento.id }})"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Visualizar Categorização">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-check-circle">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                          <path d="m9 12 2 2 4 -4" />
+                        </svg>
+                      </button>
+                      {% else %}
+                      <!-- Botão para categorizar (não categorizado) -->
+                      <a href="{{ url_for('categorizar_fatura', id=faturamento.id, tipo='despesa_avulsa') }}"
+                        class="btn btn-icon btn-outline-orange" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Categorizar Fatura">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-category">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M4 4h6v6h-6z" />
+                          <path d="M14 4h6v6h-6z" />
+                          <path d="M4 14h6v6h-6z" />
+                          <path d="M17 17m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                        </svg>
+                      </a>
+                      {% endif %}
+                      <a href="{{ url_for('exportar_despesa_avulsa_pdf', faturamento_id=faturamento.id) }}"
+                        target="_blank" class="btn btn-icon btn-outline-danger" data-bs-toggle="tooltip"
+                        data-bs-placement="top" title="Exportar Relatório PDF">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-pdf">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M10 8v8h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-2z" />
+                          <path d="M3 12h2a2 2 0 1 0 0 -4h-2v8" />
+                          <path d="M17 12h3" />
+                          <path d="M21 8h-4v8" />
+                        </svg>
+                      </a>
+                      <a href="{{ url_for('exportar_despesa_avulsa_imagem', faturamento_id=faturamento.id) }}"
+                        target="_blank" class="btn btn-icon btn-outline-warning" data-bs-toggle="tooltip"
+                        data-bs-placement="top" title="Exportar Relatório como Imagem">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-photo-scan">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M15 8h.01" />
+                          <path d="M6 13l2.644 -2.644a1.21 1.21 0 0 1 1.712 0l3.644 3.644" />
+                          <path d="M13 13l1.644 -1.644a1.21 1.21 0 0 1 1.712 0l1.644 1.644" />
+                          <path d="M4 8v-2a2 2 0 0 1 2 -2h2" />
+                          <path d="M4 16v2a2 2 0 0 0 2 2h2" />
+                          <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+                          <path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
+                        </svg>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% else %}
+        <div class="area-info-card"
+          style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">
+          <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
+          <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">Nenhuma receita avulsa disponível para
+            faturamento</h2>
+          <p style="color: #777;">No momento não há faturamentos de receitas avulsas para serem exibidos.</p>
+        </div>
+        {%endif%}
+      </div>
+    </div>
+  </div>
+
+  <div class="modal modal-blur fade" id="modal-faturamento" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header border-0"
+          style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 1.5rem 2rem;">
+          <h4 class="modal-title text-white fw-bold">
+            <span id="modal-faturamento-id"></span>
+          </h4>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-0">
+          <div id="loading-faturamento" class="text-center py-5">
+            <div class="spinner-border" style="color: #1B5E20;" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+            <div class="mt-3 text-muted">Carregando detalhes do faturamento...</div>
+          </div>
+
+          <div id="conteudo-faturamento" style="display: none;">
+            <div class="p-4">
+              <!-- Receitas Avulsas -->
+              <div class="mb-5" id="secao-receitas-avulsas">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                  <div class="d-flex align-items-center">
+                    <div>
+                      <h5 class="mb-1 fw-bold" style="color: #1B5E20;">Receitas Avulsas</h5>
+                      <div class="text-muted">
+                        <span id="total-receitas-avulsas">0</span> receitas avulsas
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="lista-receitas-avulsas"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0" style="background: #f8f9fa; padding: 1rem 2rem;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="20" height="20" viewBox="0 0 24 24"
+              stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M18 6l-12 12" />
+              <path d="M6 6l12 12" />
+            </svg>
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'estrutura/footer.html' %}
+</div>
+
+<script>
+  // Variável global para o modal PDF
+  let faturamentoParaPDF = null;
+  let faturamentoParaImagem = null;
+
+  // Inicialização quando DOM carregar
+  document.addEventListener('DOMContentLoaded', function () {
+    // Event listeners para visualizar faturamentos
+    document.querySelectorAll('[data-faturamento-id]').forEach(button => {
+      button.addEventListener('click', function () {
+        const faturamentoId = this.getAttribute('data-faturamento-id');
+        visualizarFaturamento(faturamentoId);
+      });
+    });
+
+  });
+
+  // ===== FUNÇÕES PRINCIPAIS =====
+
+  function visualizarFaturamento(id) {
+    const modal = new bootstrap.Modal(document.getElementById('modal-faturamento'));
+    modal.show();
+
+    document.getElementById('loading-faturamento').style.display = 'block';
+    document.getElementById('conteudo-faturamento').style.display = 'none';
+
+    fetch(`/financeiro/operacional/receita-avulsa/detalhes/${id}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.erro) {
+          alert('Erro: ' + data.erro);
+          modal.hide();
+          return;
+        }
+
+        const modalTitle = document.getElementById('modal-faturamento-id');
+        if (modalTitle) {
+          modalTitle.textContent = data.faturamento.codigo_faturamento;
+        }
+
+        // Processar dados de créditos com arrays seguros
+        const receitasAvulsas = data.receitas_avulsas || [];
+
+        processarReceitasAvulsas(receitasAvulsas);
+
+        // Verificar se não há dados para mostrar mensagem informativa
+        verificarDadosVazios(receitasAvulsas);
+
+        // Contadores
+        document.getElementById('total-receitas-avulsas').textContent = data.faturamento.total_receitas_avulsas;
+
+        // Esconder loading e mostrar conteúdo
+        document.getElementById('loading-faturamento').style.display = 'none';
+        document.getElementById('conteudo-faturamento').style.display = 'block';
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao carregar os detalhes do faturamento');
+        modal.hide();
+      });
+  }
+
+  function processarReceitasAvulsas(receitas) {
+    const container = document.getElementById('lista-receitas-avulsas');
+    const secaoReceitas = document.getElementById('secao-receitas-avulsas');
+
+    container.innerHTML = '';
+
+    // Mostrar a seção quando há receitas
+    secaoReceitas.style.display = 'block';
+
+    // Criar tabela simples para receitas avulsas
+    const card = document.createElement('div');
+    card.className = 'card mb-4 shadow-sm';
+    card.style.borderRadius = '12px';
+    card.style.border = '1px solid #e3e6f0';
+
+    card.innerHTML = `
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table mb-0">
+            <thead style="background: #f8f9fa;">
+              <tr>
+                <th class="fw-semibold text-center">Data Cadastro</th>
+                <th class="fw-semibold text-center">Descrição</th>
+                <th class="fw-semibold text-center">Conta Bancária</th>
+                <th class="fw-semibold text-center">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${receitas.map(receita => `
+                <tr>
+                  <td class="text-center">${receita.data_cadastro}</td>
+                  <td class="text-center">${receita.descricao}</td>
+                  <td class="text-center">${receita.conta_bancaria}</td>
+                  <td class="text-center">
+                    <span class="badge badge-outline" style="color: #1B5E20; border-color: #1B5E20;">${receita.valor}</span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  }
+
+  // ===== FUNÇÕES DE EXPORTAR PDF =====
+
+  function abrirModalExportarPDF(faturamentoId) {
+    faturamentoParaPDF = faturamentoId;
+    faturamentoParaImagem = null;
+
+    const modalElement = document.getElementById('modal-exportar-pdf');
+    if (!modalElement) {
+      console.error('Modal de exportar PDF não encontrado');
+      return;
+    }
+
+    // Restaurar título original do modal
+    const modalTitle = modalElement.querySelector('.modal-title');
+    modalTitle.innerHTML = `
+    Exportar Faturamento para PDF
+  `;
+
+    // Restaurar texto do botão e limpar event listeners
+    const btnGerar = document.getElementById('btn-gerar-pdf');
+    btnGerar.innerHTML = `
+    Gerar PDF
+  `;
+
+    // Limpar todos os event listeners e definir apenas um
+    btnGerar.replaceWith(btnGerar.cloneNode(true));
+    const newBtnGerar = document.getElementById('btn-gerar-pdf');
+    newBtnGerar.onclick = function () {
+      gerarPDFFaturamento();
+    };
+
+    try {
+      if (window.bootstrap && window.bootstrap.Modal) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+      } else {
+        // Fallback manual
+        modalElement.style.display = 'block';
+        modalElement.classList.add('show');
+        document.body.classList.add('modal-open');
+
+        // Criar backdrop
+        if (!document.querySelector('.modal-backdrop')) {
+          const backdrop = document.createElement('div');
+          backdrop.className = 'modal-backdrop fade show';
+          document.body.appendChild(backdrop);
+        }
+      }
+    } catch (error) {
+      console.log('Erro ao abrir modal PDF:', error);
+      // Fallback final
+      modalElement.style.display = 'block';
+      modalElement.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+  }
+
+  function gerarPDFFaturamento() {
+    if (!faturamentoParaPDF) {
+      mostrarNotificacao('Erro: Nenhum faturamento selecionado.', 'error');
+      return;
+    }
+
+    // Coletar opções do modal
+    const opcoes = {
+      ocultar_fornecedores: document.getElementById('ocultar-fornecedores')?.checked || false,
+      ocultar_transportadoras: document.getElementById('ocultar-transportadoras')?.checked || false,
+      ocultar_cliente: document.getElementById('ocultar-cliente')?.checked || false,
+      ocultar_receitas_avulsas: document.getElementById('ocultar-receitas-avulsas')?.checked || false,
+      ocultar_despesas_avulsas: document.getElementById('ocultar-despesas-avulsas')?.checked || false
+    };
+
+    // Criar formulário para enviar via POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/financeiro/faturamentos/exportar-pdf/${faturamentoParaPDF}`;
+    form.target = '_blank'; // Abrir em nova aba
+
+    // Adicionar dados das opções
+    Object.keys(opcoes).forEach(key => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = opcoes[key];
+      form.appendChild(input);
+    });
+
+    // Adicionar CSRF token se necessário
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'csrf_token';
+      input.value = csrfToken.getAttribute('content');
+      form.appendChild(input);
+    }
+
+    // Enviar formulário
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+
+    // Fechar modal
+    fecharModalSeguro('modal-exportar-pdf');
+
+    mostrarNotificacao('PDF sendo gerado...', 'info');
+  }
+
+  // ===== FUNÇÕES AUXILIARES =====
+
+  function fecharModalSeguro(modalId) {
+    const modalElement = document.getElementById(modalId);
+    if (!modalElement) return;
+
+    try {
+      // Tentar Bootstrap Modal
+      if (window.bootstrap && window.bootstrap.Modal) {
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+          modalInstance.hide();
+        } else {
+          const modal = new bootstrap.Modal(modalElement);
+          modal.hide();
+        }
+        return;
+      }
+
+      // Fallback manual
+      modalElement.style.display = 'none';
+      modalElement.classList.remove('show');
+      document.body.classList.remove('modal-open');
+
+      // Remover backdrop se existir
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) {
+        backdrop.remove();
+      }
+
+    } catch (error) {
+      console.log('Erro ao fechar modal:', error);
+      // Fallback final
+      modalElement.style.display = 'none';
+      modalElement.classList.remove('show');
+      document.body.classList.remove('modal-open');
+
+      // Remover backdrop
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) {
+        backdrop.remove();
+      }
+    }
+  }
+
+  function mostrarNotificacao(mensagem, tipo = 'info') {
+    // Toast simples do Tabler (se não tiver, usar fallback)
+    if (typeof window.Tabler !== 'undefined' && window.Tabler.toast) {
+      window.Tabler.toast({
+        message: mensagem,
+        type: tipo
+      });
+    } else {
+      // Fallback: criar toast manual
+      const toast = document.createElement('div');
+      toast.className = `bg-white alert alert-${tipo === 'success' ? 'success' : tipo === 'warning' ? 'warning' : tipo === 'error' ? 'danger' : 'info'} alert-dismissible`;
+      toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+      toast.innerHTML = `
+        ${mensagem}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+      `;
+
+      document.body.appendChild(toast);
+
+      // Auto remover após 4 segundos
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.remove();
+        }
+      }, 4000);
+    }
+  }
+
+  // ======== FUNÇÃO DE EXPORTAR IMG ======
+
+  function abrirModalExportarImagem(faturamentoId) {
+    faturamentoParaImagem = faturamentoId;
+    faturamentoParaPDF = null; // Limpar variável de PDF
+
+    const modalElement = document.getElementById('modal-exportar-pdf'); // Reutilizar o mesmo modal
+    if (!modalElement) {
+      console.error('Modal de exportar não encontrado');
+      return;
+    }
+
+    // Alterar título do modal para imagem
+    const modalTitle = modalElement.querySelector('.modal-title');
+    modalTitle.innerHTML = `
+    Exportar Faturamento para Imagem
+  `;
+
+    // Alterar texto do botão e limpar event listeners
+    const btnGerar = document.getElementById('btn-gerar-pdf');
+    btnGerar.innerHTML = `
+    Gerar Imagem
+  `;
+
+    // Limpar todos os event listeners e definir apenas um
+    btnGerar.replaceWith(btnGerar.cloneNode(true));
+    const newBtnGerar = document.getElementById('btn-gerar-pdf');
+    newBtnGerar.onclick = function () {
+      gerarImagemFaturamento();
+    };
+
+    try {
+      if (window.bootstrap && window.bootstrap.Modal) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+      } else {
+        modalElement.style.display = 'block';
+        modalElement.classList.add('show');
+        document.body.classList.add('modal-open');
+
+        if (!document.querySelector('.modal-backdrop')) {
+          const backdrop = document.createElement('div');
+          backdrop.className = 'modal-backdrop fade show';
+          document.body.appendChild(backdrop);
+        }
+      }
+    } catch (error) {
+      console.log('Erro ao abrir modal imagem:', error);
+      modalElement.style.display = 'block';
+      modalElement.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+  }
+
+  // Gerar imagem do faturamento
+
+  function gerarImagemFaturamento() {
+    if (!faturamentoParaImagem) {
+      mostrarNotificacao('Erro: Nenhum faturamento selecionado.', 'error');
+      return;
+    }
+
+    // Coletar opções do modal (mesmo do PDF)
+    const opcoes = {
+      ocultar_fornecedores: document.getElementById('ocultar-fornecedores')?.checked || false,
+      ocultar_transportadoras: document.getElementById('ocultar-transportadoras')?.checked || false,
+      ocultar_cliente: document.getElementById('ocultar-cliente')?.checked || false,
+      ocultar_receitas_avulsas: document.getElementById('ocultar-receitas-avulsas')?.checked || false,
+      ocultar_despesas_avulsas: document.getElementById('ocultar-despesas-avulsas')?.checked || false
+    };
+
+    // Criar formulário para enviar via POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/financeiro/faturamentos/exportar-imagem/${faturamentoParaImagem}`; // Nova rota
+    form.target = '_blank';
+
+    // Adicionar dados das opções
+    Object.keys(opcoes).forEach(key => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = opcoes[key];
+      form.appendChild(input);
+    });
+
+    // Adicionar CSRF token se necessário
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'csrf_token';
+      input.value = csrfToken.getAttribute('content');
+      form.appendChild(input);
+    }
+
+    // Enviar formulário
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+
+    // Fechar modal
+    fecharModalSeguro('modal-exportar-pdf');
+
+    mostrarNotificacao('Imagem sendo gerada...', 'info');
+  }
+
+  // ===== FUNÇÃO PARA VERIFICAR DADOS VAZIOS =====
+
+  // Função para verificar dados vazios
+  function verificarDadosVazios(receitasAvulsas) {
+    const temReceitasAvulsas = receitasAvulsas && receitasAvulsas.length > 0;
+
+    // Se não há receitas avulsas, mostrar mensagem informativa
+    if (!temReceitasAvulsas) {
+      const conteudoFaturamento = document.querySelector('#conteudo-faturamento .p-4');
+      if (conteudoFaturamento) {
+        conteudoFaturamento.innerHTML = `
+        <div class="text-center py-5 text-muted">
+          <div class="mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z"/>
+              <path d="M3 10l18 0"/>
+              <path d="M7 15l.01 0"/>
+              <path d="M11 15l2 0"/>
+            </svg>
+          </div>
+          <h5 class="fw-bold mb-2">Faturamento sem receitas avulsas</h5>
+          <p class="text-muted mb-0">Este faturamento não possui receitas avulsas associadas.</p>
+        </div>
+      `;
+      }
+    }
+  }
+
+</script>
+
+<!-- Modal de Categorização Simples -->
+<div class="modal modal-blur fade" id="modal-categorizacao" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header border-0"
+        style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 1.5rem 2rem;">
+        <h4 class="modal-title text-white fw-bold">
+          Categorização do Faturamento
+        </h4>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-0">
+        <div id="loading-categorizacao" class="text-center py-5">
+          <div class="spinner-border" style="color: #1B5E20;" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+          <div class="mt-3 text-muted">Carregando dados da categorização...</div>
+        </div>
+
+        <div id="conteudo-categorizacao" style="display: none;">
+          <!-- O conteúdo será carregado via JavaScript -->
+        </div>
+      </div>
+
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="20" height="20" viewBox="0 0 24 24"
+            stroke-width="2" stroke="currentColor" fill="none">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+            <path d="M18 6l-12 12"></path>
+            <path d="M6 6l12 12"></path>
+          </svg>
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let faturamentoSelecionadoId = null;
+
+  function carregarCategorizacao(faturamentoId) {
+    faturamentoSelecionadoId = faturamentoId;
+
+    // Mostrar loading
+    document.getElementById('loading-categorizacao').style.display = 'block';
+    document.getElementById('conteudo-categorizacao').style.display = 'none';
+
+    // Fazer requisição para controle de créditos
+    fetch(`/financeiro/operacional/categorizacao/despesas-avulsas/detalhes-json/${faturamentoId}`)
+      .then(response => response.json())
+      .then(data => {
+        // Esconder loading
+        document.getElementById('loading-categorizacao').style.display = 'none';
+
+        if (data.error) {
+          document.getElementById('conteudo-categorizacao').innerHTML = `
+            <div class="alert alert-danger m-3">
+              <h4>Erro</h4>
+              <p>${data.error}</p>
+            </div>
+          `;
+        } else {
+          // Montar HTML com os dados
+          document.getElementById('conteudo-categorizacao').innerHTML = montarHtmlCategorizacao(data);
+        }
+
+        document.getElementById('conteudo-categorizacao').style.display = 'block';
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        document.getElementById('loading-categorizacao').style.display = 'none';
+        document.getElementById('conteudo-categorizacao').innerHTML = `
+        <div class="alert alert-danger m-3">
+          <h4>Erro ao Carregar</h4>
+          <p>Não foi possível carregar os dados da categorização.</p>
+        </div>
+      `;
+        document.getElementById('conteudo-categorizacao').style.display = 'block';
+      });
+  }
+
+  function montarHtmlCategorizacao(data) {
+    console.log(data)
+    // Usar valores vindos do backend - já convertidos para reais
+    const valorBrutoTotal = data.faturamento.valor_bruto_total || data.faturamento.valor_total || 0;
+    const valorCreditoTotal = data.faturamento.valor_credito_total || 0;
+    const valorFinalTotal = data.faturamento.valor_total || 0;
+
+    let html = `
+    <div class="p-4">
+      <!-- Informações do Pagamento -->
+      <div class="mb-4">
+        <h4 class="mb-3" style="color: #277329;">
+          Informações da Categorização
+        </h4>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="text-muted small mb-1">Beneficiário</div>
+            <div class="fw-bold">${data.pagamento.beneficiario}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small mb-1">Data Vencimento</div>
+            <div class="fw-bold">${data.pagamento.data_vencimento}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small mb-1">Situação Pagamento</div>
+            <div><span class="badge badge-outline text-yellow">${data.pagamento.situacao_nome}</span></div>
+          </div>
+        </div>
+      </div>`;
+
+    // Seção de Créditos de Fornecedores
+    if (data.faturamento.creditos_fornecedores && data.faturamento.creditos_fornecedores.length > 0) {
+      const totalCreditosFornecedores = data.faturamento.creditos_fornecedores.reduce((total, f) => total + (f.valor_credito || 0), 0);
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Créditos de Fornecedores</h6>
+        <div class="text-muted small mb-3">${data.faturamento.creditos_fornecedores.length} crédito(s) • R$ ${totalCreditosFornecedores.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">FORNECEDOR</th>
+                <th class="small text-uppercase text-center">DATA MOVIMENTAÇÃO</th>
+                <th class="small text-uppercase text-center">DESCRIÇÃO</th>
+                <th class="small text-uppercase text-center">VALOR CRÉDITO</th>
+                <th class="small text-uppercase text-center">CONTA BANCÁRIA</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.faturamento.creditos_fornecedores.forEach(credito => {
+        const valorCredito = credito.valor_credito || 0;
+        const nomeFornecedor = credito.identificacao || 'N/A';
+        const dataMovimentacao = credito.data_movimentacao || 'N/A';
+        const descricao = credito.credito_descricao || 'N/A';
+        const contaBancaria = credito.conta_bancaria_id || 'N/A';
+
+        html += `
+              <tr>
+                <td class="text-center">${nomeFornecedor}</td>
+                <td class="text-center">${dataMovimentacao}</td>
+                <td class="text-center">${descricao}</td>
+                <td class="text-center">R$ ${valorCredito.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center">${contaBancaria}</td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Créditos de Transportadoras
+    if (data.faturamento.creditos_transportadoras && data.faturamento.creditos_transportadoras.length > 0) {
+      const totalCreditosTransportadoras = data.faturamento.creditos_transportadoras.reduce((total, t) => total + (t.valor_credito || 0), 0);
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Créditos de Transportadoras</h6>
+        <div class="text-muted small mb-3">${data.faturamento.creditos_transportadoras.length} crédito(s) • R$ ${totalCreditosTransportadoras.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">TRANSPORTADORA</th>
+                <th class="small text-uppercase text-center">DATA MOVIMENTAÇÃO</th>
+                <th class="small text-uppercase text-center">DESCRIÇÃO</th>
+                <th class="small text-uppercase text-center">VALOR CRÉDITO</th>
+                <th class="small text-uppercase text-center">CONTA BANCÁRIA</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.faturamento.creditos_transportadoras.forEach(credito => {
+        const valorCredito = credito.valor_credito || 0;
+        const nomeTransportadora = credito.identificacao || 'N/A';
+        const dataMovimentacao = credito.data_movimentacao || 'N/A';
+        const descricao = credito.credito_descricao || 'N/A';
+        const contaBancaria = credito.conta_bancaria_id || 'N/A';
+
+        html += `
+              <tr>
+                <td class="text-center">${nomeTransportadora}</td>
+                <td class="text-center">${dataMovimentacao}</td>
+                <td class="text-center">${descricao}</td>
+                <td class="text-center">R$ ${valorCredito.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center">${contaBancaria}</td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Créditos de Extratores
+    if (data.faturamento.creditos_extratores && data.faturamento.creditos_extratores.length > 0) {
+      const totalCreditosExtratores = data.faturamento.creditos_extratores.reduce((total, t) => total + (t.valor_credito || 0), 0);
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Créditos de Extratores</h6>
+        <div class="text-muted small mb-3">${data.faturamento.creditos_extratores.length} crédito(s) • R$ ${totalCreditosExtratores.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">EXTRATOR</th>
+                <th class="small text-uppercase text-center">DATA MOVIMENTAÇÃO</th>
+                <th class="small text-uppercase text-center">DESCRIÇÃO</th>
+                <th class="small text-uppercase text-center">VALOR CRÉDITO</th>
+                <th class="small text-uppercase text-center">CONTA BANCÁRIA</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.faturamento.creditos_extratores.forEach(credito => {
+        const valorCredito = credito.valor_credito || 0;
+        const nomeExtrator = credito.identificacao || 'N/A';
+        const dataMovimentacao = credito.data_movimentacao || 'N/A';
+        const descricao = credito.credito_descricao || 'N/A';
+        const contaBancaria = credito.conta_bancaria_id || 'N/A';
+
+        html += `
+              <tr>
+                <td class="text-center">${nomeExtrator}</td>
+                <td class="text-center">${dataMovimentacao}</td>
+                <td class="text-center">${descricao}</td>
+                <td class="text-center">R$ ${valorCredito.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center">${contaBancaria}</td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Comissionados
+    if (data.faturamento.comissionados && data.faturamento.comissionados.length > 0) {
+      const totalComissionados = data.faturamento.comissionados.reduce((total, t) => total + (t.valor || 0), 0) / 100;
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Comissionados</h6>
+        <div class="text-muted small mb-3">${data.faturamento.comissionados.length} registro • R$ ${totalComissionados.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">NOME</th>
+                <th class="small text-uppercase text-center">VALOR BRUTO</th>
+                <th class="small text-uppercase text-center">CRÉDITO UTILIZADO</th>
+                <th class="small text-uppercase text-center">VALOR FINAL</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.faturamento.comissionados.forEach(comissionado => {
+        const valorBruto = (comissionado.valor_bruto_total || comissionado.valor_bruto || 0) / 100;
+        const valorCredito = (comissionado.valor_credito_aplicado || comissionado.valor_credito || 0) / 100;
+        const valorFinal = (comissionado.valor || comissionado.valor_faturado || 0) / 100;
+        const nomeComissionado = comissionado.identificacao || comissionado.nome || 'N/A';
+
+        html += `
+              <tr>
+                <td class="text-center">${nomeComissionado}</td>
+                <td class="text-center">R$ ${valorBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center"><span>R$ ${valorCredito.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></td>
+                <td class="text-center"><span>R$ ${valorFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Receitas Avulsas
+    if (data.receitas_avulsas && data.receitas_avulsas.length > 0) {
+      const totalReceitas = data.receitas_avulsas.reduce((total, r) => {
+        const valor = parseFloat(r.valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+        return total + valor;
+      }, 0);
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Receitas Avulsas</h6>
+        <div class="text-muted small mb-3">${data.receitas_avulsas.length} receita • R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">DESCRIÇÃO</th>
+                <th class="small text-uppercase text-center">CONTA BANCÁRIA</th>
+                <th class="small text-uppercase text-center">DATA CADASTRO</th>
+                <th class="small text-uppercase text-center">VALOR</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.receitas_avulsas.forEach(receita => {
+        html += `
+              <tr>
+                <td class="text-center">${receita.descricao}</td>
+                <td class="text-center">${receita.conta_bancaria}</td>
+                <td class="text-center">${receita.data_cadastro}</td>
+                <td class="text-center"><span>R$ ${receita.valor}</span></td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Despesas Avulsas
+    if (data.despesas_avulsas && data.despesas_avulsas.length > 0) {
+      const totalDespesas = data.despesas_avulsas.reduce((total, d) => {
+        const valor = parseFloat(d.valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+        return total + valor;
+      }, 0);
+
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Despesas Avulsas</h6>
+        <div class="text-muted small mb-3">${data.despesas_avulsas.length} despesa • R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">DESCRIÇÃO</th>
+                <th class="small text-uppercase text-center">CONTA BANCÁRIA</th>
+                <th class="small text-uppercase text-center">DATA CADASTRO</th>
+                <th class="small text-uppercase text-center">VALOR</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.despesas_avulsas.forEach(despesa => {
+        html += `
+              <tr>
+                <td class="text-center">${despesa.descricao}</td>
+                <td class="text-center">${despesa.conta_bancaria}</td>
+                <td class="text-center">${despesa.data_cadastro}</td>
+                <td class="text-center"><span class="text-danger">R$ ${despesa.valor}</span></td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }    // Seção de Categorização por Conta
+    if (data.categorias && data.categorias.length > 0) {
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Categorização por Conta</h6>
+        <div class="text-muted small mb-3">${data.categorias.length} categoria</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">CATEGORIA</th>
+                <th class="small text-uppercase text-center">VALOR</th>
+                <th class="small text-uppercase text-center">DESCRIÇÃO</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      let totalCategorias = 0;
+      data.categorias.forEach(categoria => {
+        const valorCategoria = categoria.valor / 100 || 0; // Valor já vem em reais do backend
+        totalCategorias += valorCategoria;
+        const nomeCategoria = categoria.nome || 'N/A';
+
+        html += `
+              <tr>
+                <td class="text-center">${nomeCategoria}</td>
+                <td class="text-center">R$ ${valorCategoria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center">${categoria.detalhamento || '-'}</td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+            <tfoot>
+              <tr class="table-active fw-bold">
+                <td class="text-center">TOTAL</td>
+                <td class="text-center">R$ ${totalCategorias.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-end"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Centros de Custo (se houver)
+    console.log('Debug centros_custo:', data.centros_custo);
+    if (data.centros_custo && data.centros_custo.length > 0) {
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Centros de Custo</h6>
+        <div class="text-muted small mb-3">${data.centros_custo.length} centro(s) de custo</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">CENTRO DE CUSTO</th>
+                <th class="small text-uppercase text-center">VALOR</th>
+                <th class="small text-uppercase text-center">PERCENTUAL</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.centros_custo.forEach(centro => {
+        console.log('Debug centro individual:', centro);
+
+        // Tratar valores que podem vir do backend de diferentes formas
+        const valorCentro = centro.valor || 0;
+        const nomeCentro = centro.nome || centro.descricao || centro.centro || 'Centro não informado';
+        const percentualCentro = centro.percentual || 0;
+
+        html += `
+              <tr>
+                <td class="text-center">${nomeCentro}</td>
+                <td class="text-center">R$ ${valorCentro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center">${percentualCentro ? parseFloat(percentualCentro).toFixed(1) : '0.0'}%</td>
+              </tr>`;
+      });
+
+      html += ` 
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    // Seção de Parcelas
+    if (data.parcelas && data.parcelas.length > 0) {
+      html += `
+      <div class="mb-4">
+        <h6 class="text-muted mb-2">Parcelas</h6>
+        <div class="text-muted small mb-3">${data.parcelas.length} parcela</div>
+        
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr class="text-muted">
+                <th class="small text-uppercase text-center">PARCELA</th>
+                <th class="small text-uppercase text-center">VENCIMENTO</th>
+                <th class="small text-uppercase text-center text-end">VALOR</th>
+                <th class="small text-uppercase text-center">SITUAÇÃO</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      data.parcelas.forEach(parcela => {
+        const valorParcela = parcela.valor_parcela / 100;
+        const situacaoNome = parcela.situacao_nome || parcela.situacao || 'Pendente';
+        html += `
+              <tr>
+                <td class="text-center">${parcela.numero_parcela}/${data.parcelas.length}</td>
+                <td class="text-center">${parcela.data_vencimento}</td>
+                <td class="text-center">R$ ${valorParcela.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="text-center">${situacaoNome}</td>
+              </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    html += '</div>';
+    return html;
+  }
+</script>
+
+{% endblock conteudo %}

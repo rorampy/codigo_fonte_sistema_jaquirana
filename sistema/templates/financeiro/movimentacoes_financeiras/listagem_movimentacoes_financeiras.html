@@ -1,0 +1,984 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle text-muted">FINANCEIRO</div>
+          <h2 class="page-title fw-bold display-6">MOVIMENTAÇÕES
+            FINANCEIRAS</h2>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <a href="{%if transacoes_nao_conciliadas > 0%}{{url_for('listagem_ofx')}}{%else%}{{url_for('importar_ofx')}}{%endif%}"
+              class="btn btn-outline-orange">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-file-arrow-right">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                <path d="M9 15h6" />
+                <path d="M12.5 17.5l2.5 -2.5l-2.5 -2.5" />
+              </svg>
+              {%if transacoes_nao_conciliadas > 0%}Conciliar{%else%}Importar{%endif%} OFX
+            </a>
+            <a href="#" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#modal-report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-replace">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M3 3m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M15 15m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M21 11v-3a2 2 0 0 0 -2 -2h-6l3 3m0 -6l-3 3" />
+                <path d="M3 13v3a2 2 0 0 0 2 2h6l-3 -3m0 6l3 -3" />
+              </svg>
+              Customizar Conta Bancária </a>
+            <a href="{{url_for('nova_movimentacao_financeira')}}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Nova Movimentação
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body py-4">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="row row-cards mb-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-blue text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-currency-dollar">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                  <path d="M12 3v3m0 12v3" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Saldo
+                  atual</div>
+                <div class="fs-3 fw-bold text-blue mt-1">{{saldo_disponivel |
+                  formatar_float_para_brl}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-teal text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-down">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M12 5l0 14" />
+                  <path d="M18 13l-6 6" />
+                  <path d="M6 13l6 6" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Total
+                  Recebido</div>
+                <div class="fs-3 fw-bold text-teal mt-1">{{total_recebido |
+                  formatar_float_para_brl}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-orange text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-arrows-up">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M17 3l0 18" />
+                  <path d="M4 6l3 -3l3 3" />
+                  <path d="M20 6l-3 -3l-3 3" />
+                  <path d="M7 3l0 18" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Total
+                  Pago</div>
+                <div class="fs-3 fw-bold text-orange mt-1">{{valor_total_pago |
+                  formatar_float_para_brl}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-4">
+          <div class="col">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-body p-0">
+                {%if movimentacoes != []%}
+                <ul class="list-group list-group-flush">
+                  {% for mov in movimentacoes %}
+                  <li class="list-group-item py-3 px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="d-flex align-items-center gap-3">
+
+                        {% if mov.tipo_movimentacao == 2 %}
+                        <span class="text-danger">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-down">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 5l0 14" />
+                            <path d="M18 13l-6 6" />
+                            <path d="M6 13l6 6" />
+                          </svg>
+                        </span>
+                        {% elif mov.tipo_movimentacao == 1 %}
+                        <span class="text-success">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-up">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 5l0 14" />
+                            <path d="M18 11l-6 -6" />
+                            <path d="M6 11l6 -6" />
+                          </svg>
+                        </span>
+                        {% elif mov.tipo_movimentacao == 3 %}
+                        <span class="text-success">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-x">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M18 6l-12 12" />
+                            <path d="M6 6l12 12" />
+                          </svg>
+                        </span>
+                        {% elif mov.tipo_movimentacao == 4 %}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-currency-dollar">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                          <path d="M12 3v3m0 12v3" />
+                        </svg>
+                        {% elif mov.tipo_movimentacao == 5 %}
+                        <span class="text-success">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-up">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 5l0 14" />
+                            <path d="M18 11l-6 -6" />
+                            <path d="M6 11l6 -6" />
+                          </svg>
+                        </span>
+                        {% endif %}
+
+                        <div>
+
+                          <div class="fw-semibold">
+                            {% if mov.tipo_movimentacao == 1 %}
+                            {% if mov.conciliacao_bancaria and mov.importacao_ofx %}
+                            {% if mov.recebimentos_massa is defined and mov.recebimentos_massa|length > 0 %}
+                            <div class="d-flex align-items-center">
+                              <span>Recebimento cliente</span>
+                              <button type="button" class="btn btn-sm btn-ghost-dark ms-2 p-1" data-bs-toggle="modal"
+                                data-bs-target="#modalRecebimentos{{ mov.id }}" title="Ver detalhes">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                  <path
+                                    d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                                </svg>
+                                <span class="ms-1">{{ mov.recebimentos_massa|length }} transações</span>
+                              </button>
+                            </div>
+                            {% elif mov.conciliacao_faturamento %}
+                            Recebimento: {{ mov.conciliacao_faturamento.codigo_faturamento }}
+                            {% elif mov.conciliacao_lancamento_avulso %}
+                            Receita extra conciliada: {{ mov.conciliacao_lancamento_avulso.descricao }}
+                            {% else %}
+                            Receita extra conciliada
+                            {% endif %}
+                            {% elif mov.conciliacao_faturamento %}
+                            Recebimento: {{ mov.conciliacao_faturamento.codigo_faturamento }}
+                            {% else %}
+                            Receita avulsa: {{mov.agendamento.lancamento_avulso.descricao}}
+                            {% endif %}
+
+                            {% elif mov.tipo_movimentacao == 2 %}
+                            {% if mov.conciliacao_bancaria and mov.importacao_ofx %}
+                            {% if mov.fornecedores_pagos_massa is defined and mov.fornecedores_pagos_massa|length > 0 %}
+                            <div class="d-flex align-items-center">
+                              <span>Pagamento fornecedor</span>
+                              <button type="button" class="btn btn-sm btn-ghost-dark ms-2 p-1" data-bs-toggle="modal"
+                                data-bs-target="#modalFornecedores{{ mov.id }}" title="Ver detalhes">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                  <path
+                                    d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                                </svg>
+                                <span class="ms-1">{{ mov.fornecedores_pagos_massa|length }} transações</span>
+                              </button>
+                            </div>
+                            {% elif mov.transportadoras_pagas_massa is defined and
+                            mov.transportadoras_pagas_massa|length > 0 %}
+                            <div class="d-flex align-items-center">
+                              <span>Pagamento transportadora</span>
+                              <button type="button" class="btn btn-sm btn-ghost-dark ms-2 p-1" data-bs-toggle="modal"
+                                data-bs-target="#modalTransportadoras{{ mov.id }}" title="Ver detalhes">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                  <path
+                                    d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                                </svg>
+                                <span class="ms-1">{{ mov.transportadoras_pagas_massa|length }} transações</span>
+                              </button>
+                            </div>
+                            {% elif mov.extratores_pagos_massa is defined and mov.extratores_pagos_massa|length > 0 %}
+                            <div class="d-flex align-items-center">
+                              <span>Pagamento extrator</span>
+                              <button type="button" class="btn btn-sm btn-ghost-dark ms-2 p-1" data-bs-toggle="modal"
+                                data-bs-target="#modalExtratores{{ mov.id }}" title="Ver detalhes">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                  <path
+                                    d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                                </svg>
+                                <span class="ms-1">{{ mov.extratores_pagos_massa|length }} transações</span>
+                              </button>
+                            </div>
+                            {% elif mov.comissionados_pagos_massa is defined and mov.comissionados_pagos_massa|length > 0 %}
+                            <div class="d-flex align-items-center">
+                              <span>Pagamento comissionado</span>
+                              <button type="button" class="btn btn-sm btn-ghost-dark ms-2 p-1" data-bs-toggle="modal"
+                                data-bs-target="#modalComissionados{{ mov.id }}" title="Ver detalhes">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                  <path
+                                    d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                                </svg>
+                                <span class="ms-1">{{ mov.comissionados_pagos_massa|length }} transações</span>
+                              </button>
+                            </div>
+                            {% elif mov.conciliacao_lancamento_avulso %}
+                            Despesa extra conciliada: {{mov.conciliacao_lancamento_avulso.descricao}}
+                            {% elif mov.fornecedor_pagamento %}
+                            Pagamento de fornecedor: {{ mov.fornecedor_pagamento.fornecedor.identificacao }}
+                            {% elif mov.freteiro_pagamento %}
+                            Pagamento freteiro: {{ mov.freteiro_pagamento.transportadora.identificacao }}
+                            {% elif mov.extrator_pagamento %}
+                            Pagamento extrator: {{ mov.extrator_pagamento.fornecedor.extrator.identificacao }}
+                            {% elif mov.comissionado_pagamento %}
+                            Pagamento comissionado: {{ mov.comissionado_pagamento.comissionado.identificacao }}
+                            {% else %}
+                            Pagamento conciliado
+                            {% endif %}
+                            {% elif mov.conciliacao_lancamento_avulso %}
+                            Despesa avulsa: {{mov.conciliacao_lancamento_avulso.descricao}}
+                            {% elif mov.credito_extrator %}
+                            Inclusão de crédito: Extrator {{ mov.credito_extrator.extrator.identificacao }}
+                            {% elif mov.credito_fornecedor %}
+                            Inclusão de crédito: Fornecedor {{ mov.credito_fornecedor.fornecedor.identificacao }}
+                            {% elif mov.credito_freteiro %}
+                            Inclusão de crédito: Freteiro {{ mov.credito_freteiro.transportadora.identificacao }}
+                            {% elif mov.fornecedor_pagamento %}
+                            Pagamento de fornecedor: {{ mov.fornecedor_pagamento.fornecedor.identificacao }}
+                            {% elif mov.freteiro_pagamento %}
+                            Pagamento freteiro: {{ mov.freteiro_pagamento.transportadora.identificacao }}
+                            {% elif mov.extrator_pagamento %}
+                            Pagamento extrator: {{ mov.extrator_pagamento.fornecedor.extrator.identificacao }}
+                            {% elif mov.comissionado_pagamento %}
+                            Pagamento comissionado: {{ mov.comissionado_pagamento.comissionado.identificacao }}
+                            {% else %}
+                            Movimentação genérica
+                            {% endif %}
+
+                            {% elif mov.tipo_movimentacao == 3 %}
+                            Cancelamento de movimentação
+
+                            {% elif mov.tipo_movimentacao == 4 %}
+                            {% if mov.credito_fornecedor %}
+                            Estorno de crédito de fornecedor: {{ mov.credito_fornecedor.fornecedor.identificacao }}
+                            {% elif mov.credito_extrator %}
+                            Estorno de crédito de extrator: {{ mov.credito_extrator.extrator.identificacao }}
+                            {% elif mov.credito_freteiro %}
+                            Estorno de crédito de freteiro: {{ mov.credito_freteiro.transportadora.identificacao }}
+                            {% else %}
+                            Estorno de crédito genérico
+                            {% endif %}
+
+                            {% elif mov.tipo_movimentacao == 5 %}
+                            Estorno de saldo de conta
+
+                            {% else %}
+                            Movimentação desconhecida
+                            {% endif %}
+                          </div>
+
+                          <small class="text-muted">
+                            {{ mov.data_movimentacao.strftime('%d/%m/%Y') }} •
+                            {%if mov.tipo_movimentacao == 1 and
+                            mov.conciliacao_lancamento_avulso %}
+                            {% if mov.conciliacao_bancaria and mov.importacao_ofx %}Receita conciliada{% else %}Receita
+                            por lançamento{% endif %}
+                            {% elif mov.tipo_movimentacao == 1 %}
+                            Entrada
+                            {% elif mov.tipo_movimentacao == 2 and
+                            mov.conciliacao_lancamento_avulso %}
+                            {% if mov.conciliacao_bancaria and mov.importacao_ofx %}Despesa conciliada{% else %}Despesa
+                            por lançamento{% endif %}
+                            {% elif mov.tipo_movimentacao == 2 %}
+                            Saída
+                            {% elif mov.tipo_movimentacao == 3 %}
+                            Cancelamento
+                            {% elif mov.tipo_movimentacao == 4 %}
+                            Estorno de crédito
+                            {% elif mov.tipo_movimentacao == 5 %}
+                            Estorno de saldo
+                            {% endif %}
+                          </small>
+                          <small class="text-muted">
+                            {%if mov.conciliacao_bancaria and mov.importacao_ofx_id%}
+                            • FTID: {{ mov.importacao_ofx.fitid }}
+                            {% endif %}
+                          </small>
+                        </div>
+
+                      </div>
+
+                      <div class="text-end">
+                        {% set valor = 0 %}
+
+                        {% if mov.conciliacao_bancaria and mov.importacao_ofx and mov.valor_movimentacao_100 %}
+                        {% set valor = mov.valor_movimentacao_100 %}
+                        {% elif mov.recebimento %}
+                        {% set valor = mov.recebimento.valor_total_recebimento_100 or 0 %}
+                        {% elif mov.credito_extrator %}
+                        {% set valor = mov.credito_extrator.valor_credito_100 or 0 %}
+                        {% elif mov.credito_fornecedor %}
+                        {% set valor = mov.credito_fornecedor.valor_credito_100 or 0 %}
+                        {% elif mov.credito_freteiro %}
+                        {% set valor = mov.credito_freteiro.valor_credito_100 or 0 %}
+                        {% elif mov.fornecedor_pagamento %}
+                        {% if mov.movimentacao_extra %}
+                        {% set valor = mov.valor_movimentacao_100 or 0 %}
+                        {% else %}
+                        {% set valor = mov.fornecedor_pagamento.valor_total_a_pagar_100 or 0 %}
+                        {% endif %}
+                        {% elif mov.freteiro_pagamento %}
+                        {% if mov.movimentacao_extra %}
+                        {% set valor = mov.valor_movimentacao_100 or 0 %}
+                        {% else %}
+                        {% set valor = mov.freteiro_pagamento.valor_total_a_pagar_100 or 0 %}
+                        {% endif %}
+                        {% elif mov.extrator_pagamento %}
+                        {% if mov.movimentacao_extra %}
+                        {% set valor = mov.valor_movimentacao_100 or 0 %}
+                        {% else %}
+                        {% set valor = mov.extrator_pagamento.valor_total_a_pagar_100 or 0 %}
+                        {% endif %}
+                        {% elif mov.comissionado_pagamento %}
+                        {% if mov.movimentacao_extra %}
+                        {% set valor = mov.valor_movimentacao_100 or 0 %}
+                        {% else %}
+                        {% set valor = mov.comissionado_pagamento.valor_total_a_pagar_100 or 0 %}
+                        {% endif %}
+                        {% elif mov.conciliacao_lancamento_avulso %}
+                        {% set valor = mov.conciliacao_lancamento_avulso.valor_movimentacao_100 or 0 %}
+                        {% else %}
+                        {% set valor = 0 %}
+                        {% endif %}
+
+                        <div class="{% if mov.tipo_movimentacao == 1 %}text-success
+           {% elif mov.tipo_movimentacao == 2 %}text-danger
+           {% elif mov.tipo_movimentacao == 3 %}text-warning
+           {% elif mov.tipo_movimentacao == 4 %}text-primary
+           {% elif mov.tipo_movimentacao == 5 %}text-success
+           {% endif %} fw-bold">
+                          {{ '+' if mov.tipo_movimentacao == 1 else
+                          '-' if mov.tipo_movimentacao == 2 else
+                          '×' if mov.tipo_movimentacao == 3 else
+                          '↺' }} {{ valor | formatar_float_para_brl }}
+                        </div>
+
+                        <div class="d-flex flex-column align-items-end gap-1">
+                          <span class="badge
+                          {% if mov.tipo_movimentacao == 1 %}bg-success-lt text-success
+                          {% elif mov.tipo_movimentacao == 2 %}bg-danger-lt text-danger
+                          {% elif mov.tipo_movimentacao == 3 %}bg-warning-lt text-warning
+                          {% elif mov.tipo_movimentacao == 4 %}bg-primary-lt text-primary
+                          {% elif mov.tipo_movimentacao == 5 %}bg-success-lt text-success
+                          {% endif %}">
+                            {% if mov.conciliacao_bancaria and mov.importacao_ofx and mov.conciliacao_lancamento_avulso %}
+                            {% if mov.tipo_movimentacao == 1 %}Receita conciliada{% else %}Despesa conciliada{% endif %}
+                            {% elif mov.agendamento %}
+                            {% if mov.tipo_movimentacao == 1 %}Liquidação de receita{% else %}Liquidação de despesa{% endif %}
+                            {% else %}
+                            {{"Entrada por lançamento" if
+                            mov.conciliacao_lancamento_avulso and mov.tipo_movimentacao
+                            == 1 else
+                            "Entrada" if mov.tipo_movimentacao == 1 else
+                            "Saída por lançamento" if mov.conciliacao_lancamento_avulso
+                            and mov.tipo_movimentacao == 2 else
+                            "Saída" if mov.tipo_movimentacao == 2 else
+                            "Cancelamento" if mov.tipo_movimentacao == 3 else
+                            "Estorno" }}
+                            {% endif %}
+                          </span>
+
+                          {%if mov.conciliacao_bancaria and mov.importacao_ofx%}
+                          <span
+                            class="badge {% if mov.tipo_movimentacao == 1 %}bg-success-lt text-success{% else %}bg-danger-lt text-danger{% endif %}">
+                            Conciliado OFX
+                          </span>
+                          {% endif %}
+                        </div>
+
+                      </div>
+                    </div>
+                  </li>
+                  {% endfor %}
+                </ul>
+
+                {%else%}
+                <div class="area-info-extrato" style="
+                padding: 30px;
+                border-radius: 10px;
+                text-align: center;
+                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+              ">
+                  <div class="icon-extrato" style="font-size: 60px; color: #fc7801; margin-bottom: 15px">
+                    📄
+                  </div>
+                  <h2 style="font-size: 22px; margin-bottom: 10px">
+                    Nenhuma Movimentação encontrada
+                  </h2>
+                  <p>
+                    Não encontramos movimentações para serem exibidos no
+                    momento.
+                  </p>
+                </div>
+                {%endif%}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document" style="display: grid;">
+      <form id="filtroForm" method="get">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Customizar Conta Bancária </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label class="form-label" for="selectConta"><strong>Conta
+                    Bancária:</strong></label>
+                <select id="selectConta" name="conta_bancaria_id" class="form-select">
+                  <option value="0">
+                    Todos
+                  </option>
+                  {% for conta in contas_bancarias %}
+                  <option value="{{ conta.id }}" {% if (conta_selecionada_id is none and conta.id==1) or
+                    (conta_selecionada_id is not none and conta.id==conta_selecionada_id) %} selected {% endif %}>
+                    {{ conta.identificacao }}
+                  </option>
+
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <a href="{{url_for('movimentacoes_financeiras')}}" class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-2">
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para Recebimentos em Massa -->
+  {% for mov in movimentacoes %}
+  {% if mov.tipo_movimentacao == 1 and mov.conciliacao_bancaria and mov.importacao_ofx and mov.recebimentos_massa is
+  defined and mov.recebimentos_massa|length > 0 %}
+  <div class="modal modal-blur fade" id="modalRecebimentos{{ mov.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Detalhes do Recebimento em Massa - Clientes
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <span class="badge bg-success-lt text-success">
+              Conciliado OFX
+            </span>
+            <span class="badge badge-outline text-default ms-2">FTID: {{ mov.importacao_ofx.fitid }}</span>
+            <span class="badge badge-outline text-default ms-2">{{ mov.data_movimentacao.strftime('%d/%m/%Y') }}</span>
+          </div>
+          <h6 class="text-muted mb-3">Total de {{ mov.recebimentos_massa|length }} recebimento(s)</h6>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Data Entrega</th>
+                  <th>Produto</th>
+                  <th>NF</th>
+                  <th>Quantidade</th>
+                  <th class="text-end">Valor Recebido</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% set total_geral = namespace(valor=0) %}
+                {% for r in mov.recebimentos_massa %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div>
+                        <span>{{ r.cliente.identificacao | truncate(15, '...') }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="text-center text-primary">
+                      {{ r.registro.data_entrega_ticket | formatar_data_para_brl if r.registro.data_entrega_ticket else
+                      '-' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span>
+                      {{ r.registro.solicitacao.produto.nome | truncate(15, '...') if r.registro.solicitacao and
+                      r.registro.solicitacao.produto else '-' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span>{{ r.numero_nota_fiscal or '-' }}</span>
+                  </td>
+                  <td>
+                    <span>
+                      {% if r.registro.peso_liquido_ticket %}
+                      {{ r.registro.peso_liquido_ticket }} Ton.
+                      {% else %}
+                      {{ r.registro.quantidade | default('-') }}
+                      {% endif %}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <span class="fw-bold text-success">{{ (r.valor_total_recebimento_100 or 0) | formatar_float_para_brl
+                      }}</span>
+                  </td>
+                </tr>
+                {% set total_geral.valor = total_geral.valor + (r.valor_total_recebimento_100 or 0) %}
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr class="border-top">
+                  <td colspan="5" class="text-end fw-bold">Total:</td>
+                  <td class="text-end">
+                    <span class="fs-4 fw-bold text-success">{{ total_geral.valor | formatar_float_para_brl }}</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-primary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <!-- Modal para Fornecedores em Massa -->
+  {% for mov in movimentacoes %}
+  {% if mov.tipo_movimentacao == 2 and mov.conciliacao_bancaria and mov.importacao_ofx and mov.fornecedores_pagos_massa
+  is defined and mov.fornecedores_pagos_massa|length > 0 %}
+  <div class="modal modal-blur fade" id="modalFornecedores{{ mov.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Detalhes do Pagamento em Massa - Fornecedores
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <span class="badge bg-danger-lt text-danger">
+              Conciliado OFX
+            </span>
+            <span class="badge badge-outline text-default ms-2">FTID: {{ mov.importacao_ofx.fitid }}</span>
+            <span class="badge badge-outline text-default ms-2">{{ mov.data_movimentacao.strftime('%d/%m/%Y') }}</span>
+          </div>
+          <h6 class="text-muted mb-3">Total de {{ mov.fornecedores_pagos_massa|length }} pagamento(s)</h6>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Fornecedor</th>
+                  <th>Data Entrega</th>
+                  <th>Produto/Bitola</th>
+                  <th>NF</th>
+                  <th class="text-end">Valor Pago</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% set total_geral = namespace(valor=0) %}
+                {% for f in mov.fornecedores_pagos_massa %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div>
+                        <span>{{ f.fornecedor.identificacao | truncate(10, '...') }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="text-center text-primary">{{ f.data_entrega_ticket | formatar_data_para_brl or '-'
+                      }}</span>
+                  </td>
+                  <td>
+                    <span>{{ f.bitola.bitola or '-' }} | {{f.solicitacao.produto.nome or '-' }}</span>
+                  </td>
+                  <td>
+                    <span>{{ f.solicitacao.car_carga_registro_operacional[0].numero_nota_fiscal or '-' }}</span>
+                  </td>
+                  <td class="text-end">
+                    <span class="fw-bold text-danger">{{ (f.valor_total_a_pagar_100 or 0) | formatar_float_para_brl
+                      }}</span>
+                  </td>
+                </tr>
+                {% set total_geral.valor = total_geral.valor + (f.valor_total_a_pagar_100 or 0) %}
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr class="border-top">
+                  <td colspan="4" class="text-end fw-bold">Total:</td>
+                  <td class="text-end">
+                    <span class="fs-4 fw-bold text-danger">{{ total_geral.valor | formatar_float_para_brl }}</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-primary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <!-- Modal para Transportadoras em Massa -->
+  {% for mov in movimentacoes %}
+  {% if mov.tipo_movimentacao == 2 and mov.conciliacao_bancaria and mov.importacao_ofx and
+  mov.transportadoras_pagas_massa is defined and mov.transportadoras_pagas_massa|length > 0 %}
+  <div class="modal modal-blur fade" id="modalTransportadoras{{ mov.id }}" tabindex="-1" role="dialog"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Detalhes do Pagamento em Massa - Transportadoras
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <span class="badge bg-danger-lt text-danger">
+              Conciliado OFX
+            </span>
+            <span class="badge badge-outline text-default ms-2">FTID: {{ mov.importacao_ofx.fitid }}</span>
+            <span class="badge badge-outline text-default ms-2">{{ mov.data_movimentacao.strftime('%d/%m/%Y') }}</span>
+          </div>
+          <h6 class="text-muted mb-3">Total de {{ mov.transportadoras_pagas_massa|length }} pagamento(s)</h6>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Transportadora</th>
+                  <th>Data Entrega</th>
+                  <th>Produto/Bitola</th>
+                  <th>NF</th>
+                  <th class="text-end">Valor Pago</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% set total_geral = namespace(valor=0) %}
+                {% for t in mov.transportadoras_pagas_massa %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <span>
+                        {{ t.transportadora.identificacao | truncate(15, '...') }}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="text-center text-primary">{{ t.data_entrega_ticket | formatar_data_para_brl or '-'
+                      }}</span>
+                  </td>
+                  <td>
+                    <span>{{ t.bitola.bitola or '-' }} | {{t.solicitacao.produto.nome or '-' }}</span>
+                  </td>
+                  <td>
+                    <span>{{ t.solicitacao.car_carga_registro_operacional[0].numero_nota_fiscal or '-' }}</span>
+                  </td>
+                  <td class="text-end">
+                    <span class="fw-bold text-danger">{{ (t.valor_total_a_pagar_100 or 0) | formatar_float_para_brl
+                      }}</span>
+                  </td>
+                </tr>
+                {% set total_geral.valor = total_geral.valor + (t.valor_total_a_pagar_100 or 0) %}
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr class="border-top">
+                  <td colspan="4" class="text-end fw-bold">Total:</td>
+                  <td class="text-end">
+                    <span class="fs-4 fw-bold text-danger">{{ total_geral.valor | formatar_float_para_brl }}</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-primary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <!-- Modal para Extratores em Massa -->
+  {% for mov in movimentacoes %}
+  {% if mov.tipo_movimentacao == 2 and mov.conciliacao_bancaria and mov.importacao_ofx and mov.extratores_pagos_massa is
+  defined and mov.extratores_pagos_massa|length > 0 %}
+  <div class="modal modal-blur fade" id="modalExtratores{{ mov.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Detalhes do Pagamento em Massa - Extratores
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <span class="badge bg-danger-lt text-danger">
+              Conciliado OFX
+            </span>
+            <span class="badge badge-outline text-default ms-2">FTID: {{ mov.importacao_ofx.fitid }}</span>
+            <span class="badge badge-outline text-default ms-2">{{ mov.data_movimentacao.strftime('%d/%m/%Y') }}</span>
+          </div>
+          <h6 class="text-muted mb-3">Total de {{ mov.extratores_pagos_massa|length }} pagamento(s)</h6>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Extrator</th>
+                  <th>Data Entrega</th>
+                  <th>Produto/Bitola</th>
+                  <th>NF</th>
+                  <th class="text-end">Valor Pago</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% set total_geral = namespace(valor=0) %}
+                {% for e in mov.extratores_pagos_massa %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div>
+                        <span>{{ e.fornecedor.extrator.identificacao | truncate(10, '...') }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="text-center text-primary">{{ e.data_entrega_ticket | formatar_data_para_brl or '-'
+                      }}</span>
+                  </td>
+                  <td>
+                    <span>{{ e.bitola.bitola or '-' }} | {{e.solicitacao.produto.nome or '-' }}</span>
+                  </td>
+                  <td>
+                    <span>{{ e.solicitacao.car_carga_registro_operacional[0].numero_nota_fiscal or '-' }}</span>
+                  </td>
+                  <td class="text-end">
+                    <span class="fw-bold text-danger">{{ (e.valor_total_a_pagar_100 or 0) | formatar_float_para_brl
+                      }}</span>
+                  </td>
+                </tr>
+                {% set total_geral.valor = total_geral.valor + (e.valor_total_a_pagar_100 or 0) %}
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr class="border-top">
+                  <td colspan="4" class="text-end fw-bold">Total:</td>
+                  <td class="text-end">
+                    <span class="fs-4 fw-bold text-danger">{{ total_geral.valor | formatar_float_para_brl }}</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-primary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <!-- Modal para Comissionados em Massa -->
+  {% for mov in movimentacoes %}
+  {% if mov.tipo_movimentacao == 2 and mov.conciliacao_bancaria and mov.importacao_ofx and mov.comissionados_pagos_massa is
+  defined and mov.comissionados_pagos_massa|length > 0 %}
+  <div class="modal modal-blur fade" id="modalComissionados{{ mov.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Detalhes do Pagamento em Massa - Comissionados
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <span class="badge bg-danger-lt text-danger">
+              Conciliado OFX
+            </span>
+            <span class="badge badge-outline text-default ms-2">FTID: {{ mov.importacao_ofx.fitid }}</span>
+            <span class="badge badge-outline text-default ms-2">{{ mov.data_movimentacao.strftime('%d/%m/%Y') }}</span>
+          </div>
+          <h6 class="text-muted mb-3">Total de {{ mov.comissionados_pagos_massa|length }} pagamento(s)</h6>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Comissionado</th>
+                  <th>Data Entrega</th>
+                  <th>Produto/Bitola</th>
+                  <th>NF</th>
+                  <th class="text-end">Valor Pago</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% set total_geral = namespace(valor=0) %}
+                {% for c in mov.comissionados_pagos_massa %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div>
+                        <span>{{ c.comissionado.identificacao | truncate(10, '...') }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="text-center text-primary">{{ c.data_entrega_ticket | formatar_data_para_brl or '-'
+                      }}</span>
+                  </td>
+                  <td>
+                    <span>{{ c.bitola.bitola or '-' }} | {{c.solicitacao.produto.nome or '-' }}</span>
+                  </td>
+                  <td>
+                    <span>{{ c.solicitacao.car_carga_registro_operacional[0].numero_nota_fiscal or '-' }}</span>
+                  </td>
+                  <td class="text-end">
+                    <span class="fw-bold text-danger">{{ (c.valor_total_a_pagar_100 or 0) | formatar_float_para_brl
+                      }}</span>
+                  </td>
+                </tr>
+                {% set total_geral.valor = total_geral.valor + (c.valor_total_a_pagar_100 or 0) %}
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr class="border-top">
+                  <td colspan="4" class="text-end fw-bold">Total:</td>
+                  <td class="text-end">
+                    <span class="fs-4 fw-bold text-danger">{{ total_geral.valor | formatar_float_para_brl }}</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-primary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <script>
+    document.getElementById('selectConta').addEventListener('change', () => {
+      document.getElementById('filtroForm').submit();
+    });
+  </script>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

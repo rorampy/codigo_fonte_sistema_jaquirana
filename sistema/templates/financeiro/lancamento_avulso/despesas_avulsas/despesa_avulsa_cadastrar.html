@@ -1,0 +1,888 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="{{ url_for('static', filename='js/sistema/utilitarios.js') }}"></script>
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">
+            DESPESAS
+          </div>
+          <h2 class="page-title">
+           NOVA DESPESA
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body">
+              <form method="POST" x-data="categorias()" x-init="init()" @submit="prepararEnvio()">
+                <div class="row mb-4">
+                  <div class="col-md-3">
+                    <label class="form-label required">Data Vencimento</label>
+                    <input type="date" name="data_vencimento" 
+                           value="{{ dados_corretos.data_vencimento or '' }}" 
+                           class="form-control {% if 'data_vencimento' in campos_obrigatorios or 'data_vencimento' in campos_erros %}is-invalid{% endif %}">
+                    <div class="invalid-feedback">
+                      {% if 'data_vencimento' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['data_vencimento'] }}
+                      {% elif 'data_vencimento' in campos_erros %}
+                        {{ campos_erros['data_vencimento'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Data Competência</label>
+                    <input type="text" name="data_competencia" 
+                           value="{{ dados_corretos.data_competencia or '' }}" 
+                           class="form-control {% if 'data_competencia' in campos_obrigatorios or 'data_competencia' in campos_erros %}is-invalid{% endif %}" 
+                           data-mask="00/0000" placeholder="MM/AAAA">
+                    <div class="invalid-feedback">
+                      {% if 'data_competencia' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['data_competencia'] }}
+                      {% elif 'data_competencia' in campos_erros %}
+                        {{ campos_erros['data_competencia'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label required">Conta Bancária</label>
+                    <select name="conta_bancaria_id" 
+                            class="form-select {% if 'conta_bancaria_id' in campos_obrigatorios or 'conta_bancaria_id' in campos_erros %}is-invalid{% endif %}">
+                      <option value="">Selecione a conta bancária...</option>
+                      {% for conta in contas_bancarias %}
+                        <option value="{{ conta.id }}" 
+                                {% if dados_corretos.conta_bancaria_id and dados_corretos.conta_bancaria_id|string == conta.id|string %}selected{% endif %}>
+                          {{ conta.identificacao }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                    <div class="invalid-feedback">
+                      {% if 'conta_bancaria_id' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['conta_bancaria_id'] }}
+                      {% elif 'conta_bancaria_id' in campos_erros %}
+                        {{ campos_erros['conta_bancaria_id'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="text-end">
+                      <label class="form-label text-muted small">Total</label>
+                      <h1 class="fw-bold mb-0 text-dark">{{ (faturamento.valor_total if faturamento else objeto_principal.valor_movimentacao_100) | formatar_float_para_brl }}</h1>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Linha 2: Nome, Descrição, Referência -->
+                <div class="row mb-4">
+                  <div class="col-md-4">
+                    <label class="form-label required">Beneficiário</label>
+                    <select name="pessoa_financeiro_id" 
+                            class="form-select {% if 'pessoa_financeiro_id' in campos_obrigatorios or 'pessoa_financeiro_id' in campos_erros %}is-invalid{% endif %}">
+                      <option value="">Selecione o beneficiário...</option>
+                      {% for pessoa in pessoas_financeiro %}
+                        <option value="{{ pessoa.id }}" 
+                                {% if dados_corretos.pessoa_financeiro_id and dados_corretos.pessoa_financeiro_id|string == pessoa.id|string %}selected{% endif %}>
+                          {{ pessoa.identificacao }} ({{ pessoa.documento_formatado }})
+                        </option>
+                      {% endfor %}
+                    </select>
+                    <div class="invalid-feedback">
+                      {% if 'pessoa_financeiro_id' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['pessoa_financeiro_id'] }}
+                      {% elif 'pessoa_financeiro_id' in campos_erros %}
+                        {{ campos_erros['pessoa_financeiro_id'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label required">Descrição</label>
+                    <input type="text" name="descricao" 
+                           value="{{ dados_corretos.descricao or '' }}" 
+                           class="form-control {% if 'descricao' in campos_obrigatorios or 'descricao' in campos_erros %}is-invalid{% endif %}" 
+                           placeholder="Ex.: Pagamento de fornecedor">
+                    <div class="invalid-feedback">
+                      {% if 'descricao' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['descricao'] }}
+                      {% elif 'descricao' in campos_erros %}
+                        {{ campos_erros['descricao'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Referência <span class="text-muted">(opcional)</span></label>
+                    <input type="text" name="referencia" 
+                           value="{{ dados_corretos.referencia or '' }}" 
+                           class="form-control" placeholder="Ex.: Nota fiscal #123">
+                  </div>
+                </div>
+
+                <!-- Linha 3: Valor -->
+                <div class="row mb-4">
+                  <div class="col-md-4">
+                    <label class="form-label required">Valor</label>
+                    <input type="text" name="valor" 
+                           value="{{ dados_corretos.valor or '' }}" 
+                           class="form-control campo-moeda-brl {% if 'valor' in campos_obrigatorios or 'valor' in campos_erros %}is-invalid{% endif %}" 
+                           placeholder="R$ 0,00">
+                    <div class="invalid-feedback">
+                      {% if 'valor' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['valor'] }}
+                      {% elif 'valor' in campos_erros %}
+                        {{ campos_erros['valor'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Seção de Categorias com Alpine.js -->
+                <div class="mb-4">
+                  <label class="form-label mb-3 required">Categoria</label>
+                  
+                  <div class="{% if 'categorias_json' in campos_obrigatorios or 'categorias_json' in campos_erros %}border border-danger rounded p-2{% endif %}">
+                    <!-- Lista de Categorias -->
+                    <template x-for="(categoria, index) in lista" :key="index">
+                      <div class="row mb-3 align-items-center">
+                        <div class="col-lg-4 col-md-4 col-sm-6 col-12">
+                          <select class="form-select" x-model="categoria.nome" @change="validarTotalCompleto()">
+                            <option value="">Selecione uma categoria...</option>
+                            {% for cat in estrutura_plano_contas %}
+                              <optgroup label="{{ cat.codigo }} – {{ cat.nome }}">
+                                {% for sub in cat.children %}
+                                  <option value="{{ sub.codigo }}">{{ sub.codigo }} – {{ sub.nome }}</option>
+                                  {% for subsub in sub.children %}
+                                    <option value="{{ subsub.codigo }}">&nbsp;&nbsp;&nbsp;{{ subsub.codigo }} – {{ subsub.nome }}</option>
+                                  {% endfor %}
+                                {% endfor %}
+                              </optgroup>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-6 col-12">
+                          <div class="input-group">
+                            <input type="text" class="form-control" x-model="categoria.detalhamento" 
+                                   placeholder="Detalhamento (opcional)">
+                          </div>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-10 col-9">
+                          <input type="text" class="form-control text-end campo-moeda-brl"
+                                 x-bind:value="formatarParaExibicao(categoria.valor)" 
+                                 @input="aplicarMascara($event, index)"
+                                 placeholder="R$ 0,00">
+                        </div>
+                        <div class="col-lg-1 col-md-1 col-sm-2 col-3 text-center">
+                          <button type="button" class="btn btn-link text-danger p-1" 
+                                  @click="removerCategoria(index)"
+                                  x-show="lista.length > 1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                              class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                              <path d="M4 7l16 0" />
+                              <path d="M10 11l0 6" />
+                              <path d="M14 11l0 6" />
+                              <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                              <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </template>
+
+                    <!-- Botão adicionar categoria -->
+                    <div class="mt-3">
+                      <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
+                        @click="adicionarCategoria()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-plus me-1">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M12 5l0 14" />
+                          <path d="M5 12l14 0" />
+                        </svg>
+                        Adicionar categoria
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {% if 'categorias_json' in campos_obrigatorios %}
+                    <div class="text-danger mt-1">
+                      <small>{{ campos_obrigatorios['categorias_json'] }}</small>
+                    </div>
+                  {% elif 'categorias_json' in campos_erros %}
+                    <div class="text-danger mt-1">
+                      <small>{{ campos_erros['categorias_json'] }}</small>
+                    </div>
+                  {% endif %}
+                </div>
+
+                <!-- Opções adicionais -->
+                <div class="row mb-4">
+                  <div class="col-12">
+                    <!-- Switch Valores Detalhados -->
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" id="valoresDetalhados"
+                        x-model="mostrarValoresDetalhados" @change="validarTotalCompleto()">
+                      <label class="form-check-label text-muted" for="valoresDetalhados">
+                        Valores detalhados
+                      </label>
+                    </div>
+
+                    <!-- Painel Valores Detalhados -->
+                    <div x-show="mostrarValoresDetalhados" x-transition class="card mb-3"
+                      style="display: none; background-color: #F6F8FB !important;">
+                      <div class="card-body">
+                        <div class="{% if 'centros_custo_json' in campos_obrigatorios or 'centros_custo_json' in campos_erros %}border border-danger rounded p-2 mb-3{% endif %}">
+                        <!-- Tabs -->
+                        <ul class="nav nav-tabs" role="tablist" style="border: unset !important;">
+                          <li class="nav-item" role="presentation">
+                            <a class="nav-link active" id="tab-centro-custo"
+                              style="background-color: white !important; border: unset;" data-bs-toggle="tab"
+                              href="#centro-custo" role="tab">Centro de custo</a>
+                          </li>
+                        </ul>
+
+                        <!-- Tab Content -->
+                        <div class="tab-content" style="background-color: white !important; padding: 30px;">
+                          <div class="tab-pane fade show active" id="centro-custo" role="tabpanel">
+                            <div class="mb-3">
+                              <div class="row align-items-center mb-2">
+                                <div class="col-12 mb-3">
+                                  <strong>Tipo de distribuição:</strong>
+                                </div>
+                                <div class="col-4">
+                                  <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="tipoDistribuicao" id="percentual"
+                                      value="percentual" x-model="tipoDistribuicao" @change="validarTotalCompleto()">
+                                    <label class="form-check-label" for="percentual">Percentual</label>
+                                  </div>
+                                  <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="tipoDistribuicao" id="valor"
+                                      value="valor" x-model="tipoDistribuicao" @change="validarTotalCompleto()">
+                                    <label class="form-check-label" for="valor">Valor</label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Lista de Centros de Custo -->
+                            <template x-for="(centro, index) in centrosCusto" :key="index">
+                              <div class="row mb-3 align-items-center">
+                                <div class="col-md-6">
+                                  <select class="form-select" x-model="centro.centro">
+                                    <option value="">Selecione um centro de custo...</option>
+                                    {% for centro in centros_custo %}
+                                      <option value="{{ centro.id }}">{{ centro.nome }}</option>
+                                    {% endfor %}
+                                  </select>
+                                </div>
+                                <div class="col-md-2">
+                                  <input type="text" class="form-control text-center campo-float"
+                                    x-model="centro.percentual" @input="validarTotalCompleto()" placeholder="0,00"
+                                    :disabled="tipoDistribuicao === 'valor'">
+                                </div>
+                                <div class="col-md-3">
+                                  <input type="text" class="form-control text-end campo-moeda-brl"
+                                    x-bind:value="formatarParaExibicao(centro.valor)"
+                                    @input="aplicarMascaraCentroCusto($event, index)" placeholder="R$ 0,00"
+                                    :disabled="tipoDistribuicao === 'percentual'">
+                                </div>
+                                <div class="col-md-1 text-center">
+                                  <button type="button" class="btn btn-link text-danger p-1"
+                                    @click="removerCentroCusto(index)" x-show="centrosCusto.length > 1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                      stroke-linejoin="round">
+                                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                      <path d="M4 7l16 0" />
+                                      <path d="M10 11l0 6" />
+                                      <path d="M14 11l0 6" />
+                                      <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                      <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+                            </template>
+
+                            <!-- Botão adicionar centro de custo -->
+                            <div class="mt-3">
+                              <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
+                                @click="adicionarCentroCusto()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round" class="me-1">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M12 5l0 14" />
+                                  <path d="M5 12l14 0" />
+                                </svg>
+                                Adicionar centro de custo
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Mensagens de erro para valores detalhados -->
+                    {% if 'centros_custo_json' in campos_obrigatorios %}
+                      <div class="text-danger mt-1 mb-3">
+                        <small>{{ campos_obrigatorios['centros_custo_json'] }}</small>
+                      </div>
+                    {% elif 'centros_custo_json' in campos_erros %}
+                      <div class="text-danger mt-1 mb-3">
+                        <small>{{ campos_erros['centros_custo_json'] }}</small>
+                      </div>
+                    {% endif %}
+
+
+                    <!-- Switch Parcelamento -->
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" id="parcelamento" 
+                             name="parcelamento_ativo" value="true"
+                             x-model="mostrarParcelamento" @change="initParcelamento()"
+                             {% if dados_corretos.parcelamento_ativo %}checked{% endif %}>
+                      <label class="form-check-label text-muted" for="parcelamento">
+                        Parcelamento
+                      </label>
+                    </div>
+                    <!-- Painel Parcelamento -->
+                    <div x-show="mostrarParcelamento" x-transition style="background-color: #F6F8FB !important;"
+                      class="card mb-3 mt-3" style="display: none;">
+                      <div class="card-body">
+                        <div class="row mb-3 align-items-end">
+                          <div class="col-md-3">
+                            <label class="form-label required">Parcelas</label>
+                            <select name="numero_parcelas" 
+                                    class="form-select {% if 'numero_parcelas' in campos_obrigatorios or 'numero_parcelas' in campos_erros %}is-invalid{% endif %}" 
+                                    x-model.number="qtdParcelas"
+                                    @change="qtdParcelas > 0 ? gerarParcelas() : parcelas = []">
+                              <option value="0">Selecione...</option>
+                              <option value="1" {% if dados_corretos.numero_parcelas == '1' %}selected{% endif %}>1</option>
+                              <option value="2" {% if dados_corretos.numero_parcelas == '2' %}selected{% endif %}>2</option>
+                              <option value="3" {% if dados_corretos.numero_parcelas == '3' %}selected{% endif %}>3</option>
+                              <option value="4" {% if dados_corretos.numero_parcelas == '4' %}selected{% endif %}>4</option>
+                              <option value="5" {% if dados_corretos.numero_parcelas == '5' %}selected{% endif %}>5</option>
+                              <option value="6" {% if dados_corretos.numero_parcelas == '6' %}selected{% endif %}>6</option>
+                              <option value="7" {% if dados_corretos.numero_parcelas == '7' %}selected{% endif %}>7</option>
+                              <option value="8" {% if dados_corretos.numero_parcelas == '8' %}selected{% endif %}>8</option>
+                              <option value="9" {% if dados_corretos.numero_parcelas == '9' %}selected{% endif %}>9</option>
+                              <option value="10" {% if dados_corretos.numero_parcelas == '10' %}selected{% endif %}>10</option>
+                              <option value="11" {% if dados_corretos.numero_parcelas == '11' %}selected{% endif %}>11</option>
+                              <option value="12" {% if dados_corretos.numero_parcelas == '12' %}selected{% endif %}>12</option>
+                            </select>
+                            <div class="invalid-feedback">
+                              {% if 'numero_parcelas' in campos_obrigatorios %}
+                                {{ campos_obrigatorios['numero_parcelas'] }}
+                              {% elif 'numero_parcelas' in campos_erros %}
+                                {{ campos_erros['numero_parcelas'] }}
+                              {% endif %}
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">Dias entre parcelas</label>
+                            <select name="dias_entre_parcelas" class="form-select" x-model.number="diasEntre" @change="gerarParcelas()">
+                              <option value="30" {% if dados_corretos.dias_entre_parcelas == '30' %}selected{% endif %}>30 dias</option>
+                              <option value="60" {% if dados_corretos.dias_entre_parcelas == '60' %}selected{% endif %}>60 dias</option>
+                              <option value="180" {% if dados_corretos.dias_entre_parcelas == '180' %}selected{% endif %}>180 dias</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="table-responsive">
+                          <template x-if="parcelas.length > 0">
+                            <table class="table table-bordered align-middle mb-0">
+                              <thead class="bg-white">
+                                <tr>
+                                  <th style="width: 60px;">#</th>
+                                  <th style="width: 120px;">Valor</th>
+                                  <th style="width: 160px;">Vencimento</th>
+                                  <th>Descrição <span class="text-muted">(opcional)</span></th>
+                                  <th>Referência <span class="text-muted">(opcional)</span></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <template x-for="(parcela, idx) in parcelas" :key="idx">
+                                  <tr>
+                                    <td x-text="(idx+1) + '/' + qtdParcelas"></td>
+                                    <td>
+                                      <input type="text" class="form-control text-start campo-moeda-brl"
+                                        :value="formatarMoeda(parcela.valor)" readonly disabled>
+                                    </td>
+                                    <td>
+                                      <input type="date" class="form-control" x-model="parcela.vencimento">
+                                    </td>
+                                    <td>
+                                      <input type="text" class="form-control" x-model="parcela.descricao"
+                                        placeholder="Descrição">
+                                    </td>
+                                    <td>
+                                      <input type="text" class="form-control" x-model="parcela.referencia"
+                                        placeholder="Referência">
+                                    </td>
+                                  </tr>
+                                </template>
+                              </tbody>
+                              <tfoot>
+                                <tr>
+                                  <td colspan="4" class="text-end fw-bold">Total:</td>
+                                  <td class="fw-bold text-primary" x-text="formatarMoeda(totalParcelas)"></td>
+                                </tr>
+                              </tfoot>
+                            </table>
+                          </template>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Mensagens de erro para parcelamento -->
+                    {% if 'parcelas_json' in campos_obrigatorios %}
+                      <div class="text-danger mt-1 mb-3">
+                        <small>{{ campos_obrigatorios['parcelas_json'] }}</small>
+                      </div>
+                    {% elif 'parcelas_json' in campos_erros %}
+                      <div class="text-danger mt-1 mb-3">
+                        <small>{{ campos_erros['parcelas_json'] }}</small>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Campos hidden para envio dos dados JSON -->
+                <input type="hidden" name="categorias_json" id="categorias_json">
+                <input type="hidden" name="centros_custo_json" id="centros_custo_json">
+                <input type="hidden" name="parcelas_json" id="parcelas_json">
+                <input type="hidden" name="valores_detalhados_ativo" id="valores_detalhados_ativo" value="false">
+
+                <!-- Botões de ação -->
+                <div class="row">
+                  <div class="col-12">
+                    <div class="d-flex justify-content-end gap-2">
+                      <a href="javascript:history.back()" class="btn btn-outline-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-narrow-left">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M5 12l14 0" />
+                          <path d="M5 12l4 4" />
+                          <path d="M5 12l4 -4" />
+                        </svg>
+                        Voltar
+                      </a>
+                      <button type="submit" class="btn btn-primary" id="btnSalvarAgendamento" 
+                              :disabled="!lista || lista.length === 0 || lista.some(cat => !cat.nome || !cat.valor || cat.valor <= 0)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M12 5l0 14" />
+                          <path d="M5 12l14 0" />
+                        </svg>
+                        Salvar Categorização
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('select.form-select').forEach(function (select) {
+        new TomSelect(select, {
+          create: false,
+          allowEmptyOption: false,
+        });
+      });
+  });
+  function categorias() {
+    // Criar mapa completo de código para dados das categorias
+    const mapaCategorias = {};
+    {% for cat in estrutura_plano_contas %}
+      {% for sub in cat.children %}
+        mapaCategorias['{{ sub.codigo }}'] = {
+          id: {{ sub.id }},
+          codigo: '{{ sub.codigo }}',
+          nome: '{{ sub.nome }}'
+        };
+        {% for subsub in sub.children %}
+          mapaCategorias['{{ subsub.codigo }}'] = {
+            id: {{ subsub.id }},
+            codigo: '{{ subsub.codigo }}',
+            nome: '{{ subsub.nome }}'
+          };
+        {% endfor %}
+      {% endfor %}
+    {% endfor %}
+
+    return {
+      totalPagar: 0, // Será calculado dinamicamente com base no valor informado
+      mostrarValoresDetalhados: {% if dados_corretos.valores_detalhados_ativo %}true{% else %}false{% endif %},
+      tipoDistribuicao: 'percentual',
+      mapaCategorias: mapaCategorias,
+      lista: [
+        {
+          nome: '',
+          detalhamento: '',
+          referencia: '',
+          valor: 0 // Valor armazenado como inteiro (centavos)
+        }
+      ],
+      centrosCusto: [
+        {
+          centro: '',
+          percentual: '',
+          valor: 0
+        }
+      ],
+
+      // === PARCELAMENTO ===
+      mostrarParcelamento: {% if dados_corretos.parcelamento_ativo %}true{% else %}false{% endif %},
+      qtdParcelas: {{ dados_corretos.numero_parcelas or 0 }},
+      diasEntre: {{ dados_corretos.dias_entre_parcelas or 30 }},
+      parcelas: [],
+      totalParcelas: 0,
+
+      // === FUNÇÕES ===
+      prepararEnvio() {
+        // Preparar categorias com código + nome combinados
+        const categoriasComDados = this.lista.map(categoria => {
+          const dadosCategoria = this.mapaCategorias[categoria.nome] || {};
+          const categoriaCompleta = dadosCategoria.nome ? 
+            `${categoria.nome} - ${dadosCategoria.nome}` : 
+            categoria.nome;
+          
+          return {
+            categoria: categoriaCompleta,
+            categoria_id: dadosCategoria.id || null, // ID da categoria do plano de contas
+            detalhamento: categoria.detalhamento,
+            referencia: categoria.referencia,
+            valor: categoria.valor
+          };
+        });
+        
+        // Preparar dados JSON para envio
+        document.getElementById('categorias_json').value = JSON.stringify(categoriasComDados);
+        
+        // Enviar array vazio se valores detalhados não estiver ativo
+        const centrosParaEnviar = this.mostrarValoresDetalhados ? this.centrosCusto : [];
+        document.getElementById('centros_custo_json').value = JSON.stringify(centrosParaEnviar);
+        
+        document.getElementById('parcelas_json').value = JSON.stringify(this.parcelas);
+        document.getElementById('valores_detalhados_ativo').value = this.mostrarValoresDetalhados;
+        return true;
+      },
+
+      formatarMoeda(centavos) {
+        const reais = centavos / 100;
+        return 'R$ ' + reais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      },
+      gerarParcelas() {
+        if (!this.qtdParcelas || this.qtdParcelas < 1) {
+          this.parcelas = [];
+          this.totalParcelas = 0;
+          return;
+        }
+        this.parcelas = [];
+        const valorAgendamento = this.totalPagar;
+        const valorParcela = Math.floor(valorAgendamento / this.qtdParcelas);
+        let resto = valorAgendamento - (valorParcela * this.qtdParcelas);
+        // Definir a data base para o dia 10 do mês atual ou próximo
+        let hoje = new Date();
+        let ano = hoje.getFullYear();
+        let mes = hoje.getMonth();
+        if (hoje.getDate() > 10) {
+          mes += 1;
+          if (mes > 11) { mes = 0; ano += 1; }
+        }
+        let dataBase = new Date(ano, mes, 10);
+        for (let i = 0; i < this.qtdParcelas; i++) {
+          let valor = valorParcela;
+          if (resto > 0) {
+            valor += 1;
+            resto--;
+          }
+          let vencimento = new Date(dataBase);
+          if (i > 0) {
+            vencimento.setDate(vencimento.getDate() + (i * this.diasEntre));
+          }
+          const vencStr = vencimento.toISOString().slice(0, 10);
+          this.parcelas.push({
+            valor: valor,
+            vencimento: vencStr,
+            descricao: '',
+            referencia: ''
+          });
+        }
+        this.calcularTotalParcelas();
+      },
+      calcularTotalParcelas() {
+        this.totalParcelas = this.parcelas.reduce((acc, p) => acc + p.valor, 0);
+      },
+      initParcelamento() {
+        if (this.mostrarParcelamento && this.qtdParcelas > 0) {
+          this.gerarParcelas();
+        } else {
+          this.parcelas = [];
+          this.totalParcelas = 0;
+        }
+      },
+
+      // === CATEGORIAS E CENTROS DE CUSTO ===
+      adicionarCategoria() {
+        this.lista.push({
+          nome: '',
+          detalhamento: '',
+          referencia: '',
+          valor: 0 // Valor inicializado como inteiro (centavos)
+        });
+        this.$nextTick(() => {
+          this.aplicarMascaraMonetaria();
+        });
+      },
+      removerCategoria(index) {
+        if (this.lista.length > 1) {
+          this.lista.splice(index, 1);
+          this.validarTotal();
+        }
+      },
+      aplicarMascara(event, index) {
+        let valor = event.target.value.replace(/\D/g, '');
+        const valorCentavos = parseInt(valor) || 0;
+        this.lista[index].valor = valorCentavos;
+        const valorFormatado = this.formatarParaExibicao(valorCentavos);
+        event.target.value = valorFormatado;
+        this.validarTotalCompleto();
+      },
+      formatarParaExibicao(centavos) {
+        const reais = centavos / 100;
+        return 'R$ ' + reais.toLocaleString('pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      },
+      aplicarMascaraMonetaria() {
+        console.log('Máscara monetária aplicada via Alpine.js');
+      },
+      validarTotal() {
+        this.validarTotalCompleto();
+      },
+      validarTotalCompleto() {
+        // Primeiro validar categorias duplicadas
+        if (this.validarCategoriasDuplicadas()) {
+          return; // Se há duplicadas, não prosseguir com outras validações
+        }
+        
+        let totalCategorias = 0;
+        this.lista.forEach(categoria => {
+          if (categoria.valor && categoria.valor > 0) {
+            totalCategorias += categoria.valor;
+          }
+        });
+        const btnSalvar = document.getElementById('btnSalvarAgendamento');
+        let categoriasValidas = (totalCategorias === this.totalPagar && totalCategorias > 0);
+        let centrosValidos = true;
+        if (this.mostrarValoresDetalhados) {
+          centrosValidos = this.validarCentrosCusto();
+        }
+        if (categoriasValidas && centrosValidos) {
+          btnSalvar.disabled = false;
+          const modalElement = document.getElementById('modalValidacao');
+          if (modalElement.classList.contains('show')) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.hide();
+          }
+        }
+      },
+      
+      validarCategoriasDuplicadas() {
+        const categoriasUsadas = [];
+        let temDuplicada = false;
+        
+        this.lista.forEach((categoria, index) => {
+          if (categoria.nome && categoria.nome.trim() !== '') {
+            if (categoriasUsadas.includes(categoria.nome)) {
+              temDuplicada = true;
+              // Mostrar modal de erro com categoria completa
+              const dadosCategoria = this.mapaCategorias[categoria.nome] || {};
+              const categoriaCompleta = dadosCategoria.nome ? 
+                `${categoria.nome} - ${dadosCategoria.nome}` : 
+                categoria.nome;
+              const modalBody = document.querySelector('#modalValidacao .text-secondary');
+              const modalTitle = document.querySelector('#modalValidacao h3');
+              modalBody.textContent = `A categoria "${categoriaCompleta}" foi selecionada mais de uma vez!`;
+              modalTitle.textContent = 'Categoria duplicada!';
+              const modalElement = document.getElementById('modalValidacao');
+              if (!modalElement.classList.contains('show')) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+                modal.show();
+              }
+            } else {
+              categoriasUsadas.push(categoria.nome);
+            }
+          }
+        });
+        
+        // Desabilitar botão salvar se há duplicadas
+        const btnSalvar = document.getElementById('btnSalvarAgendamento');
+        if (btnSalvar && temDuplicada) {
+          btnSalvar.disabled = true;
+        }
+        
+        return temDuplicada;
+      },
+      validarCentrosCusto() {
+        if (!this.mostrarValoresDetalhados) return true;
+        if (this.tipoDistribuicao === 'valor') {
+          let totalCentros = 0;
+          this.centrosCusto.forEach(centro => {
+            if (centro.valor && centro.valor > 0) {
+              totalCentros += centro.valor;
+            }
+          });
+          return (totalCentros === this.totalPagar || totalCentros === 0);
+        } else if (this.tipoDistribuicao === 'percentual') {
+          let totalPercentual = 0;
+          this.centrosCusto.forEach(centro => {
+            if (centro.percentual) {
+              const percentual = parseFloat(centro.percentual.replace(',', '.')) || 0;
+              totalPercentual += percentual;
+            }
+          });
+          return (Math.abs(totalPercentual - 100) <= 0.01 || totalPercentual === 0);
+        }
+        return true;
+      },
+      adicionarCentroCusto() {
+        this.centrosCusto.push({
+          centro: '',
+          percentual: '',
+          valor: 0
+        });
+        this.$nextTick(() => {
+          aplicarComportamentoCampoFloat();
+        });
+      },
+      removerCentroCusto(index) {
+        if (this.centrosCusto.length > 1) {
+          this.centrosCusto.splice(index, 1);
+          this.validarTotalCompleto();
+        }
+      },
+      aplicarMascaraCentroCusto(event, index) {
+        let valor = event.target.value.replace(/\D/g, '');
+        const valorCentavos = parseInt(valor) || 0;
+        this.centrosCusto[index].valor = valorCentavos;
+        const valorFormatado = this.formatarParaExibicao(valorCentavos);
+        event.target.value = valorFormatado;
+        if (this.mostrarValoresDetalhados) {
+          this.validarTotalCompleto();
+        }
+      },
+
+      // Restaurar dados quando há erros
+      restaurarDados() {
+        // Restaurar categorias
+        {% if dados_corretos.categorias_json %}
+        try {
+          const categoriasSalvas = JSON.parse('{{ dados_corretos.categorias_json|safe }}');
+          if (Array.isArray(categoriasSalvas) && categoriasSalvas.length > 0) {
+            this.lista = categoriasSalvas.map(cat => ({
+              nome: cat.codigo || cat.categoria || cat.id || '',
+              detalhamento: cat.detalhamento || '',
+              referencia: cat.referencia || '',
+              valor: cat.valor || 0
+            }));
+          }
+        } catch (e) {
+          console.log('Erro ao restaurar categorias:', e);
+        }
+        {% endif %}
+
+        // Restaurar centros de custo
+        {% if dados_corretos.centros_custo_json %}
+        try {
+          const centrosSalvos = JSON.parse('{{ dados_corretos.centros_custo_json|safe }}');
+          if (Array.isArray(centrosSalvos) && centrosSalvos.length > 0) {
+            this.centrosCusto = centrosSalvos.map(centro => ({
+              centro: centro.centro || '',
+              percentual: centro.percentual || '',
+              valor: centro.valor || 0
+            }));
+          }
+        } catch (e) {
+          console.log('Erro ao restaurar centros de custo:', e);
+        }
+        {% endif %}
+
+        // Restaurar parcelas
+        {% if dados_corretos.parcelas_json %}
+        try {
+          const parcelasSalvas = JSON.parse('{{ dados_corretos.parcelas_json|safe }}');
+          if (Array.isArray(parcelasSalvas) && parcelasSalvas.length > 0) {
+            this.parcelas = parcelasSalvas.map(parcela => ({
+              valor: parcela.valor || 0,
+              vencimento: parcela.vencimento || '',
+              descricao: parcela.descricao || '',
+              referencia: parcela.referencia || ''
+            }));
+            this.calcularTotalParcelas();
+          }
+        } catch (e) {
+          console.log('Erro ao restaurar parcelas:', e);
+        }
+        {% endif %}
+      },
+
+      // Sincronizar valor com totalPagar
+      atualizarTotalPagar() {
+        const campoValor = document.querySelector('input[name="valor"]');
+        if (campoValor && campoValor.value) {
+          // Converter valor do campo para centavos
+          const valorLimpo = campoValor.value.replace(/[^\d,]/g, '').replace(',', '.');
+          const valorFloat = parseFloat(valorLimpo) || 0;
+          this.totalPagar = Math.round(valorFloat * 100);
+        }
+      },
+
+      // Inicialização
+      init() {
+        this.restaurarDados();
+        this.atualizarTotalPagar();
+        this.initParcelamento();
+        this.validarTotalCompleto();
+        
+        // Listener para atualizar totalPagar quando o valor mudar
+        const campoValor = document.querySelector('input[name="valor"]');
+        if (campoValor) {
+          campoValor.addEventListener('input', () => {
+            this.atualizarTotalPagar();
+            this.validarTotalCompleto();
+          });
+        }
+      }
+    }
+  }
+</script>
+
+{% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

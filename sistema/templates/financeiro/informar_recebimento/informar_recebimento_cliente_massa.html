@@ -1,0 +1,495 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle text-muted">Financeiro</div>
+          <h2 class="page-title fw-bold display-6">Confirmação de Faturamento em Massa</h2>
+          <p class="text-muted">{{ registros|length }} registro(s) selecionado(s) para faturamento</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if conciliar_transacao_id %}
+  {% set titulo_pagina = "clientes" %}
+  {% include 'financeiro/importar_ofx/dados_conciliacao_component.html' %}
+  {% endif %}
+
+  <div class="py-4">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <!-- Cards de resumo -->
+      <div class="row row-cards mb-4">
+        <div class="col-md-6 col-lg-3">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-success text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-currency-dollar">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                  <path d="M12 3v3m0 12v3" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Valor Total a Receber</div>
+                <div class="fs-3 fw-bold text-success mt-1" id="valor-total-receber">
+                  {{ valor_total | default(0) | formatar_float_para_brl }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="card border shadow-lg rounded-3">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-orange text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-users">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                  <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold">Registros Selecionados</div>
+                <div class="fs-3 fw-bold text-orange mt-1" id="qtd-registros">
+                  {{ registros|length }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Formulário de confirmação -->
+      <form action="{{ url_for('informar_recebimento_massa') }}" method="POST" enctype="multipart/form-data"
+        id="form-recebimento">
+        <input type="hidden" name="ids_registros" value="{{ ids_selecionados }}">
+        <input type="hidden" name="ids_nfs_complementares" value="{{ ids_nfs_complementares or '' }}">
+        <input type="hidden" name="ids_nfs_servico" value="{{ ids_nfs_servico or '' }}">
+
+        <!-- Seção detalhada dos registros por cliente -->
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+          <div class="card-header bg-light fw-bold">Detalhes dos Registros por Cliente</div>
+          <div class="card-body">
+            {% for cliente_id, dados_cliente in clientes_dict.items() %}
+            <div class="mb-4 p-3 border rounded">
+              <div class="row align-items-center mb-3">
+                <div class="col">
+                  <h5 class="fw-bold text-primary mb-1">
+                    {% if dados_cliente.cliente %}
+                    {{ dados_cliente.cliente.identificacao }}
+                    {% else %}
+                    Cliente ID: {{ cliente_id }}
+                    {% endif %}
+                  </h5>
+                  <span class="badge bg-blue-lt">{{ dados_cliente.registros|length }} registro(s)</span>
+                  <span class="badge bg-green-lt ms-2" id="total-cliente-{{ cliente_id }}">Total: {{
+                    dados_cliente.valor_total | formatar_float_para_brl }}</span>
+                </div>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th class="text-center">Data Entrega</th>
+                      <th class="text-center">Fornecedor</th>
+                      <th class="text-center">Transportadora</th>
+                      <th class="text-center">Cliente</th>
+                      <th class="text-center">NF</th>
+                      <th class="text-center">Produto/Bitola</th>
+                      <th class="text-center">Quantidade</th>
+                      <th class="text-center">Valor Unitário</th>
+                      <th class="text-center">Valor Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for registro in dados_cliente.registros %}
+                    <tr>
+                      <td class="text-center">{{ registro.registro_operacional.data_entrega_ticket |
+                        formatar_data_para_brl or '' }}</td>
+                      <td class="text-center">{{ registro.solicitacao.fornecedor.identificacao | truncate(20, True,
+                        '...') }}</td>
+                      <td class="text-center">{{ registro.solicitacao.transportadora_exibicao.identificacao |
+                        truncate(20, True, '...') }}</td>
+                      <td class="text-center">{{ registro.solicitacao.cliente.identificacao | truncate(20, True, '...')
+                        }}</td>
+                      <td class="text-center">{{ registro.numero_nota_fiscal or '' }}</td>
+                      <td class="text-center">{{ registro.produto.nome if registro.produto else '' }} | {{
+                        registro.solicitacao.bitola.bitola if registro.solicitacao.bitola else '' }}</td>
+                      <td class="text-center">{{ registro.quantidade | default('') }}</td>
+                      <td class="text-center">{{ registro.valor_unitario_100 | default(0) | formatar_float_para_brl }}
+                      </td>
+                      <td>
+                        <input type="text" class="form-control fw-bold text-success campo-moeda-brl valor-individual"
+                          value="{{ registro.valor_total_recebimento_100 | default(0) | formatar_float_para_brl }}"
+                          data-registro-id="{{ registro.id }}" data-cliente-id="{{ cliente_id }}"
+                          data-valor-centavos="{{ registro.valor_total_recebimento_100 or 0 }}">
+                        <input type="hidden" name="valor_registro_{{ registro.id }}" id="valor-hidden-{{ registro.id }}"
+                          value="{{ registro.valor_total_recebimento_100 or 0 }}">
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Seção de agrupamento (opcional) -->
+        {% if nfs_complementares_dict or nfs_servico_dict %}
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+          {% if nfs_complementares_dict %}
+          <div class="card-header fw-bold">NFs Complementares Agrupadas</div>
+          <div class="card-body">
+            {% for cliente_id, dados_cliente in nfs_complementares_dict.items() %}
+            <div class="mb-4 p-3 border rounded bg-light">
+              <div class="row align-items-center mb-3">
+                <div class="col">
+                  <h6 class="fw-bold text-info mb-1">
+                    {% if dados_cliente.cliente %}
+                    {{ dados_cliente.cliente.identificacao }}
+                    {% else %}
+                    Cliente ID: {{ cliente_id }}
+                    {% endif %}
+                  </h6>
+                  <span class="badge bg-info-lt">{{ dados_cliente.nfs|length }} NF(s) Complementar(es)</span>
+                  <span class="badge bg-success-lt ms-2">Total: {{ dados_cliente.valor_total | formatar_float_para_brl
+                    }}</span>
+                </div>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th class="text-center">Número NF</th>
+                      <th class="text-center">Data Emissão</th>
+                      <th class="text-center">Destinatário</th>
+                      <th class="text-center">Peso (ton)</th>
+                      <th class="text-center">Valor Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for nf in dados_cliente.nfs %}
+                    <tr>
+                      <td class="text-center">{{ nf.numero_nota_fiscal or '-' }}</td>
+                      <td class="text-center">{{ nf.destinatario_data_emissao | formatar_data_para_brl or '-' }}</td>
+                      <td class="text-center">{{ nf.destinatario_nome or '-' }}</td>
+                      <td class="text-center">{{ nf.peso_ton_nf or 0 }}</td>
+                      <td class="text-center">{{ nf.valor_total_nota_100 | formatar_float_para_brl }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+
+
+        {% if nfs_servico_dict %}
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+          <div class="card-header fw-bold">NFs de Serviço Agrupadas</div>
+          <div class="card-body">
+            {% for cliente_id, dados_cliente in nfs_servico_dict.items() %}
+            <div class="mb-4 p-3 border rounded bg-light">
+              <div class="row align-items-center mb-3">
+                <div class="col">
+                  <h6 class="fw-bold text-success mb-1">
+                    {% if dados_cliente.cliente %}
+                    {{ dados_cliente.cliente.identificacao }}
+                    {% else %}
+                    Cliente ID: {{ cliente_id }}
+                    {% endif %}
+                  </h6>
+                  <span class="badge bg-success-lt">{{ dados_cliente.nfs|length }} NF(s) de Serviço</span>
+                  <span class="badge bg-info-lt ms-2">Total: {{ dados_cliente.valor_total | formatar_float_para_brl
+                    }}</span>
+                </div>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th class="text-center">Data Emissão</th>
+                      <th class="text-center">Discriminação</th>
+                      <th class="text-center">Valor Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for nf in dados_cliente.nfs %}
+                    <tr>
+                      <td class="text-center">{{ nf.data_emissao | formatar_data_para_brl or '-' }}</td>
+                      <td class="text-center">{{ nf.carregamento_discriminacao or nf.discriminacao_servico or '-' }}
+                      </td>
+                      <td class="text-center">{{ nf.total_liquido_100 | formatar_float_para_brl }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm border-0 rounded-3">
+      <div class="card-header bg-light fw-bold">Dados do Faturamento</div>
+      <div class="card-body">
+        <!-- Botões de agrupamento -->
+        <div class="row mb-3">
+          <div class="col">
+            <h6 class="fw-bold">Agrupar com outras notas:</h6>
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-outline-info" id="btn-agrupar-nf-complementar"
+                onclick="agruparNfComplementar()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-plus">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                  <path d="M12 11v6" />
+                  <path d="M9 14h6" />
+                </svg>
+                Agrupar NFs Complementares
+              </button>
+              <button type="button" class="btn btn-outline-success" id="btn-agrupar-nf-servico"
+                onclick="agruparNfServico()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-briefcase">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2 -2v-10a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2z" />
+                  <path d="M8 7v-2a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2" />
+                  <path d="M12 12l0 .01" />
+                  <path d="M3 13a20 20 0 0 0 18 0" />
+                </svg>
+                Agrupar NFs de Serviço
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-end mt-4">
+          <a class="btn btn-outline-secondary" href="javascript:history.back()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M5 12l14 0" />
+              <path d="M5 12l6 6" />
+              <path d="M5 12l6 -6" />
+            </svg>
+            Voltar
+          </a>
+          <button type="submit" class="btn btn-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M5 12l5 5l10 -10" />
+            </svg>
+            Confirmar Faturamento em Massa (<span id="qtd-registros-botao">{{ registros|length }} </span> registros)
+          </button>
+        </div>
+      </div>
+    </div>
+    </form>
+
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM carregado, iniciando configuração...');
+
+    if (typeof aplicarMascaraMoeda === 'function') {
+      aplicarMascaraMoeda();
+    }
+
+    function brlToCents(str) {
+      if (!str) return 0;
+      str = str.replace(/[^\d,\.-]/g, '');
+      str = str.replace(/\./g, '').replace(/,/g, '.');
+      let val = parseFloat(str);
+      if (isNaN(val)) return 0;
+      return Math.round(val * 100);
+    }
+
+    function formatarMoeda(valor) {
+      return (valor / 100).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      });
+    }
+
+    function recalcularTotais() {
+      const valoresIndividuais = document.querySelectorAll('.valor-individual');
+      let valorTotalGeral = 0;
+      const totaisPorCliente = {};
+
+      valoresIndividuais.forEach(input => {
+        const clienteId = input.dataset.clienteId;
+        const registroId = input.dataset.registroId;
+        const valorFormatado = input.value;
+        const valorEmCentavos = brlToCents(valorFormatado);
+
+        // Atualiza campo hidden correspondente (em centavos)
+        const hiddenField = document.getElementById(`valor-hidden-${registroId}`);
+        if (hiddenField) {
+          hiddenField.value = valorEmCentavos;
+        }
+
+        valorTotalGeral += valorEmCentavos;
+        if (!totaisPorCliente[clienteId]) {
+          totaisPorCliente[clienteId] = 0;
+        }
+        totaisPorCliente[clienteId] += valorEmCentavos;
+      });
+
+      document.getElementById('valor-total-receber').textContent = formatarMoeda(valorTotalGeral);
+      Object.keys(totaisPorCliente).forEach(clienteId => {
+        const badgeTotal = document.getElementById(`total-cliente-${clienteId}`);
+        if (badgeTotal) {
+          badgeTotal.textContent = `Total: ${formatarMoeda(totaisPorCliente[clienteId])}`;
+        }
+      });
+
+      const saldoAtualText = document.getElementById('saldo-atual').textContent;
+      const saldoAtualCentavos = brlToCents(saldoAtualText);
+      document.getElementById('saldo-futuro').textContent = formatarMoeda(saldoAtualCentavos + valorTotalGeral);
+    }
+
+    document.addEventListener('input', function (e) {
+      if (e.target.classList.contains('valor-individual')) {
+        recalcularTotais();
+      }
+    });
+
+    const contaSelect = document.querySelector('select[name="contaBancaria"]');
+    if (contaSelect) {
+      contaSelect.addEventListener('change', function () {
+        const contaId = this.value;
+        if (contaId) {
+          fetch(`/api/conta-bancaria/${contaId}/saldo`)
+            .then(response => response.json())
+            .then(data => {
+              const saldoAtual = data.saldo || 0;
+              document.getElementById('saldo-atual').textContent = formatarMoeda(saldoAtual);
+              const valorTotalAtual = brlToCents(document.getElementById('valor-total-receber').textContent);
+              document.getElementById('saldo-futuro').textContent = formatarMoeda(saldoAtual + valorTotalAtual);
+            })
+            .catch(error => console.error('Erro ao buscar saldo:', error));
+        }
+      });
+    }
+
+    // Event listeners para botões de agrupamento
+    console.log('Configurando event listeners para botões de agrupamento...');
+
+    const btnAgruparNfComplementar = document.getElementById('btn-agrupar-nf-complementar');
+    const btnAgruparNfServico = document.getElementById('btn-agrupar-nf-servico');
+
+    if (btnAgruparNfComplementar) {
+      console.log('Botão NF Complementar encontrado');
+      btnAgruparNfComplementar.addEventListener('click', function (e) {
+        e.preventDefault();
+        const idsRegistros = document.querySelector('input[name="ids_registros"]').value;
+        const idsNfComplementar = document.querySelector('input[name="ids_nfs_complementares"]') ?
+          document.querySelector('input[name="ids_nfs_complementares"]').value : '';
+        const idsNfServico = document.querySelector('input[name="ids_nfs_servico"]') ?
+          document.querySelector('input[name="ids_nfs_servico"]').value : '';
+
+        let url = `{{ url_for('faturamento_nf_complementar') }}?agrupar_cargas_receber=${encodeURIComponent(idsRegistros)}`;
+
+        if (idsNfComplementar) {
+          url += `&ids_nf_complementar=${encodeURIComponent(idsNfComplementar)}`;
+        }
+
+        if (idsNfServico) {
+          url += `&ids_nf_servico=${encodeURIComponent(idsNfServico)}`;
+        }
+
+        window.location.href = url;
+      });
+    } else {
+      console.log('Botão NF Complementar NÃO encontrado');
+    }
+
+    if (btnAgruparNfServico) {
+      console.log('Botão NF Serviço encontrado');
+      btnAgruparNfServico.addEventListener('click', function (e) {
+        e.preventDefault();
+        const idsRegistros = document.querySelector('input[name="ids_registros"]').value;
+        const idsNfComplementar = document.querySelector('input[name="ids_nfs_complementares"]') ?
+          document.querySelector('input[name="ids_nfs_complementares"]').value : '';
+        const idsNfServico = document.querySelector('input[name="ids_nfs_servico"]') ?
+          document.querySelector('input[name="ids_nfs_servico"]').value : '';
+
+        let url = `{{ url_for('faturamento_nf_servico') }}?agrupar_cargas_receber=${encodeURIComponent(idsRegistros)}`;
+
+        if (idsNfComplementar) {
+          url += `&ids_nf_complementar=${encodeURIComponent(idsNfComplementar)}`;
+        }
+
+        if (idsNfServico) {
+          url += `&ids_nf_servico=${encodeURIComponent(idsNfServico)}`;
+        }
+
+        window.location.href = url;
+      });
+    } else {
+      console.log('Botão NF Serviço NÃO encontrado');
+    }
+
+    console.log('Configuração dos event listeners concluída');
+  });
+
+  // Funções globais para onclick
+  function agruparNfComplementar() {
+    console.log('Função agruparNfComplementar chamada');
+    const idsRegistros = document.querySelector('input[name="ids_registros"]').value;
+    console.log('IDs dos registros:', idsRegistros);
+    const url = `{{ url_for('faturamento_nf_complementar') }}?agrupar_cargas_receber=${encodeURIComponent(idsRegistros)}`;
+    console.log('URL gerada:', url);
+    window.location.href = url;
+  }
+
+  function agruparNfServico() {
+    console.log('Função agruparNfServico chamada');
+    const idsRegistros = document.querySelector('input[name="ids_registros"]').value;
+    console.log('IDs dos registros:', idsRegistros);
+    const url = `{{ url_for('faturamento_nf_servico') }}?agrupar_cargas_receber=${encodeURIComponent(idsRegistros)}`;
+    console.log('URL gerada:', url);
+    window.location.href = url;
+  }
+</script>
+
+{% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}
