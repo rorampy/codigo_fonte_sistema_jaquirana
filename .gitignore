@@ -1,0 +1,30 @@
+# python
+__pycache__/
+*.pyc
+venv/
+
+# Ignora tudo na pasta logs_sistema, exceto __init__.py (! = Negação)
+# se não funcionar de primeira, executar git add -f logs_sistema/__init__.py
+logs_sistema/*
+!logs_sistema/__init__.py
+
+# pycharm
+.idea/
+
+# base de apoio
+base_apoio/
+
+# vscode
+.vscode
+
+# arquivos e diretórios individuais de cada projeto
+migrations/
+uploads/
+uploads_bkp_edicao/
+_data_loads/
+mapeamento_roles.py
+config.py
+servidor_huey/bd_tarefas.db
+*.log
+*.db-shm
+*.db-wal
