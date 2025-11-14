@@ -302,7 +302,8 @@
               <div class="mt-3">
                 <div class="col-auto">
                   <div class="badge bg-dark-lt">
-                    Filtro por competência: {{ dados_form.data_inicio | formatar_data_filtro_para_brl }} a {{ dados_form.data_fim |
+                    Filtro por competência: {{ dados_form.data_inicio | formatar_data_filtro_para_brl }} a {{
+                    dados_form.data_fim |
                     formatar_data_filtro_para_brl }}
                   </div>
                 </div>
@@ -385,8 +386,15 @@
                   <tr class="border-0">
                     <td
                       class="{% if grupos_ordenados|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-green{% endif %} py-2 border-0">
-                      
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados|length > 1 or itens|length > 1) %}fw-medium text-green{% else %}text-dark{% endif %}">
@@ -448,8 +456,15 @@
                   <tr>
                     <td
                       class="{% if grupos_ordenados_nao_op|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-green{% endif %} py-2 border-0">
-                      
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados_nao_op|length > 1 or itens|length > 1) %}fw-medium text-green{% else %}text-dark{% endif %}">
@@ -498,7 +513,8 @@
                 <tbody>
                   {% set categorias_agrupadas_custos = {} %}
                   {% for item in dre_dados.custos.operacionais.detalhes %}
-                  {% if item.valor != 0 and not item.codigo.startswith('2.01.11') and not item.codigo.startswith('2.02.05') %}
+                  {% if item.valor != 0 and not item.codigo.startswith('2.01.11') and not
+                  item.codigo.startswith('2.02.05') %}
                   {% set partes_hierarquia = item.hierarquia_completa.split(' > ') %}
                   {% set categoria_principal = partes_hierarquia[-2] if partes_hierarquia|length > 1 else
                   partes_hierarquia[0] %}
@@ -533,8 +549,15 @@
                   <tr class="border-0">
                     <td
                       class="{% if grupos_ordenados_custos|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-red{% endif %} py-2 border-0">
-                      
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados_custos|length > 1 or itens|length > 1) %}fw-medium text-red{% else %}text-dark{% endif %}">
@@ -563,8 +586,10 @@
           </div>
 
           <!-- MARGEM DE CONTRIBUIÇÃO -->
-          {% set margem_contribuicao_filtrada = total_receitas_sem_aplicacoes - (total_custos_sem_exclusoes | sum(attribute='valor')) %}
-          {% set margem_percentual_filtrada = (margem_contribuicao_filtrada / total_receitas_sem_aplicacoes * 100) if total_receitas_sem_aplicacoes != 0 else 0 %}
+          {% set margem_contribuicao_filtrada = total_receitas_sem_aplicacoes - (total_custos_sem_exclusoes |
+          sum(attribute='valor')) %}
+          {% set margem_percentual_filtrada = (margem_contribuicao_filtrada / total_receitas_sem_aplicacoes * 100) if
+          total_receitas_sem_aplicacoes != 0 else 0 %}
           <div class="mb-4">
             <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
               <div class="card-body text-center py-4 px-4">
@@ -653,8 +678,15 @@
                   <tr class="border-0">
                     <td
                       class="{% if grupos_ordenados_despesas|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-orange{% endif %} py-2 border-0">
-                      
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados_despesas|length > 1 or itens|length > 1) %}fw-medium text-orange{% else %}text-dark{% endif %}">
@@ -668,7 +700,8 @@
                     <td class="fw-medium ps-3 py-3"
                       style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;">TOTAL DE DESPESAS</td>
                     <td class="text-end fw-medium py-3"
-                      style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;">-{{ dre_dados.despesas.operacionais.total | formatar_float_para_brl }}</td>
+                      style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;">-{{
+                      dre_dados.despesas.operacionais.total | formatar_float_para_brl }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -692,7 +725,8 @@
                     </div>
                     <h5 class="mb-0 fw-medium" style="color: #334155; letter-spacing: 0.3px;">RESULTADO OPERACIONAL</h5>
                   </div>
-                  {% set resultado_operacional_filtrado = margem_contribuicao_filtrada - dre_dados.despesas.operacionais.total %}
+                  {% set resultado_operacional_filtrado = margem_contribuicao_filtrada -
+                  dre_dados.despesas.operacionais.total %}
                   <h4 class="mb-0 fw-bold"
                     style="color: {% if resultado_operacional_filtrado >= 0 %}#334155{% else %}#dc2626{% endif %}; font-size: 1.4rem;">
                     {{ resultado_operacional_filtrado | formatar_float_para_brl }}
@@ -770,8 +804,15 @@
                   <tr class="border-0">
                     <td
                       class="{% if grupos_ordenados_inv|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-orange{% endif %} py-2 border-0">
-                      
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados_inv|length > 1 or itens|length > 1) %}fw-medium text-orange{% else %}text-dark{% endif %}">
@@ -890,8 +931,15 @@
                   <tr class="border-0">
                     <td
                       class="{% if grupos_ordenados_fin|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-gray{% endif %} py-2 border-0">
-                      
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados_fin|length > 1 or itens|length > 1) %}fw-medium text-gray{% else %}text-dark{% endif %}">
@@ -1013,8 +1061,8 @@
                   <select name="exercicio" class="form-select" onchange="limparDatasPersonalizadas()">
                     <option value="">Selecione um exercício ou use período personalizado</option>
                     {% for exercicio in exercicios_disponiveis %}
-                    <option value="{{ exercicio.valor }}" 
-                            {% if dados_form.exercicio == exercicio.valor %}selected{% endif %}>
+                    <option value="{{ exercicio.valor }}" {% if dados_form.exercicio==exercicio.valor %}selected{% endif
+                      %}>
                       {{ exercicio.texto }}
                     </option>
                     {% endfor %}
@@ -1022,9 +1070,9 @@
                 </div>
               </div>
             </div>
-            
+
             <hr class="my-4">
-            
+
             <!-- Período Personalizado -->
             <div class="mb-3">
               <label class="form-label fw-semibold">Selecione um período personalizado:</label>
@@ -1063,41 +1111,221 @@
   {% include 'estrutura/footer.html' %}
 </div>
 
+<!-- Modal para exibir detalhes da categoria -->
+<div class="modal fade" id="modalDetalhesCategoria" tabindex="-1" aria-labelledby="modalDetalhesCategoriaLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalDetalhesCategoriaLabel">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14,2 14,8 20,8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10,9 9,9 8,9" />
+          </svg>
+          Detalhes da Categoria: <span id="nomeCategoria"></span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <div class="card bg-light">
+              <div class="card-body text-center py-3">
+                <h6 class="text-muted mb-1">Total de Registros</h6>
+                <h4 class="mb-0 text-primary" id="totalRegistros">-</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card bg-primary text-white">
+              <div class="card-body text-center py-3">
+                <h6 class="text-white-50 mb-1">Valor Total</h6>
+                <h4 class="mb-0" id="valorTotal">-</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive" id="tabelaDetalhesContainer">
+          <table class="table table-striped table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Data</th>
+                <th>Documento</th>
+                <th>Origem</th>
+                <th>Beneficiário</th>
+                <th>Descrição</th>
+                <th class="text-end">Valor</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaDetalhes">
+              <!-- Conteúdo será preenchido via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="loadingDetalhes" class="text-center py-4" style="display: none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+          <p class="mt-2 text-muted">Carregando detalhes...</p>
+        </div>
+
+        <div id="erroDetalhes" class="alert alert-danger" style="display: none;">
+          <strong>Erro:</strong> <span id="mensagemErro"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   document.querySelectorAll('select.form-select').forEach(function (select) {
-        new TomSelect(select, {
-          create: false,
-          allowEmptyOption: false,
-        });
-      });
-function limparDatasPersonalizadas() {
+    new TomSelect(select, {
+      create: false,
+      allowEmptyOption: false,
+    });
+  });
+
+  function limparDatasPersonalizadas() {
     const exercicio = document.querySelector('select[name="exercicio"]');
     if (exercicio.value) {
-        document.querySelector('input[name="data_inicio"]').value = '';
-        document.querySelector('input[name="data_fim"]').value = '';
+      document.querySelector('input[name="data_inicio"]').value = '';
+      document.querySelector('input[name="data_fim"]').value = '';
     }
-}
+  }
 
-// Limpar exercício quando selecionar datas personalizadas
-document.addEventListener('DOMContentLoaded', function() {
+  // Limpar exercício quando selecionar datas personalizadas
+  document.addEventListener('DOMContentLoaded', function () {
     const dataInicio = document.querySelector('input[name="data_inicio"]');
     const dataFim = document.querySelector('input[name="data_fim"]');
     const exercicio = document.querySelector('select[name="exercicio"]');
-    
+
     if (dataInicio && dataFim && exercicio) {
-        dataInicio.addEventListener('change', function() {
-            if (this.value) {
-                exercicio.value = '';
-            }
-        });
-        
-        dataFim.addEventListener('change', function() {
-            if (this.value) {
-                exercicio.value = '';
-            }
-        });
+      dataInicio.addEventListener('change', function () {
+        if (this.value) {
+          exercicio.value = '';
+        }
+      });
+
+      dataFim.addEventListener('change', function () {
+        if (this.value) {
+          exercicio.value = '';
+        }
+      });
     }
-});
+
+    // Event listener para links de categoria
+    document.querySelectorAll('.categoria-link').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const categoriaId = this.getAttribute('data-categoria-id');
+        const categoriaNome = this.getAttribute('data-categoria-nome');
+
+        // Obter datas do filtro atual
+        const dataInicio = '{{ dados_form.data_inicio }}';
+        const dataFim = '{{ dados_form.data_fim }}';
+
+        carregarDetalhesCategoria(categoriaId, categoriaNome, dataInicio, dataFim);
+      });
+    });
+  });
+
+  function carregarDetalhesCategoria(categoriaId, categoriaNome, dataInicio, dataFim) {
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('modalDetalhesCategoria'));
+    document.getElementById('nomeCategoria').textContent = categoriaNome;
+
+    // Mostrar loading
+    document.getElementById('loadingDetalhes').style.display = 'block';
+    document.getElementById('tabelaDetalhesContainer').style.display = 'none';
+    document.getElementById('erroDetalhes').style.display = 'none';
+    document.getElementById('totalRegistros').textContent = '-';
+    document.getElementById('valorTotal').textContent = '-';
+
+    modal.show();
+
+    // Fazer requisição AJAX
+    const url = `/relatorios/relatorios-financeiros/dre-categoria-detalhes/${categoriaId}?data_inicio=${dataInicio}&data_fim=${dataFim}`;
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Erro na requisição: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Ocultar loading
+        document.getElementById('loadingDetalhes').style.display = 'none';
+
+        // Debug: verificar se os dados chegaram
+        console.log('Dados recebidos:', data);
+
+        // Atualizar contadores
+        document.getElementById('totalRegistros').textContent = data.quantidade;
+        document.getElementById('valorTotal').textContent = data.total_formatado || new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        }).format(data.total);
+
+        // Preencher tabela
+        const tbody = document.getElementById('tabelaDetalhes');
+        tbody.innerHTML = '';
+
+        if (data.registros.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum registro encontrado</td></tr>';
+        } else {
+          data.registros.forEach(registro => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+             <td>${(() => {
+                const [dia, mes, ano] = registro.data_competencia.split('/');
+                return `${mes}/${ano}`;
+              })()}
+              </td>
+              <td>
+                <div class="badge bg-light text-dark">${registro.codigo_documento}</div>
+              </td>
+              <td>
+                <span class="badge bg-primary-lt">${registro.origem}</span>
+              </td>
+              <td>${registro.beneficiario || '-'}</td>
+              <td>
+                <div>${registro.descricao || '-'}</div>
+                ${registro.detalhamento ? `<small class="text-muted">${registro.detalhamento}</small>` : ''}
+                ${registro.referencia ? `<small class="text-primary">Ref: ${registro.referencia}</small>` : ''}
+              </td>
+              <td class="text-end fw-medium text-nowrap">${registro.valor_formatado}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        }
+
+        // Mostrar tabela
+        const tableContainer = document.getElementById('tabelaDetalhesContainer');
+        tableContainer.style.display = 'block';
+        tableContainer.style.visibility = 'visible';
+      })
+      .catch(error => {
+        // Ocultar loading
+        document.getElementById('loadingDetalhes').style.display = 'none';
+
+        // Mostrar erro
+        document.getElementById('mensagemErro').textContent = error.message;
+        document.getElementById('erroDetalhes').style.display = 'block';
+
+        console.error('Erro ao carregar detalhes:', error);
+      });
+  }
 </script>
 
 {% endblock conteudo %}
