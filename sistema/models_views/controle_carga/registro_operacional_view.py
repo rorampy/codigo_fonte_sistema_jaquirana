@@ -56,7 +56,7 @@ def detalhe_registro_operacional(id):
 def excluir_registro_operacional(id):
     registro = RegistroOperacionalModel.obter_por_id(id)
     contraNota = NfEntradaModel.obter_contra_nota_por_registro(id)
-    if not registro or not contraNota:
+    if not registro:
         flash(('Registro Operacional não encontrado!', 'warning'))
 
     registro.solicitacao.deletado = 1
@@ -65,12 +65,32 @@ def excluir_registro_operacional(id):
     registro.deletado = 1
     registro.ativo = 0
 
-    registro.arquivo_nota.deletado = 1
-    registro.arquivo_nota.ativo = 0
+    # Deletar arquivo PDF se existir
+    if registro.arquivo_nota:
+        registro.arquivo_nota.deletado = 1
+        registro.arquivo_nota.ativo = 0
+    
+    # Deletar arquivo XML se existir
+    if registro.arquivo_nota_xml:
+        registro.arquivo_nota_xml.deletado = 1
+        registro.arquivo_nota_xml.ativo = 0
+        
+    # Deletar arquivo PDF de excesso se existir
+    if registro.arquivo_nota_excesso:
+        registro.arquivo_nota_excesso.deletado = 1
+        registro.arquivo_nota_excesso.ativo = 0
+        
+    # Deletar arquivo XML de excesso se existir
+    if registro.arquivo_nota_excesso_xml:
+        registro.arquivo_nota_excesso_xml.deletado = 1
+        registro.arquivo_nota_excesso_xml.ativo = 0
+        
     registro.status_emissao_nf_complementar_id = 3
 
-    contraNota.deletado = True
-    contraNota.ativo = False
+    if contraNota:
+        contraNota.deletado = True
+        contraNota.ativo = False
+  
 
     db.session.commit()
     flash(('Registro Operacional excluido com sucesso!', 'success'))

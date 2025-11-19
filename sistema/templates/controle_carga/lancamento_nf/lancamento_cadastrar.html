@@ -282,17 +282,10 @@
 
                 <div class="col-sm-12 col-md-6">
                   <div class="mb-3">
-                    <label class="form-label required">Arquivo NF (PDF)</label>
+                    <label class="form-label">Arquivo NF (PDF)</label>
                     <input type="file" name="arquivoNfPdf" value="{{ dados_corretos['arquivoNfPdf'] }}"
-                      class="form-control {% if 'arquivoNfPdf' in campos_obrigatorios %}is-invalid{% endif %}"
+                      class="form-control"
                       accept=".pdf">
-                    <div class="invalid-feedback">
-                      {% if 'arquivoNfPdf' in campos_obrigatorios %}
-                      {{ campos_obrigatorios['arquivoNfPdf'] }}
-                      {% elif 'arquivoNfPdf' in campos_erros %}
-                      {{ campos_erros['arquivoNfPdf'] }}
-                      {% endif %}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -316,16 +309,11 @@
 
                 <div class="col-sm-12 col-md-6 grupoNFeExcesso">
                   <div class="mb-3">
-                    <label class="form-label required">Arquivo NFe de Excesso (PDF)</label>
+                    <label class="form-label">Arquivo NFe de Excesso (PDF)</label>
                     <input type="file" name="arquivoNFeExcessoPdf" value="{{ dados_corretos['arquivoNFeExcessoPdf'] }}"
-                      class="form-control {% if 'arquivoNFeExcessoPdf' in campos_obrigatorios %}is-invalid{% endif %}"
+                      class="form-control"
                       accept=".pdf">
                     <div class="invalid-feedback">
-                      {% if 'arquivoNFeExcessoPdf' in campos_obrigatorios %}
-                      {{ campos_obrigatorios['arquivoNFeExcessoPdf'] }}
-                      {% elif 'arquivoNFeExcessoPdf' in campos_erros %}
-                      {{ campos_erros['arquivoNFeExcessoPdf'] }}
-                      {% endif %}
                     </div>
                   </div>
                 </div>

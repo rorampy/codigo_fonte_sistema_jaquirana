@@ -12,6 +12,7 @@ from sistema.models_views.parametros.bitola.bitola_model import BitolaModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema._utilitarios import *
+import os
 
 
 def limpar_todos_arquivos_anexados(objeto_nf_xml=None, objeto_nf_pdf=None, objeto_nf_excesso_xml=None, objeto_nf_excesso_pdf=None):
@@ -201,15 +202,15 @@ def cadastrar_emissao(id):
                     
                     
                     try:
-                        dados_nf = RegistroOperacionalModel.extrair_dados_nf_unificado(
-                            objeto_nf_xml=objeto_nf_xml,
-                            objeto_nf_pdf=objeto_nf_pdf
+                        
+                        dados_nf = RegistroOperacionalModel.extrair_dados_nota_fiscal(
+                            objeto_nf_xml=objeto_nf_xml
                         )
                         
                         if not dados_nf:
                             
                             limpar_todos_arquivos_anexados(objeto_nf_xml, objeto_nf_pdf)
-                            flash(("Não foi possível extrair dados dos arquivos. Verifique se são arquivos válidos.", "warning"))
+                            flash(("Não foi possível extrair dados do arquivo XML. Verifique se é um arquivo XML válido.", "warning"))
                             return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                         
                         peso_nf = dados_nf["peso_ton_nf"]
@@ -226,7 +227,7 @@ def cadastrar_emissao(id):
                         print(f"[ERRO] Erro ao extrair dados da NF: {e}")
                         
                         limpar_todos_arquivos_anexados(objeto_nf_xml, objeto_nf_pdf)
-                        flash(("Erro ao processar os arquivos da nota fiscal.", "warning"))
+                        flash(("O XML da nota fiscal apresentou inconsistências ou está em formato inválido. Por favor, revise o arquivo e envie novamente.", "warning"))
                         return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
 
                     
@@ -258,15 +259,14 @@ def cadastrar_emissao(id):
                         
                         
                         try:
-                            dados_excesso = RegistroOperacionalModel.extrair_dados_nf_excesso_unificado(
-                                objeto_nf_excesso_xml=objeto_nf_excesso_xml,
-                                objeto_nf_excesso_pdf=objeto_nf_excesso_pdf
+                            dados_excesso = RegistroOperacionalModel.extrair_dados_nota_excesso(
+                                objeto_nf_excesso_xml=objeto_nf_excesso_xml
                             )
                             
                             if not dados_excesso:
                                 
                                 limpar_todos_arquivos_anexados(objeto_nf_xml, objeto_nf_pdf, objeto_nf_excesso_xml, objeto_nf_excesso_pdf)
-                                flash(("Não foi possível extrair dados dos arquivos de excesso. Verifique se são arquivos válidos.", "warning"))
+                                flash(("Não foi possível extrair dados do arquivo XML de excesso. Verifique se é um arquivo XML válido.", "warning"))
                                 return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                             
                             peso_nf_excesso = dados_excesso["peso_ton_nf_excesso"]
@@ -320,13 +320,14 @@ def cadastrar_emissao(id):
                         obterRegistro.transportador_insc_estadual = dados_nf["transportador_insc_estadual"]
                         obterRegistro.placa_nf = dados_nf["placa_nf"]
                         obterRegistro.motorista_nf = dados_nf["motorista_nf"]
-                        obterRegistro.arquivo_nota_id = objeto_nf_pdf.id if objeto_nf_pdf else objeto_nf_xml.id
+                        obterRegistro.arquivo_nota_id = objeto_nf_pdf.id if objeto_nf_pdf else None  # PDF
+                        obterRegistro.arquivo_nota_xml_id = objeto_nf_xml.id if objeto_nf_xml else None  # XML
                         obterRegistro.possui_excesso_carga = (possui_nfe_excesso == "sim")
                         obterRegistro.situacao_financeira_id = 2
                         
                         if possui_nfe_excesso == "sim":
-                            obterRegistro.arquivo_nota_excesso_id = (objeto_nf_excesso_pdf.id if objeto_nf_excesso_pdf else 
-                                                                    objeto_nf_excesso_xml.id if objeto_nf_excesso_xml else None)
+                            obterRegistro.arquivo_nota_excesso_id = objeto_nf_excesso_pdf.id if objeto_nf_excesso_pdf else None  # PDF excesso
+                            obterRegistro.arquivo_nota_excesso_xml_id = objeto_nf_excesso_xml.id if objeto_nf_excesso_xml else None  # XML excesso
                             obterRegistro.peso_ton_nf_excesso = peso_nf_excesso if peso_nf_excesso > 0 else None
                             obterRegistro.peso_nf_ton_com_excecao = peso_total_com_excesso
                             obterRegistro.numero_nota_fiscal_excessao = numero_nota_excessao
@@ -353,12 +354,13 @@ def cadastrar_emissao(id):
                             transportador_insc_estadual=dados_nf["transportador_insc_estadual"],
                             placa_nf=dados_nf["placa_nf"],
                             motorista_nf=dados_nf["motorista_nf"],
-                            arquivo_nota_id=objeto_nf_pdf.id if objeto_nf_pdf else objeto_nf_xml.id,
+                            arquivo_nota_id=objeto_nf_pdf.id if objeto_nf_pdf else None,  # PDF
+                            arquivo_nota_xml_id=objeto_nf_xml.id if objeto_nf_xml else None,  # XML
                             status_emissao_nf_complementar_id=2,
                             situacao_financeira_id=2,
                             possui_excesso_carga=(possui_nfe_excesso == "sim"),
-                            arquivo_nota_excesso_id=(objeto_nf_excesso_pdf.id if objeto_nf_excesso_pdf else 
-                                                    objeto_nf_excesso_xml.id if objeto_nf_excesso_xml else None) if possui_nfe_excesso == "sim" else None,
+                            arquivo_nota_excesso_id=objeto_nf_excesso_pdf.id if objeto_nf_excesso_pdf and possui_nfe_excesso == "sim" else None,  # PDF excesso
+                            arquivo_nota_excesso_xml_id=objeto_nf_excesso_xml.id if objeto_nf_excesso_xml and possui_nfe_excesso == "sim" else None,  # XML excesso
                             peso_ton_nf_excesso=peso_nf_excesso if peso_nf_excesso > 0 and possui_nfe_excesso == "sim" else None,
                             peso_nf_ton_com_excecao=peso_total_com_excesso if possui_nfe_excesso == "sim" else None,
                             numero_nota_fiscal_excessao=numero_nota_excessao if possui_nfe_excesso == "sim" else None,
@@ -460,8 +462,11 @@ def editar_emissao(id):
         opcao_excesso = request.form.get("opcaoExcesso")
         
         arquivo_nf_nova = request.files.get("arquivoNfNova")
+        arquivo_nf_nova_xml = request.files.get("arquivoNfNovaXml")
         arquivo_nf_estorno = request.files.get("arquivoNfEstorno") 
+        arquivo_nf_estorno_xml = request.files.get("arquivoNfEstornoXml")
         arquivo_nfe_excesso = request.files.get("arquivoNfExcesso") 
+        arquivo_nfe_excesso_xml = request.files.get("arquivoNfExcessoXml") 
 
         campos = {}
 
@@ -476,15 +481,20 @@ def editar_emissao(id):
             campos["pesoFrf"] = ["Peso", pesoFrf]
             campos["valorTotalFrf"] = ["Valor Total", valorTotalFrf]
         else:
-            # Validação para campos originais
             if opcao_nf == "nova":
-                campos["arquivoNfNova"] = ["Arquivo NF Nova", arquivo_nf_nova]
+                # XML é obrigatório para nova NF
+                if not (arquivo_nf_nova_xml and arquivo_nf_nova_xml.filename):
+                    campos["arquivoNfNovaXml"] = ["Arquivo NF Nova (XML)", arquivo_nf_nova_xml]
             
             if opcao_nf == "estorno":
-                campos["arquivoNfEstorno"] = ["Arquivo NF de Estorno", arquivo_nf_estorno]
+                # XML é obrigatório para estorno de NF
+                if not (arquivo_nf_estorno_xml and arquivo_nf_estorno_xml.filename):
+                    campos["arquivoNfEstornoXml"] = ["Arquivo NF de Estorno (XML)", arquivo_nf_estorno_xml]
             
             if opcao_excesso == "novo":
-                campos["arquivoNfExcesso"] = ["Arquivo NFe de Excesso", arquivo_nfe_excesso]
+                # XML é obrigatório para novo excesso
+                if not (arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename):
+                    campos["arquivoNfExcessoXml"] = ["Arquivo NFe de Excesso (XML)", arquivo_nfe_excesso_xml]
 
         validacao_campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)
 
@@ -601,250 +611,340 @@ def editar_emissao(id):
                 peso_nf_atual = registro.peso_ton_nf
                 peso_excesso_atual = registro.peso_ton_nf_excesso or 0
                 
-                if opcao_nf == "nova" and arquivo_nf_nova and arquivo_nf_nova.filename:
-                    if arquivo_nf_nova.mimetype == "application/pdf":
-                        objeto_nf = upload_arquivo(arquivo_nf_nova, "UPLOAD_ARQUIVO_NF", f"{registro.id}")
-
-                        dados_nota = ExtrairTextoNotaFiscal.nf_extrair_dados_nota(objeto_nf.caminho)
-
-                        if not dados_nota["destinatario"] or not dados_nota["emissor"] or not dados_nota["calculo_imposto"]:
-                            flash(("Arquivo enviado não é uma NF válida. Entre em contato com o suporte!", "warning"))
-                            return redirect(url_for("editar_emissao", id=registro.id))
-
-                        razao_social_emissor = dados_nota["emissor"]["razao_social_emissor"]
-                        numero_nota = dados_nota["emissor"]["numero_nota"]
-                        serie = dados_nota["emissor"]["serie"]
-                        chave_acesso = dados_nota["emissor"]["chave_acesso"]
-
-                        destinatario = dados_nota["destinatario"]["nome_razao_social"]
-                        destinatario_cpf_cnpj = dados_nota["destinatario"]["cnpj_cpf"]
-                        destinatario_insc_estadual = dados_nota["destinatario"]["insc_estadual"]
-                        destinatario_data_emissao = dados_nota["destinatario"]["data_emissao"]
-
-                        valor_total_nota = dados_nota["calculo_imposto"]["valor_total_nota"]
-
-                        transportador = dados_nota["transportador"]["nome"]
-                        transportador_cpf_cnpj = dados_nota["transportador"]["cnpj_cpf"]
-                        transportador_insc_estadual = dados_nota["transportador"]["insc_estadual"]
-
-                        placa = dados_nota["dados_adicionais"]["placa"]
-                        motorista = dados_nota["dados_adicionais"]["motorista"]
-
-                        peso_nf = 0
-                        preco_un = 0
-                        itens_nf = dados_nota['itens']
-                        for i in itens_nf:
-                            quantidade = i['quantidade'].replace(',', '.')
-                            peso_nf += round(float(quantidade), 2)
-
-                            preco_un += int(round(float(i['preco_unitario'].replace(',', '.')) * 100))
-
-                        if destinatario_data_emissao:
-                            destinatario_data_emissao = DataHora.converter_data_str_br_em_objeto_date(destinatario_data_emissao)
-
-                        if valor_total_nota:
-                            valor_total_nota_float = ValoresMonetarios.converter_string_brl_para_float(valor_total_nota)
-                            valor_total_nota_100 = valor_total_nota_float * 100
+                
+                if opcao_nf == "nova":
+                    arquivo_nf_nova_pdf = arquivo_nf_nova
+                    arquivo_nf_nova_xml = request.files.get("arquivoNfNovaXml")
+                    
+                    objeto_nf_xml = None
+                    objeto_nf_pdf = None
+                    
+                   
+                    if arquivo_nf_nova_pdf and arquivo_nf_nova_pdf.filename:
+                        if arquivo_nf_nova_pdf.mimetype == "application/pdf":
+                            objeto_nf_pdf = upload_arquivo(arquivo_nf_nova_pdf, "UPLOAD_ARQUIVO_NF", f"{registro.id}_nova_pdf")
                         else:
-                            valor_total_nota_100 = None
+                            flash(("O arquivo PDF deve ter o tipo correto.", "warning"))
+                            return redirect(url_for("editar_emissao", id=registro.id))
+                    
+                    
+                    if arquivo_nf_nova_xml and arquivo_nf_nova_xml.filename:
+                        if arquivo_nf_nova_xml.mimetype in ["application/xml", "text/xml"]:
+                            try:
+                                objeto_nf_xml = upload_arquivo(arquivo_nf_nova_xml, "UPLOAD_ARQUIVO_NF", f"{registro.id}_nova_xml")
 
-                        obj1 = {
-                            "razao_social_emissor": registro.razao_social_emissor or "",
-                            "numero_nota_fiscal": registro.numero_nota_fiscal or "",
-                            "serie_nota": registro.serie_nota or "",
-                            "chave_acesso": registro.chave_acesso or "",
-                            "destinatario_nome": registro.destinatario_nome or "",
-                            "destinatario_cnpj_cpf": registro.destinatario_cnpj_cpf or "",
-                            "destinatario_insc_estadual": registro.destinatario_insc_estadual or "",
-                            "destinatario_data_emissao": str(registro.destinatario_data_emissao or ""),
-                            "valor_total_nota_100": int(registro.valor_total_nota_100 or 0),
-                            "transportador_nome": registro.transportador_nome or "",
-                            "transportador_cnpj_cpf": registro.transportador_cnpj_cpf or "",
-                            "transportador_insc_estadual": registro.transportador_insc_estadual or "",
-                            "placa_nf": registro.placa_nf or "",
-                            "motorista_nf": registro.motorista_nf or "",
-                            "peso_nf": float(registro.peso_ton_nf or 0),
-                        }
+                                
+                                dados_nota = RegistroOperacionalModel.extrair_dados_nota_fiscal(objeto_nf_xml=objeto_nf_xml)
 
-                        obj2 = {
-                            "razao_social_emissor": razao_social_emissor or "",
-                            "numero_nota_fiscal": numero_nota or "",
-                            "serie_nota": serie or "",
-                            "chave_acesso": chave_acesso or "",
-                            "destinatario_nome": destinatario or "",
-                            "destinatario_cnpj_cpf": destinatario_cpf_cnpj or "",
-                            "destinatario_insc_estadual": destinatario_insc_estadual or "",
-                            "destinatario_data_emissao": str(destinatario_data_emissao or ""),
-                            "valor_total_nota_100": int(valor_total_nota_100 or 0),
-                            "transportador_nome": transportador or "",
-                            "transportador_cnpj_cpf": transportador_cpf_cnpj or "",
-                            "transportador_insc_estadual": transportador_insc_estadual or "",
-                            "placa_nf": placa or "",
-                            "motorista_nf": motorista or "",
-                            "peso_nf": float(peso_nf or 0),
-                        }
+                                if not dados_nota:
+                                    
+                                    if objeto_nf_xml and hasattr(objeto_nf_xml, 'caminho') and os.path.exists(objeto_nf_xml.caminho):
+                                        os.remove(objeto_nf_xml.caminho)
+                                    if objeto_nf_xml:
+                                        db.session.delete(objeto_nf_xml)
+                                        db.session.commit()
+                                    
+                                    flash(("Arquivo XML enviado não é uma NF válida. Entre em contato com o suporte!", "warning"))
+                                    return redirect(url_for("editar_emissao", id=registro.id))
 
-                        diferencas = Gameficacao.compara_objetos(obj1, obj2)
-                        if diferencas:
-                            acao = TipoAcaoEnum.EDICAO
-                            PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
-                                current_user.id,
-                                acao,
-                                acao.pontos,
-                                modulo='lancamento_nf'
-                            )
+                                # Extrair dados do XML
+                                razao_social_emissor = dados_nota["razao_social_emissor"]
+                                numero_nota = dados_nota["numero_nota_fiscal"]
+                                serie = dados_nota["serie_nota"]
+                                chave_acesso = dados_nota["chave_acesso"]
+                                destinatario = dados_nota["destinatario_nome"]
+                                destinatario_cpf_cnpj = dados_nota["destinatario_cnpj_cpf"]
+                                destinatario_insc_estadual = dados_nota["destinatario_insc_estadual"]
+                                destinatario_data_emissao = dados_nota["destinatario_data_emissao"]
+                                valor_total_nota = dados_nota["valor_total_nota_100"]
+                                transportador = dados_nota["transportador_nome"]
+                                transportador_cpf_cnpj = dados_nota["transportador_cnpj_cpf"]
+                                transportador_insc_estadual = dados_nota["transportador_insc_estadual"]
+                                placa = dados_nota["placa_nf"]
+                                motorista = dados_nota["motorista_nf"]
+                                peso_nf = dados_nota["peso_ton_nf"]
+                                preco_un = dados_nota["preco_un_nf"]
 
-                        # Atualizar dados da nota principal
-                        registro.razao_social_emissor = razao_social_emissor or None
-                        registro.numero_nota_fiscal = numero_nota or None
-                        registro.serie_nota = serie or None
-                        registro.chave_acesso = chave_acesso or None
-                        registro.destinatario_nome = destinatario or None
-                        registro.destinatario_cnpj_cpf = destinatario_cpf_cnpj or None
-                        registro.destinatario_insc_estadual = destinatario_insc_estadual or None
-                        registro.destinatario_data_emissao = destinatario_data_emissao or None
-                        registro.valor_total_nota_100 = valor_total_nota_100
-                        registro.preco_un_nf = preco_un
-                        registro.transportador_nome = transportador or None
-                        registro.transportador_cnpj_cpf = transportador_cpf_cnpj or None
-                        registro.transportador_insc_estadual = transportador_insc_estadual or None
-                        registro.placa_nf = placa or None
-                        registro.motorista_nf = motorista or None
-                        registro.arquivo_nota_id = objeto_nf.id
-                        registro.peso_ton_nf = peso_nf if peso_nf else None
-                        registro.carga_frf = False
-                        
-                        # Limpar dados de estorno caso existam
-                        registro.estorno_nf = False
-                        registro.arquivo_nota_estorno_id = None
-                        registro.numero_nota_fiscal_estorno = None
+                                if destinatario_data_emissao:
+                                    destinatario_data_emissao = DataHora.converter_data_str_br_em_objeto_date(destinatario_data_emissao)
 
-                        peso_nf_atual = peso_nf
+                                # Verificar se o peso é válido
+                                if peso_nf is None or peso_nf <= 0:
+                                    
+                                    if objeto_nf_xml and hasattr(objeto_nf_xml, 'caminho') and os.path.exists(objeto_nf_xml.caminho):
+                                        os.remove(objeto_nf_xml.caminho)
+                                    if objeto_nf_xml:
+                                        db.session.delete(objeto_nf_xml)
+                                        db.session.commit()
+                                        
+                                    flash(("O peso extraído da nota fiscal é inválido! Entre em contato com o suporte!", "warning"))
+                                    return redirect(url_for("editar_emissao", id=registro.id))
 
-                    else:
-                        flash(("A nota deve estar em formato PDF.", "warning"))
-                        return redirect(url_for("editar_emissao", id=registro.id))
+                                
+                                obj1 = {
+                                    "razao_social_emissor": registro.razao_social_emissor or "",
+                                    "numero_nota_fiscal": registro.numero_nota_fiscal or "",
+                                    "serie_nota": registro.serie_nota or "",
+                                    "chave_acesso": registro.chave_acesso or "",
+                                    "destinatario_nome": registro.destinatario_nome or "",
+                                    "destinatario_cnpj_cpf": registro.destinatario_cnpj_cpf or "",
+                                    "destinatario_insc_estadual": registro.destinatario_insc_estadual or "",
+                                    "destinatario_data_emissao": str(registro.destinatario_data_emissao or ""),
+                                    "valor_total_nota_100": int(registro.valor_total_nota_100 or 0),
+                                    "transportador_nome": registro.transportador_nome or "",
+                                    "transportador_cnpj_cpf": registro.transportador_cnpj_cpf or "",
+                                    "transportador_insc_estadual": registro.transportador_insc_estadual or "",
+                                    "placa_nf": registro.placa_nf or "",
+                                    "motorista_nf": registro.motorista_nf or "",
+                                    "peso_nf": float(registro.peso_ton_nf or 0),
+                                }
+
+                                obj2 = {
+                                    "razao_social_emissor": razao_social_emissor or "",
+                                    "numero_nota_fiscal": numero_nota or "",
+                                    "serie_nota": serie or "",
+                                    "chave_acesso": chave_acesso or "",
+                                    "destinatario_nome": destinatario or "",
+                                    "destinatario_cnpj_cpf": destinatario_cpf_cnpj or "",
+                                    "destinatario_insc_estadual": destinatario_insc_estadual or "",
+                                    "destinatario_data_emissao": str(destinatario_data_emissao or ""),
+                                    "valor_total_nota_100": int(valor_total_nota or 0),
+                                    "transportador_nome": transportador or "",
+                                    "transportador_cnpj_cpf": transportador_cpf_cnpj or "",
+                                    "transportador_insc_estadual": transportador_insc_estadual or "",
+                                    "placa_nf": placa or "",
+                                    "motorista_nf": motorista or "",
+                                    "peso_nf": float(peso_nf or 0),
+                                }
+
+                                diferencas = Gameficacao.compara_objetos(obj1, obj2)
+                                if diferencas:
+                                    acao = TipoAcaoEnum.EDICAO
+                                    PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
+                                        current_user.id,
+                                        acao,
+                                        acao.pontos,
+                                        modulo='lancamento_nf'
+                                    )
+
+                                # Atualizar dados da nota principal
+                                registro.razao_social_emissor = razao_social_emissor or None
+                                registro.numero_nota_fiscal = numero_nota or None
+                                registro.serie_nota = serie or None
+                                registro.chave_acesso = chave_acesso or None
+                                registro.destinatario_nome = destinatario or None
+                                registro.destinatario_cnpj_cpf = destinatario_cpf_cnpj or None
+                                registro.destinatario_insc_estadual = destinatario_insc_estadual or None
+                                registro.destinatario_data_emissao = destinatario_data_emissao or None
+                                registro.valor_total_nota_100 = valor_total_nota
+                                registro.preco_un_nf = preco_un
+                                registro.transportador_nome = transportador or None
+                                registro.transportador_cnpj_cpf = transportador_cpf_cnpj or None
+                                registro.transportador_insc_estadual = transportador_insc_estadual or None
+                                registro.placa_nf = placa or None
+                                registro.motorista_nf = motorista or None
+                                registro.peso_ton_nf = peso_nf if peso_nf else None
+                                registro.carga_frf = False
+                                
+                                # Limpar dados de estorno caso existam
+                                registro.estorno_nf = False
+                                registro.arquivo_nota_estorno_id = None
+                                registro.numero_nota_fiscal_estorno = None
+
+                                peso_nf_atual = peso_nf
+
+                            except Exception as e:
+                                print(f"[ERRO] Erro ao processar XML da nova NF: {e}")
+                                
+                                # Remove o arquivo que foi feito upload em caso de erro
+                                if 'objeto_nf_xml' in locals() and objeto_nf_xml:
+                                    try:
+                                        if hasattr(objeto_nf_xml, 'caminho') and os.path.exists(objeto_nf_xml.caminho):
+                                            os.remove(objeto_nf_xml.caminho)
+                                        db.session.delete(objeto_nf_xml)
+                                        db.session.commit()
+                                    except:
+                                        pass
+                                        
+                                flash(("Erro ao processar o arquivo XML. Verifique se é um arquivo XML válido de nota fiscal.", "warning"))
+                                return redirect(url_for("editar_emissao", id=registro.id))
+                        else:
+                            flash(("O arquivo XML deve ter o tipo correto.", "warning"))
+                            return redirect(url_for("editar_emissao", id=registro.id))
+                    
+                    # Atualizar as referências dos arquivos
+                    if objeto_nf_xml:
+                        registro.arquivo_nota_xml_id = objeto_nf_xml.id
+                    
+                    if objeto_nf_pdf:
+                        registro.arquivo_nota_id = objeto_nf_pdf.id
 
                 # Tratamento para ESTORNO de nota fiscal
-                elif opcao_nf == "estorno" and arquivo_nf_estorno and arquivo_nf_estorno.filename:
-                    if arquivo_nf_estorno.mimetype == "application/pdf":
-                        objeto_nf = upload_arquivo(arquivo_nf_estorno, "UPLOAD_ARQUIVO_ESTORNO", f"{registro.id}")
-
-                        dados_nota = ExtrairTextoNotaFiscal.nf_extrair_dados_nota(objeto_nf.caminho)
-
-                        if not dados_nota["destinatario"] or not dados_nota["emissor"] or not dados_nota["calculo_imposto"]:
-                            flash(("Arquivo enviado não é uma NF válida. Entre em contato com o suporte!", "warning"))
-                            return redirect(url_for("editar_emissao", id=registro.id))
-
-                        razao_social_emissor = dados_nota["emissor"]["razao_social_emissor"]
-                        numero_nota = dados_nota["emissor"]["numero_nota"]
-                        serie = dados_nota["emissor"]["serie"]
-                        chave_acesso = dados_nota["emissor"]["chave_acesso"]
-
-                        destinatario = dados_nota["destinatario"]["nome_razao_social"]
-                        destinatario_cpf_cnpj = dados_nota["destinatario"]["cnpj_cpf"]
-                        destinatario_insc_estadual = dados_nota["destinatario"]["insc_estadual"]
-                        destinatario_data_emissao = dados_nota["destinatario"]["data_emissao"]
-
-                        valor_total_nota = dados_nota["calculo_imposto"]["valor_total_nota"]
-
-                        transportador = dados_nota["transportador"]["nome"]
-                        transportador_cpf_cnpj = dados_nota["transportador"]["cnpj_cpf"]
-                        transportador_insc_estadual = dados_nota["transportador"]["insc_estadual"]
-
-                        placa = dados_nota["dados_adicionais"]["placa"]
-                        motorista = dados_nota["dados_adicionais"]["motorista"]
-
-                        peso_nf = 0
-                        preco_un = 0
-                        itens_nf = dados_nota['itens']
-                        for i in itens_nf:
-                            quantidade = i['quantidade'].replace(',', '.')
-                            peso_nf += round(float(quantidade), 2)
-
-                            preco_un += int(round(float(i['preco_unitario'].replace(',', '.')) * 100))
-
-                        if destinatario_data_emissao:
-                            destinatario_data_emissao = DataHora.converter_data_str_br_em_objeto_date(destinatario_data_emissao)
-
-                        if valor_total_nota:
-                            valor_total_nota_float = ValoresMonetarios.converter_string_brl_para_float(valor_total_nota)
-                            valor_total_nota_100 = valor_total_nota_float * 100
+                elif opcao_nf == "estorno":
+                    arquivo_nf_estorno_pdf = arquivo_nf_estorno
+                    arquivo_nf_estorno_xml = request.files.get("arquivoNfEstornoXml")
+                    
+                    objeto_nf_estorno_xml = None
+                    objeto_nf_estorno_pdf = None
+                    
+                    # Upload do PDF se fornecido
+                    if arquivo_nf_estorno_pdf and arquivo_nf_estorno_pdf.filename:
+                        if arquivo_nf_estorno_pdf.mimetype == "application/pdf":
+                            objeto_nf_estorno_pdf = upload_arquivo(arquivo_nf_estorno_pdf, "UPLOAD_ARQUIVO_ESTORNO", f"{registro.id}_estorno_pdf")
                         else:
-                            valor_total_nota_100 = None
+                            flash(("O arquivo PDF de estorno deve ter o tipo correto.", "warning"))
+                            return redirect(url_for("editar_emissao", id=registro.id))
+                    
+                    # Upload e processamento do XML (obrigatório)
+                    if arquivo_nf_estorno_xml and arquivo_nf_estorno_xml.filename:
+                        if arquivo_nf_estorno_xml.mimetype in ["application/xml", "text/xml"]:
+                            try:
+                                objeto_nf_estorno_xml = upload_arquivo(arquivo_nf_estorno_xml, "UPLOAD_ARQUIVO_ESTORNO", f"{registro.id}_estorno_xml")
 
-                        obj1 = {
-                            "razao_social_emissor": registro.razao_social_emissor or "",
-                            "numero_nota_fiscal_estorno": registro.numero_nota_fiscal_estorno or "",
-                            "serie_nota": registro.serie_nota or "",
-                            "chave_acesso": registro.chave_acesso or "",
-                            "destinatario_nome": registro.destinatario_nome or "",
-                            "destinatario_cnpj_cpf": registro.destinatario_cnpj_cpf or "",
-                            "destinatario_insc_estadual": registro.destinatario_insc_estadual or "",
-                            "destinatario_data_emissao": str(registro.destinatario_data_emissao or ""),
-                            "valor_total_nota_100": int(registro.valor_total_nota_100 or 0),
-                            "transportador_nome": registro.transportador_nome or "",
-                            "transportador_cnpj_cpf": registro.transportador_cnpj_cpf or "",
-                            "transportador_insc_estadual": registro.transportador_insc_estadual or "",
-                            "placa_nf": registro.placa_nf or "",
-                            "motorista_nf": registro.motorista_nf or "",
-                            "peso_nf": float(registro.peso_ton_nf or 0),
-                        }
+                                # Extrair dados do XML para validação
+                                dados_nota = RegistroOperacionalModel.extrair_dados_nota_fiscal(objeto_nf_xml=objeto_nf_estorno_xml)
 
-                        obj2 = {
-                            "razao_social_emissor": razao_social_emissor or "",
-                            "numero_nota_fiscal_estorno": numero_nota or "",
-                            "serie_nota": serie or "",
-                            "chave_acesso": chave_acesso or "",
-                            "destinatario_nome": destinatario or "",
-                            "destinatario_cnpj_cpf": destinatario_cpf_cnpj or "",
-                            "destinatario_insc_estadual": destinatario_insc_estadual or "",
-                            "destinatario_data_emissao": str(destinatario_data_emissao or ""),
-                            "valor_total_nota_100": int(valor_total_nota_100 or 0),
-                            "transportador_nome": transportador or "",
-                            "transportador_cnpj_cpf": transportador_cpf_cnpj or "",
-                            "transportador_insc_estadual": transportador_insc_estadual or "",
-                            "placa_nf": placa or "",
-                            "motorista_nf": motorista or "",
-                            "peso_nf": float(peso_nf or 0),
-                        }
+                                if not dados_nota:
+                                    # Remove o arquivo que foi feito upload
+                                    if objeto_nf_estorno_xml and hasattr(objeto_nf_estorno_xml, 'caminho') and os.path.exists(objeto_nf_estorno_xml.caminho):
+                                        os.remove(objeto_nf_estorno_xml.caminho)
+                                    if objeto_nf_estorno_xml:
+                                        db.session.delete(objeto_nf_estorno_xml)
+                                        db.session.commit()
+                                    
+                                    flash(("Arquivo XML de estorno enviado não é uma NF válida. Entre em contato com o suporte!", "warning"))
+                                    return redirect(url_for("editar_emissao", id=registro.id))
 
-                        diferencas = Gameficacao.compara_objetos(obj1, obj2)
-                        if diferencas:
-                            acao = TipoAcaoEnum.EDICAO
-                            PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
-                                current_user.id,
-                                acao,
-                                acao.pontos,
-                                modulo='lancamento_nf'
-                            )
+                                # Extrair dados do XML de estorno
+                                razao_social_emissor = dados_nota["razao_social_emissor"]
+                                numero_nota_estorno = dados_nota["numero_nota_fiscal"]
+                                serie = dados_nota["serie_nota"]
+                                chave_acesso = dados_nota["chave_acesso"]
+                                destinatario = dados_nota["destinatario_nome"]
+                                destinatario_cpf_cnpj = dados_nota["destinatario_cnpj_cpf"]
+                                destinatario_insc_estadual = dados_nota["destinatario_insc_estadual"]
+                                destinatario_data_emissao = dados_nota["destinatario_data_emissao"]
+                                valor_total_nota = dados_nota["valor_total_nota_100"]
+                                transportador = dados_nota["transportador_nome"]
+                                transportador_cpf_cnpj = dados_nota["transportador_cnpj_cpf"]
+                                transportador_insc_estadual = dados_nota["transportador_insc_estadual"]
+                                placa = dados_nota["placa_nf"]
+                                motorista = dados_nota["motorista_nf"]
+                                peso_nf = dados_nota["peso_ton_nf"]
+                                preco_un = dados_nota["preco_un_nf"]
 
-                        registro.razao_social_emissor = razao_social_emissor or None
-                        registro.numero_nota_fiscal_estorno = numero_nota or None
-                        registro.serie_nota = serie or None
-                        registro.chave_acesso = chave_acesso or None
-                        registro.destinatario_nome = destinatario or None
-                        registro.destinatario_cnpj_cpf = destinatario_cpf_cnpj or None
-                        registro.destinatario_insc_estadual = destinatario_insc_estadual or None
-                        registro.destinatario_data_emissao = destinatario_data_emissao or None
-                        registro.valor_total_nota_100 = valor_total_nota_100
-                        registro.preco_un_nf = preco_un
-                        registro.transportador_nome = transportador or None
-                        registro.transportador_cnpj_cpf = transportador_cpf_cnpj or None
-                        registro.transportador_insc_estadual = transportador_insc_estadual or None
-                        registro.placa_nf = placa or None
-                        registro.motorista_nf = motorista or None
-                        registro.arquivo_nota_id = objeto_nf.id
-                        registro.peso_ton_nf = peso_nf if peso_nf else None
-                        registro.estorno_nf = (opcao_nf == "estorno")
-                        registro.arquivo_nota_estorno_id = objeto_nf.id
-                        registro.carga_frf = False
+                                if destinatario_data_emissao:
+                                    destinatario_data_emissao = DataHora.converter_data_str_br_em_objeto_date(destinatario_data_emissao)
 
-                        peso_nf_atual = peso_nf
+                                # Verificar se o peso é válido
+                                if peso_nf is None or peso_nf <= 0:
+                                    # Remove o arquivo que foi feito upload
+                                    if objeto_nf_estorno_xml and hasattr(objeto_nf_estorno_xml, 'caminho') and os.path.exists(objeto_nf_estorno_xml.caminho):
+                                        os.remove(objeto_nf_estorno_xml.caminho)
+                                    if objeto_nf_estorno_xml:
+                                        db.session.delete(objeto_nf_estorno_xml)
+                                        db.session.commit()
+                                        
+                                    flash(("O peso extraído da nota fiscal de estorno é inválido! Entre em contato com o suporte!", "warning"))
+                                    return redirect(url_for("editar_emissao", id=registro.id))
 
-                    else:
-                        flash(("A nota deve estar em formato PDF.", "warning"))
-                        return redirect(url_for("editar_emissao", id=registro.id))
+                                # Comparação para gamificação
+                                obj1 = {
+                                    "razao_social_emissor": registro.razao_social_emissor or "",
+                                    "numero_nota_fiscal_estorno": registro.numero_nota_fiscal_estorno or "",
+                                    "serie_nota": registro.serie_nota or "",
+                                    "chave_acesso": registro.chave_acesso or "",
+                                    "destinatario_nome": registro.destinatario_nome or "",
+                                    "destinatario_cnpj_cpf": registro.destinatario_cnpj_cpf or "",
+                                    "destinatario_insc_estadual": registro.destinatario_insc_estadual or "",
+                                    "destinatario_data_emissao": str(registro.destinatario_data_emissao or ""),
+                                    "valor_total_nota_100": int(registro.valor_total_nota_100 or 0),
+                                    "transportador_nome": registro.transportador_nome or "",
+                                    "transportador_cnpj_cpf": registro.transportador_cnpj_cpf or "",
+                                    "transportador_insc_estadual": registro.transportador_insc_estadual or "",
+                                    "placa_nf": registro.placa_nf or "",
+                                    "motorista_nf": registro.motorista_nf or "",
+                                    "peso_nf": float(registro.peso_ton_nf or 0),
+                                }
+
+                                obj2 = {
+                                    "razao_social_emissor": razao_social_emissor or "",
+                                    "numero_nota_fiscal_estorno": numero_nota_estorno or "",
+                                    "serie_nota": serie or "",
+                                    "chave_acesso": chave_acesso or "",
+                                    "destinatario_nome": destinatario or "",
+                                    "destinatario_cnpj_cpf": destinatario_cpf_cnpj or "",
+                                    "destinatario_insc_estadual": destinatario_insc_estadual or "",
+                                    "destinatario_data_emissao": str(destinatario_data_emissao or ""),
+                                    "valor_total_nota_100": int(valor_total_nota or 0),
+                                    "transportador_nome": transportador or "",
+                                    "transportador_cnpj_cpf": transportador_cpf_cnpj or "",
+                                    "transportador_insc_estadual": transportador_insc_estadual or "",
+                                    "placa_nf": placa or "",
+                                    "motorista_nf": motorista or "",
+                                    "peso_nf": float(peso_nf or 0),
+                                }
+
+                                diferencas = Gameficacao.compara_objetos(obj1, obj2)
+                                if diferencas:
+                                    acao = TipoAcaoEnum.EDICAO
+                                    PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
+                                        current_user.id,
+                                        acao,
+                                        acao.pontos,
+                                        modulo='lancamento_nf'
+                                    )
+
+                                # Atualizar dados da nota de estorno
+                                registro.razao_social_emissor = razao_social_emissor or None
+                                registro.numero_nota_fiscal_estorno = numero_nota_estorno or None
+                                registro.serie_nota = serie or None
+                                registro.chave_acesso = chave_acesso or None
+                                registro.destinatario_nome = destinatario or None
+                                registro.destinatario_cnpj_cpf = destinatario_cpf_cnpj or None
+                                registro.destinatario_insc_estadual = destinatario_insc_estadual or None
+                                registro.destinatario_data_emissao = destinatario_data_emissao or None
+                                registro.valor_total_nota_100 = valor_total_nota
+                                registro.preco_un_nf = preco_un
+                                registro.transportador_nome = transportador or None
+                                registro.transportador_cnpj_cpf = transportador_cpf_cnpj or None
+                                registro.transportador_insc_estadual = transportador_insc_estadual or None
+                                registro.placa_nf = placa or None
+                                registro.motorista_nf = motorista or None
+                                registro.peso_ton_nf = peso_nf if peso_nf else None
+                                registro.estorno_nf = True
+                                registro.carga_frf = False
+
+                                peso_nf_atual = peso_nf
+
+                            except Exception as e:
+                                print(f"[ERRO] Erro ao processar XML de estorno: {e}")
+                                
+                                # Remove o arquivo que foi feito upload em caso de erro
+                                if 'objeto_nf_estorno_xml' in locals() and objeto_nf_estorno_xml:
+                                    try:
+                                        if hasattr(objeto_nf_estorno_xml, 'caminho') and os.path.exists(objeto_nf_estorno_xml.caminho):
+                                            os.remove(objeto_nf_estorno_xml.caminho)
+                                        db.session.delete(objeto_nf_estorno_xml)
+                                        db.session.commit()
+                                    except:
+                                        pass
+                                        
+                                flash(("Erro ao processar o arquivo XML de estorno. Verifique se é um arquivo XML válido de nota fiscal.", "warning"))
+                                return redirect(url_for("editar_emissao", id=registro.id))
+                        else:
+                            flash(("O arquivo XML de estorno deve ter o tipo correto.", "warning"))
+                            return redirect(url_for("editar_emissao", id=registro.id))
+                    
+                    # Atualizar as referências dos arquivos de estorno
+                    # Para estorno, substitui o XML principal e também salva como estorno
+                    if objeto_nf_estorno_xml:
+                        registro.arquivo_nota_xml_id = objeto_nf_estorno_xml.id
+                    
+                    if objeto_nf_estorno_pdf:
+                        # Para estorno, substitui o PDF principal e também salva como estorno
+                        registro.arquivo_nota_id = objeto_nf_estorno_pdf.id
+                        registro.arquivo_nota_estorno_id = objeto_nf_estorno_pdf.id
 
                 peso_excesso_final = 0
                 objeto_nf_excesso = None
@@ -861,47 +961,88 @@ def editar_emissao(id):
                     if opcao_nf in ["estorno", "nova"]:
                         registro.peso_nf_ton_com_excecao = peso_nf_atual + peso_excesso_final
                         
-                elif opcao_excesso == "novo" and arquivo_nfe_excesso and arquivo_nfe_excesso.filename:
-                    if arquivo_nfe_excesso.mimetype == "application/pdf":
-                        objeto_nf_excesso = upload_arquivo(
-                            arquivo_nfe_excesso, "UPLOAD_ARQUIVO_NF_EXCESSO", f"{registro.id}_excesso"
-                        )
-
-                        dados_nota_excesso = ExtrairTextoNotaFiscal.nf_extrair_dados_nota(
-                            objeto_nf_excesso.caminho
-                        )
-
-                        if (
-                            not dados_nota_excesso["destinatario"]
-                            or not dados_nota_excesso["emissor"]
-                            or not dados_nota_excesso["calculo_imposto"]
-                        ):
-                            flash(
-                                (
-                                    "Arquivo de NFe de Excesso enviado não é uma NF válida. Entre em contato com o suporte!",
-                                    "warning",
-                                )
-                            )
+                elif opcao_excesso == "novo":
+                    arquivo_nfe_excesso_pdf = arquivo_nfe_excesso
+                    arquivo_nfe_excesso_xml = request.files.get("arquivoNfExcessoXml")
+                    
+                    objeto_nf_excesso_xml = None
+                    objeto_nf_excesso_pdf = None
+                    peso_excesso_final = 0
+                    
+                    # Upload do PDF se fornecido
+                    if arquivo_nfe_excesso_pdf and arquivo_nfe_excesso_pdf.filename:
+                        if arquivo_nfe_excesso_pdf.mimetype == "application/pdf":
+                            objeto_nf_excesso_pdf = upload_arquivo(arquivo_nfe_excesso_pdf, "UPLOAD_ARQUIVO_NF_EXCESSO", f"{registro.id}_excesso_pdf")
+                        else:
+                            flash(("O arquivo PDF de excesso deve ter o tipo correto.", "warning"))
                             return redirect(url_for("editar_emissao", id=registro.id))
+                    
+                    # Upload e processamento do XML (obrigatório)
+                    if arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename:
+                        if arquivo_nfe_excesso_xml.mimetype in ["application/xml", "text/xml"]:
+                            try:
+                                objeto_nf_excesso_xml = upload_arquivo(arquivo_nfe_excesso_xml, "UPLOAD_ARQUIVO_NF_EXCESSO", f"{registro.id}_excesso_xml")
 
-                        itens_nf_excesso = dados_nota_excesso['itens']
-                        for i in itens_nf_excesso:
-                            quantidade_excesso = i['quantidade'].replace(',', '.')
-                            peso_excesso_final += round(float(quantidade_excesso), 2)
-                        
-                        numero_nota_excessao = dados_nota_excesso["emissor"]["numero_nota"]
+                                # Extrair dados do XML para validação
+                                dados_nota_excesso = RegistroOperacionalModel.extrair_dados_nota_excesso(objeto_nf_excesso_xml=objeto_nf_excesso_xml)
 
-                        registro.possui_excesso_carga = True
-                        registro.arquivo_nota_excesso_id = objeto_nf_excesso.id
-                        registro.peso_ton_nf_excesso = peso_excesso_final if peso_excesso_final > 0 else None
-                        registro.peso_nf_ton_com_excecao = peso_nf_atual + peso_excesso_final
-                        registro.numero_nota_fiscal_excessao = numero_nota_excessao
+                                if not dados_nota_excesso:
+                                    # Remove o arquivo que foi feito upload
+                                    if objeto_nf_excesso_xml and hasattr(objeto_nf_excesso_xml, 'caminho') and os.path.exists(objeto_nf_excesso_xml.caminho):
+                                        os.remove(objeto_nf_excesso_xml.caminho)
+                                    if objeto_nf_excesso_xml:
+                                        db.session.delete(objeto_nf_excesso_xml)
+                                        db.session.commit()
+                                    
+                                    flash(("Arquivo XML de excesso enviado não é uma NF válida. Entre em contato com o suporte!", "warning"))
+                                    return redirect(url_for("editar_emissao", id=registro.id))
 
-                    else:
-                        flash(
-                            ("A NFe de Excesso deve estar em formato PDF.", "warning")
-                        )
-                        return redirect(url_for("editar_emissao", id=registro.id))
+                                peso_excesso_final = dados_nota_excesso["peso_ton_nf_excesso"]
+                                numero_nota_excessao = dados_nota_excesso["numero_nota_fiscal_excessao"]
+                                
+                                # Verificar se o peso é válido
+                                if peso_excesso_final is None or peso_excesso_final <= 0:
+                                    # Remove o arquivo que foi feito upload
+                                    if objeto_nf_excesso_xml and hasattr(objeto_nf_excesso_xml, 'caminho') and os.path.exists(objeto_nf_excesso_xml.caminho):
+                                        os.remove(objeto_nf_excesso_xml.caminho)
+                                    if objeto_nf_excesso_xml:
+                                        db.session.delete(objeto_nf_excesso_xml)
+                                        db.session.commit()
+                                        
+                                    flash(("O peso extraído da NFe de excesso é inválido! Entre em contato com o suporte!", "warning"))
+                                    return redirect(url_for("editar_emissao", id=registro.id))
+
+                                # Atualizar registro
+                                registro.possui_excesso_carga = True
+                                registro.peso_ton_nf_excesso = peso_excesso_final if peso_excesso_final > 0 else None
+                                registro.peso_nf_ton_com_excecao = peso_nf_atual + peso_excesso_final
+                                registro.numero_nota_fiscal_excessao = numero_nota_excessao
+
+                            except Exception as e:
+                                print(f"[ERRO] Erro ao processar XML de excesso: {e}")
+                                
+                                # Remove o arquivo que foi feito upload em caso de erro
+                                if 'objeto_nf_excesso_xml' in locals() and objeto_nf_excesso_xml:
+                                    try:
+                                        if hasattr(objeto_nf_excesso_xml, 'caminho') and os.path.exists(objeto_nf_excesso_xml.caminho):
+                                            os.remove(objeto_nf_excesso_xml.caminho)
+                                        db.session.delete(objeto_nf_excesso_xml)
+                                        db.session.commit()
+                                    except:
+                                        pass
+                                        
+                                flash(("Erro ao processar o arquivo XML de excesso. Verifique se é um arquivo XML válido de nota fiscal.", "warning"))
+                                return redirect(url_for("editar_emissao", id=registro.id))
+                        else:
+                            flash(("O arquivo XML de excesso deve ter o tipo correto.", "warning"))
+                            return redirect(url_for("editar_emissao", id=registro.id))
+                    
+                    # Atualizar as referências dos arquivos de excesso
+                    if objeto_nf_excesso_xml:
+                        registro.arquivo_nota_excesso_xml_id = objeto_nf_excesso_xml.id
+                    
+                    if objeto_nf_excesso_pdf:
+                        registro.arquivo_nota_excesso_id = objeto_nf_excesso_pdf.id
 
                 db.session.commit()
 

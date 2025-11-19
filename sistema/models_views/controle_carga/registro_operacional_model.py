@@ -24,7 +24,7 @@ from sistema.models_views.parametros.bitola.bitola_model import BitolaModel
 from sistema.models_views.faturamento.cargas_a_pagar.transportadora.frete_a_pagar_model import FretePagarModel
 from sistema.models_views.faturamento.cargas_a_receber.recebimento_model import RecebimentoModel
 from sistema.models_views.financeiro.movimentacao_financeira.movimentacao_financeira_model import MovimentacaoFinanceiraModel
-
+from sistema.models_views.upload_arquivo.upload_arquivo_model import UploadArquivoModel
 
 class RegistroOperacionalModel(BaseModel):
     """
@@ -75,9 +75,13 @@ class RegistroOperacionalModel(BaseModel):
     numero_nota_fiscal_ticket = db.Column(db.String(20), nullable=True)
     peso_liquido_ticket = db.Column(db.Float, nullable=True)
 
-    # Arquivos
+    # Arquivos PDF 
     arquivo_nota_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     arquivo_nota = db.relationship("UploadArquivoModel",foreign_keys=[arquivo_nota_id], backref=db.backref("car_registro_nf", lazy=True))
+
+    # Arquivos XML
+    arquivo_nota_xml_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
+    arquivo_nota_xml = db.relationship("UploadArquivoModel",foreign_keys=[arquivo_nota_xml_id], backref=db.backref("car_registro_nf_xml", lazy=True))
 
     arquivo_ticket_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     arquivo_ticket = db.relationship("UploadArquivoModel", foreign_keys=[arquivo_ticket_id], backref=db.backref("car_registro_ticket", lazy=True))
@@ -88,9 +92,17 @@ class RegistroOperacionalModel(BaseModel):
     situacao_financeira_id = db.Column(db.Integer, db.ForeignKey("fin_situacao_pagamento.id"), nullable=True)
     situacao = db.relationship("SituacaoPagamentoModel",backref=db.backref("situacao_financeira_registro", lazy=True),)
 
+    # Arquivos de excesso
     possui_excesso_carga = db.Column(db.Boolean, default=False, nullable=False) 
+
+    # Excesso PDF
     arquivo_nota_excesso_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     arquivo_nota_excesso = db.relationship("UploadArquivoModel",foreign_keys=[arquivo_nota_excesso_id], backref=db.backref("arquivo_nota_excesso", lazy=True))
+    
+    # Excesso XML
+    arquivo_nota_excesso_xml_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
+    arquivo_nota_excesso_xml = db.relationship("UploadArquivoModel",foreign_keys=[arquivo_nota_excesso_xml_id], backref=db.backref("arquivo_nota_excesso_xml", lazy=True))
+
     peso_ton_nf_excesso = db.Column(db.Float, nullable=True)
     peso_nf_ton_com_excecao = db.Column(db.Float, nullable=True)
     numero_nota_fiscal_excessao = db.Column(db.String(20), nullable=True)
@@ -134,12 +146,14 @@ class RegistroOperacionalModel(BaseModel):
         placa_ticket=None,
         motorista_ticket=None,
         peso_liquido=None,
-        arquivo_nota_id=None,
+        arquivo_nota_id=None, # PDF
+        arquivo_nota_xml_id=None, # XML
         arquivo_ticket_id=None,
         status_emissao_nf_complementar_id=None,
         situacao_financeira_id=None,
         possui_excesso_carga=False,
-        arquivo_nota_excesso_id=None,
+        arquivo_nota_excesso_id=None, # Excesso PDF
+        arquivo_nota_excesso_xml_id=None, # Excesso XML
         peso_ton_nf_excesso=None,
         peso_nf_ton_com_excecao=None,
         estorno_nf=False,
@@ -174,12 +188,14 @@ class RegistroOperacionalModel(BaseModel):
         self.data_entrega_ticket = data_entrega_ticket
         self.motorista_ticket = motorista_ticket
         self.peso_liquido = peso_liquido
-        self.arquivo_nota_id = arquivo_nota_id
+        self.arquivo_nota_id = arquivo_nota_id # PDF
+        self.arquivo_nota_xml_id = arquivo_nota_xml_id # XML
         self.arquivo_ticket_id = arquivo_ticket_id
         self.status_emissao_nf_complementar_id = status_emissao_nf_complementar_id
         self.situacao_financeira_id = situacao_financeira_id
         self.possui_excesso_carga = possui_excesso_carga
-        self.arquivo_nota_excesso_id = arquivo_nota_excesso_id
+        self.arquivo_nota_excesso_id = arquivo_nota_excesso_id # Excesso PDF
+        self.arquivo_nota_excesso_xml_id = arquivo_nota_excesso_xml_id # Excesso XML
         self.peso_ton_nf_excesso = peso_ton_nf_excesso
         self.peso_nf_ton_com_excecao = peso_nf_ton_com_excecao
         self.estorno_nf = estorno_nf
@@ -191,26 +207,31 @@ class RegistroOperacionalModel(BaseModel):
         self.ativo = ativo
 
 
+    @staticmethod
     def corrigir_peso_preco_un_nf_todos():
         """
-        Corrige o peso e o preço unitário de todas as notas fiscais, lendo novamente o(s) PDF(s).
-        Atualiza separadamente os campos da nota normal e da nota de excesso, conforme o arquivo processado.
-        Não sobrescreve valores de excesso com valores da nota normal.
+        Corrige o peso e o preço unitário de todas as notas fiscais.
+        Os dados são extraídos APENAS do XML (obrigatório).
         """
         from sistema._utilitarios.extracao_texto_nota_fiscal import ExtrairTextoNotaFiscal
-        from sistema.models_views.upload_arquivo.upload_arquivo_model import UploadArquivoModel
+        
         registros = RegistroOperacionalModel.query.filter_by(deletado=False).all()
+
         for registro in registros:
             if registro.carga_frf:
                 continue
+
             atualizou = False
-            # Corrige nota normal
-            if registro.arquivo_nota_id and (registro.peso_ton_nf is None or registro.preco_un_nf is None):
-                arquivo = UploadArquivoModel.query.get(registro.arquivo_nota_id)
-                if arquivo and hasattr(arquivo, 'caminho') and arquivo.caminho:
+        
+            # Corrige nota normal - APENAS XML
+            if (registro.peso_ton_nf is None or registro.preco_un_nf is None) and registro.arquivo_nota_xml_id:
+                arquivo_xml = UploadArquivoModel.query.get(registro.arquivo_nota_xml_id)
+            
+                if arquivo_xml and hasattr(arquivo_xml, 'caminho') and arquivo_xml.caminho:
                     try:
-                        texto_pdf = ExtrairTextoNotaFiscal.extrair_texto_do_pdf(arquivo.caminho)
-                        itens = ExtrairTextoNotaFiscal.nf_extrair_itens(texto_pdf)
+                        dados_xml = ExtrairTextoNotaFiscal.nf_extrair_dados_nota_xml(arquivo_xml.caminho)
+                        itens = dados_xml.get('itens', [])
+
                         peso_nf = 0
                         preco_un = 0
                         for item in itens:
@@ -221,54 +242,37 @@ class RegistroOperacionalModel(BaseModel):
                                 preco_un += int(round(float(preco_unitario) * 100))
                             except Exception:
                                 continue
+                        
                         registro.peso_ton_nf = peso_nf
                         registro.preco_un_nf = preco_un
                         atualizou = True
                     except Exception as e:
+                        print(f"[ERRO] Falha ao processar XML: {e}")
                         db.session.rollback()
-            # Corrige nota de excesso
-            if registro.possui_excesso_carga and registro.arquivo_nota_excesso_id and registro.peso_ton_nf_excesso is None:
-                arquivo_excesso = UploadArquivoModel.query.get(registro.arquivo_nota_excesso_id)
-                if arquivo_excesso and hasattr(arquivo_excesso, 'caminho') and arquivo_excesso.caminho:
+            
+            # Corrige nota de excesso - APENAS XML
+            if (registro.peso_ton_nf_excesso is None) and registro.possui_excesso_carga and registro.arquivo_nota_excesso_xml_id:
+                arquivo_excesso_xml = UploadArquivoModel.query.get(registro.arquivo_nota_excesso_xml_id)
+
+                if arquivo_excesso_xml and hasattr(arquivo_excesso_xml, 'caminho') and arquivo_excesso_xml.caminho:
                     try:
-                        texto_pdf_excesso = ExtrairTextoNotaFiscal.extrair_texto_do_pdf(arquivo_excesso.caminho)
-                        itens_excesso = ExtrairTextoNotaFiscal.nf_extrair_itens(texto_pdf_excesso)
+                        dados_xml = ExtrairTextoNotaFiscal.nf_extrair_dados_nota_xml(arquivo_excesso_xml.caminho)
+                        itens = dados_xml.get('itens', [])
+
                         peso_nf_excesso = 0
-                        for item in itens_excesso:
+                        for item in itens:
                             quantidade = item.get('quantidade', '0').replace(',', '.')
                             try:
                                 peso_nf_excesso += round(float(quantidade), 2)
                             except Exception:
                                 continue
+                        
                         registro.peso_ton_nf_excesso = peso_nf_excesso
-                        # Atualiza campo total se necessário
-                        registro.peso_nf_ton_com_excecao = (registro.peso_ton_nf or 0) + (registro.peso_ton_nf_excesso or 0)
                         atualizou = True
                     except Exception as e:
+                        print(f"[ERRO] Falha ao processar XML de excesso: {e}")
                         db.session.rollback()
 
-            # Corrige nota de estorno
-            if registro.estorno_nf and registro.arquivo_nota_estorno_id and (getattr(registro, 'peso_ton_nf_estorno', None) is None or getattr(registro, 'preco_un_nf_estorno', None) is None):
-                arquivo_estorno = UploadArquivoModel.query.get(registro.arquivo_nota_estorno_id)
-                if arquivo_estorno and hasattr(arquivo_estorno, 'caminho') and arquivo_estorno.caminho:
-                    try:
-                        texto_pdf_estorno = ExtrairTextoNotaFiscal.extrair_texto_do_pdf(arquivo_estorno.caminho)
-                        itens_estorno = ExtrairTextoNotaFiscal.nf_extrair_itens(texto_pdf_estorno)
-                        peso_nf_estorno = 0
-                        preco_un_estorno = 0
-                        for item in itens_estorno:
-                            quantidade = item.get('quantidade', '0')
-                            preco_unitario = item.get('preco_unitario', '0')
-                            try:
-                                peso_nf_estorno += round(float(quantidade), 2)
-                                preco_un_estorno += int(round(float(preco_unitario) * 100))
-                            except Exception:
-                                continue
-                        registro.peso_ton_nf_estorno = peso_nf_estorno
-                        registro.preco_un_nf_estorno = preco_un_estorno
-                        atualizou = True
-                    except Exception as e:
-                        db.session.rollback()
             if atualizou:
                 try:
                     db.session.add(registro)
@@ -299,65 +303,6 @@ class RegistroOperacionalModel(BaseModel):
             "motorista_nf": motoristaFrf,
             "peso_ton_nf": pesoFrf,
             "valor_total_nota_100": valorTotalFrf,
-        }
-
-    def extrair_dados_nf_pdf(dados_nota):
-        """
-        Extrai e valida os dados de uma nota fiscal extraída do PDF.
-        """
-        razao_social_emissor = dados_nota["emissor"]["razao_social_emissor"]
-        numero_nota = dados_nota["emissor"]["numero_nota"]
-        serie = dados_nota["emissor"]["serie"]
-        chave_acesso = dados_nota["emissor"]["chave_acesso"]
-        destinatario = dados_nota["destinatario"]["nome_razao_social"]
-        destinatario_cpf_cnpj = dados_nota["destinatario"]["cnpj_cpf"]
-        destinatario_insc_estadual = dados_nota["destinatario"]["insc_estadual"]
-        destinatario_data_emissao = dados_nota["destinatario"]["data_emissao"]
-        valor_total_nota = dados_nota["calculo_imposto"]["valor_total_nota"]
-        transportador = dados_nota["transportador"]["nome"]
-        transportador_cpf_cnpj = dados_nota["transportador"]["cnpj_cpf"]
-        transportador_insc_estadual = dados_nota["transportador"]["insc_estadual"]
-        placa = dados_nota["dados_adicionais"]["placa"]
-        motorista = dados_nota["dados_adicionais"]["motorista"]
-        itens_nf = dados_nota['itens']
-        peso_nf = 0
-        preco_un = 0
-        for i in itens_nf:
-            quantidade = i['quantidade'].replace(',', '.')
-            peso_nf += round(float(quantidade), 2)
-            preco_un += int(round(float(i['preco_unitario'].replace(',', '.')) * 100))
-        return {
-            "razao_social_emissor": razao_social_emissor,
-            "numero_nota_fiscal": numero_nota,
-            "serie_nota": serie,
-            "chave_acesso": chave_acesso,
-            "destinatario_nome": destinatario,
-            "destinatario_cnpj_cpf": destinatario_cpf_cnpj,
-            "destinatario_insc_estadual": destinatario_insc_estadual,
-            "destinatario_data_emissao": destinatario_data_emissao,
-            "valor_total_nota_100": valor_total_nota,
-            "preco_un_nf": preco_un,
-            "transportador_nome": transportador,
-            "transportador_cnpj_cpf": transportador_cpf_cnpj,
-            "transportador_insc_estadual": transportador_insc_estadual,
-            "placa_nf": placa,
-            "motorista_nf": motorista,
-            "peso_ton_nf": peso_nf,
-        }
-
-    def extrair_dados_nf_excesso_pdf(dados_nota_excesso):
-        """
-        Extrai e valida os dados de uma nota fiscal de excesso extraída do PDF.
-        """
-        numero_nota_excessao = dados_nota_excesso["emissor"]["numero_nota"]
-        itens_nf_excesso = dados_nota_excesso['itens']
-        peso_nf_excesso = 0
-        for i in itens_nf_excesso:
-            quantidade_excesso = i['quantidade'].replace(',', '.')
-            peso_nf_excesso += round(float(quantidade_excesso), 2)
-        return {
-            "numero_nota_fiscal_excessao": numero_nota_excessao,
-            "peso_ton_nf_excesso": peso_nf_excesso,
         }
     
     @staticmethod
@@ -440,91 +385,88 @@ class RegistroOperacionalModel(BaseModel):
         }
     
     @staticmethod
-    def extrair_dados_nf_unificado(objeto_nf_xml, objeto_nf_pdf):
+    def extrair_dados_nota_fiscal(objeto_nf_xml):
         """
-        Extrai dados da NF priorizando XML sobre PDF.
-        Retorna dados do XML se disponível e válido, caso contrário usa PDF.
+        Extrai dados da nota fiscal SEMPRE e APENAS do XML (obrigatório).
+        
+        Args:
+            objeto_nf_xml: Objeto do arquivo XML (obrigatório)
+        
+        Returns:
+            dict: Dados extraídos do XML
+        
+        Raises:
+            ValueError: Se XML não for fornecido ou for inválido
         """
         
-        dados_nf = None
+        if not objeto_nf_xml or not objeto_nf_xml.caminho:
+            raise ValueError("XML é obrigatório e deve ser fornecido")
         
-        # Tentar XML primeiro (mais confiável)
-        if objeto_nf_xml and objeto_nf_xml.caminho:
-            try:
-                dados_xml = ExtrairTextoNotaFiscal.nf_extrair_dados_nota_xml(objeto_nf_xml.caminho)
-                
-                # Verificar se XML tem dados essenciais
-                if (dados_xml.get("emissor", {}).get("numero_nota") and 
+        try:
+            dados_xml = ExtrairTextoNotaFiscal.nf_extrair_dados_nota_xml(objeto_nf_xml.caminho)
+            
+            # Verificar se XML tem dados essenciais
+            if not (dados_xml.get("emissor", {}).get("numero_nota") and 
                     dados_xml.get("destinatario", {}).get("nome_razao_social") and 
                     dados_xml.get("calculo_imposto", {}).get("valor_total_nota")):
-                    
-                    dados_nf = RegistroOperacionalModel.extrair_dados_nf_xml(dados_xml)
-                    print(f"[INFO] Dados extraídos do XML com sucesso")
-                else:
-                    print(f"[AVISO] XML não contém dados essenciais, tentando PDF")
-                    
-            except Exception as e:
-                print(f"[ERRO] Falha ao processar XML: {e}")
-        
-        # Se XML falhou ou não está disponível, usar PDF
-        if dados_nf is None and objeto_nf_pdf and objeto_nf_pdf.caminho:
-            try:
-                dados_pdf = ExtrairTextoNotaFiscal.nf_extrair_dados_nota(objeto_nf_pdf.caminho)
-                
-                # Verificar se PDF tem dados essenciais
-                if (dados_pdf.get("emissor", {}).get("numero_nota") and 
-                    dados_pdf.get("destinatario", {}).get("nome_razao_social") and 
-                    dados_pdf.get("calculo_imposto", {}).get("valor_total_nota")):
-                    
-                    dados_nf = RegistroOperacionalModel.extrair_dados_nf_pdf(dados_pdf)
-                    print(f"[INFO] Dados extraídos do PDF com sucesso")
-                else:
-                    print(f"[ERRO] PDF também não contém dados essenciais")
-                    
-            except Exception as e:
-                print(f"[ERRO] Falha ao processar PDF: {e}")
-        
-        return dados_nf
-    
+                raise ValueError("XML não contém dados essenciais para processamento")
+            
+            dados_nf = RegistroOperacionalModel.extrair_dados_nf_xml(dados_xml)
+            print(f"[INFO] Dados extraídos do XML com sucesso")
+            return dados_nf
+            
+        except Exception as e:
+            print(f"[ERRO] Falha ao processar XML obrigatório: {e}")
+            raise e
+
     @staticmethod
-    def extrair_dados_nf_excesso_unificado(objeto_nf_excesso_xml, objeto_nf_excesso_pdf):
+    def extrair_dados_nota_excesso(objeto_nf_excesso_xml):
         """
-        Extrai dados da NF de excesso priorizando XML sobre PDF.
+        Extrai dados da nota fiscal de excesso SEMPRE e APENAS do XML (obrigatório).
+        
+        Args:
+            objeto_nf_excesso_xml: Objeto do arquivo XML de excesso (obrigatório)
+        
+        Returns:
+            dict: Dados extraídos do XML de excesso
+        
+        Raises:
+            ValueError: Se XML não for fornecido ou for inválido
         """
         
-        dados_excesso = None
+        if not objeto_nf_excesso_xml or not objeto_nf_excesso_xml.caminho:
+            raise ValueError("XML de excesso é obrigatório e deve ser fornecido")
         
-        # Tentar XML primeiro
-        if objeto_nf_excesso_xml and objeto_nf_excesso_xml.caminho:
-            try:
-                dados_xml = ExtrairTextoNotaFiscal.nf_extrair_dados_nota_xml(objeto_nf_excesso_xml.caminho)
-                
-                if (dados_xml.get("emissor", {}).get("numero_nota") and 
+        try:
+            dados_xml = ExtrairTextoNotaFiscal.nf_extrair_dados_nota_xml(objeto_nf_excesso_xml.caminho)
+            
+            if not (dados_xml.get("emissor", {}).get("numero_nota") and 
                     dados_xml.get("itens")):
-                    
-                    dados_excesso = RegistroOperacionalModel.extrair_dados_nf_excesso_xml(dados_xml)
-                    print(f"[INFO] Dados de excesso extraídos do XML com sucesso")
-                else:
-                    print(f"[AVISO] XML de excesso não contém dados essenciais, tentando PDF")
-                    
-            except Exception as e:
-                print(f"[ERRO] Falha ao processar XML de excesso: {e}")
-        
-        # Se XML falhou, usar PDF
-        if dados_excesso is None and objeto_nf_excesso_pdf and objeto_nf_excesso_pdf.caminho:
-            try:
-                dados_pdf = ExtrairTextoNotaFiscal.nf_extrair_dados_nota(objeto_nf_excesso_pdf.caminho)
-                
-                if (dados_pdf.get("emissor", {}).get("numero_nota") and 
-                    dados_pdf.get("itens")):
-                    
-                    dados_excesso = RegistroOperacionalModel.extrair_dados_nf_excesso_pdf(dados_pdf)
-                    print(f"[INFO] Dados de excesso extraídos do PDF com sucesso")
-                    
-            except Exception as e:
-                print(f"[ERRO] Falha ao processar PDF de excesso: {e}")
-        
-        return dados_excesso
+                raise ValueError("XML de excesso não contém dados essenciais")
+            
+            dados_excesso = RegistroOperacionalModel.extrair_dados_nf_excesso_xml(dados_xml)
+            print(f"[INFO] Dados de excesso extraídos do XML com sucesso")
+            return dados_excesso
+            
+        except Exception as e:
+            print(f"[ERRO] Falha ao processar XML de excesso: {e}")
+            raise e
+
+    # Propriedades para exibição
+    @property
+    def arquivo_nota_display(self):
+        """
+        Retorna o arquivo XML principal para exibição (XML é sempre o principal)
+        """
+        return self.arquivo_nota_xml
+
+    @property
+    def arquivo_nota_excesso_display(self):
+        """
+        Retorna o arquivo XML de excesso para exibição (XML é sempre o principal)
+        """
+        return self.arquivo_nota_excesso_xml
+    
 
     def criar_registro_operacional(**kwargs):
         """

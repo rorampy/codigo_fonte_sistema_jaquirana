@@ -440,9 +440,14 @@ class ExtrairTextoNotaFiscal:
                     serie_elem = inf_nfe.find('nfe:ide/nfe:serie', ns) if ns else inf_nfe.find('ide/serie')
                     nome_elem = emit.find('nfe:xNome', ns) if ns else emit.find('xNome')
                     
+                    numero_nota_formatado = ""
+                    if numero_nota_elem is not None:
+                        numero_original = numero_nota_elem.text
+                        numero_nota_formatado = numero_original.zfill(6)
+
                     dados["emissor"] = {
                         "razao_social_emissor": nome_elem.text if nome_elem is not None else "",
-                        "numero_nota": numero_nota_elem.text if numero_nota_elem is not None else "",
+                        "numero_nota": numero_nota_formatado,
                         "serie": serie_elem.text if serie_elem is not None else "",
                         "chave_acesso": inf_nfe.get('Id', '').replace('NFe', '') if inf_nfe.get('Id') else ""
                     }

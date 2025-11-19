@@ -170,11 +170,12 @@
               </div>
             </div>
 
+            <!-- Campo de Input da Nota Fiscal -->
             <div id="camposOriginais" class="{% if emissao.carga_frf %}d-none{% endif %}">
               <div class="row">
                 <div class="col-md-6 mb-3">
                   <label class="form-label required">Nota Fiscal Principal</label>
-                  {% if emissao.arquivo_nota_id %}
+                  {% if emissao.arquivo_nota_id or emissao.arquivo_nota_xml_id %}
                   <div class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="opcaoNf" id="opcaoNfManter" value="manter"
                       checked>
@@ -192,7 +193,7 @@
                   {% if emissao.arquivo_nota_id %}
                   <div>
                     <a href="#" id="visualizar-nf" class="btn btn-outline-primary btn-visualizar-arquivo mb-2"
-                      data-url="{% if emissao.estorno_nf %}{{ url_for('diretorio_uploads_arquivo_estorno', filename=emissao.arquivo_nota_estorno.caminho.split('/')[-1]) }}{% else %}{{ url_for('diretorio_uploads_nota_fiscal', filename=emissao.arquivo_nota.caminho.split('/')[-1]) }}{% endif %}"
+                      data-url="{% if emissao.estorno_nf and emissao.arquivo_nota_estorno and emissao.arquivo_nota_estorno.caminho %}{{ url_for('diretorio_uploads_arquivo_estorno', filename=emissao.arquivo_nota_estorno.caminho.split('/')[-1]) }}{% elif emissao.arquivo_nota and emissao.arquivo_nota.caminho %}{{ url_for('diretorio_uploads_nota_fiscal', filename=emissao.arquivo_nota.caminho.split('/')[-1]) }}{% endif %}"
                       data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -205,22 +206,37 @@
                       Visualizar NF Atual
                     </a>
                   </div>
+
                   {%endif%}
                   <div id="inputUploadNova" class="d-none mb-3">
-                    <label class="form-label required">Arquivo NF Nova (PDF)</label>
-                    <input type="file" name="arquivoNfNova"
-                      class="form-control {% if 'arquivoNfNova' in campos_obrigatorios or 'arquivoNfNova' in campos_erros %}is-invalid{% endif %}"
-                      accept=".pdf">
-                    <div class="invalid-feedback">{{ campos_obrigatorios.get('arquivoNfNova') or
-                      campos_erros.get('arquivoNfNova') }}</div>
+                    <label class="form-label">Arquivo NF Nova (PDF)</label>
+                    <input type="file" name="arquivoNfNova" class="form-control" accept=".pdf">
                   </div>
+
+                  <!-- Campo de Envio do novo XML -->
+                  <div id="inputUploadNovaXml" class="d-none mt-3">
+                    <label class="form-label required">Arquivo NF Nova (XML)</label>
+                    <input type="file" name="arquivoNfNovaXml"
+                      class="form-control {% if 'arquivoNfNovaXml' in campos_obrigatorios or 'arquivoNfNovaXml' in campos_erros %}is-invalid{% endif %}"
+                      accept=".xml">
+                    <div class="invalid-feedback">{{ campos_obrigatorios.get('arquivoNfNovaXml') or
+                      campos_erros.get('arquivoNfNovaXml') }}</div>
+                  </div>
+
                   <div id="inputUploadEstorno" class="d-none mb-3">
-                    <label class="form-label required">Arquivo NF de Estorno (PDF)</label>
-                    <input type="file" name="arquivoNfEstorno"
-                      class="form-control {% if 'arquivoNfEstorno' in campos_obrigatorios or 'arquivoNfEstorno' in campos_erros %}is-invalid{% endif %}"
-                      accept=".pdf">
-                    <div class="invalid-feedback">{{ campos_obrigatorios.get('arquivoNfEstorno') or
-                      campos_erros.get('arquivoNfEstorno') }}</div>
+                    <label class="form-label">Arquivo NF de Estorno (PDF)</label>
+                    <input type="file" name="arquivoNfEstorno" class="form-control" accept=".pdf">
+                    <small class="text-danger"><strong>Atenção:</strong> Esta NF de estorno substituirá a NF atual no
+                      sistema.</small>
+                  </div>
+                  <!-- Estorno XML -->
+                  <div id="inputUploadEstornoXml" class="d-none mb-3">
+                    <label class="form-label required">Arquivo NF de Estorno (XML)</label>
+                    <input type="file" name="arquivoNfEstornoXml"
+                      class="form-control {% if 'arquivoNfEstornoXml' in campos_obrigatorios or 'arquivoNfEstornoXml' in campos_erros %}is-invalid{% endif %}"
+                      accept=".xml">
+                    <div class="invalid-feedback">{{ campos_obrigatorios.get('arquivoNfEstornoXml') or
+                      campos_erros.get('arquivoNfEstornoXml') }}</div>
                     <small class="text-danger"><strong>Atenção:</strong> Esta NF de estorno substituirá a NF atual no
                       sistema.</small>
                   </div>
@@ -233,7 +249,7 @@
                       if not emissao.arquivo_nota_excesso_id %}checked{% endif %}>
                     <label class="form-check-label" for="opcaoExcessoNao">Não possui</label>
                   </div>
-                  {% if emissao.arquivo_nota_excesso_id %}
+                  {% if emissao.arquivo_nota_excesso_id or emissao.arquivo_nota_excesso_xml_id %}
                   <div class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="opcaoExcesso" id="opcaoExcessoManter"
                       value="manter" checked>
@@ -247,7 +263,7 @@
                   {% if emissao.arquivo_nota_excesso_id %}
                   <div>
                     <a href="#" id="visualizar-nf-excesso" class="btn btn-outline-primary btn-visualizar-arquivo mb-2"
-                      data-url="{{ url_for('diretorio_uploads_nf_excessao', filename=emissao.arquivo_nota_excesso.caminho.split('/')[-1]) }}"
+                      data-url="{% if emissao.arquivo_nota_excesso and emissao.arquivo_nota_excesso.caminho %}{{ url_for('diretorio_uploads_nf_excessao', filename=emissao.arquivo_nota_excesso.caminho.split('/')[-1]) }}{% endif %}"
                       data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -261,14 +277,24 @@
                     </a>
                   </div>
                   {% endif %}
-                  <div id="inputUploadExcesso" class="d-none">
-                    <label class="form-label required">Arquivo NFe de Excesso (PDF)</label>
+
+                  <div id="inputUploadExcesso" class="d-none mb-3">
+                    <label class="form-label">Arquivo NFe de Excesso (PDF)</label>
                     <input type="file" name="arquivoNfExcesso"
-                      class="form-control {% if 'arquivoNfExcesso' in campos_obrigatorios or 'arquivoNfExcesso' in campos_erros %}is-invalid{% endif %}"
+                      class="form-control"
                       accept=".pdf">
-                    <div class="invalid-feedback">{{ campos_obrigatorios.get('arquivoNfExcesso') or
-                      campos_erros.get('arquivoNfExcesso') }}</div>
                   </div>
+
+                  <!-- Campo XML do NFe de Excesso -->
+                  <div id="inputUploadExcessoXml" class="d-none mt-3">
+                    <label class="form-label required">Arquivo NFe de Excesso (XML)</label>
+                    <input type="file" name="arquivoNfExcessoXml"
+                      class="form-control {% if 'arquivoNfExcessoXml' in campos_obrigatorios or 'arquivoNfExcessoXml' in campos_erros %}is-invalid{% endif %}"
+                      accept=".xml">
+                    <div class="invalid-feedback">{{ campos_obrigatorios.get('arquivoNfExcessoXml') or
+                      campos_erros.get('arquivoNfExcessoXml') }}</div>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -314,24 +340,49 @@
 
       const radioNf = [...document.querySelectorAll('input[name="opcaoNf"]')];
       const inputNova = document.getElementById('inputUploadNova');
+      const inputNovaXml = document.getElementById('inputUploadNovaXml');
       const inputEstorno = document.getElementById('inputUploadEstorno');
+      const inputEstornoXml = document.getElementById('inputUploadEstornoXml');
       const linkNf = document.getElementById('visualizar-nf');
       function toggleNf() {
         const escolha = radioNf.find(r => r.checked)?.value;
-        inputNova.classList.toggle('d-none', escolha !== 'nova');
-        inputEstorno.classList.toggle('d-none', escolha !== 'estorno');
-        linkNf.classList.toggle('d-none', escolha !== 'manter');
+        
+        if (inputNova) {
+          inputNova.classList.toggle('d-none', escolha !== 'nova');
+        }
+        if (inputNovaXml) {
+          inputNovaXml.classList.toggle('d-none', escolha !== 'nova');
+        }
+        if (inputEstorno) {
+          inputEstorno.classList.toggle('d-none', escolha !== 'estorno');
+        }
+        if (inputEstornoXml) {
+          inputEstornoXml.classList.toggle('d-none', escolha !== 'estorno');
+        }
+        if (linkNf) {
+          linkNf.classList.toggle('d-none', escolha !== 'manter');
+        }
       }
       radioNf.forEach(r => r.addEventListener('change', toggleNf));
       toggleNf();
 
       const radioEx = [...document.querySelectorAll('input[name="opcaoExcesso"]')];
       const inputEx = document.getElementById('inputUploadExcesso');
+      const inputExXml = document.getElementById('inputUploadExcessoXml');
       const linkEx = document.getElementById('visualizar-nf-excesso');
+      
       function toggleEx() {
         const escolha = radioEx.find(r => r.checked)?.value;
-        inputEx.classList.toggle('d-none', escolha !== 'novo');
-        if (linkEx) linkEx.classList.toggle('d-none', escolha !== 'manter');
+        
+        if (inputEx) {
+          inputEx.classList.toggle('d-none', escolha !== 'novo');
+        }
+        if (inputExXml) {
+          inputExXml.classList.toggle('d-none', escolha !== 'novo');
+        }
+        if (linkEx) {
+          linkEx.classList.toggle('d-none', escolha !== 'manter');
+        }
       }
       radioEx.forEach(r => r.addEventListener('change', toggleEx));
       toggleEx();
