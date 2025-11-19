@@ -261,20 +261,54 @@
                 </div>
               </div>
 
+
+
               <div class="row">
                 <div class="col-sm-12 col-md-6">
                   <div class="mb-3">
+                    <label class="form-label required">Arquivo NF (XML)</label>
+                    <input type="file" name="arquivoNfXml" value="{{ dados_corretos['arquivoNfXml'] }}"
+                      class="form-control {% if 'arquivoNfXml' in campos_obrigatorios %}is-invalid{% endif %}"
+                      accept=".xml">
+                    <div class="invalid-feedback">
+                      {% if 'arquivoNfXml' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['arquivoNfXml'] }}
+                      {% elif 'arquivoNfXml' in campos_erros %}
+                      {{ campos_erros['arquivoNfXml'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-sm-12 col-md-6">
+                  <div class="mb-3">
                     <label class="form-label required">Arquivo NF (PDF)</label>
-                    <input type="file" name="arquivoNf" value="{{ dados_corretos['arquivoNf'] }}"
-                      class="form-control {% if 'arquivoNf' in campos_obrigatorios %}is-invalid{% endif %}"
+                    <input type="file" name="arquivoNfPdf" value="{{ dados_corretos['arquivoNfPdf'] }}"
+                      class="form-control {% if 'arquivoNfPdf' in campos_obrigatorios %}is-invalid{% endif %}"
                       accept=".pdf">
                     <div class="invalid-feedback">
-                      {% if 'arquivoNf' in
-                      campos_obrigatorios
-                      %}
-                      {{ campos_obrigatorios['arquivoNf'] }}
-                      {% elif 'arquivoNf' in campos_erros %}
-                      {{ campos_erros['arquivoNf'] }}
+                      {% if 'arquivoNfPdf' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['arquivoNfPdf'] }}
+                      {% elif 'arquivoNfPdf' in campos_erros %}
+                      {{ campos_erros['arquivoNfPdf'] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-sm-12 col-md-6 grupoNFeExcesso">
+                  <div class="mb-3">
+                    <label class="form-label required">Arquivo NFe de Excesso (XML)</label>
+                    <input type="file" name="arquivoNFeExcessoXml" value="{{ dados_corretos['arquivoNFeExcessoXml'] }}"
+                      class="form-control {% if 'arquivoNFeExcessoXml' in campos_obrigatorios %}is-invalid{% endif %}"
+                      accept=".xml">
+                    <div class="invalid-feedback">
+                      {% if 'arquivoNFeExcessoXml' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['arquivoNFeExcessoXml'] }}
+                      {% elif 'arquivoNFeExcessoXml' in campos_erros %}
+                      {{ campos_erros['arquivoNFeExcessoXml'] }}
                       {% endif %}
                     </div>
                   </div>
@@ -282,18 +316,15 @@
 
                 <div class="col-sm-12 col-md-6 grupoNFeExcesso">
                   <div class="mb-3">
-                    <label class="form-label required">Arquivo NFe de Excesso
-                      (PDF)</label>
-                    <input type="file" name="arquivoNFeExcesso" value="{{ dados_corretos['arquivoNFeExcesso'] }}"
-                      class="form-control {% if 'arquivoNFeExcesso' in campos_obrigatorios %}is-invalid{% endif %}"
+                    <label class="form-label required">Arquivo NFe de Excesso (PDF)</label>
+                    <input type="file" name="arquivoNFeExcessoPdf" value="{{ dados_corretos['arquivoNFeExcessoPdf'] }}"
+                      class="form-control {% if 'arquivoNFeExcessoPdf' in campos_obrigatorios %}is-invalid{% endif %}"
                       accept=".pdf">
                     <div class="invalid-feedback">
-                      {% if 'arquivoNFeExcesso' in
-                      campos_obrigatorios
-                      %}
-                      {{ campos_obrigatorios['arquivoNFeExcesso'] }}
-                      {% elif 'arquivoNFeExcesso' in campos_erros %}
-                      {{ campos_erros['arquivoNFeExcesso'] }}
+                      {% if 'arquivoNFeExcessoPdf' in campos_obrigatorios %}
+                      {{ campos_obrigatorios['arquivoNFeExcessoPdf'] }}
+                      {% elif 'arquivoNFeExcessoPdf' in campos_erros %}
+                      {{ campos_erros['arquivoNFeExcessoPdf'] }}
                       {% endif %}
                     </div>
                   </div>

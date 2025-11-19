@@ -1,6 +1,6 @@
 import fitz
 import re
-
+import xml.etree.ElementTree as ET
 
 class ExtrairTextoNotaFiscal:
     def extrair_texto_do_pdf(caminho_pdf):
@@ -402,3 +402,260 @@ class ExtrairTextoNotaFiscal:
         dados["itens"] = ExtrairTextoNotaFiscal.nf_extrair_itens(texto_completo)
         dados["dados_adicionais"] = ExtrairTextoNotaFiscal.nf_extrair_dados_adicionais(texto_completo)
         return dados
+    
+
+    def nf_extrair_dados_nota_xml(caminho_xml):
+        """
+        Extrai dados da nota fiscal a partir do arquivo XML.
+        """
+        
+        try:
+            tree = ET.parse(caminho_xml)
+            root = tree.getroot()
+            
+            
+            ns = {'nfe': 'http://www.portalfiscal.inf.br/nfe'}
+            
+            
+            inf_nfe = root.find('.//nfe:infNFe', ns)
+            if inf_nfe is None:
+            
+                inf_nfe = root.find('.//infNFe')
+                ns = None
+            
+            dados = {
+                "emissor": {},
+                "destinatario": {},
+                "calculo_imposto": {},
+                "transportador": {},
+                "itens": [],
+                "dados_adicionais": {}
+            }
+            
+            if inf_nfe is not None:
+                #  DADOS DO EMISSOR 
+                emit = inf_nfe.find('nfe:emit', ns) if ns else inf_nfe.find('emit')
+                if emit is not None:
+                    numero_nota_elem = inf_nfe.find('nfe:ide/nfe:nNF', ns) if ns else inf_nfe.find('ide/nNF')
+                    serie_elem = inf_nfe.find('nfe:ide/nfe:serie', ns) if ns else inf_nfe.find('ide/serie')
+                    nome_elem = emit.find('nfe:xNome', ns) if ns else emit.find('xNome')
+                    
+                    dados["emissor"] = {
+                        "razao_social_emissor": nome_elem.text if nome_elem is not None else "",
+                        "numero_nota": numero_nota_elem.text if numero_nota_elem is not None else "",
+                        "serie": serie_elem.text if serie_elem is not None else "",
+                        "chave_acesso": inf_nfe.get('Id', '').replace('NFe', '') if inf_nfe.get('Id') else ""
+                    }
+                
+                #  DADOS DESTINATÁRIO 
+                dest = inf_nfe.find('nfe:dest', ns) if ns else inf_nfe.find('dest')
+                if dest is not None:
+                    # Data de Emissão
+                    data_emissao_elem = inf_nfe.find('nfe:ide/nfe:dhEmi', ns) if ns else inf_nfe.find('ide/dhEmi')
+                    data_emissao = ""
+                    if data_emissao_elem is not None:
+                        data_emissao = data_emissao_elem.text[:10]  
+                        data_emissao = '/'.join(reversed(data_emissao.split('-')))
+                    
+                    # Data de saída
+                    data_saida_elem = inf_nfe.find('nfe:ide/nfe:dhSaiEnt', ns) if ns else inf_nfe.find('ide/dhSaiEnt')
+                    data_saida = ""
+                    if data_saida_elem is not None:
+                        data_saida = data_saida_elem.text[:10]
+                        data_saida = '/'.join(reversed(data_saida.split('-')))
+                    
+                    # Nome do destinatário
+                    nome_dest_elem = dest.find('nfe:xNome', ns) if ns else dest.find('xNome')
+                    
+                    # CNPJ/CPF do destinatário
+                    cnpj_elem = dest.find('nfe:CNPJ', ns) if ns else dest.find('CNPJ')
+                    cpf_elem = dest.find('nfe:CPF', ns) if ns else dest.find('CPF')
+                    cnpj_cpf = ""
+                    if cnpj_elem is not None:
+                        cnpj_cpf = cnpj_elem.text
+                    elif cpf_elem is not None:
+                        cnpj_cpf = cpf_elem.text
+                    
+                    # Inscrição Estadual
+                    ie_elem = dest.find('nfe:IE', ns) if ns else dest.find('IE')
+                    
+                    
+                    endereco_elem = dest.find('nfe:enderDest/nfe:xLgr', ns) if ns else dest.find('enderDest/xLgr')
+                    numero_elem = dest.find('nfe:enderDest/nfe:nro', ns) if ns else dest.find('enderDest/nro')
+                    bairro_elem = dest.find('nfe:enderDest/nfe:xBairro', ns) if ns else dest.find('enderDest/xBairro')
+                    cep_elem = dest.find('nfe:enderDest/nfe:CEP', ns) if ns else dest.find('enderDest/CEP')
+                    municipio_elem = dest.find('nfe:enderDest/nfe:xMun', ns) if ns else dest.find('enderDest/xMun')
+                    uf_elem = dest.find('nfe:enderDest/nfe:UF', ns) if ns else dest.find('enderDest/UF')
+                    
+                    
+                    endereco = ""
+                    if endereco_elem is not None:
+                        endereco = endereco_elem.text
+                        if numero_elem is not None:
+                            endereco += f", {numero_elem.text}"
+                    
+                    dados["destinatario"] = {
+                        "nome_razao_social": nome_dest_elem.text if nome_dest_elem is not None else "",
+                        "cnpj_cpf": cnpj_cpf,
+                        "insc_estadual": ie_elem.text if ie_elem is not None else "",
+                        "endereco": endereco,
+                        "bairro": bairro_elem.text if bairro_elem is not None else "",
+                        "cep": cep_elem.text if cep_elem is not None else "",
+                        "municipio": municipio_elem.text if municipio_elem is not None else "",
+                        "uf": uf_elem.text if uf_elem is not None else "",
+                        "data_emissao": data_emissao,
+                        "data_saida_entrada": data_saida
+                    }
+                
+                
+                total = inf_nfe.find('nfe:total/nfe:ICMSTot', ns) if ns else inf_nfe.find('total/ICMSTot')
+                if total is not None:
+                    valor_nf_elem = total.find('nfe:vNF', ns) if ns else total.find('vNF')
+                    base_icms_elem = total.find('nfe:vBC', ns) if ns else total.find('vBC')
+                    valor_icms_elem = total.find('nfe:vICMS', ns) if ns else total.find('vICMS')
+                    base_icms_st_elem = total.find('nfe:vBCST', ns) if ns else total.find('vBCST')
+                    valor_icms_st_elem = total.find('nfe:vST', ns) if ns else total.find('vST')
+                    valor_fcp_elem = total.find('nfe:vFCPUFDest', ns) if ns else total.find('vFCPUFDest')
+                    valor_produtos_elem = total.find('nfe:vProd', ns) if ns else total.find('vProd')
+                    valor_frete_elem = total.find('nfe:vFrete', ns) if ns else total.find('vFrete')
+                    valor_seguro_elem = total.find('nfe:vSeg', ns) if ns else total.find('vSeg')
+                    desconto_elem = total.find('nfe:vDesc', ns) if ns else total.find('vDesc')
+                    outras_desp_elem = total.find('nfe:vOutro', ns) if ns else total.find('vOutro')
+                    valor_ipi_elem = total.find('nfe:vIPI', ns) if ns else total.find('vIPI')
+                    
+                    dados["calculo_imposto"] = {
+                        "valor_total_nota": valor_nf_elem.text if valor_nf_elem is not None else "",
+                        "base_calculo_icms": base_icms_elem.text if base_icms_elem is not None else "",
+                        "valor_icms": valor_icms_elem.text if valor_icms_elem is not None else "",
+                        "base_calculo_icms_subst": base_icms_st_elem.text if base_icms_st_elem is not None else "",
+                        "valor_icms_subst": valor_icms_st_elem.text if valor_icms_st_elem is not None else "",
+                        "valor_fcp_st": valor_fcp_elem.text if valor_fcp_elem is not None else "",
+                        "valor_total_produtos": valor_produtos_elem.text if valor_produtos_elem is not None else "",
+                        "valor_frete": valor_frete_elem.text if valor_frete_elem is not None else "",
+                        "valor_seguro": valor_seguro_elem.text if valor_seguro_elem is not None else "",
+                        "desconto": desconto_elem.text if desconto_elem is not None else "",
+                        "outras_despesas": outras_desp_elem.text if outras_desp_elem is not None else "",
+                        "valor_ipi": valor_ipi_elem.text if valor_ipi_elem is not None else ""
+                    }
+                
+                #  DADOS DO TRANSPORTADOR 
+                transp = inf_nfe.find('nfe:transp', ns) if ns else inf_nfe.find('transp')
+                if transp is not None:
+                    # Modalidade de frete
+                    mod_frete_elem = transp.find('nfe:modFrete', ns) if ns else transp.find('modFrete')
+                    mod_frete = mod_frete_elem.text if mod_frete_elem is not None else ""
+                    
+                    # Dados do transportador (se houver)
+                    transporta = transp.find('nfe:transporta', ns) if ns else transp.find('transporta')
+                    
+                    transportador_nome = ""
+                    transportador_cnpj_cpf = ""
+                    transportador_ie = ""
+                    
+                    if transporta is not None:
+                        nome_transp_elem = transporta.find('nfe:xNome', ns) if ns else transporta.find('xNome')
+                        cnpj_transp_elem = transporta.find('nfe:CNPJ', ns) if ns else transporta.find('CNPJ')
+                        cpf_transp_elem = transporta.find('nfe:CPF', ns) if ns else transporta.find('CPF')
+                        ie_transp_elem = transporta.find('nfe:IE', ns) if ns else transporta.find('IE')
+                        
+                        transportador_nome = nome_transp_elem.text if nome_transp_elem is not None else ""
+                        
+                        if cnpj_transp_elem is not None:
+                            transportador_cnpj_cpf = cnpj_transp_elem.text
+                        elif cpf_transp_elem is not None:
+                            transportador_cnpj_cpf = cpf_transp_elem.text
+                        
+                        transportador_ie = ie_transp_elem.text if ie_transp_elem is not None else ""
+                    else:
+                        # Se não há transportador específico, usar modalidade de frete
+                        if mod_frete == "0":
+                            transportador_nome = "Por conta do Emitente"
+                        elif mod_frete == "1":
+                            transportador_nome = "Por conta do Destinatário"
+                        elif mod_frete == "2":
+                            transportador_nome = "Por conta de Terceiros"
+                        elif mod_frete == "9":
+                            transportador_nome = "Sem cobrança de frete"
+                    
+                    dados["transportador"] = {
+                        "nome": transportador_nome,
+                        "cnpj_cpf": transportador_cnpj_cpf,
+                        "insc_estadual": transportador_ie
+                    }
+                    
+                    #  DADOS DO VEÍCULO/PLACA 
+                    veiculo = transp.find('nfe:veicTransp', ns) if ns else transp.find('veicTransp')
+                    placa = ""
+                    if veiculo is not None:
+                        placa_elem = veiculo.find('nfe:placa', ns) if ns else veiculo.find('placa')
+                        placa = placa_elem.text if placa_elem is not None else ""
+                    
+                    dados["dados_adicionais"] = {
+                        "placa": placa,
+                        "motorista": "",  # XML não possui dados do motorista normalmente
+                        "informacoes_complementares": ""
+                    }
+                
+                #  ITENS DA NOTA 
+                itens = inf_nfe.findall('nfe:det', ns) if ns else inf_nfe.findall('det')
+                for item in itens:
+                    prod = item.find('nfe:prod', ns) if ns else item.find('prod')
+                    if prod is not None:
+                        codigo_elem = prod.find('nfe:cProd', ns) if ns else prod.find('cProd')
+                        desc_elem = prod.find('nfe:xProd', ns) if ns else prod.find('xProd')
+                        ncm_elem = prod.find('nfe:NCM', ns) if ns else prod.find('NCM')
+                        cfop_elem = prod.find('nfe:CFOP', ns) if ns else prod.find('CFOP')
+                        unidade_elem = prod.find('nfe:uCom', ns) if ns else prod.find('uCom')
+                        qtd_elem = prod.find('nfe:qCom', ns) if ns else prod.find('qCom')
+                        valor_un_elem = prod.find('nfe:vUnCom', ns) if ns else prod.find('vUnCom')
+                        valor_total_elem = prod.find('nfe:vProd', ns) if ns else prod.find('vProd')
+                        
+                        # CST/CSOSN do ICMS
+                        imposto = item.find('nfe:imposto', ns) if ns else item.find('imposto')
+                        cst_csosn = ""
+                        if imposto is not None:
+                            icms = imposto.find('nfe:ICMS', ns) if ns else imposto.find('ICMS')
+                            if icms is not None:
+                                # Procura por qualquer tag que contenha CST ou CSOSN
+                                for child in icms:
+                                    cst_elem = child.find('nfe:CST', ns) if ns else child.find('CST')
+                                    csosn_elem = child.find('nfe:CSOSN', ns) if ns else child.find('CSOSN')
+                                    if cst_elem is not None:
+                                        cst_csosn = f"0/{cst_elem.text}"
+                                        break
+                                    elif csosn_elem is not None:
+                                        cst_csosn = csosn_elem.text
+                                        break
+                        
+                        item_dados = {
+                            "codigo": item.get('nItem', ''),
+                            "descricao": desc_elem.text if desc_elem is not None else "",
+                            "ncm": ncm_elem.text if ncm_elem is not None else "",
+                            "cst_csosn": cst_csosn,
+                            "cfop": cfop_elem.text if cfop_elem is not None else "",
+                            "unidade": unidade_elem.text if unidade_elem is not None else "",
+                            "quantidade": qtd_elem.text if qtd_elem is not None else "0",
+                            "preco_unitario": valor_un_elem.text if valor_un_elem is not None else "0",
+                            "preco_total": valor_total_elem.text if valor_total_elem is not None else "0"
+                        }
+                        dados["itens"].append(item_dados)
+                
+                #  INFORMAÇÕES COMPLEMENTARES 
+                inf_adic = inf_nfe.find('nfe:infAdic', ns) if ns else inf_nfe.find('infAdic')
+                if inf_adic is not None:
+                    info_compl_elem = inf_adic.find('nfe:infCpl', ns) if ns else inf_adic.find('infCpl')
+                    if info_compl_elem is not None:
+                        dados["dados_adicionais"]["informacoes_complementares"] = info_compl_elem.text
+            
+            return dados
+            
+        except Exception as e:
+            print(f"Erro ao processar XML: {e}")
+            return {
+                "emissor": {},
+                "destinatario": {},
+                "calculo_imposto": {},
+                "transportador": {},
+                "itens": [],
+                "dados_adicionais": {}
+            }
