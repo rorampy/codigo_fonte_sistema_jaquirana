@@ -90,7 +90,7 @@ class RegistroOperacionalModel(BaseModel):
     status_emissao_nf_complementar = db.relationship("StatusEmissaoNfComplementarModel",foreign_keys=[status_emissao_nf_complementar_id],backref=db.backref("status_emissao_nf_complementar", lazy=True))
 
     situacao_financeira_id = db.Column(db.Integer, db.ForeignKey("fin_situacao_pagamento.id"), nullable=True)
-    situacao = db.relationship("SituacaoPagamentoModel",backref=db.backref("situacao_financeira_registro", lazy=True),)
+    situacao = db.relationship("SituacaoPagamentoModel",backref=db.backref("situacao_financeira_registro", lazy=True))
 
     # Arquivos de excesso
     possui_excesso_carga = db.Column(db.Boolean, default=False, nullable=False) 
