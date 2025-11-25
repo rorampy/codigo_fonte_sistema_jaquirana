@@ -31,11 +31,11 @@ def cadastrar_ticket(id):
         solicitacao = CargaModel.obter_solicitacao_por_id(id)
         if not solicitacao:
             flash(("Não encontramos nenhuma solicitação!", "warning"))
-            return redirect(url_for("listagem_registros_operacionais"))
+            return redirect(url_for("vendas_em_transito"))
 
         if solicitacao.ticket_emitido:
             flash(("O ticket desta solicitação já foi emitido", "warning"))
-            return redirect(url_for("listagem_registros_operacionais"))
+            return redirect(url_for("vendas_entregues"))
 
         if request.method == "POST":
             arquivoTicket = request.files.get("arquivoTicket")
@@ -143,8 +143,16 @@ def cadastrar_ticket(id):
                 ).all()
                 
                 for vinculo in comissionados_vinculados:
-                    valor_comissao_por_ton = vinculo.valor_comissao_ton_100 or 0
-                    valor_total_comissao = peso_liquido_float * valor_comissao_por_ton
+                    # tipo_comissao: 0 = valor fixo (R$/ton), 1 = porcentagem (%)
+                    if vinculo.tipo_comissao == 1:  # Porcentagem
+                        # valor_comissao_ton_100 armazena percentual * 100 (ex: 5% = 500)
+                        percentual = (vinculo.valor_comissao_ton_100 or 0) / 100  # Ex: 500 / 100 = 5%
+                        valor_comissao_por_ton = (preco_custo * percentual) / 100  # Ex: preco_custo * 0.05
+                        valor_total_comissao = peso_liquido_float * valor_comissao_por_ton
+                    else:  # Valor fixo (tipo = 0)
+                        # valor_comissao_ton_100 armazena centavos (ex: R$ 10,00 = 1000)
+                        valor_comissao_por_ton = (vinculo.valor_comissao_ton_100 or 0) / 100
+                        valor_total_comissao = peso_liquido_float * valor_comissao_por_ton
                     
                     comissionadoPagamento = ComissionadoPagarModel(
                         solicitacao_id=solicitacao.id,
@@ -152,8 +160,8 @@ def cadastrar_ticket(id):
                         comissionado_id=vinculo.comissionado_id,
                         bitola_id=bitolaSolicitacao,
                         situacao_pagamento_id=2,
-                        preco_custo_bitola_100=valor_comissao_por_ton,
-                        valor_total_a_pagar_100=valor_total_comissao,
+                        preco_custo_bitola_100=int(valor_comissao_por_ton * 100),
+                        valor_total_a_pagar_100=int(valor_total_comissao * 100),
                         data_entrega_ticket=dataEntregaTicket,
                         incompleto=origemIncompleta,
                     )
@@ -241,12 +249,12 @@ def cadastrar_ticket(id):
             )
 
             flash(("Ticket lançado com sucesso!", "success"))
-            return redirect(url_for("listagem_registros_operacionais"))
+            return redirect(url_for("vendas_entregues"))
 
     except Exception as e:
         print(e)
         flash(("Houve um erro ao tentar lançar ticket, entre em contato com o suporte!", "warning"))
-        return redirect(url_for("listagem_registros_operacionais"))
+        return redirect(url_for("vendas_entregues"))
 
     registroOperacional = RegistroOperacionalModel.obter_registro_solicitacao_por_id(id)
     fornecedores = FornecedorModel.listar_fornecedores()
@@ -470,17 +478,25 @@ def editar_ticket(id):
                     ).all()
                     
                     for vinculo in comissionados_vinculados:
-                        valor_comissao_por_ton = vinculo.valor_comissao_ton_100 or 0
-                        valor_total_comissao = peso_liquido_float * valor_comissao_por_ton
-                        
+                        # tipo_comissao: 0 = valor fixo (R$/ton), 1 = porcentagem (%)
+                        if vinculo.tipo_comissao == 1:  # Porcentagem
+                            # valor_comissao_ton_100 armazena percentual * 100 (ex: 5% = 500)
+                            percentual = (vinculo.valor_comissao_ton_100 or 0) / 100  # Ex: 500 / 100 = 5%
+                            valor_comissao_por_ton = (preco_custo * percentual) / 100  # Ex: preco_custo * 0.05
+                            valor_total_comissao = peso_liquido_float * valor_comissao_por_ton
+                        else:  # Valor fixo (tipo = 0)
+                            # valor_comissao_ton_100 armazena centavos (ex: R$ 10,00 = 1000)
+                            valor_comissao_por_ton = (vinculo.valor_comissao_ton_100 or 0) / 100
+                            valor_total_comissao = peso_liquido_float * valor_comissao_por_ton
+                            
                         comissionadoPagamento = ComissionadoPagarModel(
                             solicitacao_id=registro.solicitacao.id,
                             fornecedor_id=fornecedor_id,
                             comissionado_id=vinculo.comissionado_id,
                             bitola_id=bitolaSolicitacao,
                             situacao_pagamento_id=2,
-                            preco_custo_bitola_100=valor_comissao_por_ton,
-                            valor_total_a_pagar_100=valor_total_comissao,
+                            preco_custo_bitola_100=int(valor_comissao_por_ton * 100),
+                            valor_total_a_pagar_100=int(valor_total_comissao * 100),
                             data_entrega_ticket=dataEntregaTicket,
                             incompleto=False,
                         )
@@ -559,12 +575,11 @@ def editar_ticket(id):
 
             db.session.commit()
             flash(("Ticket editado com sucesso!", "success"))
-            return redirect(url_for("listagem_registros_operacionais"))
+            return redirect(url_for("vendas_entregues"))
 
     except Exception as e:
         flash(("Houve um erro ao tentar editar este ticket! Entre em contato com o suporte", "warning"))
-        return redirect(url_for("listagem_registros_operacionais"))
-
+        return redirect(url_for("vendas_entregues"))
     return render_template(
         "/controle_carga/ticket/ticket_editar.html",
         florestas=florestas,

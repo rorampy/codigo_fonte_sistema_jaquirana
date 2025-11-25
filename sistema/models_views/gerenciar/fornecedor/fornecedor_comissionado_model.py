@@ -17,15 +17,20 @@ class FornecedorComissionadoModel(BaseModel):
     comissionado_id = db.Column(db.Integer, db.ForeignKey("com_comissionado.id"), nullable=False)
     comissionado = db.relationship("ComissionadoModel", backref=db.backref("vinculos_fornecedor", lazy=True))
     
-    # Valor da comissão por tonelada (em centavos)
+    # Tipo de comissão: 'valor': 0 ou 'porcentagem': 1
+    tipo_comissao = db.Column(db.Integer, nullable=False, default=0)
+    
+    # Valor da comissão por tonelada (em centavos) quando tipo = 'valor'
+    # OU percentual * 100 quando tipo = 'porcentagem' (ex: 5% = 500)
     valor_comissao_ton_100 = db.Column(db.Integer, nullable=False)
     
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
-    def __init__(self, fornecedor_id, comissionado_id, valor_comissao_ton_100, ativo=True):
+    def __init__(self, fornecedor_id, comissionado_id, valor_comissao_ton_100, tipo_comissao=0, ativo=True):
         self.fornecedor_id = fornecedor_id
         self.comissionado_id = comissionado_id
         self.valor_comissao_ton_100 = valor_comissao_ton_100
+        self.tipo_comissao = tipo_comissao
         self.ativo = ativo
 
     @staticmethod

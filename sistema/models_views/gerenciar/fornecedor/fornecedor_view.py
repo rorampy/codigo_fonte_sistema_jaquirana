@@ -1,6 +1,7 @@
 from sistema import app, requires_roles, db, current_user
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
+import json
 from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_madeira_posta_model import FornecedorMadeiraPostaModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
@@ -15,6 +16,9 @@ from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
 from sistema.models_views.gerenciar.comissionado.comissionado_model import ComissionadoModel
 from sistema.models_views.parametros.instituicoes_financeiras.instituicao_financeira_model import InstituicoesFinanceirasModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
+from sistema.models_views.configuracoes_gerais.tag.tag_model import TagModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_tag_model import FornecedorTag
+from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
 from sistema._utilitarios import *
 
 
@@ -57,6 +61,7 @@ def cadastrar_fornecedor():
         transportadoras = TransportadoraModel.listar_transportadoras_ativas()
         comissionados = ComissionadoModel.listar_comissionados_ativos()
         bancos = InstituicoesFinanceirasModel.obter_todos_bancos()
+        tags = TagModel.obter_tags_ativas()
 
         if request.method == "POST":
 
@@ -65,6 +70,7 @@ def cadastrar_fornecedor():
             classeFornecedor = request.form.get("classeFornecedor")
             controleEntrada = request.form.get("controleEntrada")
             valorContrato = request.form.get("valorContrato")
+            estimativaTonelada = request.form.get("estimativaTonelada", "") # Estimativa de Tonelada
             tipo_cadastro = request.form.get("tipoCadastro", "")
             custoExtracao = request.form.get("custoExtracao", "")
             nome_completo = request.form.get("nomeCompleto", "").strip()
@@ -72,6 +78,8 @@ def cadastrar_fornecedor():
             cpf = request.form.get("cpf", "").strip()
             cnpj = request.form.get("cnpj", "").strip()
             telefone = request.form.get("telefone", "").strip()
+            
+            tags_fornecedor = request.form.getlist("tags_fornecedor")
 
             instituicao_financeira = request.form["instituicao_financeira"]
             agencia_bancaria = request.form["agencia_bancaria"]
@@ -95,12 +103,17 @@ def cadastrar_fornecedor():
             credito_fornecedor = request.form.get("credito_fornecedor", "0")
             contratoFornecedor = request.files.get("contratoFornecedor")
 
+            # Criar pessoa financeiro
+
+            criar_pessoa_financeiro = request.form.get("criarPessoaFinanceiro", "nao")
+
             campos = {
                 "telefone": ["Telefone", telefone]
             }
             
             if classeFornecedor == "sim":
                 campos["valorContrato"] = ["Valor do Contrato", valorContrato]
+                campos["estimativaTonelada"] = ["Estimativa Tonelada", estimativaTonelada]  # Estimativa de Tonelada
 
             if tipo_cadastro == "cpf":
                 campos["nomeCompleto"] = ["Nome Completo", nome_completo]
@@ -145,6 +158,7 @@ def cadastrar_fornecedor():
             if "validado" not in validacao_campos_obrigatorios:
                 gravar_banco = False
                 flash(("Verifique os campos destacados em vermelho!", "warning"))
+            
 
             # Validação de CPF / CNPJ
             if tipo_cadastro == "cpf":
@@ -297,6 +311,7 @@ def cadastrar_fornecedor():
                     chave_pix=chave_pix if chave_pix else None,
                     classe_fornecedor=(True if classeFornecedor == "sim" else False),
                     valor_contrato_100=(valor_contrato if classeFornecedor == "sim" else None),
+                    estimativa_tonelada=(float(estimativaTonelada) if classeFornecedor == "sim" and estimativaTonelada else None),
                     controle_entrada=(True if controleEntrada == "sim" else False),
                     ativo=True,
                 )
@@ -305,9 +320,114 @@ def cadastrar_fornecedor():
                 fornecedor.madeira_posta = madeira_posta
                 # Flag de possui comissionado
                 fornecedor.possui_comissionado = possui_comissionado
-
+                    
                 db.session.add(fornecedor)
                 db.session.flush()  
+
+                if criar_pessoa_financeiro == "sim":
+                    try:
+                        vinculos_operacionais = {
+                            "fornecedor" : [{
+                                "id": str(fornecedor.id),
+                                "identificacao": fornecedor.identificacao
+                            }]
+                        }
+
+                        # Extrator se HOUVER
+                        if custoExtracao == 'possui' and extratorNome:
+                            extrator = ExtratorModel.obter_extrator_por_id(int(extratorNome))
+                            if extrator:
+                                vinculos_operacionais["extrator"] = [{
+                                    "id": str(extrator.id),
+                                    "identificacao": extrator.identificacao
+                                }]
+
+                        if madeira_posta:
+                            transportadora_ids_list = request.form.getlist("transportadoraMadeiraPosta[]")  
+                            transportadoras_unicas = list(set([int(tid) for tid in transportadora_ids_list if tid]))
+                            if transportadoras_unicas:
+                                vinculos_operacionais["transportadora"] = []
+                                for tid in transportadoras_unicas:
+                                    transportadora = TransportadoraModel.obter_transportadora_por_id(tid)
+                                    if transportadora:
+                                        vinculos_operacionais["transportadora"].append({
+                                            "id": str(transportadora.id),
+                                            "identificacao": transportadora.identificacao
+                                        })
+                        
+                        if possui_comissionado:
+                            comissionados_list = request.form.getlist("comissionados[]")
+                            comissionados_ids = [int(cid) for cid in comissionados_list if cid and cid.strip()]
+                            if comissionados_ids:
+                                vinculos_operacionais["comissionado"] = []
+                                for cid in comissionados_ids:
+                                    comissionado = ComissionadoModel.obter_comissionado_por_id(cid)
+                                    if comissionado:
+                                        vinculos_operacionais["comissionado"].append({
+                                            "id": str(comissionado.id),
+                                            "identificacao": comissionado.identificacao
+                                        })
+                        
+                        vinculos_json = json.dumps(vinculos_operacionais)
+
+                           
+                        print(f"JSON de vínculos: {vinculos_json}")
+
+                        tem_fornecedor, tem_transportadora, tem_extrator, tem_comissionado, vinculos_data = \
+                        PessoaFinanceiroModel.processar_vinculos(vinculos_json)
+
+                        # Debug - Imprimir flags processadas
+                        print(f"Flags processadas - Fornecedor: {tem_fornecedor}, Transportadora: {tem_transportadora}, Extrator: {tem_extrator}, Comissionado: {tem_comissionado}")
+                        print(f"Dados dos vínculos: {vinculos_data}")
+
+                        #Criar pessoa financeira
+                        pessoa_financeira = PessoaFinanceiroModel(
+                            tipo_cadastro=fatura_via_cpf,
+                            identificacao=identificacao,
+                            numero_documento=numero_documento,
+                            telefone=telefone_tratado,
+                            instituicao_financeira_id=int(instituicao_financeira) if instituicao_financeira else None,
+                            agencia_bancaria=agencia_bancaria if agencia_bancaria else None,
+                            conta_bancaria=conta_bancaria if conta_bancaria else None,
+                            chave_pix=chave_pix if chave_pix else None,
+                            tem_vinculo_fornecedor=tem_fornecedor,
+                            tem_vinculo_transportadora=tem_transportadora,
+                            tem_vinculo_extrator=tem_extrator,
+                            tem_vinculo_comissionado=tem_comissionado,
+                            vinculos_operacionais=vinculos_data,
+                            ativo=True
+                        )
+
+                        db.session.add(pessoa_financeira)
+                        db.session.flush()
+
+                        print(f"Pessoa financeira criada - ID: {pessoa_financeira.id}")
+                        print(f"Vínculos salvos: {pessoa_financeira.vinculos_operacionais}")
+
+                        flash(("Cadastro realizado com sucesso: Fornecedor e Pessoa Financeira foram criados e já estão disponíveis para uso.", "success"))
+
+                    except Exception as e:
+                        db.session.rollback()
+                        print(f"Erro ao criar Pessoa Financeira: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        flash((f"O fornecedor foi cadastrado, mas a criação da Pessoa Financeira não pôde ser finalizada. Detalhe: {str(e)}", "warning"))
+                        return redirect(url_for("listar_fornecedores"))
+                else:
+                    flash(("Fornecedor cadastrado com sucesso e todas as informações financeiras foram registradas corretamente.", "success"))
+
+
+                if tags_fornecedor:
+                    tags_fornecedor_ids = [int(tag_id) for tag_id in tags_fornecedor]
+                    
+                    for tag_id in tags_fornecedor_ids:
+                        fornecedor_tag = FornecedorTag(
+                            fornecedor_id=fornecedor.id,
+                            tag_id=tag_id,
+                            ativo=True
+                        )
+                        db.session.add(fornecedor_tag)
+                        db.session.flush()
 
                 # Se a contribuição for senar e tiver dados
                 if tipoContribuicao == "senar" and declaracaoSenar and declaracaoSenar.filename:
@@ -424,17 +544,26 @@ def cadastrar_fornecedor():
                 if possui_comissionado:
                     comissionados_list = request.form.getlist("comissionados[]")
                     valores_comissao_list = request.form.getlist("valorComissaoTon[]")
+                    tipos_comissao_list = request.form.getlist("tipoComissao[]")
 
                     # Criar registros de FornecedorComissionadoModel
                     for idx, comissionado_id in enumerate(comissionados_list):
                         if comissionado_id and comissionado_id.strip():
                             valor_comissao_str = valores_comissao_list[idx] if idx < len(valores_comissao_list) else '0'
-                            valor_comissao_100 = int(ValoresMonetarios.converter_string_brl_para_float(valor_comissao_str) * 100)
+                            tipo_comissao = tipos_comissao_list[idx] if idx < len(tipos_comissao_list) else 'valor'
+                            
+                            if tipo_comissao == 'porcentagem':
+                                # Porcentagem: converte para inteiro (5.5% = 550)
+                                valor_comissao_100 = int(float(valor_comissao_str) * 100)
+                            else:
+                                # Valor fixo: converte BRL para centavos
+                                valor_comissao_100 = int(ValoresMonetarios.converter_string_brl_para_float(valor_comissao_str) * 100)
                             
                             fornecedor_comissionado = FornecedorComissionadoModel(
                                 fornecedor_id=fornecedor.id,
                                 comissionado_id=int(comissionado_id),
-                                valor_comissao_ton_100=valor_comissao_100
+                                valor_comissao_ton_100=valor_comissao_100,
+                                tipo_comissao=1 if tipo_comissao == 'porcentagem' else 0,
                             )
                             db.session.add(fornecedor_comissionado)
 
@@ -468,6 +597,7 @@ def cadastrar_fornecedor():
         comissionados=comissionados,
         campos_erros=validacao_campos_erros,
         dados_corretos=dados_corretos_padrao,
+        tags=tags,
     )
 
 
@@ -488,8 +618,13 @@ def editar_fornecedor(id):
         clientes = ClienteModel.listar_clientes_ativos()
         transportadoras = TransportadoraModel.listar_transportadoras_ativas()
         comissionados = ComissionadoModel.listar_comissionados_ativos()
+        tags = TagModel.obter_tags_ativas()
 
         bancos = InstituicoesFinanceirasModel.obter_todos_bancos()
+
+        # Carregar tags do fornecedor (IDs das tags selecionadas)
+        tags_fornecedor_obj = FornecedorTag.query.filter_by(fornecedor_id=fornecedor.id, ativo=True).all()
+        tags_fornecedor_selecionadas = [ft.tag_id for ft in tags_fornecedor_obj]
 
         # Carregar entradas existentes de madeira posta ativas
         madeiras_existentes = [mp for mp in fornecedor.madeiras_posta if mp.ativo]
@@ -533,6 +668,7 @@ def editar_fornecedor(id):
             "classeFornecedor": "sim" if fornecedor.classe_fornecedor else "nao",
             "controleEntrada": "sim" if fornecedor.controle_entrada else "nao",
             "valorContrato": fornecedor.valor_contrato_100 if fornecedor.classe_fornecedor == 1 else 0,  
+            "estimativaTonelada": str(fornecedor.estimativa_tonelada) if fornecedor.estimativa_tonelada else "",
             "tipoCadastro": "cpf" if fornecedor.fatura_via_cpf == 1 else "cnpj",
             "razaoSocial": fornecedor.identificacao if fornecedor.fatura_via_cpf == 0 else "",
             "nomeCompleto": fornecedor.identificacao if fornecedor.fatura_via_cpf == 1 else "",
@@ -584,6 +720,9 @@ def editar_fornecedor(id):
             "chave_pix": fornecedor.chave_pix or "",
         }
 
+        print(f"Estimativa Tonelada do banco: {fornecedor.estimativa_tonelada}")
+        print(f"Dados corretos: {dados_corretos.get('estimativaTonelada', 'CAMPO NÃO ENCONTRADO')}")
+
         if request.method == "POST":
             # -----------------------------------------------------------------
             tipoContribuicao = request.form.get("tipoContribuicao", "")
@@ -592,12 +731,16 @@ def editar_fornecedor(id):
             classeFornecedor = request.form.get("classeFornecedor")
             valorContrato = request.form.get("valorContrato")
             controleEntrada = request.form.get("controleEntrada")
+            estimativaTonelada = request.form.get("estimativaTonelada", "")
             custoExtracao = request.form.get("custoExtracao", "")
             nome_completo = request.form.get("nomeCompleto", "").strip()
             razao_social = request.form.get("razaoSocial", "").strip()
             cpf = request.form.get("cpf", "").strip()
             cnpj = request.form.get("cnpj", "").strip()
             telefone = request.form.get("telefone", "").strip()
+
+            # Capturar tags selecionadas
+            tags_fornecedor = request.form.getlist("tags_fornecedor")
 
             eucaPrecoCusto1 = request.form.get("eucaPrecoCusto1", "0")
             eucaPrecoCusto2 = request.form.get("eucaPrecoCusto2", "0")
@@ -833,6 +976,119 @@ def editar_fornecedor(id):
                     "chavePix": chave_pix,
                 }
 
+                #Pessoa Financeira - Se Existir
+                pessoa_financeira = PessoaFinanceiroModel.query.filter_by(
+                    numero_documento=numero_documento,
+                    ativo=True,
+                    deletado=False
+                ).first()
+
+                if pessoa_financeira:
+                    try:
+                        print(f"Atualizando Pessoa Financeira ID: {pessoa_financeira.id}")
+
+                        # Atualizar dados básicos
+
+                        pessoa_financeira.tipo_cadastro = fatura_via_cpf
+                        pessoa_financeira.identificacao = identificacao
+                        pessoa_financeira.numero_documento = numero_documento
+                        pessoa_financeira.telefone = telefone_tratado
+                        pessoa_financeira.instituicao_financeira_id = int(instituicao_financeira) if instituicao_financeira else None
+                        pessoa_financeira.agencia_bancaria = agencia_bancaria if agencia_bancaria else None
+                        pessoa_financeira.conta_bancaria = conta_bancaria if conta_bancaria else None
+                        pessoa_financeira.chave_pix = chave_pix if chave_pix else None
+
+                        # Reconstruir vínculos operacionais
+                        vinculos_atuais = pessoa_financeira.vinculos_operacionais or {}
+
+                        # Atualizar fornecedor (sempre mantém)
+                        vinculos_atuais["fornecedor"] = [{
+                            "id": str(fornecedor.id),
+                            "identificacao": identificacao
+                        }]
+
+                        # Atualizar ou remover extrator
+                        if custoExtracao == 'possui' and extratorNome:
+                            extrator = ExtratorModel.obter_extrator_por_id(int(extratorNome))
+                            if extrator:
+                                vinculos_atuais["extrator"] = [{
+                                    "id": str(extrator.id),
+                                    "identificacao": extrator.identificacao
+                                }]
+                                pessoa_financeira.tem_vinculo_extrator = True
+                            else:
+                                # Se não encontrou o extrator, remove
+                                if "extrator" in vinculos_atuais:
+                                    del vinculos_atuais["extrator"]
+                                pessoa_financeira.tem_vinculo_extrator = False
+                        else:
+                            # Remove extrator se não possui mais
+                            if "extrator" in vinculos_atuais:
+                                del vinculos_atuais["extrator"]
+                            pessoa_financeira.tem_vinculo_extrator = False
+
+                        # Atualizar transportadoras
+                        if madeira_posta:
+                            transportadora_ids_list = request.form.getlist("transportadoraMadeiraPosta[]")
+                            transportadoras_unicas = list(set([int(tid) for tid in transportadora_ids_list if tid]))
+                            if transportadoras_unicas:
+                                vinculos_atuais["transportadora"] = []
+                                for tid in transportadoras_unicas:
+                                    transportadora = TransportadoraModel.obter_transportadora_por_id(tid)
+                                    if transportadora:
+                                        vinculos_atuais["transportadora"].append({
+                                            "id": str(transportadora.id),
+                                            "identificacao": transportadora.identificacao
+                                        })
+                                pessoa_financeira.tem_vinculo_transportadora = True if len(vinculos_atuais.get("transportadora", [])) > 0 else False
+                            else:
+                                if "transportadora" in vinculos_atuais:
+                                    del vinculos_atuais["transportadora"]
+                                pessoa_financeira.tem_vinculo_transportadora = False
+                        else:
+                            if "transportadora" in vinculos_atuais:
+                                del vinculos_atuais["transportadora"]
+                            pessoa_financeira.tem_vinculo_transportadora = False
+
+                        # Atualizar comissionados
+                        if possui_comissionado:
+                            comissionados_list = request.form.getlist("comissionados[]")
+                            comissionados_ids = [int(cid) for cid in comissionados_list if cid and cid.strip()]
+                            if comissionados_ids:
+                                vinculos_atuais["comissionado"] = []
+                                for cid in comissionados_ids:
+                                    comissionado = ComissionadoModel.obter_comissionado_por_id(cid)
+                                    if comissionado:
+                                        vinculos_atuais["comissionado"].append({
+                                            "id": str(comissionado.id),
+                                            "identificacao": comissionado.identificacao
+                                        })
+                                pessoa_financeira.tem_vinculo_comissionado = True if len(vinculos_atuais.get("comissionado", [])) > 0 else False
+                            else:
+                                if "comissionado" in vinculos_atuais:
+                                    del vinculos_atuais["comissionado"]
+                                pessoa_financeira.tem_vinculo_comissionado = False
+                        else:
+                            if "comissionado" in vinculos_atuais:
+                                del vinculos_atuais["comissionado"]
+                            pessoa_financeira.tem_vinculo_comissionado = False
+
+                        # Salvar vínculos atualizados
+                        pessoa_financeira.vinculos_operacionais = vinculos_atuais
+
+                        # IMPORTANTE: Marcar a pessoa_financeira como modificada para forçar atualização
+                        from sqlalchemy.orm.attributes import flag_modified
+                        flag_modified(pessoa_financeira, "vinculos_operacionais")
+
+                        db.session.flush()
+                        
+                    except Exception as e:
+                        print(f"Erro ao atualizar Pessoa Financeira: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        # Não cancela a edição do fornecedor, apenas avisa
+                        flash(("Fornecedor atualizado, porém houve uma falha ao ajustar os dados financeiros. As demais alterações foram mantidas.", "warning"))
+
                 diferencas = Gameficacao.compara_objetos(obj1, obj2)
                 if diferencas:
                     acao = TipoAcaoEnum.EDICAO
@@ -856,10 +1112,14 @@ def editar_fornecedor(id):
                 
                 fornecedor.classe_fornecedor = 1 if classeFornecedor == "sim" else 0
                 
+                estimativaTonelada = request.form.get("estimativaTonelada", "")
+
                 if classeFornecedor == "sim":
                     fornecedor.valor_contrato_100 = valor_contrato
+                    fornecedor.estimativa_tonelada = float(estimativaTonelada) if estimativaTonelada else None
                 else:
                     fornecedor.valor_contrato_100 = None
+                    fornecedor.estimativa_tonelada = None
 
                 fornecedor.controle_entrada = 1 if controleEntrada == "sim" else 0
                 
@@ -915,6 +1175,34 @@ def editar_fornecedor(id):
 
                 fornecedor.credito_100 = credito_fornecedor_ton_100
                 fornecedor.ativo = True
+
+                # Processar tags do fornecedor
+                # Primeiro, desativar todas as tags existentes
+                FornecedorTag.query.filter_by(fornecedor_id=fornecedor.id, ativo=True).update(
+                    {"ativo": False, "deletado": True }
+                )
+                db.session.flush()
+
+                # Criar novas associações de tags
+                if tags_fornecedor:
+                    for tag_id in tags_fornecedor:
+                        # Tentar reativar tag existente ou criar nova
+                        existing_tag = FornecedorTag.query.filter_by(
+                            fornecedor_id=fornecedor.id,
+                            tag_id=int(tag_id)
+                        ).first()
+                        
+                        if existing_tag:
+                            
+                            existing_tag.ativo = True
+                            existing_tag.deletado = False
+                        else:
+                            new_tag = FornecedorTag(
+                                fornecedor_id=fornecedor.id,
+                                tag_id=int(tag_id),
+                                ativo=True
+                            )
+                            db.session.add(new_tag)
 
                 # Se a contribuição for senar e tiver dados
                 if tipoContribuicao == "senar" and declaracaoSenar and declaracaoSenar.filename:
@@ -1039,22 +1327,31 @@ def editar_fornecedor(id):
                 if possui_comissionado:
                     comissionados_list = request.form.getlist("comissionados[]")
                     valores_comissao_list = request.form.getlist("valorComissaoTon[]")
+                    tipos_comissao_list = request.form.getlist("tipoComissao[]")
 
                     # Criar novos registros de FornecedorComissionadoModel
                     for idx, comissionado_id in enumerate(comissionados_list):
                         if comissionado_id and comissionado_id.strip():
                             valor_comissao_str = valores_comissao_list[idx] if idx < len(valores_comissao_list) else '0'
-                            valor_comissao_100 = int(ValoresMonetarios.converter_string_brl_para_float(valor_comissao_str) * 100)
+                            tipo_comissao = tipos_comissao_list[idx] if idx < len(tipos_comissao_list) else 'valor'
+                            
+                            if tipo_comissao == 'porcentagem':
+                                # Porcentagem: converte para inteiro (5.5% = 550)
+                                valor_comissao_100 = int(float(valor_comissao_str.replace(',', '.')) * 100)
+                            else:
+                                # Valor fixo: converte BRL para centavos
+                                valor_comissao_100 = int(ValoresMonetarios.converter_string_brl_para_float(valor_comissao_str) * 100)
                             
                             fornecedor_comissionado = FornecedorComissionadoModel(
                                 fornecedor_id=fornecedor.id,
                                 comissionado_id=int(comissionado_id),
-                                valor_comissao_ton_100=valor_comissao_100
+                                valor_comissao_ton_100=valor_comissao_100,
+                                tipo_comissao=1 if tipo_comissao == 'porcentagem' else 0,
                             )
                             db.session.add(fornecedor_comissionado)
 
                 db.session.commit()
-                flash(("Fornecedor editado com sucesso!", "success"))
+                flash(("As informações do fornecedor foram atualizadas com sucesso.", "success"))
                 return redirect(url_for("listar_fornecedores"))
     except Exception as e:
         print(f'Erro ao tentar editar fornecedor: {e}')
@@ -1074,6 +1371,8 @@ def editar_fornecedor(id):
         campos_obrigatorios=validacao_campos_obrigatorios,
         campos_erros=validacao_campos_erros,
         dados_corretos=dados_corretos,
+        tags=tags,
+        tags_fornecedor_selecionadas=tags_fornecedor_selecionadas
     )
 
 

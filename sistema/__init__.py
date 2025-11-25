@@ -427,6 +427,7 @@ from sistema.models_views.gerenciar.floresta import floresta_view
 from sistema.models_views.gerenciar.fornecedor import fornecedor_model
 from sistema.models_views.gerenciar.fornecedor import fornecedor_madeira_posta_model
 from sistema.models_views.gerenciar.fornecedor import fornecedor_view
+from sistema.models_views.gerenciar.fornecedor import fornecedor_tag_model
 from sistema.models_views.faturamento.cargas_a_pagar.extrator import extrator_a_pagar_model
 from sistema.models_views.faturamento.cargas_a_pagar.extrator import extrator_a_pagar_view
 
@@ -487,6 +488,8 @@ from sistema.models_views.configuracoes_gerais.plano_conta import plano_conta_vi
 from sistema.models_views.configuracoes_gerais.categorizacao_fiscal import categorizacao_fiscal_model
 from sistema.models_views.configuracoes_gerais.categorizacao_fiscal import categorizacao_fiscal_view
 from sistema.models_views.parametros.instituicoes_financeiras import instituicao_financeira_model
+from sistema.models_views.configuracoes_gerais.tag import tag_model
+from sistema.models_views.configuracoes_gerais.tag import tag_view
 
 # Imposto
 from sistema.models_views.parametros.imposto import imposto_model

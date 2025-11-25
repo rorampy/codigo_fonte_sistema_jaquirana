@@ -12,6 +12,7 @@ class FornecedorModel(BaseModel):
     identificacao = db.Column(db.String(200), nullable=False)
     numero_documento = db.Column(db.String(20), nullable=False)
     telefone = db.Column(db.String(20), nullable=False)
+    estimativa_tonelada = db.Column(db.Float, nullable=True) # Estimativa de Tonelada
 
     # Cadastro funrural 1- Sim | 2- Não
     funrural = db.Column(db.Boolean, default=True, nullable=False)
@@ -100,11 +101,14 @@ class FornecedorModel(BaseModel):
     valor_contrato_100 = db.Column(db.Integer, nullable=True)
     
     controle_entrada = db.Column(db.Boolean, default=True)
-
+    
     ativo = db.Column(db.Boolean, default=True, nullable=False)
 
     # relacionamento 1:N -> cada fornecedor pode ter várias entradas de madeira posta
     madeiras_posta = db.relationship("FornecedorMadeiraPostaModel", back_populates="fornecedor", cascade="all, delete-orphan")
+    
+    # relacionamento 1:N -> cada fornecedor pode ter várias tags
+    fornecedor_tags = db.relationship("FornecedorTag", backref="fornecedor_rel", lazy=True)
 
     def __init__(
             self, fatura_via_cpf, identificacao, numero_documento, senar,
@@ -141,7 +145,8 @@ class FornecedorModel(BaseModel):
             agencia_bancaria=None,
             conta_bancaria=None,
             chave_pix=None,
-            possui_comissionado=None
+            possui_comissionado=None,
+            estimativa_tonelada=None# Estimativa de Tonelada
     ):
         self.funrural = funrural
         self.senar = senar
@@ -205,6 +210,9 @@ class FornecedorModel(BaseModel):
         self.conta_bancaria = conta_bancaria
         self.chave_pix = chave_pix
         self.ativo = ativo
+
+        # Estimativa de Tonelada
+        self.estimativa_tonelada = estimativa_tonelada
 
     def listar_fornecedores():
         """

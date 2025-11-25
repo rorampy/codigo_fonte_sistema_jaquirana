@@ -37,6 +37,7 @@
             <!-- Imposto Funrural ou Senar -->
 
             <div class="row">
+              <h3 class="text-primary">Informações Iniciais</h3>
               <div class="col-sm-2 col-md-2">
                 <div class="mb-3">
                   <div class="form-label">Contribuição Social</div>
@@ -120,6 +121,24 @@
                   </div>
                 </div>
               </div>
+
+              <!--NOVO CAMPO: Estimativa Toneladas-->
+
+              <div class="col-12 col-md-2 florestaSim">
+                <div class="mb-3">
+                  <label class="form-label required">Estimativa Toneladas</label>
+                  <input type="text" name="estimativaTonelada" value="{{ dados_corretos['estimativaTonelada'] }}" class="form-control {% if 'estimativaTonelada' in campos_obrigatorios or 'estimativaTonelada' in campos_erros %}
+                  is-invalid 
+                  {% endif %} campo-float " placeholder="Ex: 1000.23">
+                  <div class="invalid-feedback">
+                    {% if 'estimativaTonelada' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['estimativaTonelada'] }}
+                    {% elif 'estimativaTonelada' in campos_erros %}
+                    {{ campos_erros['estimativaTonelada'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="col-sm-2 col-md-2">
@@ -128,13 +147,13 @@
                 <div>
                   <label class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="controleEntrada" value="nao" {% if
-                      dados_corretos['controleEntrada']=='nao' %}checked{%
-                      endif %}>
+                      dados_corretos['controleEntrada']=='nao' %}checked{% endif %}>
                     <span class="form-check-label">Não</span>
                   </label>
                   <label class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="controleEntrada" value="sim" {% if
-                      dados_corretos['controleEntrada']=='sim' or not dados_corretos['controleEntrada'] %}checked{% endif %}>
+                      dados_corretos['controleEntrada']=='sim' or not dados_corretos['controleEntrada'] %}checked{%
+                      endif %}>
                     <span class="form-check-label">Sim</span>
                   </label>
                 </div>
@@ -144,8 +163,7 @@
             <div class="row">
               <div class="col-sm-6 col-md-6">
                 <div class="mb-3">
-                  <div class="form-label">Tipo de
-                    Cadastro</div>
+                  <div class="form-label">Tipo de Cadastro</div>
                   <div>
                     <label class="form-check form-check-inline">
                       <input class="form-check-input" type="radio" name="tipoCadastro" value="cpf" {% if
@@ -161,6 +179,36 @@
                         CNPJ</span>
                     </label>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cadastro Financeiro - Automático -->
+            <div class="row mb-3">
+              <div class="col-sm-6 col-md-6">
+                <div class="mb-3">
+                  <div class="form-label">Cadastrar em Pessoas Financeiro</div>
+                  <div>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="criarPessoaFinanceiro" value="sim" {% if
+                        dados_corretos['criarPessoaFinanceiro']=='sim' or not dados_corretos['criarPessoaFinanceiro'] %}
+                        checked {% endif %}>
+                      <span class="form-check-label"><strong>Sim</strong> - Criar cadastro financeiro
+                        automaticamente</span>
+                    </label>
+
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="criarPessoaFinanceiro" value="nao" {% if
+                        dados_corretos['criarPessoaFinanceiro']=='nao' %} checked {% endif %}>
+                      <span class="form-check-label"><strong>Não</strong> - Cadastrar apenas como fornecedor</span>
+                    </label>
+                  </div>
+                  <small class="form-hint">
+                    Escolha esta opção caso deseje que o sistema gere <span
+                      style="font-weight: bold; font-style: italic;">automaticamente</span> o registro financeiro
+                    associado a
+                    esta pessoa.
+                  </small>
                 </div>
               </div>
             </div>
@@ -274,6 +322,26 @@
                   </div>
                 </div>
               </div>
+
+              {%if tags %}
+              <h3 class="text-primary mb-4">Informações de Tags</h3>
+              <div class="row">
+                <div class="col-12 mb-3">
+                  <div class="mb-3">
+                    <label class="form-label">Selecione as tags</label>
+                    <div class="form-selectgroup">
+                      {% for tag in tags %}
+                      <label class="form-selectgroup-item">
+                        <input type="checkbox" name="tags_fornecedor" value="{{ tag.id }}"
+                          class="form-selectgroup-input">
+                        <span class="form-selectgroup-label">{{ tag.nome_tag }}</span>
+                      </label>
+                      {%endfor%}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
 
               <h3 class="text-primary mb-4">Informações Bancárias</h3>
               <div class="row">
@@ -1138,7 +1206,7 @@
                   <div class="row mb-3 comissionado-item grupoPossuiComissionado">
 
                     <!-- SELECIONAR COMISSIONADO -->
-                    <div class="col-md-6 mb-4">
+                    <div class="col-md-4 mb-4">
                       <label class="form-label">Selecione um Comissionado</label>
                       <select name="comissionados[]" class="form-select">
                         <option value>Selecione...</option>
@@ -1148,11 +1216,20 @@
                       </select>
                     </div>
 
+                    <!-- TIPO COMISSÃO -->
+                    <div class="col-md-2 mb-4">
+                      <label class="form-label">Tipo</label>
+                      <select name="tipoComissao[]" class="form-select tipo-comissao-select">
+                        <option value="valor" selected>Valor (R$/ton)</option>
+                        <option value="porcentagem">Porcentagem (%)</option>
+                      </select>
+                    </div>
+
                     <!-- VALOR COMISSÃO -->
                     <div class="col-md-4 mb-4">
-                      <label class="form-label">Valor Comissão/Ton (R$)</label>
-                      <input type="text" name="valorComissaoTon[]" class="form-control campo-moeda-brl"
-                        placeholder="0,00">
+                      <label class="form-label valor-label">Valor Comissão/Ton</label>
+                      <input type="text" name="valorComissaoTon[]" class="form-control campo-moeda-brl valor-input"
+                        placeholder="R$ 0,00">
                     </div>
 
                     <!-- BOTÕES -->
@@ -1243,12 +1320,12 @@
       });
 
       alternarCampos(); // Configura o estado inicial dos campos
-      
+
       // Controle do campo Valor Contrato para Floresta
       function alternarCampoFloresta() {
         var radioFlorestaSimInput = document.querySelector('input[name="classeFornecedor"][value="sim"]');
         var campoValorContrato = document.querySelectorAll('.florestaSim');
-        
+
         if (radioFlorestaSimInput && radioFlorestaSimInput.checked) {
           // Mostra o campo Valor Contrato
           campoValorContrato.forEach(el => el.style.display = 'block');
@@ -1532,7 +1609,53 @@
         });
       }
 
-      // 2) Função para adicionar novo bloco de comissionado
+      // 2) Função para alternar entre valor e porcentagem
+      function alternarTipoComissao(bloco) {
+        const selectTipo = bloco.querySelector('.tipo-comissao-select');
+        let inputValor = bloco.querySelector('.valor-input');
+        const labelValor = bloco.querySelector('.valor-label');
+        
+        if (selectTipo && inputValor && labelValor) {
+          selectTipo.addEventListener('change', function() {
+            // Atualizar referência do input
+            inputValor = bloco.querySelector('.valor-input');
+            
+            // Limpar completamente o input
+            inputValor.value = '';
+            inputValor.removeAttribute('data-mascara-aplicada');
+            
+            // Remover evento de input antigo (máscara)
+            const novoInput = inputValor.cloneNode(true);
+            inputValor.parentNode.replaceChild(novoInput, inputValor);
+            
+            if (this.value === 'porcentagem') {
+              // Mudar para porcentagem
+              novoInput.classList.remove('campo-moeda-brl');
+              novoInput.classList.add('campo-float');
+              novoInput.placeholder = '0.00';
+              novoInput.value = '';
+              labelValor.textContent = 'Porcentagem (%)';
+            } else {
+              // Mudar para valor
+              novoInput.classList.remove('campo-float');
+              novoInput.classList.add('campo-moeda-brl');
+              novoInput.placeholder = 'R$ 0,00';
+              novoInput.value = '';
+              labelValor.textContent = 'Valor Comissão/Ton';
+            }
+            
+            // Reaplicar máscaras
+            if (typeof aplicarMascaraMoeda === 'function') {
+              aplicarMascaraMoeda();
+            }
+            if (typeof aplicarComportamentoCampoFloat === 'function') {
+              aplicarComportamentoCampoFloat();
+            }
+          });
+        }
+      }
+
+      // 3) Função para adicionar novo bloco de comissionado
       function adicionarNovoBlocoComissionado() {
         const blocoModelo = containerComissionados.querySelector('.comissionado-item');
         const novoBloco = blocoModelo.cloneNode(true);
@@ -1543,10 +1666,23 @@
           select.selectedIndex = 0;
         }
 
-        const input = novoBloco.querySelector('input');
+        const selectTipo = novoBloco.querySelector('select[name="tipoComissao[]"]');
+        if (selectTipo) {
+          selectTipo.selectedIndex = 0;
+        }
+
+        const input = novoBloco.querySelector('input[name="valorComissaoTon[]"]');
         if (input) {
           input.value = '';
           input.removeAttribute('data-mascara-aplicada');
+          input.classList.remove('campo-float');
+          input.classList.add('campo-moeda-brl');
+          input.placeholder = 'R$ 0,00';
+        }
+
+        const label = novoBloco.querySelector('.valor-label');
+        if (label) {
+          label.textContent = 'Valor Comissão/Ton';
         }
 
         // Habilitar botão "remover"
@@ -1557,6 +1693,9 @@
 
         containerComissionados.appendChild(novoBloco);
 
+        // Vincular evento de troca de tipo
+        alternarTipoComissao(novoBloco);
+
         // Reaplicar máscara e atualizar botões
         if (typeof aplicarMascaraMoeda === 'function') {
           aplicarMascaraMoeda();
@@ -1564,7 +1703,7 @@
         atualizarBotoesRemoverComissionados();
       }
 
-      // 3) Gerencia clique em adicionar/remover blocos de comissionados
+      // 4) Gerencia clique em adicionar/remover blocos de comissionados
       containerComissionados.addEventListener('click', function (event) {
         if (event.target.closest('.btn-adicionar-comissionado')) {
           adicionarNovoBlocoComissionado();
@@ -1579,7 +1718,12 @@
         }
       });
 
-      // 4) Ao inicializar, reaplica máscara nos campos existentes e atualiza botões
+      // 5) Ao inicializar, vincular eventos nos blocos existentes
+      containerComissionados.querySelectorAll('.comissionado-item').forEach(bloco => {
+        alternarTipoComissao(bloco);
+      });
+
+      // Reaplica máscara nos campos existentes e atualiza botões
       if (typeof aplicarMascaraMoeda === 'function') {
         aplicarMascaraMoeda();
       }
@@ -1588,18 +1732,33 @@
   </script>
 
   <script>
+    // Cria o TOM Select nos selects para melhor UX
     document.addEventListener('DOMContentLoaded', function () {
-      const fornecedorSelect = document.querySelector('#selectExtrator');
-      if (fornecedorSelect) {
-        new TomSelect(fornecedorSelect, {
-          create: false,
-          allowEmptyOption: false,
-          sortField: {
-            field: "text",
-            direction: "asc"
-          }
-        });
-      }
+      // Configuração padrão do TomSelect
+      const defaultConfig = {
+        create: false,
+        allowEmptyOption: false,
+        sortField: {
+          field: "text",
+          direction: "asc"
+        }
+      };
+
+      // Array com os seletores dos elementos
+      const selectors = [
+        '#selectExtrator',
+        'select[name="instituicao_financeira"]',
+        'select[name="transportadoraMadeiraPosta[]"]',
+        'select[name="clienteMadeiraPosta[]"]'
+      ];
+
+      // Inicializa TomSelect em cada elemento encontrado
+      selectors.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) {
+          new TomSelect(element, defaultConfig);
+        }
+      });
     });
   </script>
 

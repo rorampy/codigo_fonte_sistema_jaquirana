@@ -1,0 +1,178 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            TAG
+          </div>
+          <h2 class="page-title">
+            Listagem
+          </h2>
+        </div>
+
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('cadastrar_tag') }}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Cadastrar Tag
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <div class="card">
+
+          {% if tags %}
+          <!-- Início Tabela -->
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: left;">Cod. Tag</th>
+                  <th style="text-align: center;">Nome Tag</th>
+                  <th class="w-1" style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for tag in tags %}
+                <tr>
+                  <td class="text-secondary">
+                    <div class="d-flex align-items-center">
+                      <div>
+                        <div class="fw-bold">{{ tag.codigo_tag }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ tag.nome_tag }}
+                  </td>
+                  <td>
+                    <div class="btn-list flex-nowrap">
+                      <!-- Botão: Editar conta -->
+                      <a href="{{url_for('editar_tag', id=tag.id)}}" class="btn btn-icon btn-outline-warning"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Editar tag">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="24"
+                          height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                          <path d="M13.5 6.5l4 4" />
+                        </svg>
+                      </a>
+
+                      <!-- Botão: Excluir conta -->
+                      <a href="#" class="btn btn-icon btn-outline-danger" data-bs-toggle="modal"
+                        data-bs-target="#modal-excluir-{{ tag.id }}" title="Excluir tag">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="24"
+                          height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M4 7l16 0" />
+                          <path d="M10 11l0 6" />
+                          <path d="M14 11l0 6" />
+                          <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                          <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                        </svg>
+                      </a>
+
+                      <!-- Modal: Confirmar exclusão -->
+                      <div class="modal modal-blur fade" id="modal-excluir-{{tag.id}}" tabindex="-1" role="dialog"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                          <div class="modal-content">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-status bg-danger"></div>
+                            <div class="modal-body text-center py-4">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
+                                <path d="M12 9v4" />
+                                <path
+                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                                <path d="M12 16h.01" />
+                              </svg>
+                              <h3>Confirmar exclusão</h3>
+                              <div class="text-secondary">
+                                Você realmente deseja excluir a tag <strong>{{
+                                  tag.nome_tag }}</strong>?
+                                <br>
+                                <small class="text-muted">{{ tag.codigo_tag }}</small>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <div class="w-100">
+                                <div class="row">
+                                  <div class="col">
+                                    <a href="#" class="btn w-100" data-bs-dismiss="modal">
+                                      Cancelar
+                                    </a>
+                                  </div>
+                                  <div class="col">
+                                    <a href="{{url_for('excluir_tag', id=tag.id)}}" class="btn btn-danger w-100">
+                                      Confirmar
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="col-12">
+
+            <div class="area-info-card" style="
+          padding: 30px;
+          border-radius: 10px;
+          text-align: center;
+          box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+          background-color: white;
+        ">
+              <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">
+                ❌
+              </div>
+              <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">
+                Nenhuma tag disponível
+              </h2>
+              <p style="color: #777;">
+                No momento não há registros para exibir.
+              </p>
+            </div>
+
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

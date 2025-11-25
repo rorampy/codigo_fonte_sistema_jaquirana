@@ -1,0 +1,81 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <!-- Page pre-title -->
+          <div class="page-pretitle">
+            TAG
+          </div>
+          <h2 class="page-title">
+            Editar
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <form class="card" action="{{ url_for('editar_tag', id=tag.id) }}" method="POST">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-12">
+                <div class="mb-3">
+                  <label class="form-label required">Nome Tag</label>
+                  <input type="text" name="nome_tag" value="{{ dados_corretos['nome_tag'] }}" class="form-control {% if 'nome_tag' in campos_obrigatorios or 'nome_tag' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
+                  <div class="invalid-feedback">
+                    {% if 'nome_tag' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['nome_tag'] }}
+                    {% elif 'nome_tag' in campos_erros %}
+                    {{ campos_erros['nome_tag'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer text-center text-md-end">
+            <a href="{{url_for('listar_tags')}}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
+                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M5 12l14 0"></path>
+                <path d="M5 12l6 6"></path>
+                <path d="M5 12l6 -6"></path>
+              </svg>
+              Voltar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24"
+                viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12 5l0 14"></path>
+                <path d="M5 12l14 0"></path>
+              </svg>
+              Editar
+            </button>
+          </div>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}
