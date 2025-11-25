@@ -31,11 +31,11 @@ def cadastrar_ticket(id):
         solicitacao = CargaModel.obter_solicitacao_por_id(id)
         if not solicitacao:
             flash(("Não encontramos nenhuma solicitação!", "warning"))
-            return redirect(url_for("vendas_em_transito"))
+            return redirect(url_for("listagem_registros_operacionais"))
 
         if solicitacao.ticket_emitido:
             flash(("O ticket desta solicitação já foi emitido", "warning"))
-            return redirect(url_for("vendas_entregues"))
+            return redirect(url_for("listagem_registros_operacionais"))
 
         if request.method == "POST":
             arquivoTicket = request.files.get("arquivoTicket")
@@ -249,12 +249,12 @@ def cadastrar_ticket(id):
             )
 
             flash(("Ticket lançado com sucesso!", "success"))
-            return redirect(url_for("vendas_entregues"))
+            return redirect(url_for("listagem_registros_operacionais"))
 
     except Exception as e:
         print(e)
         flash(("Houve um erro ao tentar lançar ticket, entre em contato com o suporte!", "warning"))
-        return redirect(url_for("vendas_entregues"))
+        return redirect(url_for("listagem_registros_operacionais"))
 
     registroOperacional = RegistroOperacionalModel.obter_registro_solicitacao_por_id(id)
     fornecedores = FornecedorModel.listar_fornecedores()
@@ -575,11 +575,11 @@ def editar_ticket(id):
 
             db.session.commit()
             flash(("Ticket editado com sucesso!", "success"))
-            return redirect(url_for("vendas_entregues"))
+            return redirect(url_for("listagem_registros_operacionais"))
 
     except Exception as e:
         flash(("Houve um erro ao tentar editar este ticket! Entre em contato com o suporte", "warning"))
-        return redirect(url_for("vendas_entregues"))
+        return redirect(url_for("listagem_registros_operacionais"))
     return render_template(
         "/controle_carga/ticket/ticket_editar.html",
         florestas=florestas,
