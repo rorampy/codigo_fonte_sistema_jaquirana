@@ -3,25 +3,25 @@ import json
 from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem, formatar_data_para_brl
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from sistema.models_views.controle_carga.carga_model import CargaModel
+from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
 from sistema.models_views.gerenciar.motorista.transportadora_motorista_associado_model import TransportadoraMotoristaAssocModel
 from sistema.models_views.gerenciar.veiculo.veiculo_model import VeiculoModel
 from sistema.models_views.gerenciar.veiculo.veiculo_transportadora_veiculo_associado_model import TransportadoraVeiculoAssocModel
-from sistema.models_views.controle_carga.produto_model import ProdutoModel
+from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.parametros.bitola.bitola_model import BitolaModel
 from sistema.models_views.parametros.nome_grupo_whats.nome_grupo_whats_model import NomeGrupoWhatsModel
 from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.models_views.configuracoes_gerais.empresa_emissora.empresa_emissora_model import EmpresaEmissoraModel
-from sistema.models_views.faturamento.cargas_a_pagar.transportadora.frete_a_pagar_model import FretePagarModel
-from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
+from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
+from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
 from sistema.models_views.autenticacao.usuario_model import UsuarioModel
 from sistema._utilitarios import *
 from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
-from sistema.models_views.financeiro.situacao_pagamento_model import SituacaoPagamentoModel
+from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
@@ -288,12 +288,12 @@ def detalhes_categorizacao_faturamento_despesa_avulsa_json(id):
         
         valor_credito_total = total_creditos_fornecedores + total_creditos_transportadoras + total_creditos_extratores
 
-        # Montar resposta JSON específica para controle de créditos
+        # Montar resposta JSON específica para Adiantamentos de Créditos
         dados = {
             'categorizacao_id': agendamento.id,
             'faturamento': {
                 'codigo': faturamento.codigo_faturamento,
-                'tipo': 'Controle de Créditos',
+                'tipo': 'Adiantamentos de Créditos',
                 'valor_total': valor_total_final,
                 'valor_bruto_total': valor_bruto_total,
                 'valor_credito_total': valor_credito_total,

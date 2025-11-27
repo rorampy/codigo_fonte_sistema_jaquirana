@@ -5,6 +5,9 @@ from sistema.models_views.gerenciar.transportadora.transportadora_model import T
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema.models_views.parametros.instituicoes_financeiras.instituicao_financeira_model import InstituicoesFinanceirasModel
+from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
+from sqlalchemy.orm.attributes import flag_modified  
+import json  
 from sistema._utilitarios import *
 
 
@@ -45,6 +48,7 @@ def cadastrar_transportadora():
 
     if request.method == "POST":
         tipoCadastro = request.form["tipoCadastro"]
+        criar_pessoa_financeiro = request.form.get("criarPessoaFinanceiro", "nao")
         nomeTransportadora = request.form["nomeTransportadora"]
         cpfTransportadora = request.form["cpfTransportadora"]
         razao_social = request.form["razaoSocial"]
@@ -123,6 +127,54 @@ def cadastrar_transportadora():
             )
             db.session.add(transportadora)
             db.session.commit()
+
+            if criar_pessoa_financeiro == "sim":
+                try:
+                    vinculos_operacionais = {
+                        "transportadora": [{
+                            "id": transportadora.id,
+                            "identificacao": transportadora.identificacao
+                        }]
+                    }
+
+                    vinculos_json = json.dumps(vinculos_operacionais)
+                    tem_fornecedor, tem_transportadora, tem_extrator, tem_comissionado, vinculos_data = \
+                        PessoaFinanceiroModel.processar_vinculos(vinculos_json)
+                    
+                    pessoa_financeira = PessoaFinanceiroModel(
+                        tipo_cadastro=True if tipoCadastroTransportadora == 1 else False,
+                        identificacao=identificacaoTransportadora,
+                        numero_documento=numeroDocumento,
+                        telefone=telefone_tratado,
+                        instituicao_financeira_id=int(instituicao_financeira) if instituicao_financeira else None,
+                        agencia_bancaria=agencia_bancaria if agencia_bancaria else None,
+                        conta_bancaria=conta_bancaria if conta_bancaria else None,
+                        chave_pix=chave_pix if chave_pix else None,
+                        tem_vinculo_fornecedor=tem_fornecedor,
+                        tem_vinculo_transportadora=tem_transportadora,
+                        tem_vinculo_extrator=tem_extrator,
+                        tem_vinculo_comissionado=tem_comissionado,
+                        vinculos_operacionais=vinculos_data,
+                        ativo=True
+                    )
+
+                    db.session.add(pessoa_financeira)
+                    db.session.flush()
+
+                    flash(("Transportadora e Pessoa Financeira cadastradas com sucesso!", "success"))
+
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"Erro ao criar Pessoa Financeira: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    flash((f"Transportadora cadastrada, mas houve erro ao criar Pessoa Financeira: {str(e)}", "warning"))
+                    return redirect(url_for("listar_transportadoras"))
+            else:
+                flash(("Transportadora cadastrada com sucesso!", "success"))
+
+
+
             acao = TipoAcaoEnum.CADASTRO
             PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                 current_user.id,
@@ -278,6 +330,40 @@ def editar_transportadora(id):
             transportadora.agencia_bancaria = agencia_bancaria if agencia_bancaria else None
             transportadora.conta_bancaria = conta_bancaria if conta_bancaria else None
             transportadora.chave_pix = chave_pix if chave_pix else None
+
+            pessoa_financeira = PessoaFinanceiroModel.query.filter_by(
+                numero_documento=numeroDocumento,
+                ativo=True,
+                deletado=False
+            ).first()
+
+            if pessoa_financeira:
+                try:
+                     # Atualizar dados básicos
+                    pessoa_financeira.tipo_cadastro = True if tipoCadastroTransportadora == 1 else False
+                    pessoa_financeira.identificacao = identificacaoTransportadora
+                    pessoa_financeira.numero_documento = numeroDocumento
+                    pessoa_financeira.telefone = telefone_tratado
+                    pessoa_financeira.instituicao_financeira_id = int(instituicao_financeira) if instituicao_financeira else None
+                    pessoa_financeira.agencia_bancaria = agencia_bancaria if agencia_bancaria else None
+                    pessoa_financeira.conta_bancaria = conta_bancaria if conta_bancaria else None
+                    pessoa_financeira.chave_pix = chave_pix if chave_pix else None
+
+                    vinculos_atuais = pessoa_financeira.vinculos_operacionais or {}
+                    vinculos_atuais['transportadora'] = [{
+                        "id": str(transportadora.id),
+                        "identificacao": identificacaoTransportadora
+                    }]
+
+                    pessoa_financeira.vinculos_operacionais = vinculos_atuais
+                    flag_modified(pessoa_financeira, "vinculos_operacionais")
+
+                    db.session.flush()
+
+                except Exception as e:
+                    print(f"Erro ao atualizar Pessoa Financeira: {e}")
+                    import traceback
+                    traceback.print_exc()
 
             db.session.commit()
             flash(("Transportadora editada com sucesso!", "success"))

@@ -4,7 +4,7 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
 from sistema.models_views.configuracoes_gerais.conta_bancaria.conta_bancaria_model import ContaBancariaModel
-from sistema.models_views.financeiro.situacao_pagamento_model import SituacaoPagamentoModel
+from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
 from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
 from sistema._utilitarios import *
 

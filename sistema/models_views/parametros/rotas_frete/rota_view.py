@@ -8,7 +8,7 @@ from sistema.models_views.gerenciar.transportadora.transportadora_model import T
 from sistema.models_views.parametros.rotas_frete.rota_model import RotaFreteModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
-from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema._utilitarios import *
 
 

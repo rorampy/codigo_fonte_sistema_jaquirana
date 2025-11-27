@@ -162,7 +162,7 @@
                                   <input type="checkbox" class="form-check-input registro-checkbox"
                                     data-id="{{ item.registro.id }}" data-group="{{ groupId }}"
                                     data-diff="{{ item.registro.valor_total_a_pagar_100 / 100 or 0 }}" {% if
-                                    item.registro.situacao_pagamento_id==1 %}disabled{% endif %}>
+                                    item.registro.situacao_pagamento_id in [5, 6, 8, 9, 10] %}disabled{% endif %}>
                                 </td>
                                 <td class="text-center fw-bold text-primary">
                                   {% if item.registro.data_entrega_ticket %}
@@ -245,8 +245,16 @@
                                   {{ precoTon | formatar_float_para_brl }}
                                 </td>
                                 <td class="text-center">
-                                  <span
-                                    class="badge badge-outline {%if item.registro.situacao_pagamento_id == 5%}text-success{%else%} text-warning{%endif%}">{{item.registro.situacao.situacao}}</span>
+                                  {% if item.registro.situacao_pagamento_id == 5 %}
+                                  <span class="badge badge-outline text-success" data-bs-toggle="tooltip"
+                                    data-bs-placement="top" title="Faturamento: {{ item.cod_faturamento or 'N/A' }}">
+                                    {{ item.registro.situacao.situacao }}
+                                  </span>
+                                  {% else %}
+                                  <span class="badge badge-outline text-warning">
+                                    {{ item.registro.situacao.situacao }}
+                                  </span>
+                                  {% endif %}
                                 </td>
                                 <td class="text-center">
                                   {% if item.registro.valor_total_a_pagar_100 %}
@@ -404,7 +412,8 @@
                 <div class="form-selectgroup form-selectgroup-boxes d-flex flex-row">
                   <label class="form-selectgroup-item flex-fill">
                     <input type="radio" name="tipo_filtro" value="semanal" id="radio-semanal"
-                      class="form-selectgroup-input" {% if dados_corretos.get('tipo_filtro') !='data' %}checked{% endif %}>
+                      class="form-selectgroup-input" {% if dados_corretos.get('tipo_filtro') !='data' %}checked{% endif
+                      %}>
                     <div class="form-selectgroup-label d-flex align-items-center p-3">
                       <div class="me-3">
                         <span class="form-selectgroup-check"></span>
@@ -432,15 +441,15 @@
               </div>
 
               <!-- Filtro Semanal -->
-              <div id="filtro-semanal" class="col-12 mb-3" {% if dados_corretos.get('tipo_filtro')=='data' %}style="display: none;"{% endif %}>
+              <div id="filtro-semanal" class="col-12 mb-3" {% if dados_corretos.get('tipo_filtro')=='data'
+                %}style="display: none;" {% endif %}>
                 <label class="form-label">Selecionar Período</label>
                 <select name="semanaSelecionada" class="form-select" id="semanaSelecionada">
                   <option value="">Selecione...</option>
                   {% for semana in semanas_disponiveis %}
-                  <option value="{{ semana.valor }}" 
-                          {% if semana.valor == dados_corretos.get('semanaSelecionada') %}selected{% endif %}
-                          {% if semana.is_atual %}data-current="true"{% endif %}
-                          {% if semana.get('is_mes_completo') %}data-mes-completo="true"{% endif %}>
+                  <option value="{{ semana.valor }}" {% if semana.valor==dados_corretos.get('semanaSelecionada')
+                    %}selected{% endif %} {% if semana.is_atual %}data-current="true" {% endif %} {% if
+                    semana.get('is_mes_completo') %}data-mes-completo="true" {% endif %}>
                     {{ semana.texto }}
                     {% if semana.is_atual %} (Atual){% endif %}
                   </option>
@@ -449,7 +458,8 @@
               </div>
 
               <!-- Filtro por Data -->
-              <div id="filtro-data" class="row" {% if dados_corretos.get('tipo_filtro') !='data' %}style="display: none;"{% endif %}>
+              <div id="filtro-data" class="row" {% if dados_corretos.get('tipo_filtro') !='data'
+                %}style="display: none;" {% endif %}>
                 <div class="col-md-6 mb-3">
                   <label class="form-label">Data Início</label>
                   <input type="date" name="dataInicio" class="form-control"
@@ -468,20 +478,20 @@
               </div>
               <div class="col-md-4 mb-3">
                 <label class="form-label">Placa</label>
-                <input type="text" name="placaCarga" class="form-control" value="{{ dados_corretos.get('placaCarga', '') }}"
-                  placeholder="Placa do veículo">
+                <input type="text" name="placaCarga" class="form-control"
+                  value="{{ dados_corretos.get('placaCarga', '') }}" placeholder="Placa do veículo">
               </div>
 
               <!-- Linha 2: Produto e Bitola -->
               <div class="col-md-4 mb-3">
                 <label class="form-label">Produto</label>
-                <input type="text" name="produtoCarga" class="form-control" value="{{ dados_corretos.get('produtoCarga', '') }}"
-                  placeholder="Nome do produto">
+                <input type="text" name="produtoCarga" class="form-control"
+                  value="{{ dados_corretos.get('produtoCarga', '') }}" placeholder="Nome do produto">
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label">Bitola</label>
-                <input type="text" name="bitolaCarga" class="form-control" value="{{ dados_corretos.get('bitolaCarga', '') }}"
-                  placeholder="Bitola do produto">
+                <input type="text" name="bitolaCarga" class="form-control"
+                  value="{{ dados_corretos.get('bitolaCarga', '') }}" placeholder="Bitola do produto">
               </div>
 
               <!-- Linha 3: Pessoas e Empresas -->
@@ -497,8 +507,8 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label">Cliente</label>
-                <input type="text" name="clienteCarga" class="form-control" value="{{ dados_corretos.get('clienteCarga', '') }}"
-                  placeholder="Nome do cliente">
+                <input type="text" name="clienteCarga" class="form-control"
+                  value="{{ dados_corretos.get('clienteCarga', '') }}" placeholder="Nome do cliente">
               </div>
 
               <!-- Linha 4: Origem -->

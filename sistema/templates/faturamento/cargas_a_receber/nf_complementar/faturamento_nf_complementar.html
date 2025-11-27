@@ -1,8 +1,7 @@
 {% extends 'estrutura/base.html' %}
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
-<link href="{{ url_for('static', filename='css/relatorio-cargas.css') }}"
-  rel="stylesheet">
+<link href="{{ url_for('static', filename='css/relatorio-cargas.css') }}" rel="stylesheet">
 <div class="page-wrapper">
   <div class="page-header d-print-none">
     <div class="container-xl">
@@ -15,37 +14,27 @@
           <div class="d-flex gap-2">
             <!-- Botão de Agrupamento com Cargas a Receber -->
             {% if agrupar_cargas_receber %}
-            <button id="btn-agrupar-cargas-receber" class="btn btn-secondary"
-              disabled>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round"
+            <button id="btn-agrupar-cargas-receber" class="btn btn-secondary" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="icon icon-tabler icons-tabler-outline icon-tabler-link">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M9 15l6 -6" />
                 <path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464" />
-                <path
-                  d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463" />
+                <path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463" />
               </svg>
               Agrupar com Cargas a Receber
             </button>
             {% else %}
             <!-- Botão de Faturamento em Massa (apenas quando não está em modo agrupamento) -->
-            <button id="btn-informar-faturamento-massa"
-              class="btn btn-secondary" disabled>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-cash"
-                aria-hidden="true">
+            <button id="btn-informar-faturamento-massa" class="btn btn-secondary" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-cash" aria-hidden="true">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path
-                  d="M7 9m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" />
+                <path d="M7 9m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" />
                 <path d="M14 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                <path
-                  d="M17 9v-2a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v6a2 2 0 0 0 2 2h2" />
+                <path d="M17 9v-2a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v6a2 2 0 0 0 2 2h2" />
               </svg>
               Faturamento em massa
             </button>
@@ -77,12 +66,9 @@
               {% set cliente = cliente_group.grouper %}
               {% set registros_cliente = cliente_group.list %}
               <div class="accordion-item">
-                <h2 class="accordion-header"
-                  id="heading-cliente-{{ loop.index }}">
-                  <button class="accordion-button" type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#collapse-cliente-{{ loop.index }}"
-                    aria-expanded="true">
+                <h2 class="accordion-header" id="heading-cliente-{{ loop.index }}">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapse-cliente-{{ loop.index }}" aria-expanded="true">
                     {{ cliente }}
                   </button>
                 </h2>
@@ -93,8 +79,7 @@
                     {% set clienteId = loop.index %}
                     <div class="produto-section border-bottom">
                       <div class="produto-header p-3 bg-light">
-                        <div
-                          class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center justify-content-between">
                           <div>
                             <strong>NFs Complementares</strong>
                             <span class="badge bg-azure-lt ms-2">{{
@@ -102,20 +87,17 @@
                           </div>
                           <div>
                             <strong>Total a Faturar:</strong>
-                            <span id="total-valor-c{{ clienteId }}"
-                              class="badge bg-green-lt">R$ 0,00</span>
+                            <span id="total-valor-c{{ clienteId }}" class="badge bg-green-lt">R$ 0,00</span>
                           </div>
                         </div>
                       </div>
                       <div class="p-3">
                         <div class="table-responsive">
-                          <table
-                            class="table table-vcenter table-hover table-striped">
+                          <table class="table table-vcenter table-hover table-striped">
                             <thead class="bg-light">
                               <tr>
                                 <th class="text-center">
-                                  <input type="checkbox"
-                                    class="form-check-input select-all-group"
+                                  <input type="checkbox" class="form-check-input select-all-group"
                                     data-group="c{{ clienteId }}" />
                                 </th>
                                 <th class="text-center text-primary">Data
@@ -136,13 +118,11 @@
                               {% for item in registros_cliente %}
                               <tr>
                                 <td class="text-center">
-                                  <input type="checkbox"
-                                    class="form-check-input registro-checkbox"
-                                    data-id="{{ item.registro.id }}"
-                                    data-group="c{{ clienteId }}"
-                                    data-diff="{{ item.registro.valor_total or 0 }}"
-                                    {% if item.registro.situacao_financeira.id
-                                    == 5 %}disabled{% endif %}>
+                                  <input type="checkbox" class="form-check-input registro-checkbox" {%if not
+                                    item.registro.nf_complementar.arquivo_nota%}disabled{%endif%}
+                                    data-id="{{ item.registro.id }}" data-group="c{{ clienteId }}"
+                                    data-diff="{{ item.registro.valor_total or 0 }}" {% if
+                                    item.registro.situacao_financeira.id==5 %}disabled{% endif %}>
                                 </td>
                                 <td class="text-center fw-bold text-primary">
                                   {{ item.registro.data_emissao |
@@ -186,47 +166,49 @@
                                 <!-- Coluna de Ações apenas quando não está em modo agrupamento -->
                                 {% if not agrupar_cargas_receber %}
                                 <td>
-                                  <div
-                                    class="btn-list flex-nowrap justify-content-center">
-                                    <a href="#"
-                                      class="btn btn-icon btn-outline-primary btn-visualizar-arquivo"
-                                      data-url="{{ url_for('diretorio_uploads_nf_complementar', filename=item.registro.nf_complementar.arquivo_nota.caminho.split('/')[-1]) }}"
-                                      data-bs-toggle="modal"
-                                      data-bs-target="#modal-visualizar-arquivo">
-                                      <svg xmlns="http://www.w3.org/2000/svg"
-                                        width="24" height="24"
-                                        viewBox="0 0 24 24" fill="none"
-                                        stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round"
+                                  <div class="btn-list flex-nowrap justify-content-center">
+                                    <a href="#" class="btn btn-icon btn-outline-primary btn-visualizar-arquivo {% if not
+                                      item.registro.nf_complementar.arquivo_nota %}disabled{% endif %}"
+                                      data-url="{% if item.registro.nf_complementar.arquivo_nota %}{{ url_for('diretorio_uploads_nf_complementar', filename=item.registro.nf_complementar.arquivo_nota.caminho.split('/')[-1]) }}{%else%}#{% endif %}"
+                                      data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                         stroke-linejoin="round"
-                                        class="icon icon-tabler icons-tabler-outline icon-tabler-eye"><path
-                                          stroke="none" d="M0 0h24v24H0z"
-                                          fill="none" /><path
-                                          d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path
-                                          d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
+                                        class="icon icon-tabler icons-tabler-outline icon-tabler-eye">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                        <path
+                                          d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                                      </svg>
                                     </a>
-                                    <!-- Botão para informar faturamento (futuro) -->
-                                    <a
-                                      href="{{ url_for('informar_faturamento_nf_complementar', id=item.registro.id) }}"
-                                      class="btn btn-icon btn-outline-success"
-                                      data-bs-toggle="tooltip"
-                                      data-bs-placement="top"
-                                      title="Informar Faturamento">
-                                      <svg xmlns="http://www.w3.org/2000/svg"
-                                        width="24" height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="icon icon-tabler icon-tabler-cash">
-                                        <path stroke="none" d="M0 0h24v24H0z"
-                                          fill="none" />
+                                    <!-- Botão para informar faturamento -->
+                                    <a href="{{ url_for('informar_faturamento_nf_complementar', id=item.registro.id) }}"
+                                      class="btn btn-icon btn-outline-success {% if not
+                                      item.registro.nf_complementar.arquivo_nota or item.registro.situacao_financeira.id == 5 %}disabled{% endif %}"
+                                      data-bs-toggle="tooltip" data-bs-placement="top" title="Informar Faturamento">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-tabler icon-tabler-cash">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                         <path
                                           d="M7 9m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" />
-                                        <path
-                                          d="M14 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                                        <path
-                                          d="M17 9v-2a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v6a2 2 0 0 0 2 2h2" />
+                                        <path d="M14 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                        <path d="M17 9v-2a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v6a2 2 0 0 0 2 2h2" />
+                                      </svg>
+                                    </a>
+                                    <a href="#"
+                                      class="btn btn-icon btn-outline-danger excluir {% if item.registro.situacao_financeira.id == 5 %}disabled{% endif %}"
+                                      data-bs-toggle="modal" data-bs-target="#modal-excluir-{{item.registro.id}}">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M4 7l16 0" />
+                                        <path d="M10 11l0 6" />
+                                        <path d="M14 11l0 6" />
+                                        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                        <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
                                       </svg>
                                     </a>
                                   </div>
@@ -244,13 +226,60 @@
               </div>
               {% endfor %}
             </div>
+
+            <!-- Modais de confirmação para cada registro -->
+            {% for cliente_group in registros|groupby('cliente') %}
+            {% for item in cliente_group.list %}
+
+            <!-- Modal para excluir NF complementar -->
+            {% if item.registro.situacao_financeira.id == 2 %}
+            <div class="modal modal-blur fade" id="modal-excluir-{{item.registro.id}}" tabindex="-1" role="dialog"
+              aria-hidden="true">
+              <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                <div class="modal-content">
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  <div class="modal-status bg-danger"></div>
+                  <div class="modal-body text-center py-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon mb-2 text-danger icon-lg">
+                      <path d="M12 9v4" />
+                      <path
+                        d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                      <path d="M12 16h.01" />
+                    </svg>
+                    <div class="text-secondary">
+                      Você realmente deseja excluir esta NF Complementar?<br>
+                      <small>Esta ação não pode ser desfeita e pode afetar os registros operacionais
+                        relacionados.</small>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <div class="w-100">
+                      <div class="row">
+                        <div class="col">
+                          <a href="#" class="btn btn-3 w-100" data-bs-dismiss="modal">Cancelar</a>
+                        </div>
+                        <div class="col">
+                          <form action="{{ url_for('excluir_nf_complementar', id=item.registro.id) }}" method="POST">
+                            <button type="submit" class="btn btn-danger btn-4 w-100">Excluir</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            {% endfor %}
+            {% endfor %}
             {% else %}
             <div class="area-info-card"
               style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">
-              <div class="icon-extrato"
-                style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
-              <h2
-                style="font-size: 22px; margin-bottom: 10px; color: #555;">Nenhum
+              <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
+              <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">Nenhum
                 dado disponível</h2>
               <p style="color: #777;">No momento não há registros para
                 exibir.</p>
@@ -262,16 +291,13 @@
     </div>
   </div>
 
-  <div class="modal modal-blur fade" id="modal-report" tabindex="-1"
-    role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered" role="document"
-      style="display: grid;">
+  <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document" style="display: grid;">
       <form action="{{ url_for('faturamento_nf_complementar') }}" method="GET">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Filtrar NFs Complementares</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"
-              aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <div class="row">
@@ -283,32 +309,27 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label">Data Fim</label>
-                <input type="date" name="dataFim" class="form-control"
-                  value="{{ dados_corretos.get('dataFim', '') }}">
+                <input type="date" name="dataFim" class="form-control" value="{{ dados_corretos.get('dataFim', '') }}">
               </div>
 
               <div class="col-md-4 mb-3">
                 <label class="form-label">Número NF Complementar</label>
-                <input type="text" name="numeroNF" class="form-control"
-                  value="{{ dados_corretos.get('numeroNF', '') }}"
+                <input type="text" name="numeroNF" class="form-control" value="{{ dados_corretos.get('numeroNF', '') }}"
                   placeholder="Número da nota fiscal complementar">
               </div>
 
               <div class="col-md-4 mb-3">
                 <label class="form-label">Destinatário</label>
                 <input type="text" name="destinatario" class="form-control"
-                  value="{{ dados_corretos.get('destinatario', '') }}"
-                  placeholder="Nome do destinatário">
+                  value="{{ dados_corretos.get('destinatario', '') }}" placeholder="Nome do destinatário">
               </div>
 
               <div class="col-md-4 mb-3">
                 <label class="form-label">Cliente</label>
-                <select class="form-select" name="clienteCarga"
-                  id="clienteCarga">
+                <select class="form-select" name="clienteCarga" id="clienteCarga">
                   <option value>Selecione...</option>
                   {% for c in clientes %}
-                  <option value="{{ c.identificacao }}" {% if
-                    dados_corretos.get('clienteCarga')==c.identificacao
+                  <option value="{{ c.identificacao }}" {% if dados_corretos.get('clienteCarga')==c.identificacao
                     %}selected{% endif %}>
                     {{ c.identificacao }}
                   </option>
@@ -319,23 +340,17 @@
               <div class="col-md-4 mb-3">
                 <label class="form-label">Transportador</label>
                 <input type="text" name="transportador" class="form-control"
-                  value="{{ dados_corretos.get('transportador', '') }}"
-                  placeholder="Nome do transportador">
+                  value="{{ dados_corretos.get('transportador', '') }}" placeholder="Nome do transportador">
               </div>
 
               <div class="col-md-4 mb-3">
                 <label class="form-label">Situação Financeira</label>
-                <select class="form-select" name="situacaoFinanceira"
-                  id="situacaoFinanceira">
+                <select class="form-select" name="situacaoFinanceira" id="situacaoFinanceira">
                   <option value>Todas as situações</option>
-                  <option value="2" {% if
-                    dados_corretos.get('situacaoFinanceira')=='2' %}selected{%
-                    endif %}>
+                  <option value="2" {% if dados_corretos.get('situacaoFinanceira')=='2' %}selected{% endif %}>
                     Pendente de faturamento
                   </option>
-                  <option value="5" {% if
-                    dados_corretos.get('situacaoFinanceira')=='5' %}selected{%
-                    endif %}>
+                  <option value="5" {% if dados_corretos.get('situacaoFinanceira')=='5' %}selected{% endif %}>
                     Faturado
                   </option>
                 </select>
@@ -344,16 +359,12 @@
           </div>
 
           <div class="modal-footer">
-            <a href="{{ url_for('faturamento_nf_complementar') }}"
-              class="btn btn-link link-secondary btn-3">
+            <a href="{{ url_for('faturamento_nf_complementar') }}" class="btn btn-link link-secondary btn-3">
               Limpar Filtros
             </a>
-            <button type="submit" class="btn btn-primary btn-5 ms-auto"
-              data-bs-dismiss="modal">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round"
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="icon icon-tabler icon-tabler-filter">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path
@@ -402,7 +413,7 @@
         const btnFaturamentoMassa = document.getElementById('btn-informar-faturamento-massa');
         const btnAgruparCargas = document.getElementById('btn-agrupar-cargas-receber');
         const selecionadosValidos = document.querySelectorAll('.registro-checkbox:checked:not(:disabled)').length;
-        
+
         // Atualizar botão de faturamento em massa (apenas se existir)
         if (btnFaturamentoMassa) {
           if (selecionadosValidos > 0) {
@@ -415,7 +426,7 @@
             btnFaturamentoMassa.classList.add('btn-secondary');
           }
         }
-        
+
         // Botão de agrupamento: habilitado apenas quando há seleção
         if (btnAgruparCargas) {
           if (selecionadosValidos > 0) {
@@ -451,9 +462,9 @@
       // Funcionalidade do botão faturamento em massa (apenas se existir)
       const btnFaturamentoMassa = document.getElementById('btn-informar-faturamento-massa');
       if (btnFaturamentoMassa) {
-        btnFaturamentoMassa.addEventListener('click', function() {
+        btnFaturamentoMassa.addEventListener('click', function () {
           const selecionados = Array.from(document.querySelectorAll('.registro-checkbox:checked:not(:disabled)'));
-          
+
           if (selecionados.length === 0) {
             mostrarMensagem('warning', 'Selecione pelo menos uma NF complementar válida para faturamento.');
             return;
@@ -461,7 +472,7 @@
 
           // Verificar se todas as NFs selecionadas são do mesmo cliente (agrupamento do accordion)
           const acordeonsComSelecao = [...new Set(selecionados.map(cb => cb.closest('.accordion-item')))];
-          
+
           if (acordeonsComSelecao.length > 1) {
             mostrarMensagem('warning', 'Todas as NFs selecionadas devem ser do mesmo cliente.');
             return;
@@ -479,43 +490,43 @@
       // Funcionalidade do botão agrupar com cargas a receber
       const btnAgruparCargas = document.getElementById('btn-agrupar-cargas-receber');
       if (btnAgruparCargas) {
-        btnAgruparCargas.addEventListener('click', function() {
+        btnAgruparCargas.addEventListener('click', function () {
           const selecionados = Array.from(document.querySelectorAll('.registro-checkbox:checked:not(:disabled)'));
-          
+
           // Capturar os IDs selecionados (pode ser vazio se nenhum foi selecionado)
           const idsSelecionados = selecionados.map(cb => cb.dataset.id);
-          
+
           // Capturar os IDs já agrupados que vieram da página anterior (se houver)
           const urlParams = new URLSearchParams(window.location.search);
           const idsCargas = urlParams.get('agrupar_cargas_receber') || urlParams.get('ids_cargas') || '';
           const idsNfComplementar = urlParams.get('ids_nf_complementar') || '';
           const idsNfServico = urlParams.get('ids_nf_servico') || '';
-          
-          const todosIdsComplementar = idsNfComplementar ? 
-              idsNfComplementar.split(',').concat(idsSelecionados) : 
-              idsSelecionados;
-          
+
+          const todosIdsComplementar = idsNfComplementar ?
+            idsNfComplementar.split(',').concat(idsSelecionados) :
+            idsSelecionados;
+
           // Construir URL de retorno preservando todos os IDs
           let urlRetorno = "{{ url_for('informar_recebimento_massa') }}";
           const params = [];
-          
+
           if (idsCargas) {
-              params.push('ids_cargas=' + encodeURIComponent(idsCargas));
+            params.push('ids_cargas=' + encodeURIComponent(idsCargas));
           }
           if (todosIdsComplementar.length > 0) {
-              params.push('ids_nf_complementar=' + encodeURIComponent(todosIdsComplementar.join(',')));
+            params.push('ids_nf_complementar=' + encodeURIComponent(todosIdsComplementar.join(',')));
           }
           if (idsNfServico) {
-              params.push('ids_nf_servico=' + encodeURIComponent(idsNfServico));
+            params.push('ids_nf_servico=' + encodeURIComponent(idsNfServico));
           }
-          
+
           // Sempre adicionar parâmetros se houver pelo menos IDs de cargas
           if (params.length > 0) {
-              urlRetorno += '?' + params.join('&');
+            urlRetorno += '?' + params.join('&');
           } else if (idsCargas) {
-              urlRetorno += '?ids_cargas=' + encodeURIComponent(idsCargas);
+            urlRetorno += '?ids_cargas=' + encodeURIComponent(idsCargas);
           }
-          
+
           window.location.href = urlRetorno;
         });
       }

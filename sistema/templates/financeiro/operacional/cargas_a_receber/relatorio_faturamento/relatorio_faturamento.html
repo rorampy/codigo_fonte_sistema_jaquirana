@@ -251,10 +251,10 @@
     <table>
       <tr>
         <td style="width: 200px;">
-          <img src="{{ logo_path }}" alt="Logo Jaquirana Florestal" />
+          <img src="{{ logo_path }}" alt="Logo MBR Extração" />
         </td>
         <td class="system-info">
-          <div><strong>Sistema de Gestão Jaquirana</strong></div>
+          <div><strong>Sistema de Gestão MBR</strong></div>
           <div><strong>Relatório gerado em:</strong> {{ data_geracao }}</div>
         </td>
       </tr>
@@ -269,6 +269,11 @@
   <div class="simple-info">
     <strong>Código:</strong> {{ faturamento.codigo_faturamento }}
   </div>
+  {% if faturamento.periodo_quinzenal %}
+  <div class="simple-info">
+    <strong>Período:</strong> {{ faturamento.periodo_quinzenal }}
+  </div>
+  {% endif %}
   <div class="simple-info">
     <strong>Data/Hora:</strong> {{ faturamento.data_cadastro }}
   </div>
@@ -371,7 +376,8 @@
       <tr class="total-principal">
         <td><strong>TOTAL NFS COMPLEMENTARES</strong></td>
         <td><strong>{{ total_nfs_complementares }}</strong></td>
-        <td class="total-valor"><strong>{{ (nfs_complementares.values() | sum(attribute='total')) | formatar_float_para_brl }}</strong></td>
+        <td class="total-valor"><strong>{{ (nfs_complementares.values() | sum(attribute='total')) |
+            formatar_float_para_brl }}</strong></td>
       </tr>
     </tbody>
   </table>
@@ -379,15 +385,15 @@
   <!-- Detalhes das NFs por cliente -->
   {% for nome_cliente, grupo in nfs_complementares.items() %}
   <div class="section-title">DETALHES NF COMPLEMENTAR - {{ nome_cliente }}</div>
-  
+
   {% for nf in grupo.nfs %}
   <div style="margin: 15px 0; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
     <div style="font-weight: bold; color: #1c5f20; margin-bottom: 10px;">
-      NF Complementar: {{ nf.numero_nf or '-' }} | 
-      Data: {{ nf.destinatario_data_emissao or '-' }} | 
+      NF Complementar: {{ nf.numero_nf or '-' }} |
+      Data: {{ nf.destinatario_data_emissao or '-' }} |
       Valor: {{ (nf.valor_total_nota_100) | formatar_float_para_brl }}
     </div>
-    
+
     {% if nf.registros_operacionais %}
     <table style="margin-top: 10px;">
       <thead>
@@ -449,7 +455,8 @@
       <tr class="total-principal">
         <td><strong>TOTAL NFS DE SERVIÇO</strong></td>
         <td><strong>{{ total_nfs_servico }}</strong></td>
-        <td class="total-valor"><strong>{{ (nfs_servico.values() | sum(attribute='total')) | formatar_float_para_brl }}</strong></td>
+        <td class="total-valor"><strong>{{ (nfs_servico.values() | sum(attribute='total')) | formatar_float_para_brl
+            }}</strong></td>
       </tr>
     </tbody>
   </table>
@@ -502,7 +509,8 @@
       {% if nfs_complementares %}
       <tr>
         <td>Total NFs Complementares</td>
-        <td class="valor-destaque">{{ (nfs_complementares.values() | sum(attribute='total')) | formatar_float_para_brl }}</td>
+        <td class="valor-destaque">{{ (nfs_complementares.values() | sum(attribute='total')) | formatar_float_para_brl
+          }}</td>
       </tr>
       {% endif %}
       {% if nfs_servico %}
@@ -520,9 +528,9 @@
   {% endif %}
 
   <div class="footer">
-    <p><strong>Jaquirana Florestal &copy; 2025</strong> - Todos os direitos reservados</p>
-    <p><strong>Sistema de Gestão Jaquirana - Módulo Financeiro</strong></p>
-    <p>Relatório de Faturamento gerado automaticamente pelo Sistema de Gestão Jaquirana</p>
+    <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão MBR - Módulo Financeiro</strong></p>
+    <p>Relatório de Faturamento gerado automaticamente pelo Sistema de Gestão MBR</p>
   </div>
 </body>
 

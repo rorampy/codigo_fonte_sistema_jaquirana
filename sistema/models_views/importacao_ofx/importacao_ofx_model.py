@@ -57,8 +57,19 @@ class ImportacaoOfx(BaseModel):
     usuario_conciliacao_id = db.Column(db.Integer, nullable=True)
     observacoes_conciliacao = db.Column(db.Text, nullable=True)
     
+    # Controle de conciliação parcial
+    valor_utilizado_100 = db.Column(db.Integer, nullable=True)  # Valor já utilizado em centavos
+    conciliacao_parcial = db.Column(db.Boolean, default=False)
+    
     # Dados da conciliação em JSON para permitir reversão
     dados_conciliacao_json = db.Column(db.JSON, nullable=True)
+    
+    # Controle de exclusão/ignorar movimentação
+    ofx_deletada = db.Column(db.Boolean, default=False, nullable=False)
+    ofx_justificativa_deletada = db.Column(db.String(50), nullable=True)
+    
+    conta_bancaria_id = db.Column(db.Integer, db.ForeignKey("con_conta_bancaria.id"), nullable=True)
+    conta_bancaria = db.relationship("ContaBancariaModel", foreign_keys=[conta_bancaria_id], backref=db.backref("transacoes_ofx", lazy=True))
     
     # Índices para melhor performance
     __table_args__ = (
@@ -82,6 +93,119 @@ class ImportacaoOfx(BaseModel):
         """Retorna a descrição final (limpa tem prioridade sobre memo)"""
         return self.descricao_limpa if self.descricao_limpa else self.memo
     
+    @property
+    def valor_disponivel(self):
+        """Retorna o valor ainda disponível para conciliação"""
+        from decimal import Decimal
+        valor_total = abs(self.valor) * 100  # Convert to centavos
+        valor_usado = self.valor_utilizado_100 or 0
+        return (valor_total - valor_usado) / 100
+    
+    @property
+    def valor_disponivel_100(self):
+        """Retorna o valor ainda disponível em centavos"""
+        valor_total = int(abs(self.valor) * 100)
+        valor_usado = self.valor_utilizado_100 or 0
+        return valor_total - valor_usado
+    
+    @property
+    def percentual_utilizado(self):
+        """Retorna o percentual já utilizado da transação"""
+        valor_total = int(abs(self.valor) * 100)
+        if valor_total == 0:
+            return 0
+        valor_usado = self.valor_utilizado_100 or 0
+        return (valor_usado / valor_total) * 100
+    
+    @property
+    def pode_conciliar_valor(self):
+        """Verifica se ainda há valor disponível para conciliação"""
+        return self.valor_disponivel_100 > 0
+    
+    @property
+    def esta_totalmente_utilizada(self):
+        """Verifica se a transação foi totalmente utilizada"""
+        return self.valor_disponivel_100 <= 0
+    
+    def adicionar_valor_utilizado(self, valor_centavos):
+        """
+        Adiciona um valor ao total já utilizado
+        
+        Args:
+            valor_centavos (int): Valor em centavos para adicionar
+            
+        Returns:
+            bool: True se adicionado com sucesso, False se exceder o valor total
+        """
+        if not isinstance(valor_centavos, int) or valor_centavos <= 0:
+            return False
+            
+        valor_total_100 = int(abs(self.valor) * 100)
+        novo_valor_utilizado = (self.valor_utilizado_100 or 0) + valor_centavos
+        
+        # Não permite utilizar mais que o valor total
+        if novo_valor_utilizado > valor_total_100:
+            return False
+            
+        self.valor_utilizado_100 = novo_valor_utilizado
+        self.conciliacao_parcial = novo_valor_utilizado < valor_total_100
+        
+        # Se totalmente utilizado, marcar como conciliado
+        if novo_valor_utilizado >= valor_total_100:
+            self.conciliado = True
+        
+        return True
+    
+    def resetar_utilizacao(self):
+        """Reset da utilização parcial"""
+        self.valor_utilizado_100 = None
+        self.conciliacao_parcial = False
+        self.conciliado = False
+    
+    def obter_transacao_por_fitid(self, fitid):
+        """
+        Retorna a transação OFX pelo fitid
+        """
+        return db.session.query(ImportacaoOfx).filter(ImportacaoOfx.fitid == fitid, ImportacaoOfx.ofx_deletada == False,
+                                                    ImportacaoOfx.conciliado == False).first()
+    
+    def obter_transacoes_com_filtros():
+        return db.session.query(ImportacaoOfx).filter(ImportacaoOfx.ofx_deletada == False).all()
+    
+    @classmethod
+    def obter_transacoes_query_com_filtros(cls, pagina=1, por_pagina=50):
+        """
+        Retorna transações não deletadas e não conciliadas com paginação otimizada.
+        Retorna um dicionário com as transações, total e dados de paginação.
+        """
+        # Query base para transações não conciliadas
+        query = db.session.query(cls).filter(
+            cls.ofx_deletada == False,
+            cls.conciliado == False,
+            cls.processado == False
+        )
+        
+        # Contar total antes da paginação
+        total_transacoes = query.count()
+        
+        # Aplicar ordenação e paginação
+        offset = (pagina - 1) * por_pagina
+        transacoes = query.order_by(cls.data_transacao.desc(), cls.id.desc())\
+                          .offset(offset)\
+                          .limit(por_pagina)\
+                          .all()
+        
+        # Calcular informações de paginação
+        total_paginas = (total_transacoes + por_pagina - 1) // por_pagina
+        
+        return {
+            'transacoes': transacoes,
+            'total_transacoes': total_transacoes,
+            'pagina': pagina,
+            'total_paginas': total_paginas,
+            'por_pagina': por_pagina
+        }
+
     @classmethod
     def filtrar_por_conciliacao(cls, conciliado=None, batch_id=None):
         """
@@ -93,7 +217,7 @@ class ImportacaoOfx(BaseModel):
             query = query.filter(cls.conciliado == conciliado)
         if batch_id:
             query = query.filter(cls.batch_importacao == batch_id)
-        return query.order_by(cls.data_transacao.desc(), cls.id.desc()).all()
+        return query.order_by(cls.data_transacao.desc(), cls.id.desc()).limit(10).all()
     
     @classmethod
     def truncar_tabela(cls):
@@ -147,16 +271,21 @@ class ImportacaoOfx(BaseModel):
             return 0
 
     @classmethod
-    def obter_ultimo_batch_importacao(cls):
+    def obter_ultimo_batch_importacao(cls, conta_bancaria_id=None):
         try:
-            ultima_transacao = db.session.query(cls).order_by(cls.data_importacao.desc()).first()
+            query = db.session.query(cls).filter(cls.ofx_deletada == False)
+            
+            if conta_bancaria_id:
+                query = query.filter(cls.conta_bancaria_id == conta_bancaria_id)
+            
+            ultima_transacao = query.order_by(cls.data_importacao.desc()).first()
             return ultima_transacao.batch_importacao if ultima_transacao else None
         except Exception as e:
             print(f"[ERRO] Erro ao obter último batch: {e}")
             return None
 
     @classmethod
-    def inserir_transacoes_lote(cls, transacoes_data, arquivo_info):
+    def inserir_transacoes_lote(cls, transacoes_data, arquivo_info, conta_bancaria_id=None):
         try:
             if not transacoes_data:
                 return False, "Nenhuma transação para inserir"
@@ -164,24 +293,33 @@ class ImportacaoOfx(BaseModel):
             from uuid import uuid4
             batch_id = str(uuid4())[:8]
 
-            # Filtrar fitids já existentes (conciliados ou não)
+            # Filtrar fitids já existentes na mesma conta bancária
+            # IMPORTANTE: Permite importar a mesma transação (mesmo fitid) se for para contas bancárias diferentes
             fitids_para_importar = [t.get('fitid') for t in transacoes_data if t.get('fitid')]
 
             fitids_ja_existentes = set()
-            if fitids_para_importar:
-                fitids_ja_existentes = {row[0] for row in db.session.query(cls.fitid).filter(cls.fitid.in_(fitids_para_importar)).all()}
+            if fitids_para_importar and conta_bancaria_id:
+                # Verificar fitids que já existem NA MESMA conta bancária específica
+                fitids_ja_existentes = {row[0] for row in db.session.query(cls.fitid).filter(
+                    cls.fitid.in_(fitids_para_importar),
+                    cls.conta_bancaria_id == conta_bancaria_id
+                ).all()}
 
-            # Filtrar transações que não estão no banco
+            # Filtrar transações que não estão no banco para esta conta específica
             transacoes_filtradas = [
                 t for t in transacoes_data
                 if t.get('fitid') not in fitids_ja_existentes
             ]
 
-            print(f"[INFO] Transações no arquivo: {len(transacoes_data)}")
-            print(f"[INFO] Já existentes (ignoradas): {len(fitids_ja_existentes)}")
-            print(f"[INFO] A importar: {len(transacoes_filtradas)}")
-
             if not transacoes_filtradas:
+                total_duplicadas = len(transacoes_data) - len(transacoes_filtradas)
+                if total_duplicadas > 0:
+                    return True, {
+                        'total': 0, 
+                        'batch_id': batch_id,
+                        'duplicadas': total_duplicadas,
+                        'mensagem': f'{total_duplicadas} transação(ões) já existe(m) nesta conta bancária e foi(ram) ignorada(s)'
+                    }
                 return True, {'total': 0, 'batch_id': batch_id}
 
             resumo = arquivo_info.get('resumo', {})
@@ -217,7 +355,10 @@ class ImportacaoOfx(BaseModel):
                     instituicao_fid=instituicao_info.get('fid') or instituicao_info.get('fi_id'),
 
                     data_inicio_extrato=periodo_info.get('primeira_transacao'),
-                    data_fim_extrato=periodo_info.get('ultima_transacao')
+                    data_fim_extrato=periodo_info.get('ultima_transacao'),
+                    
+                    # Vincular à conta bancária selecionada no formulário
+                    conta_bancaria_id=conta_bancaria_id
                 )
 
                 transacoes_obj.append(transacao_obj)
@@ -225,8 +366,23 @@ class ImportacaoOfx(BaseModel):
             db.session.add_all(transacoes_obj)
             db.session.commit()
 
-            print(f"[INFO] {len(transacoes_obj)} transações OFX inseridas com sucesso (Batch: {batch_id})")
-            return True, {'total': len(transacoes_obj), 'batch_id': batch_id}
+            total_inseridas = len(transacoes_obj)
+            total_duplicadas = len(transacoes_data) - total_inseridas
+            
+            print(f"[INFO] {total_inseridas} transações OFX inseridas com sucesso (Batch: {batch_id})")
+            if total_duplicadas > 0:
+                print(f"[INFO] {total_duplicadas} transações duplicadas ignoradas para esta conta bancária")
+            
+            resultado = {
+                'total': total_inseridas, 
+                'batch_id': batch_id
+            }
+            
+            if total_duplicadas > 0:
+                resultado['duplicadas'] = total_duplicadas
+                resultado['mensagem_duplicadas'] = f'{total_duplicadas} transação(ões) já existia(m) nesta conta e foi(ram) ignorada(s)'
+            
+            return True, resultado
 
         except Exception as e:
             db.session.rollback()
@@ -234,7 +390,7 @@ class ImportacaoOfx(BaseModel):
             return False, str(e)
 
     @classmethod
-    def obter_resumo_importacao(cls, data_inicio=None, data_fim=None, batch_id=None, conciliado=None, ftid=None, valor='', descricao=None, tipo_movimentacao=None):
+    def obter_resumo_importacao(cls, data_inicio=None, data_fim=None, batch_id=None, conciliado=None, ftid=None, valor='', descricao=None, tipo_movimentacao=None, conta_bancaria_id=None):
         """
         Se batch_id for None e conciliado==True, retorna resumo de todas as transações conciliadas (de todos os batches).
         Caso contrário, mantém o comportamento padrão (resumo do batch).
@@ -246,6 +402,11 @@ class ImportacaoOfx(BaseModel):
         
             filtro_data_inicio = data_inicio is not None
             filtro_data_fim = data_fim is not None
+            
+            filtro_conta_bancaria = conta_bancaria_id is not None
+            
+            if filtro_conta_bancaria:
+                query = query.filter(cls.conta_bancaria_id == conta_bancaria_id)
 
             if filtro_data_inicio:
                 query = query.filter(cls.data_transacao >= data_inicio)
@@ -415,7 +576,7 @@ class ImportacaoOfx(BaseModel):
             return False
         
     @classmethod
-    def obter_estatisticas_transacoes(cls, batch_id=None):
+    def obter_estatisticas_transacoes(cls, batch_id=None, conta_bancaria_id=None):
         """
         Retorna estatísticas das transações importadas
         """
@@ -428,6 +589,9 @@ class ImportacaoOfx(BaseModel):
                 ultimo_batch = cls.obter_ultimo_batch_importacao()
                 if ultimo_batch:
                     query = query.filter(cls.batch_importacao == ultimo_batch)
+                    
+            if conta_bancaria_id:
+                query = query.filter(cls.conta_bancaria_id == conta_bancaria_id)
             
             total = query.count()
             conciliadas = query.filter(cls.conciliado == True).count()
@@ -497,7 +661,7 @@ class ImportacaoOfx(BaseModel):
             dados = self.dados_conciliacao_json
             
             # Importar modelos necessários
-            from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
+            from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
             from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
             from sistema.models_views.financeiro.movimentacao_financeira.movimentacao_financeira_model import MovimentacaoFinanceiraModel
             from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
@@ -508,6 +672,7 @@ class ImportacaoOfx(BaseModel):
                     agendamento = AgendamentoPagamentoModel.obter_agendamento_por_id(agendamento_id)
                     if agendamento:
                         agendamento.situacao_pagamento_id = 2  # Pendente
+                        agendamento.valor_conciliado_100 = None
                         db.session.add(agendamento)
             
             # Restaurar status dos faturamentos para situação 6 (Conciliado)
@@ -586,12 +751,14 @@ class ImportacaoOfx(BaseModel):
                         db.session.add(saldo_conta)
             
             # Limpar dados da conciliação
-            self.conciliado = False
+           
             self.tipo_conciliacao = None
             self.pagamento_id = None
             self.data_conciliacao = None
             self.usuario_conciliacao_id = None
             self.observacoes_conciliacao = None
+            self.dados_conciliacao_json = None
+            self.resetar_utilizacao()
             
             db.session.commit()
             return True, "Conciliação revertida com sucesso"
@@ -621,3 +788,4 @@ class ImportacaoOfx(BaseModel):
         except Exception as e:
             print(f"[ERRO] Erro ao obter conciliações reversíveis: {e}")
             return []
+        

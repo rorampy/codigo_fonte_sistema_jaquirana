@@ -1,17 +1,16 @@
 from sistema import app, requires_roles, db, current_user
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
-import json
 from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_madeira_posta_model import FornecedorMadeiraPostaModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
 from sistema.models_views.upload_arquivo.upload_arquivo_view import upload_arquivo
 from sistema.models_views.upload_arquivo.upload_arquivo_model import UploadArquivoModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
-from sistema.models_views.faturamento.cargas_a_pagar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
-from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
 from sistema.models_views.gerenciar.comissionado.comissionado_model import ComissionadoModel
 from sistema.models_views.parametros.instituicoes_financeiras.instituicao_financeira_model import InstituicoesFinanceirasModel
@@ -19,6 +18,8 @@ from sistema.models_views.gerenciar.transportadora.transportadora_model import T
 from sistema.models_views.configuracoes_gerais.tag.tag_model import TagModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_tag_model import FornecedorTag
 from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
+from sqlalchemy.orm.attributes import flag_modified 
+import json
 from sistema._utilitarios import *
 
 

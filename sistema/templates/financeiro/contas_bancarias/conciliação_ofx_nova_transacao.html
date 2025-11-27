@@ -1,0 +1,424 @@
+<!-- Campos hidden para dados da transação OFX -->
+<form id="formNovaTransacao-{{ transacao_id }}" method="POST">
+  <input type="hidden" name="transacao_ofx_id" value="{{ transacao_id }}">
+  <input type="hidden" name="valor_transacao_ofx" value="{{ valor_transacao or 0 }}">
+  <input type="hidden" name="tipo_movimento_ofx" value="{{ tipo_movimento }}">
+
+  <!-- Linha 1: Data Vencimento, Data Competência, Conta Bancária, Total -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <label class="form-label required">Data Vencimento</label>
+      <input type="date" name="data_vencimento" value="{{ dados_corretos.data_vencimento or data_vencimento or '' }}"
+        class="form-control {% if 'data_vencimento' in campos_obrigatorios or 'data_vencimento' in campos_erros %}is-invalid{% endif %}">
+      <div class="invalid-feedback">
+        {% if 'data_vencimento' in campos_obrigatorios %}
+        {{ campos_obrigatorios['data_vencimento'] }}
+        {% elif 'data_vencimento' in campos_erros %}
+        {{ campos_erros['data_vencimento'] }}
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Data Competência</label>
+      <input type="text" name="data_competencia" value="{{ dados_corretos.data_competencia or data_competencia or '' }}"
+        class="form-control {% if 'data_competencia' in campos_obrigatorios or 'data_competencia' in campos_erros %}is-invalid{% endif %}"
+        data-mask="00/0000" placeholder="MM/AAAA">
+      <div class="invalid-feedback">
+        {% if 'data_competencia' in campos_obrigatorios %}
+        {{ campos_obrigatorios['data_competencia'] }}
+        {% elif 'data_competencia' in campos_erros %}
+        {{ campos_erros['data_competencia'] }}
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label required">Conta Bancária</label>
+      <select name="conta_bancaria_id"
+        class="form-select {% if 'conta_bancaria_id' in campos_obrigatorios or 'conta_bancaria_id' in campos_erros %}is-invalid{% endif %}">
+        <option value="">Selecione a conta bancária...</option>
+        {% for conta in contas_bancarias %}
+        <option value="{{ conta.id }}" {% if dados_corretos.conta_bancaria_id and
+          dados_corretos.conta_bancaria_id|string==conta.id|string %}selected{% endif %}>
+          {{ conta.identificacao }}
+        </option>
+        {% endfor %}
+      </select>
+      <div class="invalid-feedback">
+        {% if 'conta_bancaria_id' in campos_obrigatorios %}
+        {{ campos_obrigatorios['conta_bancaria_id'] }}
+        {% elif 'conta_bancaria_id' in campos_erros %}
+        {{ campos_erros['conta_bancaria_id'] }}
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="text-end">
+        <label class="form-label text-muted small">Total da Transação</label>
+        <h1 class="fw-bold mb-0 text-dark" id="totalDisplay-{{ transacao_id }}">R$ 0,00</h1>
+      </div>
+    </div>
+  </div>
+
+  <!-- Linha 2: Beneficiário, Descrição, Referência -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <label class="form-label required">Beneficiário</label>
+      <select name="pessoa_financeiro_id"
+        class="form-select {% if 'pessoa_financeiro_id' in campos_obrigatorios or 'pessoa_financeiro_id' in campos_erros %}is-invalid{% endif %}">
+        <option value="">Selecione o beneficiário...</option>
+        {% for pessoa in pessoas_financeiro %}
+        <option value="{{ pessoa.id }}" {% if dados_corretos.pessoa_financeiro_id and
+          dados_corretos.pessoa_financeiro_id|string==pessoa.id|string %}selected{% endif %}>
+          {{ pessoa.identificacao }} ({{ pessoa.documento_formatado }})
+        </option>
+        {% endfor %}
+      </select>
+      <div class="invalid-feedback">
+        {% if 'pessoa_financeiro_id' in campos_obrigatorios %}
+        {{ campos_obrigatorios['pessoa_financeiro_id'] }}
+        {% elif 'pessoa_financeiro_id' in campos_erros %}
+        {{ campos_erros['pessoa_financeiro_id'] }}
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">
+        Descrição
+        <span class="text-muted">(opcional)</span>
+      </label>
+      <input type="text" name="descricao" value="{{ dados_corretos.descricao or descricao_transacao or '' }}" class="form-control"
+        placeholder="Ex.: Serviço prestado">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">
+        Referência
+        <span class="text-muted">(opcional)</span>
+      </label>
+      <input type="text" name="referencia" value="{{ dados_corretos.referencia or '' }}" class="form-control">
+    </div>
+  </div>
+
+  <!-- Seção de Categorias-->
+  <div class="mb-4">
+    <label class="form-label mb-3 required">Categoria</label>
+
+    <div class="{% if 'categorias_json' in campos_obrigatorios or 'categorias_json' in campos_erros %}border border-danger rounded p-2{% endif %}">
+      <!-- Container das categorias -->
+      <div id="listaCategorias-{{ transacao_id }}">
+        <!-- Categorias serão inseridas aqui via JavaScript -->
+      </div>
+
+      <!-- Botão adicionar categoria -->
+      <div class="mt-3">
+        <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
+          id="btnAdicionarCategoria-{{ transacao_id }}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-plus me-1">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M12 5l0 14" />
+            <path d="M5 12l14 0" />
+          </svg>
+          Adicionar categoria
+        </button>
+      </div>
+    </div>
+
+    {% if 'categorias_json' in campos_obrigatorios %}
+    <div class="text-danger mt-1">
+      <small>{{ campos_obrigatorios['categorias_json'] }}</small>
+    </div>
+    {% elif 'categorias_json' in campos_erros %}
+    <div class="text-danger mt-1">
+      <small>{{ campos_erros['categorias_json'] }}</small>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Opções adicionais -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <!-- Switch Valores Detalhados -->
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" id="valoresDetalhados-{{ transacao_id }}">
+        <label class="form-check-label text-muted" for="valoresDetalhados-{{ transacao_id }}">
+          Valores detalhados
+        </label>
+      </div>
+
+      <!-- Painel Valores Detalhados -->
+      <div id="painelValoresDetalhados-{{ transacao_id }}" style="display: none;" class="card mb-3"
+        style="background-color: #F6F8FB !important;">
+        <div class="card-body">
+          <div class="{% if 'centros_custo_json' in campos_obrigatorios or 'centros_custo_json' in campos_erros %}border border-danger rounded p-2 mb-3{% endif %}">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs" role="tablist" style="border: unset !important;">
+              <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="tab-centro-custo-{{ transacao_id }}"
+                  style="background-color: white !important; border: unset;" data-bs-toggle="tab" href="#centro-custo-{{ transacao_id }}"
+                  role="tab">Centro de custo</a>
+              </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" style="background-color: white !important; padding: 30px;">
+              <div class="tab-pane fade show active" id="centro-custo-{{ transacao_id }}" role="tabpanel">
+                <div class="mb-3">
+                  <div class="row align-items-center mb-2">
+                    <div class="col-12 mb-3">
+                      <strong>Tipo de distribuição:</strong>
+                    </div>
+                    <div class="col-4">
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="tipoDistribuicao-{{ transacao_id }}"
+                          id="percentual-{{ transacao_id }}" value="percentual" checked>
+                        <label class="form-check-label" for="percentual-{{ transacao_id }}">Percentual</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="tipoDistribuicao-{{ transacao_id }}"
+                          id="valor-{{ transacao_id }}" value="valor">
+                        <label class="form-check-label" for="valor-{{ transacao_id }}">Valor</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Lista de Centros de Custo -->
+                <div id="listaCentrosCusto-{{ transacao_id }}">
+                  <!-- Centros de custo serão inseridos aqui via JavaScript -->
+                </div>
+
+                <!-- Botão adicionar centro de custo -->
+                <div class="mt-3">
+                  <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
+                    id="btnAdicionarCentroCusto-{{ transacao_id }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="me-1">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M12 5l0 14" />
+                      <path d="M5 12l14 0" />
+                    </svg>
+                    Adicionar centro de custo
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensagens de erro para valores detalhados -->
+      {% if 'centros_custo_json' in campos_obrigatorios %}
+      <div class="text-danger mt-1 mb-3">
+        <small>{{ campos_obrigatorios['centros_custo_json'] }}</small>
+      </div>
+      {% elif 'centros_custo_json' in campos_erros %}
+      <div class="text-danger mt-1 mb-3">
+        <small>{{ campos_erros['centros_custo_json'] }}</small>
+      </div>
+      {% endif %}
+
+      <!-- Switch Parcelamento -->
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" id="parcelamento-{{ transacao_id }}" name="parcelamento_ativo" value="true"
+          {% if dados_corretos.parcelamento_ativo %}checked{% endif %}>
+        <label class="form-check-label text-muted" for="parcelamento-{{ transacao_id }}">
+          Parcelamento
+        </label>
+      </div>
+
+      <!-- Painel Parcelamento -->
+      <div id="painelParcelamento-{{ transacao_id }}" style="display: none;" class="card mb-3 mt-3" 
+           style="background-color: #F6F8FB !important;">
+        <div class="card-body">
+          <div class="row mb-3 align-items-end">
+            <div class="col-md-3">
+              <label class="form-label required">Parcelas</label>
+              <select name="numero_parcelas"
+                class="form-select {% if 'numero_parcelas' in campos_obrigatorios or 'numero_parcelas' in campos_erros %}is-invalid{% endif %}"
+                id="qtdParcelas-{{ transacao_id }}">
+                <option value="0">Selecione...</option>
+                <option value="1" {% if dados_corretos.numero_parcelas=='1' %}selected{% endif %}>1</option>
+                <option value="2" {% if dados_corretos.numero_parcelas=='2' %}selected{% endif %}>2</option>
+                <option value="3" {% if dados_corretos.numero_parcelas=='3' %}selected{% endif %}>3</option>
+                <option value="4" {% if dados_corretos.numero_parcelas=='4' %}selected{% endif %}>4</option>
+                <option value="5" {% if dados_corretos.numero_parcelas=='5' %}selected{% endif %}>5</option>
+                <option value="6" {% if dados_corretos.numero_parcelas=='6' %}selected{% endif %}>6</option>
+                <option value="7" {% if dados_corretos.numero_parcelas=='7' %}selected{% endif %}>7</option>
+                <option value="8" {% if dados_corretos.numero_parcelas=='8' %}selected{% endif %}>8</option>
+                <option value="9" {% if dados_corretos.numero_parcelas=='9' %}selected{% endif %}>9</option>
+                <option value="10" {% if dados_corretos.numero_parcelas=='10' %}selected{% endif %}>10</option>
+                <option value="11" {% if dados_corretos.numero_parcelas=='11' %}selected{% endif %}>11</option>
+                <option value="12" {% if dados_corretos.numero_parcelas=='12' %}selected{% endif %}>12</option>
+              </select>
+              <div class="invalid-feedback">
+                {% if 'numero_parcelas' in campos_obrigatorios %}
+                {{ campos_obrigatorios['numero_parcelas'] }}
+                {% elif 'numero_parcelas' in campos_erros %}
+                {{ campos_erros['numero_parcelas'] }}
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Dias entre parcelas</label>
+              <select name="dias_entre_parcelas" class="form-select" id="diasEntre-{{ transacao_id }}">
+                <option value="30" {% if dados_corretos.dias_entre_parcelas=='30' %}selected{% endif %}>30 dias</option>
+                <option value="60" {% if dados_corretos.dias_entre_parcelas=='60' %}selected{% endif %}>60 dias</option>
+                <option value="180" {% if dados_corretos.dias_entre_parcelas=='180' %}selected{% endif %}>180 dias</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Tabela de parcelas -->
+          <div class="table-responsive">
+            <div id="tabelaParcelas-{{ transacao_id }}" style="display: none;">
+              <table class="table table-bordered align-middle mb-0">
+                <thead class="bg-white">
+                  <tr>
+                    <th style="width: 60px;">#</th>
+                    <th style="width: 120px;">Valor</th>
+                    <th style="width: 160px;">Vencimento</th>
+                    <th>Descrição <span class="text-muted">(opcional)</span></th>
+                    <th>Referência <span class="text-muted">(opcional)</span></th>
+                  </tr>
+                </thead>
+                <tbody id="corpoTabelaParcelas-{{ transacao_id }}">
+                  <!-- Parcelas serão inseridas aqui via JavaScript -->
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="4" class="text-end fw-bold">Total:</td>
+                    <td class="fw-bold text-primary" id="totalParcelas-{{ transacao_id }}">R$ 0,00</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensagens de erro para parcelamento -->
+      {% if 'parcelas_json' in campos_obrigatorios %}
+      <div class="text-danger mt-1 mb-3">
+        <small>{{ campos_obrigatorios['parcelas_json'] }}</small>
+      </div>
+      {% elif 'parcelas_json' in campos_erros %}
+      <div class="text-danger mt-1 mb-3">
+        <small>{{ campos_erros['parcelas_json'] }}</small>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Campos hidden para envio dos dados JSON -->
+  <input type="hidden" name="categorias_json" id="categorias_json-{{ transacao_id }}">
+  <input type="hidden" name="centros_custo_json" id="centros_custo_json-{{ transacao_id }}">
+  <input type="hidden" name="parcelas_json" id="parcelas_json-{{ transacao_id }}">
+  <input type="hidden" name="valores_detalhados_ativo" id="valores_detalhados_ativo-{{ transacao_id }}" value="false">
+
+  <!-- Botões de ação -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-end gap-2">
+        <button type="submit" class="btn btn-primary" id="btnSalvarAgendamento-{{ transacao_id }}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M12 5l0 14" />
+            <path d="M5 12l14 0" />
+          </svg>
+          Salvar Categorização
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<!-- JavaScript ES6 - Inicialização -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Criar mapa de categorias para passar ao JavaScript
+  const mapaCategorias = {};
+  {% set categorias_filtradas = categorias_por_transacao.get(transacao_id, estrutura_plano_contas) %}
+  {% for cat in categorias_filtradas %}
+    {% for sub in cat.children %}
+      {% if sub.is_leaf %}
+        mapaCategorias['{{ sub.codigo }}'] = {
+          id: {{ sub.id }},
+          codigo: '{{ sub.codigo }}',
+          nome: '{{ sub.nome }}'
+        };
+      {% endif %}
+      {% for subsub in sub.children %}
+        {% if subsub.is_leaf %}
+          mapaCategorias['{{ subsub.codigo }}'] = {
+            id: {{ subsub.id }},
+            codigo: '{{ subsub.codigo }}',
+            nome: '{{ subsub.nome }}'
+          };
+        {% endif %}
+        {% for subsubsub in subsub.children %}
+          {% if subsubsub.is_leaf %}
+            mapaCategorias['{{ subsubsub.codigo }}'] = {
+              id: {{ subsubsub.id }},
+              codigo: '{{ subsubsub.codigo }}',
+              nome: '{{ subsubsub.nome }}'
+            };
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    {% endfor %}
+  {% endfor %}
+
+  // Gerar HTML das opções de categoria
+  const opcoesCategoria = `
+    {% for cat in categorias_filtradas %}
+      <optgroup label="{{ cat.nome }}">
+        {% for sub in cat.children %}
+          {% if sub.is_leaf %}
+            <option value="{{ sub.codigo }}">{{ sub.nome }}</option>
+          {% else %}
+            <option value="" disabled>{{ sub.nome }}</option>
+            {% for subsub in sub.children %}
+              {% if subsub.is_leaf %}
+                <option value="{{ subsub.codigo }}">&nbsp;&nbsp;&nbsp;{{ subsub.nome }}</option>
+              {% else %}
+                <option value="" disabled>&nbsp;&nbsp;&nbsp;{{ subsub.nome }}</option>
+                {% for subsubsub in subsub.children %}
+                  {% if subsubsub.is_leaf %}
+                    <option value="{{ subsubsub.codigo }}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ subsubsub.nome }}</option>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+      </optgroup>
+    {% endfor %}
+  `;
+
+  // Gerar HTML das opções de centros de custo
+  const opcoesCentros = `
+    {% for centro in centros_custo %}
+      <option value="{{ centro.id }}">{{ centro.nome }}</option>
+    {% endfor %}
+  `;
+
+  // Dados iniciais para a classe
+  const dadosIniciais = {
+    totalPagar: {% if valor_transacao %}Math.abs({{ valor_transacao }}) * 100{% else %}0{% endif %},
+    mostrarValoresDetalhados: {% if dados_corretos.valores_detalhados_ativo %}true{% else %}false{% endif %},
+    mostrarParcelamento: {% if dados_corretos.parcelamento_ativo %}true{% else %}false{% endif %},
+    qtdParcelas: {{ dados_corretos.numero_parcelas or 0 }},
+    diasEntre: {{ dados_corretos.dias_entre_parcelas or 30 }},
+    mapaCategorias: mapaCategorias,
+    opcoesCategoria: opcoesCategoria,
+    opcoesCentros: opcoesCentros
+  };
+
+  // Inicializar classe ES6
+  window.novaTransacaoInstance{{ transacao_id }} = new NovaTransacaoOFX({{ transacao_id }}, dadosIniciais);
+});
+</script>

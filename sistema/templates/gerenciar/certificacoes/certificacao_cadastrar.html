@@ -1,0 +1,409 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle mt-3">GERENCIAR</div>
+          <h2 class="page-title">
+            Nova Certificação Florestal
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="btn-list">
+            <a href="{{ url_for('listar_certificacoes') }}" class="btn btn-outline-secondary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M5 12l14 0" />
+                <path d="M5 12l6 -6" />
+                <path d="M5 12l6 6" />
+              </svg>
+              Voltar à Lista
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <form method="post" enctype="multipart/form-data" id="form-certificacao">
+        <div class="row">
+          <!-- Formulário Principal -->
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon me-2">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                    <path d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-16z" />
+                  </svg>
+                  Informações da Certificação
+                </h3>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label required">Nome da Certificação</label>
+                    <input type="text" name="nome"
+                      class="form-control {% if campos_obrigatorios.get('nome') %}is-invalid{% endif %}"
+                      value="{{ dados_corretos.get('nome', '') }}" placeholder="Ex: Certificação FSC, PEFC, etc."
+                      maxlength="150" required>
+                    {% if campos_obrigatorios.get('nome') %}
+                    <div class="invalid-feedback">{{ campos_obrigatorios['nome'] }}</div>
+                    {% endif %}
+                    <small class="form-hint">Digite o nome completo da certificação</small>
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label required">Estoque (Toneladas)</label>
+                    <div class="input-group">
+                      <span class="input-group-text">t</span>
+                      <input type="text" name="valor_estoque"
+                        class="form-control {% if campos_obrigatorios.get('valor_estoque') or campos_erros.get('valor_estoque') %}is-invalid{% endif %} campo-float"
+                        value="{{ dados_corretos.get('valor_estoque', '') }}" placeholder="0,00" id="valor_estoque"
+                        required>
+                      {% if campos_obrigatorios.get('valor_estoque') %}
+                      <div class="invalid-feedback">{{ campos_obrigatorios['valor_estoque'] }}</div>
+                      {% endif %}
+                      {% if campos_erros.get('valor_estoque') %}
+                      <div class="invalid-feedback">{{ campos_erros['valor_estoque'] }}</div>
+                      {% endif %}
+                    </div>
+                    <small class="form-hint">Quantidade de madeira em estoque (em toneladas)</small>
+                  </div>
+
+                  <div class="col-md-12 mb-3">
+                    <label class="form-label">Descrição</label>
+                    <input type="text" name="descricao" class="form-control"
+                      value="{{ dados_corretos.get('descricao', '') }}" placeholder="Breve descrição da certificação"
+                      maxlength="500">
+                    <small class="form-hint">Descrição opcional da certificação (máx. 500 caracteres)</small>
+                  </div>
+
+                  <div class="col-md-12 mb-3">
+                    <label class="form-label">Observações/Notas</label>
+                    <textarea name="descricao_nota" class="form-control" rows="4"
+                      placeholder="Digite observações, notas importantes ou detalhes adicionais sobre esta certificação...">{{ dados_corretos.get('descricao_nota', '') }}</textarea>
+                    <small class="form-hint">Informações adicionais, requisitos, validades, etc.</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Área de Upload de Anexos -->
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon me-2">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                    <path d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5" />
+                    <path d="M5 15a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1v-3z" />
+                  </svg>
+                  Anexos
+                </h3>
+              </div>
+              <div class="card-body">
+                <!-- Área de Upload Drag & Drop -->
+                <div class="mb-3">
+                  <label class="form-label">Documentos da Certificação</label>
+                  <div id="upload-area" class="border-dashed rounded p-4 text-center bg-light">
+                    <div class="mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon text-muted">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                        <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                        <path d="M12 11l0 6" />
+                        <path d="M9 14l3 -3l3 3" />
+                      </svg>
+                    </div>
+                    <h4 class="text-muted mb-2">Arraste arquivos aqui</h4>
+                    <p class="text-muted small mb-3">ou clique para selecionar</p>
+                    <input type="file" name="anexos" id="anexos" class="form-control d-none" multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip,.rar">
+                    <button type="button" class="btn btn-outline-primary btn-sm"
+                      onclick="document.getElementById('anexos').click()">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon me-1">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 5l0 14" />
+                        <path d="M5 12l14 0" />
+                      </svg>
+                      Selecionar Arquivos
+                    </button>
+                  </div>
+                  <small class="form-hint">
+                    Formatos aceitos: PDF, DOC, DOCX, JPG, PNG, ZIP, RAR<br>
+                    Múltiplos arquivos permitidos
+                  </small>
+                </div>
+
+                <!-- Lista de Arquivos Selecionados -->
+                <div id="lista-arquivos" class="d-none">
+                  <label class="form-label">Arquivos Selecionados:</label>
+                  <div id="arquivos-preview" class="list-group list-group-flush">
+                  </div>
+                </div>
+
+                <!-- Sugestões de Anexos -->
+                <div class="alert alert-info py-2 px-3">
+                  <div class="d-flex">
+                    <div>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon me-2 mt-1">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                        <path d="M12 9h.01" />
+                        <path d="M11 12h1v4h1" />
+                      </svg>
+                    </div>
+                    <div>
+                      <strong>Sugestões de Anexos:</strong>
+                      <ul class="mb-0 mt-1 small">
+                        <li>Certificado oficial</li>
+                        <li>Documentos de renovação</li>
+                        <li>Auditorias</li>
+                        <li>Contratos relacionados</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card de Preview do Estoque -->
+            <div class="card mt-3">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon me-2">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M9 11l3 3l8 -8" />
+                    <path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9" />
+                  </svg>
+                  Preview do Estoque
+                </h3>
+              </div>
+              <div class="card-body">
+                <div class="text-center">
+                  <div id="preview-icone" class="mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="cons-tabler-outline">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                      <path
+                        d="M12 18c-.328 0 -.652 -.017 -.97 -.05c-3.172 -.332 -5.85 -2.315 -8.03 -5.95c2.4 -4 5.4 -6 9 -6c3.465 0 6.374 1.853 8.727 5.558" />
+                      <path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                      <path d="M20.2 20.2l1.8 1.8" />
+                    </svg>
+                  </div>
+                  <div id="preview-valor" class="h3 text-muted">0,00 t</div>
+                  <div id="preview-nivel" class="text-muted small">Estoque de Madeira</div>
+                  <div class="progress progress-sm mt-3">
+                    <div id="preview-progress" class="progress-bar bg-secondary" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-footer bg-transparent">
+                <div class="btn-list justify-content-end">
+                  <a href="{{ url_for('listar_certificacoes') }}" class="btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon me-1">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M18 6l-12 12" />
+                      <path d="M6 6l12 12" />
+                    </svg>
+                    Cancelar
+                  </a>
+                  <button type="submit" class="btn btn-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon me-1">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M12 5l0 14" />
+                      <path d="M5 12l14 0" />
+                    </svg>
+                    Cadastrar Certificação
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+<!-- JavaScript para funcionalidades dinâmicas -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Formatação de moeda para o campo valor_estoque
+    const valorEstoqueInput = document.getElementById('valor_estoque');
+
+    valorEstoqueInput.addEventListener('input', function (e) {
+      let value = e.target.value.replace(/\D/g, '');
+      value = (parseInt(value) / 100).toFixed(2);
+      e.target.value = value.replace('.', ',');
+
+      // Atualizar preview
+      atualizarPreview(parseFloat(value.replace(',', '.')));
+    });
+
+    // Função para atualizar o preview do estoque
+    function atualizarPreview(valor) {
+      const previewIcone = document.getElementById('preview-icone');
+      const previewValor = document.getElementById('preview-valor');
+      const previewNivel = document.getElementById('preview-nivel');
+      const previewProgress = document.getElementById('preview-progress');
+
+      previewValor.textContent = `${valor.toFixed(2).replace('.', ',')} t`;
+
+      if (valor == 0) {
+        previewIcone.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-danger"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>';
+        previewNivel.textContent = 'Sem Estoque';
+        previewProgress.className = 'progress-bar bg-danger';
+        previewProgress.style.width = '0%';
+      } else if (valor >= 10 && valor < 25) {
+        previewIcone.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="orange" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 5l3 3l-2 1l4 4l-3 1l4 4h-9" /><path d="M15 21l0 -3" /><path d="M8 13l-2 -2" /><path d="M8 12l2 -2" /><path d="M8 21v-13" /><path d="M5.824 16a3 3 0 0 1 -2.743 -3.69a3 3 0 0 1 .304 -4.833a3 3 0 0 1 4.615 -3.707a3 3 0 0 1 4.614 3.707a3 3 0 0 1 .305 4.833a3 3 0 0 1 -2.919 3.695h-4z" /></svg>';
+        previewNivel.textContent = 'Tonelagem Baixa (10-20t)';
+        previewProgress.className = 'progress-bar bg-warning';
+        previewProgress.style.width = '25%';
+      } else if (valor >= 25 && valor < 40) {
+        previewIcone.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="yellow" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 5l3 3l-2 1l4 4l-3 1l4 4h-9" /><path d="M15 21l0 -3" /><path d="M8 13l-2 -2" /><path d="M8 12l2 -2" /><path d="M8 21v-13" /><path d="M5.824 16a3 3 0 0 1 -2.743 -3.69a3 3 0 0 1 .304 -4.833a3 3 0 0 1 4.615 -3.707a3 3 0 0 1 4.614 3.707a3 3 0 0 1 .305 4.833a3 3 0 0 1 -2.919 3.695h-4z" /></svg>';
+        previewNivel.textContent = 'Tonelagem Média (25-35t)';
+        previewProgress.className = 'progress-bar bg-info';
+        previewProgress.style.width = '60%';
+      } else if (valor >= 40) {
+        previewIcone.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 5l3 3l-2 1l4 4l-3 1l4 4h-9" /><path d="M15 21l0 -3" /><path d="M8 13l-2 -2" /><path d="M8 12l2 -2" /><path d="M8 21v-13" /><path d="M5.824 16a3 3 0 0 1 -2.743 -3.69a3 3 0 0 1 .304 -4.833a3 3 0 0 1 4.615 -3.707a3 3 0 0 1 4.614 3.707a3 3 0 0 1 .305 4.833a3 3 0 0 1 -2.919 3.695h-4z" /></svg>';
+        previewNivel.textContent = 'Tonelagem Alta (40t+)';
+        previewProgress.className = 'progress-bar bg-success';
+        previewProgress.style.width = '100%';
+      } else {
+        previewIcone.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 5l3 3l-2 1l4 4l-3 1l4 4h-9" /><path d="M15 21l0 -3" /><path d="M8 13l-2 -2" /><path d="M8 12l2 -2" /><path d="M8 21v-13" /><path d="M5.824 16a3 3 0 0 1 -2.743 -3.69a3 3 0 0 1 .304 -4.833a3 3 0 0 1 4.615 -3.707a3 3 0 0 1 4.614 3.707a3 3 0 0 1 .305 4.833a3 3 0 0 1 -2.919 3.695h-4z" /></svg>';
+        previewNivel.textContent = 'Estoque Mínimo';
+        previewProgress.className = 'progress-bar bg-secondary';
+        previewProgress.style.width = '10%';
+      }
+    }
+
+    // Gerenciar upload de arquivos
+    const anexosInput = document.getElementById('anexos');
+    const uploadArea = document.getElementById('upload-area');
+    const listaArquivos = document.getElementById('lista-arquivos');
+    const arquivosPreview = document.getElementById('arquivos-preview');
+
+    // Drag and drop
+    uploadArea.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      uploadArea.classList.add('border-primary');
+    });
+
+    uploadArea.addEventListener('dragleave', function (e) {
+      e.preventDefault();
+      uploadArea.classList.remove('border-primary');
+    });
+
+    uploadArea.addEventListener('drop', function (e) {
+      e.preventDefault();
+      uploadArea.classList.remove('border-primary');
+
+      const files = e.dataTransfer.files;
+      anexosInput.files = files;
+      mostrarArquivos(files);
+    });
+
+    anexosInput.addEventListener('change', function (e) {
+      mostrarArquivos(e.target.files);
+    });
+
+    function mostrarArquivos(files) {
+      if (files.length > 0) {
+        listaArquivos.classList.remove('d-none');
+        arquivosPreview.innerHTML = '';
+
+        Array.from(files).forEach((file, index) => {
+          const fileExtension = file.name.split('.').pop().toLowerCase();
+          let fileIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-16z"/></svg>'; // Ícone padrão
+
+          if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
+            fileIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg>';
+          } else if (fileExtension === 'pdf') {
+            fileIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4"/><path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6"/><path d="M17 18h2"/><path d="M20 15h-3v6"/><path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2z"/></svg>';
+          } else if (['zip', 'rar'].includes(fileExtension)) {
+            fileIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 16v-8h2a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2z"/><path d="M12 8v8"/><path d="M4 8h8l-4 -4z"/><path d="M4 16h8l-4 4z"/></svg>';
+          }
+
+          const fileItem = document.createElement('div');
+          fileItem.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
+          fileItem.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <span class="me-2">${fileIcon}</span>
+                        <div>
+                            <div class="text-truncate" style="max-width: 180px;">${file.name}</div>
+                            <small class="text-muted">${(file.size / 1024).toFixed(1)} KB</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerArquivo(${index})">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M18 6l-12 12"/>
+                            <path d="M6 6l12 12"/>
+                        </svg>
+                    </button>
+                `;
+          arquivosPreview.appendChild(fileItem);
+        });
+      } else {
+        listaArquivos.classList.add('d-none');
+      }
+    }
+
+    // Função global para remover arquivo (necessária para o onclick)
+    window.removerArquivo = function (index) {
+      const dt = new DataTransfer();
+      const files = anexosInput.files;
+
+      for (let i = 0; i < files.length; i++) {
+        if (i !== index) dt.items.add(files[i]);
+      }
+
+      anexosInput.files = dt.files;
+      mostrarArquivos(anexosInput.files);
+    };
+  });
+</script>
+
+{% endblock conteudo %}

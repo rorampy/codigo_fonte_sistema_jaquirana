@@ -5,6 +5,9 @@ from sistema.models_views.gerenciar.comissionado.comissionado_model import Comis
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.models_views.parametros.instituicoes_financeiras.instituicao_financeira_model import InstituicoesFinanceirasModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
+from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
+from sqlalchemy.orm.attributes import flag_modified 
+import json
 from sistema._utilitarios import *
 
 
@@ -47,6 +50,7 @@ def cadastrar_comissionado():
 
     if request.method == "POST":
         tipoCadastro = request.form["tipoCadastro"]
+        criar_pessoa_financeiro = request.form.get("criarPessoaFinanceiro", "nao")
         nomeComissionado = request.form["nomeComissionado"]
         cpfComissionado = request.form["cpfComissionado"]
         razao_social = request.form["razaoSocial"]
@@ -123,7 +127,57 @@ def cadastrar_comissionado():
                 ativo=True
             )
             db.session.add(Comissionado)
+            db.session.flush()
+
+
+            #Cadastrar pessoa financeira
+            if criar_pessoa_financeiro == "sim":
+                try:
+                    vinculos_operacionais = {
+                        "comissionado": [{
+                            "id": str(Comissionado.id),
+                            "identificacao": Comissionado.identificacao 
+                        }]
+                    }
+
+                    vinculos_json = json.dumps(vinculos_operacionais)
+                    tem_fornecedor, tem_transportadora, tem_extrator, tem_comissionado, vinculos_data = \
+                        PessoaFinanceiroModel.processar_vinculos(vinculos_json)
+                    
+                    pessoa_financeiro = PessoaFinanceiroModel(
+                        tipo_cadastro=True if tipoCadastroComissionado == 1 else False,
+                        identificacao=identificacaoComissionado,
+                        numero_documento=numeroDocumento,
+                        telefone=telefone_tratado,
+                        instituicao_financeira_id=int(instituicao_financeira) if instituicao_financeira else None,
+                        agencia_bancaria=agencia_bancaria if agencia_bancaria else None,
+                        conta_bancaria=conta_bancaria if conta_bancaria else None,
+                        chave_pix=chave_pix if chave_pix else None,
+                        tem_vinculo_fornecedor=tem_fornecedor,
+                        tem_vinculo_transportadora=tem_transportadora,
+                        tem_vinculo_extrator=tem_extrator,
+                        tem_vinculo_comissionado=tem_comissionado,
+                        vinculos_operacionais=vinculos_data,
+                        ativo=True
+                    )
+
+                    db.session.add(pessoa_financeiro)
+                    db.session.flush()
+
+                    flash(("Comissionado e Pessoa Financeira cadastrados com sucesso!", "success"))
+                
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"Erro ao criar Pessoa Financeira: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    flash((f"Comissionado cadastrado, mas houve erro ao criar Pessoa Financeira: {str(e)}", "warning"))
+                    return redirect(url_for("listar_comissionados"))
+            else:
+                flash(("Comissionado cadastrado com sucesso!", "success"))
+            
             db.session.commit()
+
             acao = TipoAcaoEnum.CADASTRO
             PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                 current_user.id,
@@ -131,7 +185,6 @@ def cadastrar_comissionado():
                 acao.pontos,
                 modulo='comissionado'
             )
-            flash(("Comissionado cadastrado com sucesso!", "success"))
             return redirect(url_for("listar_comissionados"))
     return render_template(
         "gerenciar/comissionados/comissionado_cadastrar.html",
@@ -253,10 +306,10 @@ def editar_comissionado(id):
                 "cnpj": numeroDocumento if tipoCadastro == "cnpj" else comissionado.numero_documento,
                 "cpfComissionado": numeroDocumento if tipoCadastro == "cpf" else comissionado.numero_documento,
                 "telefone": telefone_tratado.strip(),
-                "instituicao_financeira": comissionado.instituicao_financeira_id if comissionado.instituicao_financeira_id else "",
-                "agencia_bancaria": comissionado.agencia_bancaria or "",
-                "conta_bancaria": comissionado.conta_bancaria or "",
-                "chave_pix": comissionado.chave_pix or "",
+                "instituicao_financeira": int(instituicao_financeira) if instituicao_financeira else "",
+                "agencia_bancaria": agencia_bancaria.strip() if agencia_bancaria else "",
+                "conta_bancaria": conta_bancaria.strip() if conta_bancaria else "",
+                "chave_pix": chave_pix.strip() if chave_pix else "",
             }
 
 
@@ -278,6 +331,45 @@ def editar_comissionado(id):
             comissionado.agencia_bancaria = agencia_bancaria if agencia_bancaria else None
             comissionado.conta_bancaria = conta_bancaria if conta_bancaria  else None
             comissionado.chave_pix = chave_pix if chave_pix else None
+
+            pessoa_financeira = PessoaFinanceiroModel.query.filter_by(
+                numero_documento=numeroDocumento,
+                ativo=True,
+                deletado=False
+            ).first()
+
+            if pessoa_financeira:
+                try:
+                    print(f"Atualizando Pessoa Financeira ID: {pessoa_financeira.id}")
+
+                    pessoa_financeira.tipo_cadastro = True if tipoCadastroComissionado == 1 else False
+                    pessoa_financeira.identificacao = identificacaoComissionado
+                    pessoa_financeira.numero_documento = numeroDocumento
+                    pessoa_financeira.telefone = telefone_tratado
+                    pessoa_financeira.instituicao_financeira_id = int(instituicao_financeira) if instituicao_financeira else None
+                    pessoa_financeira.agencia_bancaria = agencia_bancaria.strip() if agencia_bancaria else None
+                    pessoa_financeira.conta_bancaria = conta_bancaria.strip() if conta_bancaria else None
+                    pessoa_financeira.chave_pix = chave_pix.strip() if chave_pix else None
+
+                    # Atualizar vínculos
+                    vinculos_atuais = pessoa_financeira.vinculos_operacionais or {}
+                    vinculos_atuais["comissionado"] = [{
+                        "id": str(comissionado.id),
+                        "identificacao": identificacaoComissionado
+                    }]
+
+                    pessoa_financeira.vinculos_operacionais = vinculos_atuais
+                    flag_modified(pessoa_financeira, "vinculos_operacionais")
+
+                    db.session.flush()
+
+                    print(f"Pessoa Financeira atualizada com sucesso!")
+                    print(f"Vínculos: {json.dumps(vinculos_atuais, indent=2, ensure_ascii=False)}")
+
+                except Exception as e:
+                    print(f"Erro ao atualizar Pessoa Financeira: {e}")
+                    import traceback
+                    traceback.print_exc()
 
             db.session.commit()
             flash(("Comissionado editado com sucesso!", "success"))

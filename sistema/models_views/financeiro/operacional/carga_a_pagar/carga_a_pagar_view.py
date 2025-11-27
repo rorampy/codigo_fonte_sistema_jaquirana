@@ -4,10 +4,10 @@ from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem, forma
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
-from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
+from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
 from sistema.models_views.autenticacao.usuario_model import UsuarioModel
 from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
-from sistema.models_views.financeiro.situacao_pagamento_model import SituacaoPagamentoModel
+from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
@@ -16,10 +16,10 @@ from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model im
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
 
 # Imports para modelos de A Pagar
-from sistema.models_views.faturamento.cargas_a_pagar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
-from sistema.models_views.faturamento.cargas_a_pagar.transportadora.frete_a_pagar_model import FretePagarModel
-from sistema.models_views.faturamento.cargas_a_pagar.extrator.extrator_a_pagar_model import ExtratorPagarModel
-from sistema.models_views.faturamento.cargas_a_pagar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
 
 # Imports para modelos de Crédito
 from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_fornecedor_model import CreditoFornecedorModel
@@ -28,7 +28,6 @@ from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_
 from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_fornecedor_model import ExtratoCreditoFornecedorModel
 from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_freteiro_model import ExtratoCreditoFreteiroModel
 from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_extrator_model import ExtratoCreditoExtratorModel
-
 from sistema._utilitarios import *
 
 
@@ -93,7 +92,6 @@ def detalhes_faturamento_ajax(id):
         try:
             detalhes = faturamento.obter_detalhes()
         except Exception as e:
-            print(f"Erro ao obter detalhes do faturamento {id}: {e}")
             detalhes = {"fornecedores": [], "transportadoras": [], "extratores": [], "comissionados": [], "cargas_a_receber": [],
                        "credito_fornecedor": [], "credito_transportadora": [], "credito_extrator": []}
         
@@ -253,11 +251,16 @@ def detalhes_faturamento_ajax(id):
         credito_fornecedor = detalhes.get("credito_fornecedor", [])
         if credito_fornecedor:
             for credito in credito_fornecedor:
+                # Buscar código do faturamento origem
+                extrato_credito_id = credito.get("extrato_credito_fornecedor_id")
+                codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'fornecedor')
+                
                 credito_formatado = {
                     "categoria": "Fornecedor",
                     "identificacao": credito.get("fornecedor_identificacao", credito.get("descricao", "N/A")),
                     "descricao": credito.get("credito_descricao", credito.get("descricao", "Crédito de Fornecedor")),
-                    "valor_utilizado": formatar_valor(credito.get("valor", 0))
+                    "valor_utilizado": formatar_valor(credito.get("valor", 0)),
+                    "codigo_faturamento": codigo_faturamento_origem
                 }
                 creditos_utilizados_formatados.append(credito_formatado)
         
@@ -265,11 +268,16 @@ def detalhes_faturamento_ajax(id):
         credito_transportadora = detalhes.get("credito_transportadora", [])
         if credito_transportadora:
             for credito in credito_transportadora:
+                # Buscar código do faturamento origem
+                extrato_credito_id = credito.get("extrato_credito_transportadora_id")
+                codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'transportadora')
+                
                 credito_formatado = {
                     "categoria": "Frete",
                     "identificacao": credito.get("transportadora_identificacao", credito.get("descricao", "N/A")),
                     "descricao": credito.get("credito_descricao", credito.get("descricao", "Crédito de Transportadora")),
-                    "valor_utilizado": formatar_valor(credito.get("valor", 0))
+                    "valor_utilizado": formatar_valor(credito.get("valor", 0)),
+                    "codigo_faturamento": codigo_faturamento_origem
                 }
                 creditos_utilizados_formatados.append(credito_formatado)
         
@@ -277,11 +285,16 @@ def detalhes_faturamento_ajax(id):
         credito_extrator = detalhes.get("credito_extrator", [])
         if credito_extrator:
             for credito in credito_extrator:
+                # Buscar código do faturamento origem
+                extrato_credito_id = credito.get("extrato_credito_extrator_id")
+                codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'extrator')
+                
                 credito_formatado = {
                     "categoria": "Extrator",
                     "identificacao": credito.get("extrator_identificacao", credito.get("descricao", "N/A")),
                     "descricao": credito.get("credito_descricao", credito.get("descricao", "Crédito de Extrator")),
-                    "valor_utilizado": formatar_valor(credito.get("valor", 0))
+                    "valor_utilizado": formatar_valor(credito.get("valor", 0)),
+                    "codigo_faturamento": codigo_faturamento_origem
                 }
                 creditos_utilizados_formatados.append(credito_formatado)
 
@@ -525,7 +538,7 @@ def excluir_faturamento_a_pagar(faturamento_id):
     
     try:
         # Verificar se o faturamento possui situação 6 (não pode ser excluído)
-        if faturamento.situacao_pagamento_id == 6:
+        if faturamento.situacao_pagamento_id == 6 and current_user.role_id != 1:
             flash(('Não é possível excluir este faturamento pois ele possui situação que não permite exclusão.', 'error'))
             return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
         
@@ -638,14 +651,11 @@ def _devolver_creditos_faturamento(detalhes):
             if credito_id and valor_utilizado and fornecedor_id:
                 # Buscar o registro de crédito original
                 credito_original = ExtratoCreditoFornecedorModel.query.get(credito_id)
-                if credito_original and credito_original.ativo == False:
-                    # Reativar o crédito original
-                    credito_original.ativo = True
-                    
+                if credito_original:
                     # Criar novo registro de estorno
                     estorno = ExtratoCreditoFornecedorModel(
                         data_movimentacao=date.today(),
-                        descricao=f"Estorno por exclusão de faturamento - {credito_data.get('descricao', 'Crédito')}",
+                        descricao=f"{credito_data.get('descricao', 'Crédito')}",
                         fornecedor_id=fornecedor_id,
                         valor_credito_100=valor_utilizado,
                         usuario_id=current_user.id,
@@ -677,14 +687,12 @@ def _devolver_creditos_faturamento(detalhes):
             if credito_id and valor_utilizado and transportadora_id:
                 # Buscar o registro de crédito original
                 credito_original = ExtratoCreditoFreteiroModel.query.get(credito_id)
-                if credito_original and credito_original.ativo == False:
-                    # Reativar o crédito original
-                    credito_original.ativo = True
-                    
+                if credito_original: 
+                                       
                     # Criar novo registro de estorno
                     estorno = ExtratoCreditoFreteiroModel(
                         data_movimentacao=date.today(),
-                        descricao=f"Estorno por exclusão de faturamento - {credito_data.get('descricao', 'Crédito')}",
+                        descricao=f"{credito_data.get('descricao', 'Crédito')}",
                         transportadora_id=transportadora_id,
                         valor_credito_100=valor_utilizado,
                         usuario_id=current_user.id,
@@ -720,14 +728,12 @@ def _devolver_creditos_faturamento(detalhes):
             if credito_id and valor_utilizado and extrator_id:
                 # Buscar o registro de crédito original
                 credito_original = ExtratoCreditoExtratorModel.query.get(credito_id)
-                if credito_original and credito_original.ativo == False:
-                    # Reativar o crédito original
-                    credito_original.ativo = True
-                    
+                if credito_original:
+                
                     # Criar novo registro de estorno
                     estorno = ExtratoCreditoExtratorModel(
                         data_movimentacao=date.today(),
-                        descricao=f"Estorno por exclusão de faturamento - {credito_data.get('descricao', 'Crédito')}",
+                        descricao=f"{credito_data.get('descricao', 'Crédito')}",
                         extrator_id=extrator_id,
                         valor_credito_100=valor_utilizado,
                         usuario_id=current_user.id,
@@ -755,7 +761,6 @@ def _devolver_creditos_faturamento(detalhes):
                     
     except Exception as e:
         raise e
-
 
 @app.route('/financeiro/cargas-a-pagar/exportar-pdf/<int:faturamento_id>', methods=['POST'])
 @login_required
@@ -842,7 +847,7 @@ def exportar_faturamento_imagem(faturamento_id):
         nome_arquivo = f"Faturamento_{codigo_fat}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
         # Gerar IMAGEM ao invés de PDF
-        return ManipulacaoArquivos.gerar_imagem_from_html(html, nome_arquivo, largura=1400)
+        return ManipulacaoArquivos.gerar_imagem_from_html(html, nome_arquivo, largura=1200)
         
     except Exception as e:
         flash((f"Erro ao gerar imagem do faturamento! Contate o suporte. {e}", "error"))
@@ -883,26 +888,66 @@ def processar_dados_faturamento(faturamento):
         except (json.JSONDecodeError, TypeError):
             detalhes = {}
     
-    # Processar fornecedores
-    fornecedores_agrupados = agrupar_fornecedores_pdf(detalhes.get('fornecedores', []))
-    dados['fornecedores'] = fornecedores_agrupados
-    dados['total_fornecedores'] = len(detalhes.get('fornecedores', []))
+    # Calcular período quinzenal baseado nas datas de entrega dos registros
+    todas_datas = []
     
-    # Processar transportadoras
-    transportadoras_agrupadas = agrupar_transportadoras_pdf(detalhes.get('transportadoras', []))
-    dados['transportadoras'] = transportadoras_agrupadas
+    # Coletar todas as datas de entrega dos registros
+    for categoria in ['fornecedores', 'transportadoras', 'extratores', 'comissionados']:
+        registros = detalhes.get(categoria, [])
+        for registro in registros:
+            data_entrega = registro.get('data_entrega')
+            if data_entrega and data_entrega != '-':
+                todas_datas.append(data_entrega)
+    
+    # Determinar o período quinzenal - a função faz toda a mágica!
+    periodo_quinzenal = DataHora.obter_periodo_quinzenal(todas_datas) if todas_datas else None
+    
+    # Adicionar período quinzenal aos dados do faturamento
+    dados['faturamento']['periodo_quinzenal'] = periodo_quinzenal
+    
+    # Usar método integrado que retorna AMBAS as estruturas
+    todos_dados_agrupados = FaturamentoModel.agrupar_dados_por_cliente_produto(detalhes)
+    
+    # Estrutura ORIGINAL: extrair agrupamentos por categoria
+    dados['fornecedores'] = todos_dados_agrupados['fornecedores_agrupados']
+    dados['transportadoras'] = todos_dados_agrupados['transportadoras_agrupadas']
+    dados['extratores'] = todos_dados_agrupados['extratores_agrupados']
+    dados['comissionados'] = todos_dados_agrupados['comissionados_agrupados']
+    dados['cargas_a_receber'] = todos_dados_agrupados['cargas_a_receber_agrupadas']
+    
+    # NOVA estrutura hierárquica: agrupar TODOS os dados por cliente e produto
+    dados['clientes'] = todos_dados_agrupados['dados_hierarquicos']
+    dados['total_clientes'] = len(todos_dados_agrupados['dados_hierarquicos'])
+    
+    # Usar os totais calculados pela função agrupar_dados_por_cliente_produto
+    # Os totais estão dentro de dados_hierarquicos -> produtos -> totais
+    totais_globais = {
+        'fornecedores': 0.0,
+        'transportadoras': 0.0,
+        'extratores': 0.0,
+        'comissionados': 0.0,
+        'cargas_a_receber': 0.0,
+        'total_geral': 0.0
+    }
+    
+    # Somar todos os totais de todos os produtos de todos os clientes
+    for cliente in todos_dados_agrupados.get('dados_hierarquicos', []):
+        for produto in cliente.get('produtos', []):
+            totais_produto = produto.get('totais', {})
+            totais_globais['fornecedores'] += totais_produto.get('fornecedores', 0.0)
+            totais_globais['transportadoras'] += totais_produto.get('transportadoras', 0.0)
+            totais_globais['extratores'] += totais_produto.get('extratores', 0.0)
+            totais_globais['comissionados'] += totais_produto.get('comissionados', 0.0)
+            totais_globais['cargas_a_receber'] += totais_produto.get('cargas_a_receber', 0.0)
+            totais_globais['total_geral'] += totais_produto.get('total_geral', 0.0)
+    
+    dados['totais'] = totais_globais
+    # Calcular totais gerais para compatibilidade
+    dados['total_fornecedores'] = len(detalhes.get('fornecedores', []))
     dados['total_transportadoras'] = len(detalhes.get('transportadoras', []))
-
-    # Processar extratores
-    extratores_agrupados = agrupar_extratores_pdf(detalhes.get('extratores', []))
-    dados['extratores'] = extratores_agrupados
     dados['total_extratores'] = len(detalhes.get('extratores', []))
-
-    # Processar comissionados
-    comissionados_agrupados = agrupar_comissionados_pdf(detalhes.get('comissionados', []))
-    dados['comissionados'] = comissionados_agrupados
     dados['total_comissionados'] = len(detalhes.get('comissionados', []))
-
+    dados['total_cargas_a_receber'] = len(detalhes.get('cargas_a_receber', []))
     # Processar receitas avulsas (via relacionamento direto)
     receitas_avulsas = []
     if faturamento.lancamento_avulso_id:
@@ -943,113 +988,94 @@ def processar_dados_faturamento(faturamento):
     dados['despesas_avulsas'] = despesas_avulsas
     dados['total_despesas_avulsas'] = len(despesas_avulsas)
 
-    # Processar créditos utilizados
-    def formatar_valor(valor_centavos):
-        if valor_centavos is None:
-            return "R$ 0,00"
-        return f"R$ {valor_centavos / 100:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
     creditos_utilizados = []
     
     # Processar créditos de fornecedor
     credito_fornecedor = detalhes.get("credito_fornecedor", [])
     if credito_fornecedor:
         for credito in credito_fornecedor:
+            fornecedor_id = credito.get("entidade_id") or credito.get("fornecedor_id")
+            valor_utilizado = credito.get("valor", 0)
+            valor_original = credito.get("valor_original", valor_utilizado)
+            
+            # Calcular saldo restante deste crédito específico
+            valor_restante = valor_original - valor_utilizado
+            
+            # Buscar código do faturamento origem
+            extrato_credito_id = credito.get("credito_id")
+            codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'fornecedor')
+            
             creditos_utilizados.append({
                 "categoria": "Fornecedor",
-                "identificacao": credito.get("fornecedor_identificacao", credito.get("descricao", "N/A")),
-                "descricao": credito.get("credito_descricao", credito.get("descricao", "Crédito de Fornecedor")),
-                "valor_utilizado": formatar_valor(credito.get("valor", 0))
+                "identificacao": credito.get("entidade_nome") or credito.get("fornecedor_identificacao", credito.get("descricao", "N/A")),
+                "descricao": credito.get("descricao", "Crédito de Fornecedor"),
+                "credito_id": credito.get("credito_id"),
+                "valor_original": valor_original,
+                "valor_utilizado": valor_utilizado,
+                "valor_restante": valor_restante,
+                "uso_parcial": credito.get("uso_parcial", False),
+                "codigo_faturamento": codigo_faturamento_origem
             })
     
     # Processar créditos de transportadora
     credito_transportadora = detalhes.get("credito_transportadora", [])
     if credito_transportadora:
         for credito in credito_transportadora:
+            
+            transportadora_id = credito.get("entidade_id") or credito.get("transportadora_id")
+            valor_utilizado = credito.get("valor", 0)
+            valor_original = credito.get("valor_original", valor_utilizado)
+            
+            # Calcular saldo restante deste crédito específico
+            valor_restante = valor_original - valor_utilizado
+            # Buscar código do faturamento origem
+            extrato_credito_id = credito.get("credito_id")
+            codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'transportadora')
+            
             creditos_utilizados.append({
                 "categoria": "Frete",
-                "identificacao": credito.get("transportadora_identificacao", credito.get("descricao", "N/A")),
-                "descricao": credito.get("credito_descricao", credito.get("descricao", "Crédito de Transportadora")),
-                "valor_utilizado": formatar_valor(credito.get("valor", 0))
+                "identificacao": credito.get("entidade_nome") or credito.get("transportadora_identificacao", credito.get("descricao", "N/A")),
+                "descricao": credito.get("descricao", "Crédito de Transportadora"),
+                "credito_id": credito.get("credito_id"),
+                "valor_original": valor_original,
+                "valor_utilizado": valor_utilizado,
+                "valor_restante": valor_restante,
+                "uso_parcial": credito.get("uso_parcial", False),
+                "codigo_faturamento": codigo_faturamento_origem
+            })
+    
+    # Processar créditos de extrator
+    credito_extrator = detalhes.get("credito_extrator", [])
+    if credito_extrator:
+        for credito in credito_extrator:
+            extrator_id = credito.get("entidade_id") or credito.get("extrator_id")
+            valor_utilizado = credito.get("valor", 0)
+            valor_original = credito.get("valor_original", valor_utilizado)
+            
+            # Calcular saldo restante deste crédito específico
+            valor_restante = valor_original - valor_utilizado
+            
+            # Buscar código do faturamento origem
+            extrato_credito_id = credito.get("credito_id")
+            codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'extrator')
+            
+            creditos_utilizados.append({
+                "categoria": "Extrator",
+                "identificacao": credito.get("entidade_nome") or credito.get("extrator_identificacao", credito.get("descricao", "N/A")),
+                "descricao": credito.get("descricao", "Crédito de Extrator"),
+                "credito_id": credito.get("credito_id"),
+                "valor_original": valor_original,
+                "valor_utilizado": valor_utilizado,
+                "valor_restante": valor_restante,
+                "uso_parcial": credito.get("uso_parcial", False),
+                "codigo_faturamento": codigo_faturamento_origem
             })
 
     dados['creditos_utilizados'] = creditos_utilizados
     dados['faturamento']['utilizou_credito'] = faturamento.utilizou_credito
 
+    # Buscar créditos em aberto das entidades vinculadas ao faturamento
+    creditos_em_aberto = FaturamentoModel._buscar_creditos_em_aberto(detalhes)
+    dados['creditos_em_aberto'] = creditos_em_aberto
+
     return dados
-
-
-def agrupar_fornecedores_pdf(fornecedores):
-    """Agrupa fornecedores para PDF"""
-    from collections import defaultdict
-    grupos = defaultdict(lambda: {'registros': [], 'total': 0.0})
-    
-    for fornecedor in fornecedores:
-        nome = fornecedor.get('fornecedor_identificacao', 'Não informado')
-        valor_str = fornecedor.get('valor_faturado', 'R$ 0,00')
-        valor = valor_str
-        
-        grupos[nome]['registros'].append({
-            **fornecedor,
-            'valor_faturado_num': valor
-        })
-        grupos[nome]['total'] += valor
-    
-    return dict(grupos)
-
-def agrupar_transportadoras_pdf(transportadoras):
-    """Agrupa transportadoras para PDF"""
-    from collections import defaultdict
-    grupos = defaultdict(lambda: {'registros': [], 'total': 0.0})
-    
-    for transportadora in transportadoras:
-        nome = transportadora.get('nome', 'Não informado') if transportadora.get('nome') else transportadora.get('transportadora_identificacao', 'Não informado')
-        valor_str = transportadora.get('valor_faturado', 'R$ 0,00')
-        valor = valor_str
-        
-        grupos[nome]['registros'].append({
-            **transportadora,
-            'valor_faturado_num': valor
-        })
-        grupos[nome]['total'] += valor
-    
-    return dict(grupos)
-
-def agrupar_extratores_pdf(extratores):
-    """Agrupa extratores para PDF"""
-    from collections import defaultdict
-    grupos = defaultdict(lambda: {'registros': [], 'total': 0.0})
-
-    for extrator in extratores:
-        # Tenta pegar o nome do extrator pelos diferentes campos possíveis
-        nome = extrator.get('extrator_identificacao') or extrator.get('identificacao') or extrator.get('nome', 'Não informado')
-        valor_str = extrator.get('valor_faturado', 'R$ 0,00')
-        valor = valor_str
-        
-        grupos[nome]['registros'].append({
-            **extrator,
-            'valor_faturado_num': valor
-        })
-        grupos[nome]['total'] += valor
-    
-    return dict(grupos)
-
-def agrupar_comissionados_pdf(comissionados):
-    """Agrupa comissionados para PDF"""
-    from collections import defaultdict
-    grupos = defaultdict(lambda: {'registros': [], 'total': 0.0})
-
-    for comissionado in comissionados:
-        # Tenta pegar o nome do comissionado pelos diferentes campos possíveis
-        nome = comissionado.get('comissionado_identificacao') or comissionado.get('identificacao') or comissionado.get('nome', 'Não informado')
-        valor_str = comissionado.get('valor_faturado', 'R$ 0,00')
-        valor = valor_str
-        
-        grupos[nome]['registros'].append({
-            **comissionado,
-            'valor_faturado_num': valor
-        })
-        grupos[nome]['total'] += valor
-    
-    return dict(grupos)
-

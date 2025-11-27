@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório Vendas Trânsito</title>
+  {% include 'controle_carga/vendas/vendas_transito/relatorio_pdf/relatorio_layout_padrao.html' %}
+</head>
+
+<body>
+
+
+
+  <!-- Header -->
+  <div class="header">
+    <table>
+      <tr>
+        <td style="width: 200px;">
+          <img src="{{ logo_path }}" alt="Logo MBR Extração" />
+        </td>
+        <td class="system-info">
+          <div><strong>Sistema de Gestão MBR</strong></div>
+          <div><strong>Relatório gerado em:</strong> {{ data_geracao }}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="relatorio-title">Relatório de Vendas em Trânsito</div>
+
+  <!-- Filtros aplicados (se houver) -->
+  {% if dados_corretos and (dados_corretos.get('data_inicio') or dados_corretos.get('data_fim') or dados_corretos.get('cliente_venda') or dados_corretos.get('nf_venda') or dados_corretos.get('transportadora_venda') or dados_corretos.get('produto_venda') or dados_corretos.get('bitola_venda') or dados_corretos.get('motorista_venda') or dados_corretos.get('placa_venda') or dados_corretos.get('origem_venda')) %}
+  <div class="section-title">FILTROS APLICADOS</div>
+  <table style="width: 100%; margin-bottom: 20px; border: 1px solid #ddd; border-collapse: collapse;">
+    <tbody>
+      {% if dados_corretos.get('data_inicio') or dados_corretos.get('data_fim') %}
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f8f9fa; font-weight: bold; width: 25%;">Período:</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">
+          {% if dados_corretos.get('data_inicio') and dados_corretos.get('data_fim') %}
+          {{ dados_corretos.get('data_inicio') }} até {{ dados_corretos.get('data_fim') }}
+          {% elif dados_corretos.get('data_inicio') %}
+          A partir de {{ dados_corretos.get('data_inicio') }}
+          {% elif dados_corretos.get('data_fim') %}
+          Até {{ dados_corretos.get('data_fim') }}
+          {% endif %}
+        </td>
+      </tr>
+      {% endif %}
+      {% if dados_corretos.get('cliente_venda') %}
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f8f9fa; font-weight: bold; width: 25%;">Cliente:</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ dados_corretos.get('cliente_venda') }}</td>
+      </tr>
+      {% endif %}
+      {% if dados_corretos.get('nf_venda') %}
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f8f9fa; font-weight: bold; width: 25%;">Nota Fiscal:</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ dados_corretos.get('nf_venda') }}</td>
+      </tr>
+      {% endif %}
+      {% if dados_corretos.get('transportadora_venda') %}
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f8f9fa; font-weight: bold; width: 25%;">Transportadora:</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ dados_corretos.get('transportadora_venda') }}</td>
+      </tr>
+      {% endif %}
+      {% if dados_corretos.get('motorista_venda') %}
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f8f9fa; font-weight: bold; width: 25%;">Motorista:</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ dados_corretos.get('motorista_venda') }}</td>
+      </tr>
+      {% endif %}
+      {% if dados_corretos.get('placa_venda') %}
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f8f9fa; font-weight: bold; width: 25%;">Placa:</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ dados_corretos.get('placa_venda') }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: center;">Cliente</th>
+        <th style="text-align: center;">Produto | Bitola</th>
+        <th style="text-align: center;">Número NF</th>
+        <th style="text-align: center;">Placa/Motorista</th>
+        <th style="text-align: center;">Transportadora</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for registro in vendas_em_transito %}
+      <tr>
+        <td>{{ registro.solicitacao.cliente.identificacao | truncate(40, '...') or '-' }}</td>
+        <td>{{ registro.solicitacao.produto.nome }} | {{ registro.solicitacao.bitola.bitola }}</td>
+        <td>
+          {% if registro.estorno_nf %}
+          {{ registro.numero_nota_fiscal_estorno }} *
+          {% elif registro.numero_nota_fiscal %}
+          {{ registro.numero_nota_fiscal }}
+          {% else %}
+          -
+          {% endif %}
+        </td>
+        <td>
+          {% if registro.solicitacao.veiculo.placa_veiculo %}
+          {{ registro.solicitacao.veiculo.placa_veiculo }}
+          {% else %}-{% endif %} |
+          {% set nome_split = registro.solicitacao.motorista.nome_completo.split() %}
+          {% if nome_split|length > 1 %}
+          {{ nome_split[0] }} {{ nome_split[1][0] }}.
+          {% elif nome_split|length >= 0 %} {{ nome_split[0] }}
+          {% endif %}
+        </td>
+        <td>{{ registro.solicitacao.transportadora_exibicao.identificacao | truncate(40, '...') or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão MBR - Módulo Financeiro</strong></p>
+    <p>Relatório de Vendas em Trânsito gerado automaticamente pelo Sistema de Gestão MBR</p>
+  </div>
+</body>
+
+</html>

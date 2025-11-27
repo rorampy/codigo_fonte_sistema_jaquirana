@@ -3,25 +3,25 @@ import json
 from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem, formatar_data_para_brl
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from sistema.models_views.controle_carga.carga_model import CargaModel
+from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
 from sistema.models_views.gerenciar.motorista.transportadora_motorista_associado_model import TransportadoraMotoristaAssocModel
 from sistema.models_views.gerenciar.veiculo.veiculo_model import VeiculoModel
 from sistema.models_views.gerenciar.veiculo.veiculo_transportadora_veiculo_associado_model import TransportadoraVeiculoAssocModel
-from sistema.models_views.controle_carga.produto_model import ProdutoModel
+from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.parametros.bitola.bitola_model import BitolaModel
 from sistema.models_views.parametros.nome_grupo_whats.nome_grupo_whats_model import NomeGrupoWhatsModel
 from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.models_views.configuracoes_gerais.empresa_emissora.empresa_emissora_model import EmpresaEmissoraModel
-from sistema.models_views.faturamento.cargas_a_pagar.transportadora.frete_a_pagar_model import FretePagarModel
-from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
+from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
+from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
 from sistema.models_views.autenticacao.usuario_model import UsuarioModel
 from sistema._utilitarios import *
 from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
-from sistema.models_views.financeiro.situacao_pagamento_model import SituacaoPagamentoModel
+from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
@@ -177,16 +177,16 @@ def detalhes_faturamento_controle_credito_ajax(id):
 @login_required
 @requires_roles
 def detalhes_categorizacao_faturamento_controle_creditos_json(id):
-    """Retorna JSON com os detalhes da categorização de um faturamento de controle de créditos"""
+    """Retorna JSON com os detalhes da categorização de um faturamento de Adiantamentos de Créditos"""
     try:
         # Buscar o faturamento
         faturamento = FaturamentoModel.obter_faturamento_por_id(id)
         if not faturamento:
             return jsonify({'error': 'Faturamento não encontrado!'}), 404
             
-        # Verificar se é um faturamento de controle de créditos
+        # Verificar se é um faturamento de Adiantamentos de Créditos
         if faturamento.tipo_operacao != 3 or faturamento.direcao_financeira != 2:
-            return jsonify({'error': 'Este não é um faturamento de controle de créditos.'}), 400
+            return jsonify({'error': 'Este não é um faturamento de Adiantamentos de Créditos.'}), 400
             
         # Buscar o agendamento de pagamento
         agendamento = db.session.query(AgendamentoPagamentoModel).filter_by(faturamento_id=id).first()
@@ -356,12 +356,12 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
         
         valor_credito_total = total_creditos_fornecedores + total_creditos_transportadoras + total_creditos_extratores
 
-        # Montar resposta JSON específica para controle de créditos
+        # Montar resposta JSON específica para Adiantamentos de Créditos
         dados = {
             'categorizacao_id': agendamento.id,
             'faturamento': {
                 'codigo': faturamento.codigo_faturamento,
-                'tipo': 'Controle de Créditos',
+                'tipo': 'Adiantamentos de Créditos',
                 'valor_total': valor_total_final,
                 'valor_bruto_total': valor_bruto_total,
                 'valor_credito_total': valor_credito_total,
@@ -394,14 +394,14 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
 @login_required
 @requires_roles
 def exportar_controle_creditos_pdf(faturamento_id):
-    """Gera PDF do faturamento de controle de créditos"""
+    """Gera PDF do faturamento de Adiantamentos de Créditos"""
     try:
         # Buscar faturamento
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
-        # Verificar se é um faturamento de controle de créditos
+        # Verificar se é um faturamento de Adiantamentos de Créditos
         if faturamento.tipo_operacao != 3 or faturamento.direcao_financeira != 2:
-            flash(("Este não é um faturamento de controle de créditos.", "error"))
+            flash(("Este não é um faturamento de Adiantamentos de Créditos.", "error"))
             return redirect(url_for("listagem_faturamentos_controle_credito"))
         
         # Processar dados do faturamento
@@ -417,7 +417,7 @@ def exportar_controle_creditos_pdf(faturamento_id):
         # Combinar todos os dados
         dados_template = {**dados_processados, **dados_extras}
         
-        # Renderizar template HTML específico para controle de créditos
+        # Renderizar template HTML específico para Adiantamentos de Créditos
         html = render_template('financeiro/operacional/controle_creditos/relatorio_faturamento/relatorio_faturamento.html', **dados_template)
 
         # Gerar nome do arquivo
@@ -429,7 +429,7 @@ def exportar_controle_creditos_pdf(faturamento_id):
         
     except Exception as e:
         print(f"[ERROR exportar_controle_creditos_pdf] {e}")
-        flash((f"Erro ao gerar PDF do controle de créditos! Contate o suporte. {e}", "error"))
+        flash((f"Erro ao gerar PDF do Adiantamentos de Créditos! Contate o suporte. {e}", "error"))
         return redirect(url_for("listagem_faturamentos_controle_credito"))
     
 
@@ -437,14 +437,14 @@ def exportar_controle_creditos_pdf(faturamento_id):
 @login_required
 @requires_roles
 def exportar_controle_creditos_imagem(faturamento_id):
-    """Gera imagem JPG do faturamento de controle de créditos"""
+    """Gera imagem JPG do faturamento de Adiantamentos de Créditos"""
     try:
         # Buscar faturamento
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
-        # Verificar se é um faturamento de controle de créditos
+        # Verificar se é um faturamento de Adiantamentos de Créditos
         if faturamento.tipo_operacao != 3 or faturamento.direcao_financeira != 2:
-            flash(("Este não é um faturamento de controle de créditos.", "error"))
+            flash(("Este não é um faturamento de Adiantamentos de Créditos.", "error"))
             return redirect(url_for("listagem_faturamentos_controle_credito"))
         
         # Processar dados do faturamento
@@ -460,7 +460,7 @@ def exportar_controle_creditos_imagem(faturamento_id):
         # Combinar todos os dados
         dados_template = {**dados_processados, **dados_extras}
 
-        # Renderizar template HTML específico para controle de créditos (versão imagem)
+        # Renderizar template HTML específico para Adiantamentos de Créditos (versão imagem)
         html = render_template('financeiro/operacional/controle_creditos/relatorio_faturamento/relatorio_faturamento_imagem.html', **dados_template)
 
         # Gerar nome do arquivo
@@ -472,7 +472,7 @@ def exportar_controle_creditos_imagem(faturamento_id):
         
     except Exception as e:
         print(f"[ERROR exportar_controle_creditos_imagem] {e}")
-        flash((f"Erro ao gerar imagem do controle de créditos! Contate o suporte. {e}", "error"))
+        flash((f"Erro ao gerar imagem do Adiantamentos de Créditos! Contate o suporte. {e}", "error"))
         return redirect(url_for("listagem_faturamentos_controle_credito"))
 
 @app.route('/financeiro/controle-creditos/excluir/<int:faturamento_id>', methods=['GET', 'POST'])
@@ -485,6 +485,7 @@ def excluir_faturamento_creditos(faturamento_id):
     Devolve créditos utilizados para os fornecedores, transportadoras e extratores.
     """
     faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
+    data_hoje = DataHora.obter_data_atual_padrao_en()
     
     try:
         # Verificar se o faturamento possui situação 6 (não pode ser excluído)
@@ -511,7 +512,7 @@ def excluir_faturamento_creditos(faturamento_id):
         # Processar detalhes do faturamento para marcar créditos como deletados e debitar saldos
         if faturamento.detalhes_json:
             try:
-                detalhes = json.loads(faturamento.detalhes_json)
+                detalhes = faturamento.detalhes_json
                 
                 # Processar créditos de fornecedores
                 creditos_fornecedores = detalhes.get('credito_fornecedor', [])
@@ -525,8 +526,20 @@ def excluir_faturamento_creditos(faturamento_id):
                         extrato_credito = ExtratoCreditoFornecedorModel.query.get(extrato_credito_fornecedor_id)
                         if extrato_credito:
                             # Marcar como deletado e inativo
-                            extrato_credito.deletado = True
-                            extrato_credito.ativo = False
+                            extrato_credito.credito_utilizado = True
+                            
+                            novo_extrato = ExtratoCreditoFornecedorModel(
+                                tipo_movimentacao=2,
+                                fornecedor_id=extrato_credito.fornecedor_id,
+                                descricao=f'Cancelamento de adiantamento devido ao cancelamento do faturamento de adiantamento de créditos. {faturamento.codigo_faturamento}',
+                                data_movimentacao=data_hoje,
+                                valor_credito_100= extrato_credito.valor_credito_100,
+                                usuario_id=current_user.id,
+                                credito_utilizado=True
+                            )
+                            
+                            db.session.add(novo_extrato)
+                            db.session.commit()
                     
                     if fornecedor_id and valor_credito_100 > 0:
                         # Debitar o valor do saldo agrupado do fornecedor
@@ -547,8 +560,20 @@ def excluir_faturamento_creditos(faturamento_id):
                         extrato_credito = ExtratoCreditoFreteiroModel.query.get(extrato_credito_transportadora_id)
                         if extrato_credito:
                             # Marcar como deletado e inativo
-                            extrato_credito.deletado = True
-                            extrato_credito.ativo = False
+                            extrato_credito.credito_utilizado = True
+                            
+                            novo_extrato = ExtratoCreditoFreteiroModel(
+                                tipo_movimentacao=2,
+                                transportadora_id=extrato_credito.transportadora_id,
+                                descricao=f'Cancelamento de adiantamento devido ao cancelamento do faturamento de adiantamento de créditos. {faturamento.codigo_faturamento}',
+                                data_movimentacao=data_hoje,
+                                valor_credito_100= extrato_credito.valor_credito_100,
+                                usuario_id=current_user.id,
+                                credito_utilizado=True
+                            )
+                            
+                            db.session.add(novo_extrato)
+                            db.session.commit()
                     
                     if transportadora_id and valor_credito_100 > 0:
                         # Debitar o valor do saldo agrupado da transportadora
@@ -568,14 +593,25 @@ def excluir_faturamento_creditos(faturamento_id):
                         extrato_credito = ExtratoCreditoExtratorModel.query.get(extrato_credito_extrator_id)
                         if extrato_credito:
                             # Marcar como deletado e inativo
-                            extrato_credito.deletado = True
-                            extrato_credito.ativo = False
+                            extrato_credito.credito_utilizado = True
+                            
+                            novo_extrato = ExtratoCreditoExtratorModel(
+                                tipo_movimentacao=2,
+                                extrator_id=extrato_credito.extrator_id,
+                                descricao=f'Cancelamento de adiantamento devido ao cancelamento do faturamento de adiantamento de créditos. {faturamento.codigo_faturamento}',
+                                data_movimentacao=data_hoje,
+                                valor_credito_100= extrato_credito.valor_credito_100,
+                                usuario_id=current_user.id,
+                                credito_utilizado=True
+                            )
+                            
+                            db.session.add(novo_extrato)
+                            db.session.commit()
                     
                     if extrator_id and valor_credito_100 > 0:
                         # Debitar o valor do saldo agrupado do extrator
                         credito_agrupado = CreditoExtratorModel.obtem_registro_extrator_id(extrator_id)
                         if credito_agrupado:
-                            # Reduzir o valor do crédito agrupado
                             credito_agrupado.valor_total_credito_100 -= valor_credito_100
                 
             except json.JSONDecodeError as e:
@@ -586,7 +622,7 @@ def excluir_faturamento_creditos(faturamento_id):
         faturamento.deletado = True
         
         db.session.commit()
-        flash(('Faturamento de controle de créditos excluído com sucesso! Registros de créditos foram deletados e os saldos foram debitados.', 'success'))
+        flash(('Faturamento de Adiantamentos de Créditos excluído com sucesso! Registros de créditos foram deletados e os saldos foram debitados.', 'success'))
         
     except Exception as e:
         db.session.rollback()
@@ -608,7 +644,7 @@ def processar_dados_faturamento(faturamento):
             'valor_bruto_total': faturamento.valor_bruto_total or 0,
             'valor_credito_aplicado': faturamento.valor_credito_aplicado or 0,
             'valor_total': faturamento.valor_total or 0,
-            'tipo_operacao': 'Controle de Créditos' if faturamento.tipo_operacao == 3 else 'Outro',
+            'tipo_operacao': 'Adiantamentos de Créditos' if faturamento.tipo_operacao == 3 else 'Outro',
             'direcao_financeira': 'Despesa' if faturamento.direcao_financeira == 2 else 'Outro',
             'situacao': faturamento.situacao.situacao if faturamento.situacao else 'Pendente'
         }
@@ -635,7 +671,7 @@ def processar_dados_faturamento(faturamento):
     dados['extratores'] = extratores_agrupados
     dados['total_extratores'] = len(creditos_extratores)
 
-    # Não há receitas nem despesas avulsas no controle de créditos
+    # Não há receitas nem despesas avulsas no Adiantamentos de Créditos
     dados['receitas_avulsas'] = []
     dados['total_receitas_avulsas'] = 0
     dados['despesas_avulsas'] = []

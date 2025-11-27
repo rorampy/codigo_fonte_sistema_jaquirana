@@ -1,0 +1,124 @@
+<!-- Modal Confirmação de Conciliação -->
+<div class="modal modal-blur fade" id="modal-confirmar-conciliacao" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Confirmar Conciliação
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Preview da Conciliação -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Resumo da Conciliação</h3>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <!-- Dados da Transação OFX -->
+              <div class="col-md-12">
+                <h4 class="text-primary">Transação OFX</h4>
+                <table class="table table-sm">
+                  <tr>
+                    <td><strong>Valor:</strong></td>
+                    <td id="modal-transacao-valor" class="text-end">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Data:</strong></td>
+                    <td id="modal-transacao-data" class="text-end">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Descrição:</strong></td>
+                    <td id="modal-transacao-descricao" class="text-end">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>FITID:</strong></td>
+                    <td id="modal-transacao-fitid" class="text-end text-muted small">-</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Dados do Agendamento -->
+              <div class="col-md-12">
+                <h4 class="text-primary">Agendamento</h4>
+                <table class="table table-sm">
+                  <tr>
+                    <td><strong>Valor:</strong></td>
+                    <td id="modal-agendamento-valor" class="text-end">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Vencimento:</strong></td>
+                    <td id="modal-agendamento-vencimento" class="text-end">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Beneficiário:</strong></td>
+                    <td id="modal-agendamento-pessoa" class="text-end">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Origem:</strong></td>
+                    <td id="modal-agendamento-origem" class="text-end">-</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- Categorias do Agendamento -->
+            <div class="row mt-3">
+              <div class="col-12">
+                <h5>Categorias:</h5>
+                <div id="modal-agendamento-categorias" class="d-flex flex-wrap gap-1">
+                  <!-- Categorias serão inseridas aqui via JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+            <path d="M18 6l-12 12" />
+            <path d="M6 6l12 12" />
+          </svg>
+          Cancelar
+        </button>
+
+        <button type="button" class="btn btn-success" id="btn-confirmar-conciliacao">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+            <path d="M20 6l-11 11l-4 -4" />
+          </svg>
+          <span class="btn-text">Confirmar Conciliação</span>
+          <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Validação para Categorias Duplicadas -->
+<div class="modal modal-blur fade" id="modalValidacao" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-status bg-warning"></div>
+      <div class="modal-body text-center">
+        <h3 class="mb-3 text-warning">Categoria Duplicada!</h3>
+        <div class="text-secondary mb-3" id="modalValidacaoMensagem">
+          <!-- Mensagem será inserida aqui pelo JavaScript -->
+        </div>
+        <button type="button" class="btn btn-warning w-100" data-bs-dismiss="modal" id="btnEntendidoCategoria">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M5 12l5 5l10 -10" />
+          </svg>
+          Entendi
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

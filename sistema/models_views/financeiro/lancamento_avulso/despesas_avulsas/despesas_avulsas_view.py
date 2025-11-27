@@ -5,24 +5,21 @@ from sistema._utilitarios.validador_formularios import ValidaForms
 from sistema._utilitarios.valores_monetarios import ValoresMonetarios
 from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
 from sistema.models_views.configuracoes_gerais.conta_bancaria.conta_bancaria_model import ContaBancariaModel
-from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
 from sistema.models_views.financeiro.movimentacao_financeira.movimentacao_financeira_model import MovimentacaoFinanceiraModel
 from sistema.models_views.financeiro.movimentacao_financeira.saldo_movimentacao_financeira_model import SaldoMovimentacaoFinanceiraModel
-from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
-from sistema.models_views.faturamento.cargas_a_pagar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
-from sistema.models_views.faturamento.cargas_a_pagar.transportadora.frete_a_pagar_model import FretePagarModel
-from sistema.models_views.faturamento.cargas_a_pagar.extrator.extrator_a_pagar_model import ExtratorPagarModel
-from sistema.models_views.faturamento.cargas_a_pagar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
-from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
-from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_view import (inicializar_categorias_padrao, obter_subcategorias_recursivo, obter_estrutura_com_folhas)
+from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
+from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_view import (inicializar_categorias_padrao, obter_estrutura_com_folhas)
 from sistema.models_views.configuracoes_gerais.categorizacao_fiscal.categorizacao_fiscal_view import (inicializar_categorias_padrao_categorizacao_fiscal, obter_subcategorias_recursivo_categorizacao_fiscal)
 from sistema.models_views.configuracoes_gerais.centro_custo.centro_custo_model import CentroCustoModel
 from sistema.models_views.configuracoes_gerais.categorizacao_fiscal.categorizacao_fiscal_model import CategorizacaoFiscalModel
 from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
-from sistema.models_views.financeiro.situacao_pagamento_model import SituacaoPagamentoModel
+from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
 from sistema._utilitarios import *
 from datetime import date, datetime
 from sistema.models_views.financeiro.operacional.categorizar_fatura.parcela_categorizacao.parcela_categorizacao_model import ParcelaCategorizacaoModel
@@ -33,16 +30,40 @@ import json
 @login_required
 @requires_roles
 def listagem_despesas_avulsas():
-    """Lista todas as despesas avulsas ativas baseadas nos agendamentos"""
+    """Lista todas as despesas avulsas ativas baseadas nos agendamentos com paginação"""
     try:
-        # Buscar despesas avulsas através dos agendamentos
-        agendamentos = AgendamentoPagamentoModel.listar_despesas_avulsas_agendamentos()
+        # Obter parâmetros de paginação da URL
+        pagina = request.args.get('pagina', 1, type=int)
+        por_pagina = request.args.get('por_pagina', 200, type=int)
+        
+        # Obter parâmetro de pesquisa
+        termo_pesquisa = request.args.get('pesquisa', '').strip()
+        # Filtros de data de vencimento (YYYY-MM-DD)
+        data_inicio = request.args.get('data_inicio', '').strip()
+        data_fim = request.args.get('data_fim', '').strip()
+
+        # Garantir valores válidos
+        if pagina < 1:
+            pagina = 1
+        if por_pagina < 1 or por_pagina > 200:
+            por_pagina = 200
+            
+        # Buscar despesas avulsas através dos agendamentos com paginação e pesquisa
+        resultado_paginacao = AgendamentoPagamentoModel.listar_despesas_avulsas_agendamentos(
+            pagina=pagina,
+            por_pagina=por_pagina,
+            termo_pesquisa=termo_pesquisa,
+            data_inicio=data_inicio or None,
+            data_fim=data_fim or None
+        )
+        
         contas_bancarias = ContaBancariaModel.obter_contas_bancarias_ativas()
         
         return render_template(
             "financeiro/lancamento_avulso/despesas_avulsas/despesa_avulsa_listagem.html",
-            agendamentos=agendamentos,
-            contas_bancarias=contas_bancarias
+            agendamentos=resultado_paginacao['agendamentos'],
+            contas_bancarias=contas_bancarias,
+            paginacao=resultado_paginacao
         )
         
     except Exception as e:
@@ -76,7 +97,7 @@ def cadastrar_despesa_avulsa():
     
     # Inicializar e carregar plano de contas para despesas (tipo 2)
     inicializar_categorias_padrao()
-    estrutura_plano_contas = obter_estrutura_com_folhas(2)  # 2 = Despesas
+    estrutura_plano_contas = obter_estrutura_com_folhas([2])  # 2 = Despesas
 
     # Inicializar e carregar categorização fiscal para despesas
     inicializar_categorias_padrao_categorizacao_fiscal()
@@ -434,37 +455,151 @@ def editar_despesa_avulsa(id):
 @login_required
 @requires_roles
 def excluir_despesa_avulsa(id):
-    """Exclui uma despesa avulsa (soft delete)"""
+    """Exclui uma despesa avulsa (soft delete) e reverte conciliação se houver"""
     try:
-        # Buscar a despesa existente
-        despesa_existente = LancamentoAvulsoModel.obter_lancamento_por_id(id)
-        if not despesa_existente or despesa_existente.tipo_movimentacao != 2:
-            flash(("Despesa não encontrada!", "warning"))
+        print(f"[EXCLUSAO] Iniciando exclusão do agendamento ID: {id}")
+        
+        # Buscar o agendamento primeiro (o ID vem do agendamento, não da despesa)
+        agendamento = AgendamentoPagamentoModel.obter_agendamento_por_id(id)
+        
+        if not agendamento:
+            flash(("Agendamento não encontrado!", "warning"))
             return redirect(url_for("listagem_despesas_avulsas"))
         
-        # Verificar se a despesa já foi categorizada
-        if despesa_existente.situacao_pagamento_id == 6:
-            flash(("Não é possível excluir uma despesa que já foi categorizada!", "warning"))
-            return redirect(url_for("listagem_despesas_avulsas"))
+        # Buscar a despesa relacionada se existir
+        despesa_existente = None
+        if agendamento.lancamento_avulso_id:
+            despesa_existente = LancamentoAvulsoModel.obter_lancamento_por_id(agendamento.lancamento_avulso_id)
+            if despesa_existente and despesa_existente.tipo_movimentacao != 2:
+                flash(("Esta não é uma despesa válida!", "warning"))
+                return redirect(url_for("listagem_despesas_avulsas"))
+
+        # Importar model necessário para verificação de conciliação
+        from sistema.models_views.importacao_ofx.importacao_ofx_model import ImportacaoOfx
         
-        obter_categorizacao = AgendamentoPagamentoModel.obter_agendamentos_por_lancamento(despesa_existente.id)
-        if obter_categorizacao and obter_categorizacao.situacao_pagamento_id == 1:
-            flash(("Não é possível excluir uma despesa que já foi paga!", "warning"))
+        # Verificar se existe conciliação para esta despesa/agendamento
+        conciliacao_existe = False
+        transacao_conciliada = None
+        
+        if agendamento:
+            # Buscar transação OFX que pode estar conciliada com este agendamento
+            transacao_conciliada = ImportacaoOfx.query.filter(
+                ImportacaoOfx.conciliado == True,
+                ImportacaoOfx.dados_conciliacao_json.contains(f'"agendamentos_ids": [{agendamento.id}]') |
+                ImportacaoOfx.dados_conciliacao_json.contains(f'"agendamentos_ids":[{agendamento.id}]')
+            ).first()
+            print(transacao_conciliada.id)
+            if transacao_conciliada:
+                conciliacao_existe = True
+
+        # Iniciar transação de exclusão
+        try:
+            # Se existe conciliação, reverter primeiro
+            if conciliacao_existe and transacao_conciliada:
+                print(f"[EXCLUSAO] Revertendo conciliação da transação {transacao_conciliada.id}")
+                
+                # Importar função de reversão de conciliação
+                import json
+                
+                # Obter dados da conciliação - verificar se já é dict ou se precisa fazer parse
+                if isinstance(transacao_conciliada.dados_conciliacao_json, dict):
+                    dados_conciliacao = transacao_conciliada.dados_conciliacao_json
+                elif isinstance(transacao_conciliada.dados_conciliacao_json, str):
+                    dados_conciliacao = json.loads(transacao_conciliada.dados_conciliacao_json)
+                else:
+                    dados_conciliacao = {}
+                
+                # Reverter status da transação
+                transacao_conciliada.conciliado = False
+                transacao_conciliada.dados_conciliacao_json = None
+                transacao_conciliada.data_conciliacao = None
+                
+                # Reverter agendamentos vinculados
+                agendamentos_ids = dados_conciliacao.get('agendamentos_ids', [])
+                for agend_id in agendamentos_ids:
+                    agend = AgendamentoPagamentoModel.obter_agendamento_por_id(agend_id)
+                    if agend and agend.situacao_pagamento_id in [8, 9 , 10]:
+                        agend.ativo = False
+                        agend.deletado = True
+                        agend.situacao_pagamento_id = 11  # Cancelado/Excluido
+                
+                # Reverter movimentações financeiras vinculadas
+                movimentacoes_ids = dados_conciliacao.get('movimentacoes_ids', [])
+                for mov_id in movimentacoes_ids:
+                    movimentacao = MovimentacaoFinanceiraModel.query.get(mov_id)
+                    if movimentacao:
+                        # Reverter o impacto no saldo antes de excluir a movimentação
+                        if movimentacao.conta_bancaria_id:
+                            saldo_conta = SaldoMovimentacaoFinanceiraModel.query.filter(
+                                SaldoMovimentacaoFinanceiraModel.conta_bancaria_id == movimentacao.conta_bancaria_id,
+                                SaldoMovimentacaoFinanceiraModel.ativo == True,
+                                SaldoMovimentacaoFinanceiraModel.deletado == False
+                            ).first()
+                            
+                            if saldo_conta:
+                                print(f"[EXCLUSAO] Revertendo saldo para conta {saldo_conta.conta_bancaria_id} pela movimentação {movimentacao.id}, {movimentacao.valor_movimentacao_100}")
+                                
+                                # Criar nova movimentação financeira para registrar a reversão
+                                valor_reversao = movimentacao.valor_movimentacao_100
+                                tipo_reversao = None
+                                
+                                # Se era saída (tipo 2), criar entrada para reverter
+                                if movimentacao.tipo_movimentacao == 2:
+                                    saldo_conta.valor_total_saldo_100 += valor_reversao
+                                    tipo_reversao = 1  # Entrada para compensar a saída
+                                # Se era entrada (tipo 1), criar saída para reverter
+                                elif movimentacao.tipo_movimentacao == 1:
+                                    saldo_conta.valor_total_saldo_100 -= valor_reversao
+                                    tipo_reversao = 2  # Saída para compensar a entrada
+                                
+                                # Criar movimentação de reversão para aparecer na listagem
+                                if tipo_reversao:
+                                    movimentacao_reversao = MovimentacaoFinanceiraModel(
+                                        tipo_movimentacao=tipo_reversao,
+                                        usuario_id=current_user.id,
+                                        data_movimentacao=DataHora.obter_data_atual_padrao_en(),
+                                        valor_movimentacao_100=valor_reversao,
+                                        conta_bancaria_id=movimentacao.conta_bancaria_id,
+                                        agendamento_id=None,  # Não vinculada a agendamento
+                                        observacao_movimentacao=f"Reversão de conciliação - Exclusão do agendamento {agendamento.descricao}"
+                                    )
+                                    db.session.add(movimentacao_reversao)
+                                
+                                saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
+                
+                print(f"[EXCLUSAO] Conciliação revertida com sucesso para transação {transacao_conciliada.id}")
+
+            # Agora excluir o agendamento e a despesa se existir
+            agendamento.deletado = True
+            agendamento.ativo = False
+            
+            if despesa_existente:
+                despesa_existente.ativo = False
+                despesa_existente.deletado = True
+
+            # Commit das alterações
+            db.session.commit()
+
+            # Mensagem de sucesso diferenciada
+            if conciliacao_existe:
+                flash(("Despesa excluída com sucesso! A conciliação bancária foi revertida automaticamente.", "success"))
+            else:
+                flash(("Despesa excluída com sucesso!", "success"))
+                
             return redirect(url_for("listagem_despesas_avulsas"))
-
-        # Soft delete - marcar como inativo
-        despesa_existente.ativo = False
-        despesa_existente.deletado = True
-        if obter_categorizacao:
-            obter_categorizacao.deletado = True
-            obter_categorizacao.ativo = False
-
-        db.session.commit()
-
-        flash(("Despesa excluída com sucesso!", "success"))
-        return redirect(url_for("listagem_despesas_avulsas"))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"[EXCLUSAO] Erro durante exclusão: {e}")
+            import traceback
+            traceback.print_exc()
+            flash(("Erro ao excluir despesa e reverter conciliação! Entre em contato com o suporte.", "warning"))
+            return redirect(url_for("listagem_despesas_avulsas"))
                 
     except Exception as e:
+        print(f"[EXCLUSAO] Erro geral: {e}")
+        import traceback
+        traceback.print_exc()
         flash(("Erro ao tentar excluir despesa! Entre em contato com o suporte.", "warning"))
         return redirect(url_for("listagem_despesas_avulsas"))
 

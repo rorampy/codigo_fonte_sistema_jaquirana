@@ -486,16 +486,22 @@ def obter_estrutura_com_folhas(tipo_plano_conta):
     - Não selecionáveis: 1, 1.01, 1.01.01, etc (têm filhos)
     """
     inicializar_categorias_padrao()
-    principais = PlanoContaModel.buscar_filhos(tipo_plano_conta)
+    
+    # Buscar categorias principais do tipo especificado
+    principais = PlanoContaModel.query.filter(
+        PlanoContaModel.tipo.in_(tipo_plano_conta),
+        PlanoContaModel.nivel == 1,
+        PlanoContaModel.ativo == True
+    ).order_by(PlanoContaModel.codigo).all()
+    
     estrutura = []
     
     for cat in principais:
-        if cat.tipo == tipo_plano_conta:
-            d = cat.to_dict()
-            d["children"] = obter_subcategorias_recursivo(cat.id)
-            # Marcar se é categoria folha (não tem filhos = selecionável)
-            d["is_leaf"] = len(d["children"]) == 0
-            estrutura.append(d)
+        d = cat.to_dict()
+        d["children"] = obter_subcategorias_recursivo(cat.id)
+        # Marcar se é categoria folha (não tem filhos = selecionável)
+        d["is_leaf"] = len(d["children"]) == 0
+        estrutura.append(d)
     
     return estrutura
 

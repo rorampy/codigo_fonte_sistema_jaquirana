@@ -5,6 +5,9 @@ from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema.models_views.parametros.instituicoes_financeiras.instituicao_financeira_model import InstituicoesFinanceirasModel
+from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
+from sqlalchemy.orm.attributes import flag_modified 
+import json
 from sistema._utilitarios import *
 
 
@@ -46,6 +49,7 @@ def cadastrar_extrator():
 
     if request.method == "POST":
         tipoCadastro = request.form["tipoCadastro"]
+        criar_pessoa_financeiro = request.form.get("criarPessoaFinanceiro", "nao")
         nomeExtrator = request.form["nomeExtrator"]
         cpfExtrator = request.form["cpfExtrator"]
         razao_social = request.form["razaoSocial"]
@@ -111,7 +115,7 @@ def cadastrar_extrator():
 
         if gravar_banco == True:
             telefone_tratado = Tels.remove_pontuacao_telefone_celular_br(telefone)
-            Extrator = ExtratorModel(
+            extrator = ExtratorModel(
                 tipo_cadastro=tipoCadastroExtrator,
                 identificacao=identificacaoExtrator,
                 numero_documento=numeroDocumento,
@@ -122,8 +126,55 @@ def cadastrar_extrator():
                 chave_pix=chave_pix.strip() if chave_pix else None,
                 ativo=True
             )
-            db.session.add(Extrator)
-            db.session.commit()
+            db.session.add(extrator)
+            db.session.flush()
+
+            #Cadastrar pessoa financeira
+            if criar_pessoa_financeiro == "sim":
+                try:
+                    vinculos_operacionais = {
+                        "extrator": [{
+                            "id": str(extrator.id),
+                            "identificacao": extrator.identificacao 
+                        }]
+                    }
+
+                    vinculos_json = json.dumps(vinculos_operacionais)
+                    tem_fornecedor, tem_transportadora, tem_extrator_flag, tem_comissionado, vinculos_data = \
+                        PessoaFinanceiroModel.processar_vinculos(vinculos_json)
+                    
+                    pessoa_financeiro = PessoaFinanceiroModel(
+                        tipo_cadastro=True if tipoCadastroExtrator == 1 else False,
+                        identificacao=identificacaoExtrator,
+                        numero_documento=numeroDocumento,
+                        telefone=telefone_tratado,
+                        instituicao_financeira_id=int(instituicao_financeira) if instituicao_financeira else None,
+                        agencia_bancaria=agencia_bancaria if agencia_bancaria else None,
+                        conta_bancaria=conta_bancaria if conta_bancaria else None,
+                        chave_pix=chave_pix if chave_pix else None,
+                        tem_vinculo_fornecedor=tem_fornecedor,
+                        tem_vinculo_transportadora=tem_transportadora,
+                        tem_vinculo_extrator=tem_extrator_flag,
+                        tem_vinculo_comissionado=tem_comissionado,
+                        vinculos_operacionais=vinculos_data,
+                        ativo=True
+                    )
+
+                    db.session.add(pessoa_financeiro)
+                    db.session.flush()
+
+                    flash(("Extrator e Pessoa Financeira cadastrados com sucesso!", "success"))
+                
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"Erro ao criar Pessoa Financeira: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    flash((f"Extrator cadastrado, mas houve erro ao criar Pessoa Financeira: {str(e)}", "warning"))
+                    return redirect(url_for("listar_extratores"))
+            else:
+                flash(("Extrator cadastrado com sucesso!", "success"))
+
             acao = TipoAcaoEnum.CADASTRO
             PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                 current_user.id,
@@ -131,7 +182,6 @@ def cadastrar_extrator():
                 acao.pontos,
                 modulo='extrator'
             )
-            flash(("Extrator cadastrado com sucesso!", "success"))
             return redirect(url_for("listar_extratores"))
     return render_template(
         "gerenciar/extratores/extrator_cadastrar.html",
@@ -280,6 +330,46 @@ def editar_extrator(id):
             extrator.conta_bancaria = conta_bancaria.strip() if conta_bancaria else None
             extrator.chave_pix = chave_pix.strip() if chave_pix else None
 
+
+            pessoa_financeira = PessoaFinanceiroModel.query.filter_by(
+                numero_documento=numero_documento,
+                ativo=True,
+                deletado=False
+            ).first()
+
+            if pessoa_financeira:
+                try:
+                    print(f"Atualizando Pessoa Financeira ID: {pessoa_financeira.id}")
+
+                    pessoa_financeira.tipo_cadastro = True if tipoCadastroExtrator == 1 else False
+                    pessoa_financeira.identificacao = identificacaoExtrator
+                    pessoa_financeira.numero_documento = numeroDocumento
+                    pessoa_financeira.telefone = telefone_tratado
+                    pessoa_financeira.instituicao_financeira_id = int(instituicao_financeira) if instituicao_financeira else None
+                    pessoa_financeira.agencia_bancaria = agencia_bancaria.strip() if agencia_bancaria else None
+                    pessoa_financeira.conta_bancaria = conta_bancaria.strip() if conta_bancaria else None
+                    pessoa_financeira.chave_pix = chave_pix.strip() if chave_pix else None
+
+                    # Atualizar vínculos
+                    vinculos_atuais = pessoa_financeira.vinculos_operacionais or {}
+                    vinculos_atuais["extrator"] = [{
+                        "id": str(extrator.id),
+                        "identificacao": identificacaoExtrator
+                    }]
+
+                    pessoa_financeira.vinculos_operacionais = vinculos_atuais
+                    flag_modified(pessoa_financeira, "vinculos_operacionais")
+
+                    db.session.flush()
+
+                    print(f"Pessoa Financeira atualizada com sucesso!")
+                    print(f"Vínculos: {json.dumps(vinculos_atuais, indent=2, ensure_ascii=False)}")
+
+                except Exception as e:
+                    print(f"Erro ao atualizar Pessoa Financeira: {e}")
+                    import traceback
+                    traceback.print_exc()
+            
             db.session.commit()
             flash(("Extrator editado com sucesso!", "success"))
             return redirect(url_for("listar_extratores"))

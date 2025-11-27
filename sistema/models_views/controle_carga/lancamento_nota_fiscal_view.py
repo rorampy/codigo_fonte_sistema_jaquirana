@@ -1,17 +1,17 @@
 from sistema import app, requires_roles, db
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from sqlalchemy.exc import IntegrityError
 from sistema.models_views.upload_arquivo.upload_arquivo_view import upload_arquivo
-from sistema.models_views.controle_carga.carga_model import CargaModel
+from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.controle_carga.emissao_nota_fiscal_model import LancarEmissaoNotaFiscalModel
-from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema.models_views.gerenciar.floresta.floresta_model import FlorestaModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
-from sistema.models_views.controle_carga.produto_model import ProdutoModel
+from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.parametros.bitola.bitola_model import BitolaModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
+from sistema.models_views.gerenciar.certificacoes.certificacoes_model import CertificacoesModel
 from sistema._utilitarios import *
 import os
 
@@ -162,7 +162,17 @@ def cadastrar_emissao(id):
                         raise
                     print(f"[DEBUG] Buscando registro operacional para solicitação: {solicitacao.id}")
                     obterRegistro = RegistroOperacionalModel.obter_registro_solicitacao_por_id(solicitacao.id)
-                    print(f"[DEBUG] Registro encontrado: {obterRegistro is not None}")
+                    
+                    # Certificação - Atualiza o estoque da certificação associada à carga
+                    resultado_atualizacao = CertificacoesModel.atualizar_estoque(pesoFrf_float, solicitacao.certificacao_id)
+                    if "erro" in resultado_atualizacao or "invalido" in resultado_atualizacao:
+                        if "invalido" in resultado_atualizacao:
+                            flash((resultado_atualizacao["invalido"], "warning"))
+                        elif "erro" in resultado_atualizacao:
+                            flash((resultado_atualizacao["erro"], "warning"))
+                        db.session.rollback()
+                        return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
+                    
                     if obterRegistro:
                         obterRegistro.solicitacao_nf_id = solicitacao.id
                         obterRegistro.numero_nota_fiscal = '000000'
@@ -737,6 +747,40 @@ def editar_emissao(id):
                         "peso_ton_nf": float(pesoFrf.replace(',', '.') if pesoFrf else 0),
                         "valor_total_nota_100": int(ValoresMonetarios.converter_string_brl_para_float(valorTotalFrf) * 100 if valorTotalFrf else 0),
                     }
+                    
+                    if registro.solicitacao.certificacao_id:
+                        certificacao = CertificacoesModel.obter_certificacao_por_id_ativos_inativos(registro.solicitacao.certificacao_id)
+                        
+                        if certificacao and certificacao.ativo and not certificacao.deletado:
+                            peso_anterior_total = registro.peso_ton_nf or 0
+                            novo_peso_frf = float(pesoFrf.replace(',', '.')) if pesoFrf else 0
+                            
+                            if peso_anterior_total > 0:
+                                certificacao_estoque_reverter = CertificacoesModel.atualizar_estoque_positivo(
+                                    peso_anterior_total, 
+                                    registro.solicitacao.certificacao_id
+                                )
+                                if "erro" in certificacao_estoque_reverter:
+                                    flash((certificacao_estoque_reverter["erro"], "warning"))
+                                    db.session.rollback()
+                                    return redirect(url_for("editar_emissao", id=registro.id))
+                                
+                                db.session.commit()
+                            
+                            if novo_peso_frf > 0:
+                                resultado_atualizacao = CertificacoesModel.atualizar_estoque(
+                                    novo_peso_frf, 
+                                    registro.solicitacao.certificacao_id
+                                )
+                                if "erro" in resultado_atualizacao:
+                                    flash((resultado_atualizacao.get("erro", "Erro ao atualizar estoque do certificado"), "warning"))
+                                    db.session.rollback()
+                                    return redirect(url_for("editar_emissao", id=registro.id))
+                                
+                                if "invalido" in resultado_atualizacao:
+                                    flash((resultado_atualizacao["invalido"], "warning"))
+                                    db.session.rollback()
+                                    return redirect(url_for("editar_emissao", id=registro.id))
 
                     diferencas = Gameficacao.compara_objetos(obj1, obj2)
                     if diferencas:
@@ -1279,11 +1323,14 @@ def split_carga(id):
          
     if not registro:
         flash(("Registro não encontrado!", "warning"))
-        return redirect(url_for("listagem_registros_operacionais"))
+        return redirect(url_for("vendas_em_transito"))
     
     if registro.realizado_split:
         flash(("Não é possível realizar split para este registro!", "warning"))
-        return redirect(url_for("listagem_registros_operacionais"))
+        if registro.solicitacao.ticket_emitido:
+            return redirect(url_for("vendas_entregues"))
+        else:
+            return redirect(url_for("vendas_em_transito"))
     
     produtos = ProdutoModel.listar_produtos()
     bitolas = BitolaModel.listar_bitolas_ativas()
@@ -1467,7 +1514,10 @@ def split_carga(id):
                 )
 
                 flash((f"Split de carga realizado com sucesso! Criado novo registro operacional #{novo_registro.id}", "success"))
-                return redirect(url_for("listagem_registros_operacionais"))
+                if registro.solicitacao.ticket_emitido:
+                    return redirect(url_for("vendas_entregues"))
+                else:
+                    return redirect(url_for("vendas_em_transito"))
 
             except Exception as e:
                 db.session.rollback()

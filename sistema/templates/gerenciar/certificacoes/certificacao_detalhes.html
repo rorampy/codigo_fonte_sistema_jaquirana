@@ -1,0 +1,727 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+    <div class="page-header d-print-none">
+        <div class="container-xl">
+            <div class="row g-2 align-items-center">
+                <div class="col">
+                    <div class="page-pretitle">GERENCIAR</div>
+                    <h2 class="page-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-certificate me-2">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M15 15m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                            <path d="M13 17.5v4.5l2 -1.5l2 1.5v-4.5" />
+                            <path d="M10 19h-5a2 2 0 0 1 -2 -2v-10c0 -1.1 .9 -2 2 -2h14a2 2 0 0 1 2 2v6.5" />
+                            <path d="M6 9l12 0" />
+                            <path d="M6 12l3 0" />
+                            <path d="M6 15l2 0" />
+                        </svg>
+                        Detalhes da Certificação
+                    </h2>
+                </div>
+                <div class="col-12 col-md-auto ms-auto d-print-none">
+                    <div class="btn-list">
+                        {% if certificacao.ativo %}
+                        <a href="{{ url_for('editar_certificacao', id=certificacao.id) }}" class="btn btn-warning">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                                <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" />
+                                <path d="M16 5l3 3" />
+                            </svg>
+                            Editar
+                        </a>
+                        <a href="#" class="btn btn-outline-warning" data-bs-toggle="modal"
+                            data-bs-target="#modal-desativar-certificacao">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon me-1">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M12 5l0 14" />
+                                <path d="M16 15l-4 4" />
+                                <path d="M8 15l4 4" />
+                            </svg>
+                            Desativar
+                        </a>
+                        <a href="#" class="btn btn-outline-danger" data-bs-toggle="modal"
+                            data-bs-target="#modal-excluir-certificacao">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M4 7l16 0" />
+                                <path d="M10 11l0 6" />
+                                <path d="M14 11l0 6" />
+                                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                            </svg>
+                            Excluir
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('ativar_certificacao', id=certificacao.id) }}" class="btn btn-success">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-up">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M12 5l0 14" />
+                                <path d="M18 11l-6 -6" />
+                                <path d="M6 11l6 -6" />
+                            </svg>
+                            Ativar
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('listar_certificacoes') }}" class="btn btn-outline-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M5 12l14 0" />
+                                <path d="M5 12l6 -6" />
+                                <path d="M5 12l6 6" />
+                            </svg>
+                            Voltar à Lista
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-body">
+        <div class="container-xl">
+            {% include 'estrutura/mensagens_flash.html' %}
+
+            <div class="row">
+                <!-- Informações Principais -->
+                <div class="col-md-8">
+                    <!-- Card Principal -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h3 class="card-title">
+                                        {{ certificacao.nome }}
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Descrição -->
+                            {% if certificacao.descricao %}
+                            <div class="mb-4">
+                                <h4 class="text-muted mb-2">Descrição</h4>
+                                <p class="text-muted">{{ certificacao.descricao }}</p>
+                            </div>
+                            {% endif %}
+
+                            <!-- Informações Detalhadas -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">ID da Certificação</label>
+                                        <div class="fw-bold">{{ certificacao.id }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Data de Cadastro</label>
+                                        <div class="fw-bold">
+                                            {{ certificacao.data_cadastro.strftime('%d/%m/%Y às %H:%M') if
+                                            certificacao.data_cadastro else 'Não informado' }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if certificacao.data_alteracao %}
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Última Alteração</label>
+                                        <div class="fw-bold">{{ certificacao.data_alteracao.strftime('%d/%m/%Y às
+                                            %H:%M') }}</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if certificacao.usuario_alteracao %}
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Alterado por</label>
+                                        <div class="fw-bold">{{ certificacao.usuario_alteracao.nome }}</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Observações -->
+                            {% if certificacao.descricao_nota %}
+                            <div class="mt-4">
+                                <h4 class="text-muted mb-3">Observações</h4>
+                                <div class="alert alert-info">
+                                    <div class="d-flex">
+                                        <div>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon me-3 mt-1">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                                                <path d="M12 9h.01" />
+                                                <path d="M11 12h1v4h1" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            {{ certificacao.descricao_nota|replace('\n', '<br>')|safe }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Anexos -->
+                    {% set anexos_ativos = certificacao.obter_anexos_ativos() %}
+                    {% if anexos_ativos %}
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-2">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                    <path d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-16z" />
+                                </svg>
+                                Documento{% if anexos_ativos|length != 1 %}s{% endif %} Anexado{% if
+                                anexos_ativos|length != 1 %}s {% endif %} ({{ anexos_ativos|length }})
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for anexo in anexos_ativos %}
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card card-sm h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-start">
+                                                <div class="me-3">
+                                                    {% set extensao = anexo.arquivo_upload.extensao.lower() %}
+                                                    {% if extensao in ['jpg', 'jpeg', 'png'] %}
+                                                    <span class="avatar avatar-lg"
+                                                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 24px;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round">
+                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                            <path d="M15 8h.01" />
+                                                            <path
+                                                                d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z" />
+                                                            <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" />
+                                                            <path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" />
+                                                        </svg>
+                                                    </span>
+                                                    {% elif extensao == 'pdf' %}
+                                                    <span class="avatar avatar-lg"
+                                                        style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; font-size: 24px;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round">
+                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                                            <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
+                                                            <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
+                                                            <path d="M17 18h2" />
+                                                            <path d="M20 15h-3v6" />
+                                                            <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2z" />
+                                                        </svg>
+                                                    </span>
+                                                    {% elif extensao in ['zip', 'rar'] %}
+                                                    <span class="avatar avatar-lg"
+                                                        style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; font-size: 24px;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round">
+                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                            <path d="M16 16v-8h2a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2z" />
+                                                            <path d="M12 8v8" />
+                                                            <path d="M4 8h8l-4 -4z" />
+                                                            <path d="M4 16h8l-4 4z" />
+                                                        </svg>
+                                                    </span>
+                                                    {% elif extensao in ['doc', 'docx'] %}
+                                                    <span class="avatar avatar-lg"
+                                                        style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; font-size: 24px;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round">
+                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                                            <path
+                                                                d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-16z" />
+                                                            <path d="M7 16h-.5a1.5 1.5 0 0 0 0 3h.5v-6z" />
+                                                            <path d="M10 16h1a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-1v-5z" />
+                                                            <path d="M15 16v4.5a1.5 1.5 0 0 0 3 0v-.5h-3" />
+                                                        </svg>
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="avatar avatar-lg"
+                                                        style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; font-size: 24px;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round">
+                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                                            <path
+                                                                d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-16z" />
+                                                        </svg>
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-fill">
+                                                    <div class="font-weight-medium text-truncate">
+                                                        {{ anexo.descricao_anexo or 'Documento' }}
+                                                    </div>
+                                                    <small class="text-muted text-truncate d-block">
+                                                        {{ anexo.arquivo_upload.nome | truncate(20) }}
+                                                    </small>
+                                                    <small class="text-muted">
+                                                        {{ anexo.data_cadastro.strftime('%d/%m/%Y') if
+                                                        anexo.data_cadastro else 'Data não informada' }}
+                                                    </small>
+
+                                                    <!-- Botões de Ação -->
+                                                    <div class="btn-group mt-3 w-100">
+                                                        <a href="{{ url_for('diretorio_uploads_estoque_certificacoes', filename=anexo.arquivo_upload.nome) }}"
+                                                            target="_blank"
+                                                            class="btn btn-outline-primary btn-sm flex-fill">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
+                                                                height="16" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                class="icon me-1">
+                                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                                                <path
+                                                                    d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                                                            </svg>
+                                                            Ver
+                                                        </a>
+                                                        <a href="{{ url_for('diretorio_uploads_estoque_certificacoes', filename=anexo.arquivo_upload.nome) }}"
+                                                            download="{{ anexo.arquivo_upload.nome }}"
+                                                            class="btn btn-outline-success btn-sm flex-fill">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
+                                                                height="16" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                class="icon me-1">
+                                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                                                                <path d="M7 11l5 5l5 -5" />
+                                                                <path d="M12 4l0 12" />
+                                                            </svg>
+                                                            Baixar
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- Estado Vazio de Anexos -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-2">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                    <path d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-16z" />
+                                </svg>
+                                Documentos Anexos
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="empty py-4">
+                                <div class="empty-img">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon text-muted">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                        <path
+                                            d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-16z" />
+                                    </svg>
+                                </div>
+                                <p class="empty-title">Nenhum documento anexado</p>
+                                <p class="empty-subtitle text-muted">
+                                    Esta certificação ainda não possui documentos anexados.
+                                </p>
+                                {% if certificacao.ativo %}
+                                <div class="empty-action">
+                                    <a href="{{ url_for('editar_certificacao', id=certificacao.id) }}"
+                                        class="btn btn-outline-primary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                            <path
+                                                d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                                            <path d="M12 11l0 6" />
+                                            <path d="M9 14l3 -3l3 3" />
+                                        </svg>
+                                        Adicionar documentos
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Sidebar com Informações Extras -->
+                <div class="col-md-4">
+                    <!-- Status do Estoque -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-2">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path
+                                        d="M16 8v8a1 1 0 0 1 -1 1h-11a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1h2a1 1 0 0 0 1 -1v-1a2 2 0 0 1 4 0v1a1 1 0 0 0 1 1h2" />
+                                    <path d="M8 11v-1" />
+                                    <path d="M12 11v-1" />
+                                    <path d="M18 8v.01" />
+                                    <path d="M18 12v.01" />
+                                    <path d="M18 16v.01" />
+                                </svg>
+                                Estoque de Madeira
+                            </h3>
+                        </div>
+                        <div class="card-body text-center">
+                            {% set valor_estoque = certificacao.valor_estoque_atual or 0 %}
+
+                            <!-- Ícone dinâmico -->
+                            <div class="mb-3">
+                                {% if valor_estoque == 0 %}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="text-danger">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M18 6l-12 12" />
+                                    <path d="M6 6l12 12" />
+                                </svg>
+                                {% elif valor_estoque >= 10 and valor_estoque < 25 %} <svg
+                                    xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"
+                                    fill="none" stroke="orange" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M16 5l3 3l-2 1l4 4l-3 1l4 4h-9" />
+                                    <path d="M15 21l0 -3" />
+                                    <path d="M8 13l-2 -2" />
+                                    <path d="M8 12l2 -2" />
+                                    <path d="M8 21v-13" />
+                                    <path
+                                        d="M5.824 16a3 3 0 0 1 -2.743 -3.69a3 3 0 0 1 .304 -4.833a3 3 0 0 1 4.615 -3.707a3 3 0 0 1 4.614 3.707a3 3 0 0 1 .305 4.833a3 3 0 0 1 -2.919 3.695h-4z" />
+                                    </svg>
+                                    {% elif valor_estoque >= 25 and valor_estoque < 40 %} <svg
+                                        xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"
+                                        fill="none" stroke="yellow" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M16 5l3 3l-2 1l4 4l-3 1l4 4h-9" />
+                                        <path d="M15 21l0 -3" />
+                                        <path d="M8 13l-2 -2" />
+                                        <path d="M8 12l2 -2" />
+                                        <path d="M8 21v-13" />
+                                        <path
+                                            d="M5.824 16a3 3 0 0 1 -2.743 -3.69a3 3 0 0 1 .304 -4.833a3 3 0 0 1 4.615 -3.707a3 3 0 0 1 4.614 3.707a3 3 0 0 1 .305 4.833a3 3 0 0 1 -2.919 3.695h-4z" />
+                                        </svg>
+                                        {% elif valor_estoque >= 40 %}
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"
+                                            viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M16 5l3 3l-2 1l4 4l-3 1l4 4h-9" />
+                                            <path d="M15 21l0 -3" />
+                                            <path d="M8 13l-2 -2" />
+                                            <path d="M8 12l2 -2" />
+                                            <path d="M8 21v-13" />
+                                            <path
+                                                d="M5.824 16a3 3 0 0 1 -2.743 -3.69a3 3 0 0 1 .304 -4.833a3 3 0 0 1 4.615 -3.707a3 3 0 0 1 4.614 3.707a3 3 0 0 1 .305 4.833a3 3 0 0 1 -2.919 3.695h-4z" />
+                                        </svg>
+                                        {% else %}
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"
+                                            viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M16 5l3 3l-2 1l4 4l-3 1l4 4h-9" />
+                                            <path d="M15 21l0 -3" />
+                                            <path d="M8 13l-2 -2" />
+                                            <path d="M8 12l2 -2" />
+                                            <path d="M8 21v-13" />
+                                            <path
+                                                d="M5.824 16a3 3 0 0 1 -2.743 -3.69a3 3 0 0 1 .304 -4.833a3 3 0 0 1 4.615 -3.707a3 3 0 0 1 4.614 3.707a3 3 0 0 1 .305 4.833a3 3 0 0 1 -2.919 3.695h-4z" />
+                                        </svg>
+                                        {% endif %}
+                            </div>
+
+                            <!-- Valor -->
+                            <div class="h2 mb-3">{{ "%.2f"|format(valor_estoque)|replace('.', ',') }} t</div>
+
+                            <!-- Status -->
+                            <div class="text-muted mb-3">
+                                {% if valor_estoque == 0 %}
+                                <span class="badge bg-danger-lt">Sem Estoque</span>
+                                {% elif valor_estoque >= 10 and valor_estoque < 25 %} <span class="badge bg-warning-lt">
+                                    Tonelagem Baixa (10-20t)</span>
+                                    {% elif valor_estoque >= 25 and valor_estoque < 40 %} <span
+                                        class="badge bg-info-lt">Tonelagem Média (25-35t)</span>
+                                        {% elif valor_estoque >= 40 %}
+                                        <span class="badge bg-success-lt">Tonelagem Alta (40t+)</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary-lt">Estoque Mínimo</span>
+                                        {% endif %}
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="progress progress-sm">
+                                {% if valor_estoque == 0 %}
+                                <div class="progress-bar bg-danger" style="width: 0%"></div>
+                                {% elif valor_estoque >= 10 and valor_estoque < 25 %} <div
+                                    class="progress-bar bg-warning" style="width: 25%">
+                            </div>
+                            {% elif valor_estoque >= 25 and valor_estoque < 40 %} <div class="progress-bar bg-info"
+                                style="width: 60%">
+                        </div>
+                        {% elif valor_estoque >= 40 %}
+                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                        {% else %}
+                        <div class="progress-bar bg-secondary" style="width: 10%"></div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estatísticas Rápidas -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon me-2">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                            <path d="M12 7v5l3 3" />
+                        </svg>
+                        Resumo
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="text-primary h2 mb-0">{{ anexos_ativos|length }}</div>
+                                <small class="text-muted">Anexos</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                {% if certificacao.data_cadastro %}
+                                <div class="text-info h2 mb-0">{{ certificacao.data_cadastro.strftime('%d') }}</div>
+                                <small class="text-muted">{{ certificacao.data_cadastro.strftime('%b/%Y') }}</small>
+                                {% else %}
+                                <div class="text-muted h2 mb-0">-</div>
+                                <small class="text-muted">Data</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon me-2">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                            <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                        </svg>
+                        Ações Rápidas
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if certificacao.ativo %}
+                        <a href="{{ url_for('editar_certificacao', id=certificacao.id) }}"
+                            class="btn btn-outline-warning btn-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon me-1">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                                <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" />
+                                <path d="M16 5l3 3" />
+                            </svg>
+                            Editar
+                        </a>
+                        {% endif %}
+
+                        <a href="#" class="btn btn-outline-danger btn-icon" data-bs-toggle="modal"
+                            data-bs-target="#modal-excluir-certificacao">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon me-1">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M4 7l16 0" />
+                                <path d="M10 11l0 6" />
+                                <path d="M14 11l0 6" />
+                                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                            </svg>
+                            Excluir
+                        </a>
+
+                        <a href="{{ url_for('listar_certificacoes') }}" class="btn btn-outline-secondary btn-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="icon icon-tabler icons-tabler-outline icon-tabler-list-details me-1">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M13 5h8" />
+                                <path d="M13 9h5" />
+                                <path d="M13 15h8" />
+                                <path d="M13 19h5" />
+                                <path
+                                    d="M3 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                                <path
+                                    d="M3 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                            </svg>
+                            Ver Todas
+                        </a>
+
+                        <a href="{{ url_for('cadastrar_certificacao') }}" class="btn btn-outline-primary btn-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon me-1">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M12 5l0 14" />
+                                <path d="M5 12l14 0" />
+                            </svg>
+                            Nova Certificação
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+{% include 'estrutura/footer.html' %}
+</div>
+
+<!-- Modal de Confirmação para Excluir Certificação -->
+<div class="modal modal-blur fade" id="modal-excluir-certificacao" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="modal-title">Excluir Certificação?</div>
+                <div class="text-muted">Tem certeza que deseja excluir permanentemente a certificação "{{
+                    certificacao.nome }}"? Esta ação não pode ser desfeita e todos os anexos também serão removidos.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="w-100">
+                    <div class="row">
+                        <div class="col">
+                            <a href="#" class="btn w-100" data-bs-dismiss="modal">
+                                Cancelar
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{{ url_for('excluir_certificacao', id=certificacao.id) }}"
+                                class="btn btn-danger w-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M4 7l16 0" />
+                                    <path d="M10 11l0 6" />
+                                    <path d="M14 11l0 6" />
+                                    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                    <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                                </svg>
+                                Excluir
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação para Desativar Certificação -->
+<div class="modal modal-blur fade" id="modal-desativar-certificacao" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="modal-title">Desativar Certificação?</div>
+                <div class="text-muted">Tem certeza que deseja desativar a certificação "{{ certificacao.nome }}"?
+                    <br><br> <span style="color: #F5004F;">Você
+                        poderá reativá-la posteriormente se necessário.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="w-100">
+                    <div class="row">
+                        <div class="col">
+                            <a href="#" class="btn w-100" data-bs-dismiss="modal">
+                                Cancelar
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{{ url_for('desativar_certificacao', id=certificacao.id) }}"
+                                class="btn btn-warning w-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M10 10l4 4m0 -4l-4 4" />
+                                    <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" />
+                                </svg>
+                                Desativar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock conteudo %}

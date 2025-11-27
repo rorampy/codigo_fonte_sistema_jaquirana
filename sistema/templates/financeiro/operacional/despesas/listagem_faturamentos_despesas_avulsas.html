@@ -696,7 +696,7 @@
     document.getElementById('loading-categorizacao').style.display = 'block';
     document.getElementById('conteudo-categorizacao').style.display = 'none';
 
-    // Fazer requisição para controle de créditos
+    // Fazer requisição para Adiantamentos de Créditos
     fetch(`/financeiro/operacional/categorizacao/despesas-avulsas/detalhes-json/${faturamentoId}`)
       .then(response => response.json())
       .then(data => {

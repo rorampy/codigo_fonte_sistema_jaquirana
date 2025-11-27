@@ -1,0 +1,295 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">GERENCIAR</div>
+          <h2 class="page-title">
+            Certificações Florestais
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('cadastrar_certificacao') }}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Nova Certificação
+            </a>
+            <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-filtros">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+
+      <!-- Tabela de Certificações -->
+      {% if certificacoes %}
+      <div class="col-12">
+        <div class="card">
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: center;">Nome</th>
+                  <th style="text-align: center;">Descrição</th>
+                  <th style="text-align: center;">Estoque Atual</th>
+                  <th style="text-align: center;">Anexos</th>
+                  <th style="text-align: center;">Status</th>
+                  <th class="w-1" style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for certificacao in certificacoes %}
+                {% set anexos_ativos = certificacao.obter_anexos_ativos() %}
+                {% set valor_estoque = certificacao.valor_estoque_atual or 0 %}
+                <tr>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ certificacao.nome[:40] }}
+                    {% if certificacao.nome | length > 40 %}
+                    ...
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {% if certificacao.descricao %}
+                    {{ certificacao.descricao[:50] }}
+                    {% if certificacao.descricao | length > 50 %}
+                    ...
+                    {% endif %}
+                    {% else %}
+                    -
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {% if valor_estoque == 0 %}
+                    <span class="badge badge-outline text-danger">{{ "%.2f"|format(valor_estoque) }} t</span>
+                    {% elif valor_estoque >= 10 and valor_estoque < 25 %} <span
+                      class="badge badge-outline text-warning">{{ "%.2f"|format(valor_estoque) }} t</span>
+                      {% elif valor_estoque >= 25 and valor_estoque < 40 %} <span class="badge badge-outline text-info">
+                        {{ "%.2f"|format(valor_estoque) }} t</span>
+                        {% elif valor_estoque >= 40 %}
+                        <span class="badge badge-outline text-green">{{ "%.2f"|format(valor_estoque) }} t</span>
+                        {% else %}
+                        <span class="badge badge-outline text-secondary">{{ "%.2f"|format(valor_estoque) }} t</span>
+                        {% endif %}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ anexos_ativos|length }}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {% if valor_estoque != 0 %}
+                    {% if certificacao.ativo %}
+                    <span class="badge badge-outline text-green">Ativo</span>
+                    {% else %}
+                    <span class="badge badge-outline text-danger">Desativado</span>
+                    {% endif %}
+                    {% else %}
+                    <span class="badge badge-outline text-danger">Sem Estoque</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-list flex-nowrap">
+                      <a href="{{ url_for('detalhes_certificacao', id=certificacao.id) }}"
+                        class="btn btn-icon btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Ver detalhes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-eye">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                          <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                        </svg>
+                      </a>
+                      <a href="{{ url_for('editar_certificacao', id=certificacao.id) }}"
+                        class="btn btn-icon btn-outline-warning" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Editar certificação">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                          <path d="M13.5 6.5l4 4" />
+                        </svg>
+                      </a>
+                      {% if certificacao.ativo %}
+                      <a href="#" class="btn btn-icon btn-outline-danger" data-bs-toggle="modal"
+                        data-bs-target="#modal-desativar-{{certificacao.id}}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-x">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M18 6l-12 12" />
+                          <path d="M6 6l12 12" />
+                        </svg>
+                      </a>
+                      <!-- Modal de Desativar -->
+                      <div class="modal modal-blur fade" id="modal-desativar-{{certificacao.id}}" tabindex="-1"
+                        role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                          <div class="modal-content">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-status bg-danger"></div>
+                            <div class="modal-body text-center py-4">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
+                                <path d="M12 9v4" />
+                                <path
+                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                                <path d="M12 16h.01" />
+                              </svg>
+                              <div class="text-secondary">
+                                Você realmente deseja desativar esta
+                                certificação?
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <div class="w-100">
+                                <div class="row">
+                                  <div class="col">
+                                    <a href="#" class="btn btn-3 w-100" data-bs-dismiss="modal">
+                                      Fechar
+                                    </a>
+                                  </div>
+                                  <div class="col">
+                                    <a href="{{url_for('desativar_certificacao', id=certificacao.id)}}"
+                                      class="btn btn-danger btn-4 w-100">
+                                      Desativar
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {% else %}
+                      <a href="{{ url_for('ativar_certificacao', id=certificacao.id) }}"
+                        class="btn btn-icon btn-outline-success" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Ativar certificação">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M5 12l5 5l10 -10" />
+                        </svg>
+                      </a>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <!-- Estado Vazio -->
+      <div class="empty">
+        <div class="empty-img">
+          <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-muted">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M15 15m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+            <path d="M13 17.5v4.5l2 -1.5l2 1.5v-4.5" />
+            <path d="M10 19h-5a2 2 0 0 1 -2 -2v-10c0 -1.1 .9 -2 2 -2h14a2 2 0 0 1 2 2v6.5" />
+            <path d="M6 9l12 0" />
+            <path d="M6 12l3 0" />
+            <path d="M6 15l2 0" />
+          </svg>
+        </div>
+        <p class="empty-title">Nenhuma certificação encontrada</p>
+        <p class="empty-subtitle text-muted">
+          Comece adicionando sua primeira certificação florestal ao sistema.
+        </p>
+        <div class="empty-action">
+          <a href="{{ url_for('cadastrar_certificacao') }}" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M12 5l0 14" />
+              <path d="M5 12l14 0" />
+            </svg>
+            Cadastrar primeira certificação
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Modal de Filtros -->
+  <div class="modal modal-blur fade" id="modal-filtros" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <form action="{{ url_for('listar_certificacoes') }}" method="GET">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar Certificações</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Nome da Certificação</label>
+                <input type="text" name="nome" class="form-control" value="{{ dados_corretos.get('nome', '') }}"
+                  placeholder="Digite o nome...">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Descrição</label>
+                <input type="text" name="descricao" class="form-control"
+                  value="{{ dados_corretos.get('descricao', '') }}" placeholder="Digite a descrição...">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Estoque</label>
+                <input type="number" name="estoque" class="form-control" value="{{ dados_corretos.get('estoque', '') }}"
+                  placeholder="Valor do estoque">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a href="{{ url_for('listar_certificacoes') }}" class="btn btn-link link-secondary">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary ms-auto">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

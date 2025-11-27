@@ -1,10 +1,11 @@
 from sistema import app, render_template, url_for, requires_roles, flash, redirect, request, db
 from flask import jsonify
-from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
+from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
+from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_anexo_model import AgendamentoAnexoPagamentoModel
 from sistema.models_views.financeiro.operacional.categorizar_fatura.parcela_categorizacao.parcela_categorizacao_model import ParcelaCategorizacaoModel
 from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
-from sistema.models_views.financeiro.situacao_pagamento_model import SituacaoPagamentoModel
+from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
 from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
 from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_view import (inicializar_categorias_padrao, obter_subcategorias_recursivo, obter_estrutura_com_folhas)
 from sistema.models_views.configuracoes_gerais.categorizacao_fiscal.categorizacao_fiscal_view import (inicializar_categorias_padrao_categorizacao_fiscal, obter_subcategorias_recursivo_categorizacao_fiscal)
@@ -13,6 +14,7 @@ from sistema.models_views.configuracoes_gerais.categorizacao_fiscal.categorizaca
 from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
 from sistema.models_views.configuracoes_gerais.conta_bancaria.conta_bancaria_model import ContaBancariaModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
+from sistema.models_views.upload_arquivo.upload_arquivo_view import upload_arquivo
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema._utilitarios import *
 from flask_login import login_required, current_user
@@ -44,7 +46,7 @@ def categorizar_fatura(id, tipo='despesa'):
             valor_total = faturamento.valor_total
             objeto_principal = faturamento
         # Determinar o tipo de plano de contas baseado no parâmetro
-        tipo_plano_conta = 1 if tipo == 'receita' or tipo == 'receita_avulsa' else 2  # 1 = Receitas, 2 = Despesas
+        tipo_plano_conta = [1] if tipo == 'receita' or tipo == 'receita_avulsa' else [2]  # 1 = Receitas, 2 = Despesas
         
         campos_obrigatorios = {}
         campos_erros = {}
@@ -105,6 +107,7 @@ def categorizar_fatura(id, tipo='despesa'):
         numero_parcelas = request.form.get("numero_parcelas", "")
         dias_entre_parcelas = request.form.get("dias_entre_parcelas", "30")
         parcelas_json = request.form.get("parcelas_json", "")
+        anexos_json = request.form.get("anexos_json", "[]")
 
         # Preservar dados do formulário
         dados_corretos = {
@@ -120,7 +123,8 @@ def categorizar_fatura(id, tipo='despesa'):
             'parcelamento_ativo': parcelamento_ativo,
             'numero_parcelas': numero_parcelas,
             'dias_entre_parcelas': dias_entre_parcelas,
-            'parcelas_json': parcelas_json
+            'parcelas_json': parcelas_json,
+            'anexos_json': anexos_json
         }
 
         # Validações obrigatórias
@@ -396,6 +400,33 @@ def categorizar_fatura(id, tipo='despesa'):
                     dados_corretos=dados_corretos,
                     tipo_categorização=tipo  # Passar o tipo para o template
                 )
+
+        # Processar anexos se houver
+        anexos = request.files.getlist('anexos')
+        anexos_validos = [anexo for anexo in anexos if anexo and anexo.filename != '']
+        
+        if anexos_validos:
+            for i, anexo in enumerate(anexos_validos):
+                try:
+                    # Nome do arquivo para upload
+                    nome_arquivo = f"anexo_agend_{novo_agendamento.id}_{i+1}"
+                    objeto_upload = upload_arquivo(
+                        anexo,
+                        "UPLOAD_COMPROVANTE_RECEITA_DESPESA",
+                        nome_arquivo
+                    )
+                    
+                    # Criar registro de anexo
+                    novo_anexo = AgendamentoAnexoPagamentoModel(
+                        agendamento_id=novo_agendamento.id,
+                        upload_arquivo_id=objeto_upload.id
+                    )
+                    db.session.add(novo_anexo)
+                    
+                except Exception as e:
+                    print(f'Erro ao fazer upload do arquivo {anexo.filename}: {e}')
+                    flash((f"Erro ao fazer upload do arquivo {anexo.filename}", "warning"))
+                    continue
 
         # Atualizar situação do lançamento/faturamento
         if tipo == 'receita_avulsa' or tipo == 'despesa_avulsa':
@@ -674,7 +705,7 @@ def editar_categorizacao(agendamento_id, tipo=None):
             else:
                 faturamento = FaturamentoModel.obter_faturamento_por_id(agendamento.faturamento_id)
                 tipo = 'receita' if faturamento.direcao_financeira == 1 else 'despesa'
-        print('tipo', tipo)
+
         # Buscar objeto principal baseado no tipo
         if tipo == 'receita_avulsa' or tipo == 'despesa_avulsa':
             # Buscar lançamento avulso diretamente
@@ -704,7 +735,7 @@ def editar_categorizacao(agendamento_id, tipo=None):
             objeto_principal = faturamento
 
         # Determinar o tipo de plano de contas baseado no parâmetro
-        tipo_plano_conta = 1 if tipo == 'receita' or tipo == 'receita_avulsa' else 2  # 1 = Receitas, 2 = Despesas
+        tipo_plano_conta = [1] if tipo == 'receita' or tipo == 'receita_avulsa' else [2]  # 1 = Receitas, 2 = Despesas
         
         campos_obrigatorios = {}
         campos_erros = {}
@@ -731,6 +762,9 @@ def editar_categorizacao(agendamento_id, tipo=None):
         if agendamento.parcelamento_ativo:
             parcelas_existentes = ParcelaCategorizacaoModel.query.filter_by(agendamento_id=agendamento_id).order_by(ParcelaCategorizacaoModel.numero_parcela).all()
 
+        # Buscar anexos existentes
+        anexos_existentes = AgendamentoAnexoPagamentoModel.obter_todos_anexos_por_agendamento(agendamento_id)
+
         if request.method == "GET":
             # Pré-popular dados do agendamento existente
             dados_corretos = {
@@ -754,6 +788,7 @@ def editar_categorizacao(agendamento_id, tipo=None):
                 } for p in parcelas_existentes]) if parcelas_existentes else ''
             }
 
+
             return render_template(
                 "faturamento/categorizar_fatura/editar_categorizacao_fatura.html", 
                 agendamento=agendamento,
@@ -768,7 +803,8 @@ def editar_categorizacao(agendamento_id, tipo=None):
                 dados_corretos=dados_corretos,
                 contas_bancarias=contas_bancarias,
                 tipo_categorização=tipo,  # Passar o tipo para o template
-                parcelas_existentes=parcelas_existentes
+                parcelas_existentes=parcelas_existentes,
+                anexos_existentes=anexos_existentes
             )
 
         # POST - Processar formulário de edição
@@ -802,7 +838,7 @@ def editar_categorizacao(agendamento_id, tipo=None):
             'dias_entre_parcelas': dias_entre_parcelas,
             'parcelas_json': parcelas_json
         }
-
+    
         # Validações obrigatórias (mesmas do cadastro)
         if not data_vencimento.strip():
             campos_obrigatorios['data_vencimento'] = 'Data de vencimento é obrigatória!'
@@ -958,7 +994,8 @@ def editar_categorizacao(agendamento_id, tipo=None):
                 dados_corretos=dados_corretos,
                 tipo_categorização=tipo,
                 parcelas_existentes=parcelas_existentes,
-                contas_bancarias=contas_bancarias
+                contas_bancarias=contas_bancarias,
+                anexos_existentes=anexos_existentes
             )
 
         # Processar e enriquecer centros de custo com nomes (mesma lógica do cadastro)
@@ -1070,6 +1107,46 @@ def editar_categorizacao(agendamento_id, tipo=None):
                     dados_corretos=dados_corretos,
                     tipo_categorização=tipo
                 )
+        
+        # Processar anexos se houver novos arquivos
+        anexos = request.files.getlist('anexos')
+        anexos_validos = [anexo for anexo in anexos if anexo and anexo.filename != '']
+        
+        if anexos_validos:
+            for i, anexo in enumerate(anexos_validos):
+                try:
+                    # Nome do arquivo para upload
+                    nome_arquivo = f"anexo_agend_{agendamento.id}_{i+1}"
+                    objeto_upload = upload_arquivo(
+                        anexo,
+                        "UPLOAD_COMPROVANTE_RECEITA_DESPESA",
+                        nome_arquivo
+                    )
+                    
+                    # Criar registro de anexo
+                    novo_anexo = AgendamentoAnexoPagamentoModel(
+                        agendamento_id=agendamento.id,
+                        upload_arquivo_id=objeto_upload.id
+                    )
+                    db.session.add(novo_anexo)
+                    
+                except Exception as e:
+                    print(f'Erro ao fazer upload do arquivo {anexo.filename}: {e}')
+                    flash((f"Erro ao fazer upload do arquivo {anexo.filename}", "warning"))
+                    continue
+        
+        # Processar exclusão de anexos existentes
+        anexos_excluir = request.form.get('anexos_excluir', '[]')
+        try:
+            anexos_ids_excluir = json.loads(anexos_excluir)
+            if anexos_ids_excluir and isinstance(anexos_ids_excluir, list):
+                for anexo_id in anexos_ids_excluir:
+                    anexo = AgendamentoAnexoPagamentoModel.query.get(int(anexo_id))
+                    if anexo and anexo.agendamento_id == agendamento.id:
+                        anexo.deletado = True
+                        anexo.ativo = False
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f'Erro ao processar exclusão de anexos: {e}')
         
         PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
             current_user.id,

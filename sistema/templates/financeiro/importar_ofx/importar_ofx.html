@@ -28,8 +28,30 @@
             </div>
 
             <form method="post" enctype="multipart/form-data" id="form-upload-ofx">
+              <div class="row mb-3">
+                <label for="conta_bancaria" class="form-label required">Vincule o arquivo a uma conta bancária.</label>
+                <select class="form-select {% if 'conta_bancaria' in campos_obrigatorios or 'conta_bancaria' in campos_erros %}is-invalid{% endif %}" id="conta_bancaria" name="conta_bancaria">
+                  <option value="" disabled {% if not dados_corretos.get('conta_bancaria') and not conta_bancaria_selecionada_id %}selected{% endif %}>Selecione uma conta bancária</option>
+                  {% for conta in contas_bancarias %}
+                  <option value="{{conta.id}}" 
+                    {% if dados_corretos.get('conta_bancaria') == conta.id|string %}selected
+                    {% elif not dados_corretos.get('conta_bancaria') and conta_bancaria_selecionada_id == conta.id %}selected
+                    {% elif not dados_corretos.get('conta_bancaria') and not conta_bancaria_selecionada_id and conta.conta_principal %}selected
+                    {% endif %}>
+                    {{conta.identificacao}} - Agência: {{conta.agencia}} / Conta: {{conta.conta}}
+                  </option>
+                  {% endfor %}
+                </select>
+                <div class="invalid-feedback">
+                  {% if 'conta_bancaria' in campos_obrigatorios %}
+                  {{ campos_obrigatorios['conta_bancaria'] }}
+                  {% elif 'conta_bancaria' in campos_erros %}
+                  {{ campos_erros['conta_bancaria'] }}
+                  {% endif %}
+                </div>
+              </div>
               <div class="upload-zone" id="upload-area">
-                <input type="file" class="upload-input" id="arquivo_ofx" name="arquivo_ofx" accept=".ofx,.qfx" required>
+                <input type="file" class="upload-input {% if 'arquivo_ofx' in campos_obrigatorios or 'arquivo_ofx' in campos_erros %}is-invalid{% endif %}" id="arquivo_ofx" name="arquivo_ofx" accept=".ofx,.qfx">
 
                 <div id="upload-default" class="upload-content">
                   <div class="upload-icon">
@@ -61,6 +83,17 @@
                   <h4 class="upload-title" id="file-name">Arquivo selecionado</h4>
                   <p class="upload-text" id="file-size">0 KB</p>
                 </div>
+                
+                <!-- Feedback de erro para arquivo -->
+                {% if 'arquivo_ofx' in campos_obrigatorios or 'arquivo_ofx' in campos_erros %}
+                <div class="invalid-feedback d-block mt-2">
+                  {% if 'arquivo_ofx' in campos_obrigatorios %}
+                  {{ campos_obrigatorios['arquivo_ofx'] }}
+                  {% elif 'arquivo_ofx' in campos_erros %}
+                  {{ campos_erros['arquivo_ofx'] }}
+                  {% endif %}
+                </div>
+                {% endif %}
               </div>
 
               <div class="form-actions">
@@ -297,6 +330,16 @@
       `;
       progressArea.classList.remove('d-none');
     });
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+
+    // Inicializa Tom Select nos outros selects
+    document.querySelectorAll('select.form-select').forEach(function (select) {
+      new TomSelect(select, {
+      });
+    });
+
   });
 </script>
 

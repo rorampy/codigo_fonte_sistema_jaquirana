@@ -1,11 +1,11 @@
 from ..base_model import BaseModel, db
 from sqlalchemy import and_, Numeric
-from sistema.models_views.controle_carga.carga_model import CargaModel
+from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.models_views.gerenciar.veiculo.veiculo_model import VeiculoModel
 from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
 
-
+# Nunca utilizada
 class LancarEmissaoNotaFiscalModel(BaseModel):
     """
     Model para registro de lançamentos de nf

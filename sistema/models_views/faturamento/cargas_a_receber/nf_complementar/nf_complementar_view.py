@@ -3,14 +3,15 @@ from sistema import app, requires_roles, db, current_user
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required
 from sistema.models_views.upload_arquivo.upload_arquivo_view import upload_arquivo
-from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.faturamento.cargas_a_receber.nf_complementar.nf_complementar_model import NfComplementarModel
 from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
 from sistema.models_views.parametros.status_emissao_nf_complementar.status_emissao_nf_complementar_model import StatusEmissaoNfComplementarModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.models_views.upload_arquivo.upload_arquivo_model import UploadArquivoModel
-from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
+from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema._utilitarios import *
 
@@ -328,3 +329,51 @@ def informar_faturamento_nf_complementar_massa():
         db.session.rollback()
         flash((f"Erro interno: {str(e)}", "error"))
         return redirect(url_for("faturamento_nf_complementar"))
+
+@app.route("/faturamento/nf-complementar/excluir/<int:id>", methods=["POST"])
+@login_required
+@requires_roles
+def excluir_nf_complementar(id):
+    """Exclui uma NF complementar e reverte status dos registros operacionais relacionados"""
+    try:
+        nf_complementar = NfComplementarModel.obter_por_id(id)
+        
+        if not nf_complementar:
+            flash(("NF Complementar não encontrada!", "warning"))
+            return redirect(url_for('faturamento_nf_complementar'))
+        
+        if nf_complementar.situacao_financeira_id == 5:
+            flash(("Não é possível excluir uma NF Complementar que já foi faturada!", "warning"))
+            return redirect(url_for('faturamento_nf_complementar'))
+        
+        # Buscar e processar registros operacionais relacionados
+        registros_operacionais_processados = 0
+        
+        if nf_complementar.nf_complementar_detalhes and 'registros_operacionais' in nf_complementar.nf_complementar_detalhes:
+            registros_operacionais_data = nf_complementar.nf_complementar_detalhes['registros_operacionais']
+            
+            for item in registros_operacionais_data:
+                registro_id = item.get('registro_id')
+                
+                if registro_id:
+                    # Buscar registro operacional
+                    registro_operacional = RegistroOperacionalModel.query.get(registro_id)
+                    if registro_operacional:
+                        # Reverter status emissão NF complementar para nao emitida
+                        registro_operacional.status_emissao_nf_complementar_id = 2
+                        registros_operacionais_processados += 1
+        
+        # Marcar NF complementar como deletada (soft delete)
+        nf_complementar.deletado = True
+        nf_complementar.ativo = False
+        
+        db.session.commit()
+        
+        flash(('NF Complementar excluída com sucesso!', "success"))
+        return redirect(url_for('faturamento_nf_complementar'))
+        
+    except Exception as e:
+        print(f"[ERROR] Erro ao excluir NF complementar: {e}")
+        db.session.rollback()
+        flash((f"Erro ao excluir NF complementar: {str(e)}", "danger"))
+        return redirect(url_for('faturamento_nf_complementar'))

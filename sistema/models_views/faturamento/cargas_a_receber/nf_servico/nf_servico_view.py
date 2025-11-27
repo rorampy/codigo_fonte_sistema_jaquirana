@@ -3,14 +3,14 @@ from sistema import app, requires_roles, db, current_user
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required
 from sistema.models_views.upload_arquivo.upload_arquivo_view import upload_arquivo
-from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema.models_views.faturamento.cargas_a_receber.nf_servico.nf_servico_model import NfServicoModel
 from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
 from sistema.models_views.parametros.status_emissao_nf_complementar.status_emissao_nf_complementar_model import StatusEmissaoNfComplementarModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.models_views.upload_arquivo.upload_arquivo_model import UploadArquivoModel
-from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
+from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema._utilitarios import *
 from sistema._utilitarios.extracao_nfs_e import ExtrairDadosNFSe

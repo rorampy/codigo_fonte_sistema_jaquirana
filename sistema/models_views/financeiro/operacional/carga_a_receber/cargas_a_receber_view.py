@@ -4,12 +4,12 @@ from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem, forma
 from sistema._utilitarios.manipulacao_arquivos import ManipulacaoArquivos
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
-from sistema.models_views.financeiro.situacao_pagamento_model import SituacaoPagamentoModel
+from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
+from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
 from sistema.models_views.autenticacao.usuario_model import UsuarioModel
 from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
-from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema._utilitarios import *
 
 
@@ -409,6 +409,19 @@ def processar_dados_faturamento(faturamento):
     # Obter informações do usuário
     usuario = UsuarioModel.query.get(faturamento.usuario_id) if faturamento.usuario_id else None
     
+    # Calcular período quinzenal baseado nas datas de entrega dos registros
+    todas_datas = []
+    
+    # Coletar todas as datas de entrega das cargas a receber
+    cargas_a_receber = detalhes.get('cargas_a_receber', [])
+    for carga in cargas_a_receber:
+        data_entrega = carga.get('data_entrega')
+        if data_entrega and data_entrega != '-':
+            todas_datas.append(data_entrega)
+    
+    # Determinar o período quinzenal
+    periodo_quinzenal = DataHora.obter_periodo_quinzenal(todas_datas) if todas_datas else None
+    
     # Dados básicos do faturamento
     dados = {
         'faturamento': {
@@ -421,6 +434,7 @@ def processar_dados_faturamento(faturamento):
             "valor_cargas_a_receber": faturamento.valor_total,  # Para cargas a receber, o valor total é o valor das cargas
             "utilizou_credito": faturamento.utilizou_credito,
             "situacao": faturamento.situacao.situacao if faturamento.situacao else "Pendente",
+            "periodo_quinzenal": periodo_quinzenal
         }
     }
     

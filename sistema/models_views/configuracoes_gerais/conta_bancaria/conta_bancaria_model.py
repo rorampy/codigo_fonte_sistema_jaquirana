@@ -38,7 +38,7 @@ class ContaBancariaModel(BaseModel):
         return (
             ContaBancariaModel.query
             .filter_by(deletado=False, ativo=True)
-            .order_by(desc(ContaBancariaModel.id))
+            .order_by(desc(ContaBancariaModel.conta_principal))
             .all()
         )
 

@@ -2,24 +2,24 @@ from datetime import datetime, timedelta, date
 from sistema import app, requires_roles, db, formatar_data_para_brl
 from flask import request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema._utilitarios import *
-from sistema.models_views.financeiro.situacao_pagamento_model import SituacaoPagamentoModel
-from sistema.models_views.controle_carga.carga_model import CargaModel
+from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
+from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.models_views.gerenciar.veiculo.veiculo_model import VeiculoModel
 from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
 from sistema.models_views.gerenciar.floresta.floresta_model import FlorestaModel
-from sistema.models_views.faturamento.cargas_a_pagar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
-from sistema.models_views.faturamento.cargas_a_pagar.extrator.extrator_a_pagar_model import ExtratorPagarModel
-from sistema.models_views.faturamento.cargas_a_pagar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
-from sistema.models_views.controle_carga.produto_model import ProdutoModel
+from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.parametros.bitola.bitola_model import BitolaModel
-from sistema.models_views.faturamento.cargas_a_pagar.transportadora.frete_a_pagar_model import FretePagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
 from sistema.models_views.gerenciar.comissionado.comissionado_model import ComissionadoModel
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
-from sistema.models_views.controle_carga.nf_entrada_model import NfEntradaModel
+from sistema.models_views.controle_carga.nf_complementar.nf_entrada_model import NfEntradaModel
 from sqlalchemy import case, desc, or_
 
 

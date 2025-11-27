@@ -447,7 +447,8 @@
         </div>
       </div>
 
-      <form action="{{ url_for('fornecedor_a_pagar_massa') }}" method="POST" enctype="multipart/form-data">
+      <form id="form-faturamento" action="{{ url_for('fornecedor_a_pagar_massa') }}" method="POST"
+        enctype="multipart/form-data">
         <input type="hidden" name="ids_registros" value="{{ ids_selecionados }}">
         <input type="hidden" name="valores_calculados" id="valores-calculados-hidden" value="">
         <input type="hidden" name="valores_calculados_fretes" id="valores-calculados-fretes-hidden" value="">
@@ -844,58 +845,58 @@
                 {% endif %}
               </div>
 
-                  <!-- Resumo Final Moderno -->
-                  <div class="border-top bg-light">
-                    <div class="p-4">
+              <!-- Resumo Final Moderno -->
+              <div class="border-top bg-light">
+                <div class="p-4">
 
-                      <!-- Título do resumo -->
-                      <div class="text-center mb-4">
-                        <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center"
-                          style="width: 48px; height: 48px; background: #f8f9fa; border: 2px solid #dee2e6;">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="icon icon-tabler icons-tabler-outline icon-tabler-script">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path
-                              d="M17 20h-11a3 3 0 0 1 0 -6h11a3 3 0 0 0 0 6h1a3 3 0 0 0 3 -3v-11a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v8" />
-                          </svg>
-                        </div>
-                        <h5 class="mb-0 text-dark">RESULTADO FINAL</h5>
-                      <!-- Cards do resumo matemático -->
-                  <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                      <div class="card border shadow-sm"
-                        style="border-radius: 12px;">
-                        <div class="card-body p-3 text-center">
-                          <div class="small text-muted text-uppercase mb-1">Total a Faturar</div>
-                          <h4 class="fw-bold mb-0" id="resumo-total-pagar">{{ valor_total_geral_com_fretes |
-                            formatar_float_para_brl }}</h4>
+                  <!-- Título do resumo -->
+                  <div class="text-center mb-4">
+                    <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center"
+                      style="width: 48px; height: 48px; background: #f8f9fa; border: 2px solid #dee2e6;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-script">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path
+                          d="M17 20h-11a3 3 0 0 1 0 -6h11a3 3 0 0 0 0 6h1a3 3 0 0 0 3 -3v-11a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v8" />
+                      </svg>
+                    </div>
+                    <h5 class="mb-0 text-dark">RESULTADO FINAL</h5>
+                    <!-- Cards do resumo matemático -->
+                    <div class="row g-3 mb-4">
+                      <div class="col-md-4">
+                        <div class="card border shadow-sm" style="border-radius: 12px;">
+                          <div class="card-body p-3 text-center">
+                            <div class="small text-muted text-uppercase mb-1">Total a Faturar</div>
+                            <h4 class="fw-bold mb-0" id="resumo-total-pagar">{{ valor_total_geral_com_fretes |
+                              formatar_float_para_brl }}</h4>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div class="col-md-4">
-                      <div class="card border shadow-sm"
-                        style="border-radius: 12px;">
-                        <div class="card-body p-3 text-center">
-                          <div class="small text-muted text-uppercase mb-1">Créditos Selecionados</div>
-                          <h4 class="fw-bold mb-0" id="resumo-creditos-totais">R$ 0,00</h4>
+                      <div class="col-md-4">
+                        <div class="card border shadow-sm" style="border-radius: 12px;">
+                          <div class="card-body p-3 text-center">
+                            <div class="small text-muted text-uppercase mb-1">Créditos Selecionados</div>
+                            <h4 class="fw-bold mb-0" id="resumo-creditos-totais">R$ 0,00</h4>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div class="col-md-4">
-                      <div class="card border shadow-sm text-center" id="resumo-saldo-final-card"
-                        style="border-radius: 12px;">
-                        <div class="card-body p-3">
-                          <div class="small text-muted text-uppercase mb-1" id="resumo-saldo-final-label">Saldo
-                            Final a Faturar</div>
-                          {% set saldo_final = total_credito_disponivel_geral - valor_total_geral_com_fretes %}
-                          {% if saldo_final >= 0 %}
-                          <h4 class="fw-bold mb-0 text-success" id="resumo-saldo-final">{{ saldo_final | formatar_float_para_brl
-                            }}</h4>
-                          {% else %}
-                          <h4 class="fw-bold mb-0 text-danger" id="resumo-saldo-final">{{ (saldo_final * -1) |
-                            formatar_float_para_brl }}</h4>
-                          {% endif %}
+                      <div class="col-md-4">
+                        <div class="card border shadow-sm text-center" id="resumo-saldo-final-card"
+                          style="border-radius: 12px;">
+                          <div class="card-body p-3">
+                            <div class="small text-muted text-uppercase mb-1" id="resumo-saldo-final-label">Saldo
+                              Final a Faturar</div>
+                            {% set saldo_final = total_credito_disponivel_geral - valor_total_geral_com_fretes %}
+                            {% if saldo_final >= 0 %}
+                            <h4 class="fw-bold mb-0 text-success" id="resumo-saldo-final">{{ saldo_final |
+                              formatar_float_para_brl
+                              }}</h4>
+                            {% else %}
+                            <h4 class="fw-bold mb-0 text-danger" id="resumo-saldo-final">{{ (saldo_final * -1) |
+                              formatar_float_para_brl }}</h4>
+                            {% endif %}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -904,492 +905,137 @@
               </div>
             </div>
           </div>
-        </div>
-        {% endif %}
+          {% endif %}
 
-        <div class="text-end">
-          <a class="btn btn-primary" href="{{ url_for('listagem_fornecedores_a_pagar') }}">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <path d="M5 12l14 0" />
-              <path d="M5 12l6 6" />
-              <path d="M5 12l6 -6" />
-            </svg>Voltar
-          </a>
-          <button type="submit" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              class="icon icon-tabler icons-tabler-outline icon-tabler-check">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <path d="M5 12l5 5l10 -10" />
-            </svg>Confirmar Faturamento em Massa ({{ registros|length }} registros)
-          </button>
+          <div class="card-footer">
+            <div class="text-end mt-3">
+              <a class="btn btn-outline-primary me-2" href="{{ url_for('listagem_fornecedores_a_pagar') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l14 0" />
+                  <path d="M5 12l6 6" />
+                  <path d="M5 12l6 -6" />
+                </svg>Voltar
+              </a>
+              <button type="submit" form="form-faturamento" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l5 5l10 -10" />
+                </svg>Confirmar Faturamento em Massa ({{ registros|length }} registros)
+              </button>
+            </div>
+          </div>
+
         </div>
+      </form>
 
     </div>
   </div>
-  </form>
 
-</div>
-</div>
+  <!-- Estilos customizados para as tabelas de créditos -->
+  <style>
+    .hover-row:hover {
+      background-color: #f8f9fa !important;
+      cursor: pointer;
+    }
 
-<!-- Estilos customizados para as tabelas de créditos -->
-<style>
-  .hover-row:hover {
-    background-color: #f8f9fa !important;
-    cursor: pointer;
-  }
+    .creditos-section {
+      border-radius: 8px;
+      overflow: hidden;
+    }
 
-  .creditos-section {
-    border-radius: 8px;
-    overflow: hidden;
-  }
+    .creditos-section .table {
+      border-collapse: separate;
+      border-spacing: 0;
+    }
 
-  .creditos-section .table {
-    border-collapse: separate;
-    border-spacing: 0;
-  }
+    .creditos-section .table td,
+    .creditos-section .table th {
+      border: none;
+      padding: 12px 16px;
+      vertical-align: middle;
+    }
 
-  .creditos-section .table td,
-  .creditos-section .table th {
-    border: none;
-    padding: 12px 16px;
-    vertical-align: middle;
-  }
+    .creditos-section .form-check-input {
+      transform: scale(1.1);
+    }
 
-  .creditos-section .form-check-input {
-    transform: scale(1.1);
-  }
+    .creditos-section .badge {
+      font-size: 0.85rem;
+      padding: 0.4em 0.8em;
+    }
 
-  .creditos-section .badge {
-    font-size: 0.85rem;
-    padding: 0.4em 0.8em;
-  }
+    .hover-row {
+      transition: background-color 0.2s ease;
+    }
+  </style>
 
-  .hover-row {
-    transition: background-color 0.2s ease;
-  }
-</style>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('select.form-select:not(.categoria-select)').forEach(function (select) {
-      new TomSelect(select, {
-        create: false,
-        allowEmptyOption: false,
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('select.form-select:not(.categoria-select)').forEach(function (select) {
+        new TomSelect(select, {
+          create: false,
+          allowEmptyOption: false,
+        });
       });
     });
-  });
 
 
-  let creditosSelecionados = {
-    fornecedor: {},
-    transportadora: {}
-  };
+    let creditosSelecionados = {
+      fornecedor: {},
+      transportadora: {}
+    };
 
-  function toggleAllCreditos(tipo, entidadeId) {
-    const checkboxPrincipal = document.getElementById(`select-all-creditos-${tipo}-${entidadeId}`);
-    const checkboxes = document.querySelectorAll(`input[name="creditos_${tipo}_${entidadeId}[]"]`);
+    function toggleAllCreditos(tipo, entidadeId) {
+      const checkboxPrincipal = document.getElementById(`select-all-creditos-${tipo}-${entidadeId}`);
+      const checkboxes = document.querySelectorAll(`input[name="creditos_${tipo}_${entidadeId}[]"]`);
 
-    checkboxes.forEach(checkbox => {
-      checkbox.checked = checkboxPrincipal.checked;
-    });
-
-    calcularCreditosSelecionados();
-  }
-
-  function calcularCreditosSelecionados() {
-    const creditosParaEnvio = { fornecedor: {}, transportadora: {} };
-    creditosSelecionados = { fornecedor: {}, transportadora: {} };
-
-    document.querySelectorAll('.credito-checkbox:checked').forEach(checkbox => {
-      const tipo = checkbox.dataset.tipo;
-      const entidadeId = checkbox.dataset.entidadeId;
-      const valor = parseInt(checkbox.dataset.valor) || 0;
-      const creditoId = parseInt(checkbox.value);
-
-      if (!creditosSelecionados[tipo][entidadeId]) {
-        creditosSelecionados[tipo][entidadeId] = [];
-      }
-      creditosSelecionados[tipo][entidadeId].push({
-        id: creditoId,
-        valor: valor
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = checkboxPrincipal.checked;
       });
 
-      if (!creditosParaEnvio[tipo][entidadeId]) {
-        creditosParaEnvio[tipo][entidadeId] = [];
-      }
-      creditosParaEnvio[tipo][entidadeId].push(creditoId);
-    });
-
-    atualizarTotaisCreditos();
-    document.getElementById('creditos-selecionados-hidden').value = JSON.stringify(creditosParaEnvio);
-    verificarCreditosExcessivos();
-
-    const radioUsarCredito = document.querySelector('input[name="usar_credito"][value="sim"]');
-    if (radioUsarCredito && radioUsarCredito.checked) {
-      calcularTotaisGerais();
-    }
-  }
-
-  function verificarCreditosExcessivos() {
-    let totalCreditosSelecionados = 0;
-
-    Object.keys(creditosSelecionados.fornecedor).forEach(fornecedorId => {
-      if (creditosSelecionados.fornecedor[fornecedorId]) {
-        totalCreditosSelecionados += creditosSelecionados.fornecedor[fornecedorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
-      }
-    });
-
-    Object.keys(creditosSelecionados.transportadora).forEach(transportadoraId => {
-      if (creditosSelecionados.transportadora[transportadoraId]) {
-        totalCreditosSelecionados += creditosSelecionados.transportadora[transportadoraId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
-      }
-    });
-
-    let valorTotalFatura = 0;
-    Object.values(valoresCalculados).forEach(dados => {
-      valorTotalFatura += dados.valor_total;
-    });
-    Object.values(valoresCalculadosFretes).forEach(dados => {
-      valorTotalFatura += dados.valor_total;
-    });
-
-    const creditoExcessivo = totalCreditosSelecionados < 0 ? 0 : Math.max(0, totalCreditosSelecionados - valorTotalFatura);
-
-    const alertaExistente = document.getElementById('alerta-credito-excessivo');
-    if (alertaExistente) {
-      alertaExistente.remove();
+      calcularCreditosSelecionados();
     }
 
-    if (creditoExcessivo > 0) {
-      const alertaDiv = document.createElement('div');
-      alertaDiv.id = 'alerta-credito-excessivo';
-      alertaDiv.className = 'bg-white alert alert-primary mt-3';
-      alertaDiv.innerHTML = `
-          <div class="d-flex align-items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="m9 12 2 2 4-4"></path>
-            </svg>
-            <div>
-              <strong>Crédito Suficiente!</strong><br>
-              <small>Você selecionou <strong>${formatarMoeda(totalCreditosSelecionados)}</strong> em créditos, mas apenas <strong>${formatarMoeda(Math.min(totalCreditosSelecionados, valorTotalFatura))}</strong> serão utilizados para cobrir o valor da fatura.</small>
-            </div>
-          </div>
-        `;
+    function calcularCreditosSelecionados() {
+      const creditosParaEnvio = { fornecedor: {}, transportadora: {} };
+      creditosSelecionados = { fornecedor: {}, transportadora: {} };
 
-      const resumoCreditos = document.getElementById('resumo-creditos');
-      if (resumoCreditos) {
-        resumoCreditos.appendChild(alertaDiv);
-      }
-    }
-  }
+      document.querySelectorAll('.credito-checkbox:checked').forEach(checkbox => {
+        const tipo = checkbox.dataset.tipo;
+        const entidadeId = checkbox.dataset.entidadeId;
+        const valor = parseInt(checkbox.dataset.valor) || 0;
+        const creditoId = parseInt(checkbox.value);
 
-  function atualizarTotaisCreditos() {
-    Object.keys(creditosSelecionados.fornecedor).forEach(fornecedorId => {
-      const total = creditosSelecionados.fornecedor[fornecedorId].reduce((sum, credito) => sum + credito.valor, 0);
-      const elemento = document.getElementById(`total-credito-fornecedor-${fornecedorId}`);
-      if (elemento) {
-        elemento.textContent = formatarMoeda(total / 100);
-      }
-    });
-
-    Object.keys(creditosSelecionados.transportadora).forEach(transportadoraId => {
-      const total = creditosSelecionados.transportadora[transportadoraId].reduce((sum, credito) => sum + credito.valor, 0);
-      const elemento = document.getElementById(`total-credito-transportadora-${transportadoraId}`);
-      if (elemento) {
-        elemento.textContent = formatarMoeda(total / 100);
-      }
-    });
-
-    document.querySelectorAll('[id^="total-credito-fornecedor-"]').forEach(elemento => {
-      const fornecedorId = elemento.id.replace('total-credito-fornecedor-', '');
-      if (!creditosSelecionados.fornecedor[fornecedorId] || creditosSelecionados.fornecedor[fornecedorId].length === 0) {
-        elemento.textContent = 'R$ 0,00';
-      }
-    });
-
-    document.querySelectorAll('[id^="total-credito-transportadora-"]').forEach(elemento => {
-      const transportadoraId = elemento.id.replace('total-credito-transportadora-', '');
-      if (!creditosSelecionados.transportadora[transportadoraId] || creditosSelecionados.transportadora[transportadoraId].length === 0) {
-        elemento.textContent = 'R$ 0,00';
-      }
-    });
-  }
-</script>
-
-<script>
-  const totalCreditoDisponivel = {{ total_credito_disponivel_geral|default (0) / 100}};
-  const valorTotalFretesOriginal = {{ valor_total_fretes|default (0) / 100 }};
-  let valoresCalculados = {};
-  let valoresCalculadosFretes = {};
-
-  const creditosOriginais = {
-    fornecedores: {},
-    transportadoras: {}
-  };
-
-  {% for fornecedor_id, dados_fornecedor in fornecedores_dict.items() %}
-  creditosOriginais.fornecedores['{{ fornecedor_id }}'] = {{ dados_fornecedor.credito_disponivel / 100 }};
-  {% endfor %}
-
-  {% if fretes_dict %}
-  {% for transportadora_id, dados_transportadora in fretes_dict.items() %}
-  creditosOriginais.transportadoras['{{ transportadora_id }}'] = {{ dados_transportadora.credito_disponivel / 100 }};
-  {% endfor %}
-  {% endif %}
-
-  function extrairValorNumerico(valorMascarado) {
-    if (!valorMascarado) return 0;
-    return parseFloat(valorMascarado.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
-  }
-
-  function formatarMoeda(valor) {
-    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
-
-  function calcularValorRegistro(registroId) {
-    const row = document.querySelector(`tr[data-registro-id="${registroId}"]`);
-    if (!row) return;
-
-    const precoCustoInput = row.querySelector('.preco-custo-input');
-    const pesoCell = row.querySelector('td[data-peso]');
-    const valorBadge = row.querySelector('.valor-pagar-badge');
-
-    if (!precoCustoInput || !pesoCell || !valorBadge) return;
-
-    const precoCusto = extrairValorNumerico(precoCustoInput.value);
-    const peso = parseFloat(pesoCell.dataset.peso) || 0;
-    const valorTotal = (precoCusto * peso);
-
-    valorBadge.textContent = formatarMoeda(valorTotal);
-    valoresCalculados[registroId] = {
-      preco_custo: precoCusto,
-      peso: peso,
-      valor_total: valorTotal
-    };
-
-    calcularTotaisGerais();
-  }
-
-  function calcularValorFrete(freteId) {
-    const row = document.querySelector(`tr[data-frete-id="${freteId}"]`);
-    if (!row) return;
-
-    const precoCustoInput = row.querySelector('.preco-custo-frete-input');
-    const pesoCell = row.querySelector('td[data-peso-frete]');
-    const valorBadge = row.querySelector('.valor-frete-badge');
-
-    if (!precoCustoInput || !pesoCell || !valorBadge) return;
-
-    const precoCusto = extrairValorNumerico(precoCustoInput.value);
-    const peso = parseFloat(pesoCell.dataset.pesoFrete) || 0;
-    const valorTotal = (precoCusto * peso);
-
-    valorBadge.textContent = formatarMoeda(valorTotal);
-    valoresCalculadosFretes[freteId] = {
-      preco_custo: precoCusto,
-      peso: peso,
-      valor_total: valorTotal
-    };
-
-    calcularTotaisGerais();
-  }
-
-  function calcularTotaisGerais() {
-    let totalGeralFornecedores = 0;
-    let totalGeralFretes = 0;
-    const totaisPorFornecedor = {};
-    const totaisPorTransportadora = {};
-
-    Object.values(valoresCalculados).forEach(dados => {
-      totalGeralFornecedores += dados.valor_total;
-    });
-
-    Object.values(valoresCalculadosFretes).forEach(dados => {
-      totalGeralFretes += dados.valor_total;
-    });
-
-    const totalGeralCompleto = totalGeralFornecedores + totalGeralFretes;
-
-    Object.keys(valoresCalculados).forEach(registroId => {
-      const row = document.querySelector(`tr[data-registro-id="${registroId}"]`);
-      if (row) {
-        const fornecedorId = row.dataset.fornecedorId;
-        if (!totaisPorFornecedor[fornecedorId]) {
-          totaisPorFornecedor[fornecedorId] = 0;
+        if (!creditosSelecionados[tipo][entidadeId]) {
+          creditosSelecionados[tipo][entidadeId] = [];
         }
-        totaisPorFornecedor[fornecedorId] += valoresCalculados[registroId].valor_total;
-      }
-    });
+        creditosSelecionados[tipo][entidadeId].push({
+          id: creditoId,
+          valor: valor
+        });
 
-    Object.keys(valoresCalculadosFretes).forEach(freteId => {
-      const row = document.querySelector(`tr[data-frete-id="${freteId}"]`);
-      if (row) {
-        const transportadoraId = row.dataset.transportadoraId;
-        if (!totaisPorTransportadora[transportadoraId]) {
-          totaisPorTransportadora[transportadoraId] = 0;
+        if (!creditosParaEnvio[tipo][entidadeId]) {
+          creditosParaEnvio[tipo][entidadeId] = [];
         }
-        totaisPorTransportadora[transportadoraId] += valoresCalculadosFretes[freteId].valor_total;
-      }
-    });
-
-    const radioUsarCredito = document.querySelector('input[name="usar_credito"][value="sim"]');
-    const usandoCredito = radioUsarCredito && radioUsarCredito.checked;
-
-    let valorFinalFornecedores = totalGeralFornecedores;
-    let valorFinalFretes = totalGeralFretes;
-    let totalCreditoAplicado = 0;
-
-    if (usandoCredito) {
-      let totalCreditosSelecionados = 0;
-
-      Object.keys(creditosSelecionados.fornecedor).forEach(fornecedorId => {
-        if (creditosSelecionados.fornecedor[fornecedorId]) {
-          const creditoFornecedor = creditosSelecionados.fornecedor[fornecedorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
-          totalCreditosSelecionados += creditoFornecedor;
-        }
+        creditosParaEnvio[tipo][entidadeId].push(creditoId);
       });
 
-      // Somar créditos de transportadoras
-      Object.keys(creditosSelecionados.transportadora).forEach(transportadoraId => {
-        if (creditosSelecionados.transportadora[transportadoraId]) {
-          const creditoTransportadora = creditosSelecionados.transportadora[transportadoraId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
-          totalCreditosSelecionados += creditoTransportadora;
-        }
-      });
+      atualizarTotaisCreditos();
+      document.getElementById('creditos-selecionados-hidden').value = JSON.stringify(creditosParaEnvio);
+      verificarCreditosExcessivos();
 
-      totalCreditoAplicado = totalCreditosSelecionados;
-
-      let valorFinalGlobal;
-      if (totalCreditoAplicado < 0) {
-        valorFinalGlobal = totalGeralCompleto + Math.abs(totalCreditoAplicado);
-      } else {
-        valorFinalGlobal = totalGeralCompleto - totalCreditoAplicado;
-      }
-
-      if (totalGeralCompleto > 0) {
-        const proporcaoFornecedores = totalGeralFornecedores / totalGeralCompleto;
-        const proporcaoFretes = totalGeralFretes / totalGeralCompleto;
-
-        valorFinalFornecedores = valorFinalGlobal * proporcaoFornecedores;
-        valorFinalFretes = valorFinalGlobal * proporcaoFretes;
-      } else {
-        valorFinalFornecedores = 0;
-        valorFinalFretes = 0;
+      const radioUsarCredito = document.querySelector('input[name="usar_credito"][value="sim"]');
+      if (radioUsarCredito && radioUsarCredito.checked) {
+        calcularTotaisGerais();
       }
     }
 
-    const valorFinalAPagar = valorFinalFornecedores + valorFinalFretes;
-
-    atualizarInterface(totalGeralCompleto, valorFinalAPagar, usandoCredito, totalCreditoAplicado, totaisPorFornecedor, totaisPorTransportadora, totalGeralFornecedores, totalGeralFretes);
-    atualizarCamposHidden();
-  }
-
-  function atualizarInterface(totalBruto, valorFinal, usandoCredito, creditoAplicado, totaisPorFornecedor, totaisPorTransportadora, totalFornecedores, totalFretes) {
-    atualizarCardTotalFaturar(totalBruto, valorFinal, usandoCredito, creditoAplicado);
-    atualizarSubtotais(totalFornecedores, totalFretes);
-    atualizarBadgesEntidades(totaisPorFornecedor, totaisPorTransportadora);
-    atualizarResumoFinal(totalBruto, valorFinal, usandoCredito, totaisPorFornecedor, totaisPorTransportadora);
-  }
-
-  function atualizarCardTotalFaturar(totalBruto, valorFinal, usandoCredito, creditoAplicado) {
-    const elements = {
-      total: document.getElementById('total-pagar'),
-      label: document.getElementById('total-pagar-label'),
-      status: document.getElementById('credito-status'),
-      brutoMini: document.getElementById('total-bruto-mini'),
-      badge: document.getElementById('credito-aplicado-badge')
-    };
-
-    if (!elements.total) return;
-
-    if (usandoCredito) {
-      elements.total.textContent = formatarMoeda(valorFinal);
-      elements.label.textContent = "Valor Final a Faturar";
-
-      if (elements.status) {
-        elements.status.style.display = 'block';
-        if (elements.brutoMini) elements.brutoMini.textContent = formatarMoeda(totalBruto);
-
-        if (elements.badge) {
-          if (creditoAplicado < 0) {
-            elements.badge.textContent = `Débito aplicado: +${formatarMoeda(Math.abs(creditoAplicado))}`;
-            elements.badge.className = 'badge bg-orange-lt';
-            elements.badge.textContent += ` (Total: ${formatarMoeda(valorFinal)})`;
-          } else {
-            elements.badge.textContent = `Crédito aplicado: ${formatarMoeda(creditoAplicado || 0)}`;
-
-            if (valorFinal === 0) {
-              elements.badge.className = 'badge bg-success-lt';
-              elements.badge.textContent += ' ✓ Totalmente coberto';
-            } else {
-              elements.badge.className = 'badge bg-warning-lt';
-              if (creditoAplicado > 0) {
-                elements.badge.textContent += ` (Restante: ${formatarMoeda(valorFinal)})`;
-              }
-            }
-          }
-        }
-      }
-
-      elements.total.style.color = valorFinal === 0 ? '#1B5E20' :
-        creditoAplicado < 0 ? '#fd7e14' :
-          creditoAplicado > 0 ? '#28a745' :
-            '#dc3545';
-    } else {
-      elements.total.textContent = formatarMoeda(totalBruto);
-      elements.label.textContent = "Total a Faturar";
-      elements.total.style.color = '#1B5E20';
-
-      if (elements.status) elements.status.style.display = 'none';
-    }
-  }
-
-  function atualizarSubtotais(totalFornecedores, totalFretes) {
-    const fornecedoresElement = document.getElementById('fornecedores-subtotal');
-    const fretesElement = document.getElementById('fretes-subtotal');
-    const totalFretesElement = document.getElementById('total-fretes');
-
-    if (fornecedoresElement) fornecedoresElement.textContent = formatarMoeda(totalFornecedores);
-    if (fretesElement) fretesElement.textContent = formatarMoeda(totalFretes);
-    if (totalFretesElement) totalFretesElement.textContent = formatarMoeda(totalFretes);
-  }
-
-  function atualizarBadgesEntidades(totaisPorFornecedor, totaisPorTransportadora) {
-    Object.keys(totaisPorFornecedor).forEach(fornecedorId => {
-      const badge = document.getElementById(`total-fornecedor-${fornecedorId}`);
-      if (badge) {
-        badge.textContent = `Total: ${formatarMoeda(totaisPorFornecedor[fornecedorId])}`;
-      }
-    });
-
-    Object.keys(totaisPorTransportadora).forEach(transportadoraId => {
-      const badge = document.getElementById(`total-transportadora-${transportadoraId}`);
-      if (badge) {
-        badge.textContent = `Total: ${formatarMoeda(totaisPorTransportadora[transportadoraId])}`;
-      }
-    });
-  }
-
-  function atualizarResumoFinal(totalGeral, valorFinalPagar, usandoCredito, totaisPorFornecedor, totaisPorTransportadora) {
-    const resumoCreditos = document.getElementById('resumo-creditos');
-    if (!resumoCreditos) return;
-
-    const elements = {
-      totalPagar: document.getElementById('resumo-total-pagar'),
-      creditosTotais: document.getElementById('resumo-creditos-totais'),
-      saldoFinal: document.getElementById('resumo-saldo-final'),
-      saldoCard: document.getElementById('resumo-saldo-final-card'),
-      saldoLabel: document.getElementById('resumo-saldo-final-label')
-    };
-
-    if (elements.totalPagar) elements.totalPagar.textContent = formatarMoeda(totalGeral);
-
-    if (elements.creditosTotais) {
+    function verificarCreditosExcessivos() {
       let totalCreditosSelecionados = 0;
 
       Object.keys(creditosSelecionados.fornecedor).forEach(fornecedorId => {
@@ -1404,501 +1050,856 @@
         }
       });
 
-      const creditosUtilizados = totalCreditosSelecionados < 0 ? totalCreditosSelecionados : Math.min(totalCreditosSelecionados, totalGeral);
-      elements.creditosTotais.textContent = formatarMoeda(creditosUtilizados);
+      let valorTotalFatura = 0;
+      Object.values(valoresCalculados).forEach(dados => {
+        valorTotalFatura += dados.valor_total;
+      });
+      Object.values(valoresCalculadosFretes).forEach(dados => {
+        valorTotalFatura += dados.valor_total;
+      });
+
+      const creditoExcessivo = totalCreditosSelecionados < 0 ? 0 : Math.max(0, totalCreditosSelecionados - valorTotalFatura);
+
+      const alertaExistente = document.getElementById('alerta-credito-excessivo');
+      if (alertaExistente) {
+        alertaExistente.remove();
+      }
+
+      if (creditoExcessivo > 0) {
+        const alertaDiv = document.createElement('div');
+        alertaDiv.id = 'alerta-credito-excessivo';
+        alertaDiv.className = 'bg-white alert alert-primary mt-3';
+        alertaDiv.innerHTML = `
+          <div class="d-flex align-items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
+            <div>
+              <strong>Crédito Suficiente!</strong><br>
+              <small>Você selecionou <strong>${formatarMoeda(totalCreditosSelecionados)}</strong> em créditos, mas apenas <strong>${formatarMoeda(Math.min(totalCreditosSelecionados, valorTotalFatura))}</strong> serão utilizados para cobrir o valor da fatura.</small>
+            </div>
+          </div>
+        `;
+
+        const resumoCreditos = document.getElementById('resumo-creditos');
+        if (resumoCreditos) {
+          resumoCreditos.appendChild(alertaDiv);
+        }
+      }
     }
 
-    if (elements.saldoFinal && elements.saldoCard && elements.saldoLabel) {
-      if (usandoCredito) {
-        elements.saldoFinal.textContent = formatarMoeda(valorFinalPagar);
-        elements.saldoLabel.textContent = 'VALOR FINAL A FATURAR';
+    function atualizarTotaisCreditos() {
+      Object.keys(creditosSelecionados.fornecedor).forEach(fornecedorId => {
+        const total = creditosSelecionados.fornecedor[fornecedorId].reduce((sum, credito) => sum + credito.valor, 0);
+        const elemento = document.getElementById(`total-credito-fornecedor-${fornecedorId}`);
+        if (elemento) {
+          elemento.textContent = formatarMoeda(total / 100);
+        }
+      });
 
-        elements.saldoCard.style.background = valorFinalPagar === 0 ? 'rgba(76, 175, 80, 0.25)' :
-          valorFinalPagar < totalGeral ? 'rgba(255,255,255,0.15)' :
-            'rgba(255,255,255,0.25)';
-      } else {
-        elements.saldoFinal.textContent = formatarMoeda(totalGeral);
-        elements.saldoLabel.textContent = 'SALDO FINAL A FATURAR';
-        elements.saldoCard.style.background = 'rgba(255,255,255,0.25)';
-      }
+      Object.keys(creditosSelecionados.transportadora).forEach(transportadoraId => {
+        const total = creditosSelecionados.transportadora[transportadoraId].reduce((sum, credito) => sum + credito.valor, 0);
+        const elemento = document.getElementById(`total-credito-transportadora-${transportadoraId}`);
+        if (elemento) {
+          elemento.textContent = formatarMoeda(total / 100);
+        }
+      });
+
+      document.querySelectorAll('[id^="total-credito-fornecedor-"]').forEach(elemento => {
+        const fornecedorId = elemento.id.replace('total-credito-fornecedor-', '');
+        if (!creditosSelecionados.fornecedor[fornecedorId] || creditosSelecionados.fornecedor[fornecedorId].length === 0) {
+          elemento.textContent = 'R$ 0,00';
+        }
+      });
+
+      document.querySelectorAll('[id^="total-credito-transportadora-"]').forEach(elemento => {
+        const transportadoraId = elemento.id.replace('total-credito-transportadora-', '');
+        if (!creditosSelecionados.transportadora[transportadoraId] || creditosSelecionados.transportadora[transportadoraId].length === 0) {
+          elemento.textContent = 'R$ 0,00';
+        }
+      });
+    }
+  </script>
+
+  <script>
+    const totalCreditoDisponivel = {{ total_credito_disponivel_geral|default (0) / 100}};
+    const valorTotalFretesOriginal = {{ valor_total_fretes|default (0) / 100 }};
+    let valoresCalculados = {};
+    let valoresCalculadosFretes = {};
+
+    const creditosOriginais = {
+      fornecedores: {},
+      transportadoras: {}
+    };
+
+    {% for fornecedor_id, dados_fornecedor in fornecedores_dict.items() %}
+    creditosOriginais.fornecedores['{{ fornecedor_id }}'] = {{ dados_fornecedor.credito_disponivel / 100 }};
+    {% endfor %}
+
+    {% if fretes_dict %}
+    {% for transportadora_id, dados_transportadora in fretes_dict.items() %}
+    creditosOriginais.transportadoras['{{ transportadora_id }}'] = {{ dados_transportadora.credito_disponivel / 100 }};
+    {% endfor %}
+    {% endif %}
+
+    function extrairValorNumerico(valorMascarado) {
+      if (!valorMascarado) return 0;
+      return parseFloat(valorMascarado.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
     }
 
-    atualizarStatusEntidades(totaisPorFornecedor, totaisPorTransportadora);
-  }
+    function formatarMoeda(valor) {
+      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
 
-  function atualizarStatusEntidades(totaisPorFornecedor, totaisPorTransportadora) {
-    Object.keys(totaisPorFornecedor).forEach(fornecedorId => {
-      const valorElement = document.getElementById(`resumo-valor-fornecedor-${fornecedorId}`);
-      const statusElement = document.getElementById(`resumo-status-fornecedor-${fornecedorId}`);
+    function calcularValorRegistro(registroId) {
+      const row = document.querySelector(`tr[data-registro-id="${registroId}"]`);
+      if (!row) return;
 
-      if (valorElement) {
-        valorElement.textContent = formatarMoeda(totaisPorFornecedor[fornecedorId]);
-      }
-
-      if (statusElement) {
-        const valorPagar = totaisPorFornecedor[fornecedorId] || 0;
-        let creditoSelecionado = 0;
-
-        if (creditosSelecionados.fornecedor[fornecedorId]) {
-          creditoSelecionado = creditosSelecionados.fornecedor[fornecedorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
-        }
-
-        if (creditoSelecionado < 0) {
-          const valorDebito = Math.abs(creditoSelecionado);
-          statusElement.innerHTML = `<div class="small fw-bold text-warning">DÉBITO</div>
-                                      <div class="small text-warning">+${formatarMoeda(valorDebito)}</div>`;
-        } else {
-          const diferenca = creditoSelecionado - valorPagar;
-          statusElement.innerHTML = diferenca >= 0 ?
-            '<div class="small fw-bold text-success">COBERTO</div>' :
-            `<div class="small fw-bold text-warning">FALTA</div>
-               <div class="small text-warning">${formatarMoeda(Math.abs(diferenca))}</div>`;
-        }
-      }
-    });
-
-    Object.keys(totaisPorTransportadora).forEach(transportadoraId => {
-      const valorElement = document.getElementById(`resumo-valor-transportadora-${transportadoraId}`);
-      const statusElement = document.getElementById(`resumo-status-transportadora-${transportadoraId}`);
-
-      if (valorElement) {
-        valorElement.textContent = formatarMoeda(totaisPorTransportadora[transportadoraId]);
-      }
-
-      if (statusElement) {
-        const valorPagar = totaisPorTransportadora[transportadoraId] || 0;
-        let creditoSelecionado = 0;
-
-        if (creditosSelecionados.transportadora[transportadoraId]) {
-          creditoSelecionado = creditosSelecionados.transportadora[transportadoraId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
-        }
-
-        if (creditoSelecionado < 0) {
-          const valorDebito = Math.abs(creditoSelecionado);
-          statusElement.innerHTML = `<div class="small fw-bold text-warning">DÉBITO</div>
-                                      <div class="small text-warning">+${formatarMoeda(valorDebito)}</div>`;
-        } else {
-          const diferenca = creditoSelecionado - valorPagar;
-          statusElement.innerHTML = diferenca >= 0 ?
-            '<div class="small fw-bold text-success">COBERTO</div>' :
-            `<div class="small fw-bold text-warning">FALTA</div>
-               <div class="small text-warning">${formatarMoeda(Math.abs(diferenca))}</div>`;
-        }
-      }
-    });
-  }
-
-  function atualizarCamposHidden() {
-    const hiddenInput = document.getElementById('valores-calculados-hidden');
-    if (hiddenInput) hiddenInput.value = JSON.stringify(valoresCalculados);
-
-    const hiddenFretes = document.getElementById('valores-calculados-fretes-hidden');
-    if (hiddenFretes) hiddenFretes.value = JSON.stringify(valoresCalculadosFretes);
-  }
-
-  function inicializarValoresOriginais() {
-    document.querySelectorAll('tr[data-registro-id]').forEach(row => {
-      const registroId = row.dataset.registroId;
       const precoCustoInput = row.querySelector('.preco-custo-input');
       const pesoCell = row.querySelector('td[data-peso]');
       const valorBadge = row.querySelector('.valor-pagar-badge');
 
-      if (precoCustoInput && pesoCell && valorBadge) {
-        const precoCusto = extrairValorNumerico(precoCustoInput.value);
-        const peso = parseFloat(pesoCell.dataset.peso) || 0;
-        const valorOriginal = extrairValorNumerico(valorBadge.textContent);
+      if (!precoCustoInput || !pesoCell || !valorBadge) return;
 
-        valoresCalculados[registroId] = {
-          preco_custo: precoCusto,
-          peso: peso,
-          valor_total: valorOriginal
-        };
-      }
-    });
-  }
+      const precoCusto = extrairValorNumerico(precoCustoInput.value);
+      const peso = parseFloat(pesoCell.dataset.peso) || 0;
+      const valorTotal = (precoCusto * peso);
 
-  function inicializarValoresOriginaisFretes() {
-    document.querySelectorAll('tr[data-frete-id]').forEach(row => {
-      const freteId = row.dataset.freteId;
+      valorBadge.textContent = formatarMoeda(valorTotal);
+      valoresCalculados[registroId] = {
+        preco_custo: precoCusto,
+        peso: peso,
+        valor_total: valorTotal
+      };
+
+      calcularTotaisGerais();
+    }
+
+    function calcularValorFrete(freteId) {
+      const row = document.querySelector(`tr[data-frete-id="${freteId}"]`);
+      if (!row) return;
+
       const precoCustoInput = row.querySelector('.preco-custo-frete-input');
       const pesoCell = row.querySelector('td[data-peso-frete]');
       const valorBadge = row.querySelector('.valor-frete-badge');
 
-      if (precoCustoInput && pesoCell && valorBadge) {
-        const precoCusto = extrairValorNumerico(precoCustoInput.value);
-        const peso = parseFloat(pesoCell.dataset.pesoFrete) || 0;
-        const valorOriginal = extrairValorNumerico(valorBadge.textContent);
+      if (!precoCustoInput || !pesoCell || !valorBadge) return;
 
-        valoresCalculadosFretes[freteId] = {
-          preco_custo: precoCusto,
-          peso: peso,
-          valor_total: valorOriginal
-        };
-      }
-    });
-  }
+      const precoCusto = extrairValorNumerico(precoCustoInput.value);
+      const peso = parseFloat(pesoCell.dataset.pesoFrete) || 0;
+      const valorTotal = (precoCusto * peso);
 
-  function configurarEventListeners() {
-    const radioSim = document.querySelector('input[name="usar_credito"][value="sim"]');
-    const radioNao = document.querySelector('input[name="usar_credito"][value="nao"]');
+      valorBadge.textContent = formatarMoeda(valorTotal);
+      valoresCalculadosFretes[freteId] = {
+        preco_custo: precoCusto,
+        peso: peso,
+        valor_total: valorTotal
+      };
 
-    if (radioSim) radioSim.addEventListener('change', calcularTotaisGerais);
-    if (radioNao) radioNao.addEventListener('change', calcularTotaisGerais);
-
-    document.querySelectorAll('.preco-custo-input').forEach(input => {
-      const row = input.closest('tr[data-registro-id]');
-      if (!row) return;
-
-      const registroId = row.dataset.registroId;
-      ['input', 'blur', 'keyup'].forEach(event => {
-        input.addEventListener(event, () => setTimeout(() => calcularValorRegistro(registroId), 10));
-      });
-    });
-
-    document.querySelectorAll('.preco-custo-frete-input').forEach(input => {
-      const row = input.closest('tr[data-frete-id]');
-      if (!row) return;
-
-      const freteId = row.dataset.freteId;
-      ['input', 'blur', 'keyup'].forEach(event => {
-        input.addEventListener(event, () => setTimeout(() => calcularValorFrete(freteId), 10));
-      });
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    inicializarValoresOriginais();
-    inicializarValoresOriginaisFretes();
-    configurarEventListeners();
-    calcularCreditosSelecionados();
-    calcularTotaisGerais();
-  });
-</script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    function aplicarMascaraMoeda(input) {
-      let valor = input.value.replace(/\D/g, '');
-      if (valor === '') {
-        input.value = 'R$ 0,00';
-        return;
-      }
-      valor = (parseInt(valor) / 100).toFixed(2) + '';
-      valor = valor.replace(".", ",");
-      valor = valor.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
-      valor = valor.replace(/(\d)(\d{3}),/g, "$1.$2,");
-      input.value = 'R$ ' + valor;
+      calcularTotaisGerais();
     }
 
-    document.querySelectorAll('.campo-moeda-brl').forEach(input => {
-      input.addEventListener('input', function () {
-        aplicarMascaraMoeda(this);
+    function calcularTotaisGerais() {
+      let totalGeralFornecedores = 0;
+      let totalGeralFretes = 0;
+      const totaisPorFornecedor = {};
+      const totaisPorTransportadora = {};
+
+      Object.values(valoresCalculados).forEach(dados => {
+        totalGeralFornecedores += dados.valor_total;
       });
 
-      input.addEventListener('focus', function () {
-        if (this.value === 'R$ 0,00') {
-          this.value = '';
+      Object.values(valoresCalculadosFretes).forEach(dados => {
+        totalGeralFretes += dados.valor_total;
+      });
+
+      const totalGeralCompleto = totalGeralFornecedores + totalGeralFretes;
+
+      Object.keys(valoresCalculados).forEach(registroId => {
+        const row = document.querySelector(`tr[data-registro-id="${registroId}"]`);
+        if (row) {
+          const fornecedorId = row.dataset.fornecedorId;
+          if (!totaisPorFornecedor[fornecedorId]) {
+            totaisPorFornecedor[fornecedorId] = 0;
+          }
+          totaisPorFornecedor[fornecedorId] += valoresCalculados[registroId].valor_total;
         }
       });
 
-      input.addEventListener('blur', function () {
-        if (this.value === '' || this.value === 'R$ ') {
-          this.value = 'R$ 0,00';
+      Object.keys(valoresCalculadosFretes).forEach(freteId => {
+        const row = document.querySelector(`tr[data-frete-id="${freteId}"]`);
+        if (row) {
+          const transportadoraId = row.dataset.transportadoraId;
+          if (!totaisPorTransportadora[transportadoraId]) {
+            totaisPorTransportadora[transportadoraId] = 0;
+          }
+          totaisPorTransportadora[transportadoraId] += valoresCalculadosFretes[freteId].valor_total;
         }
       });
 
-      input.addEventListener('keypress', function (e) {
-        const char = String.fromCharCode(e.which);
-        if (!/[0-9,.]/.test(char)) {
-          e.preventDefault();
-        }
-      });
-    });
-  });
-</script>
+      const radioUsarCredito = document.querySelector('input[name="usar_credito"][value="sim"]');
+      const usandoCredito = radioUsarCredito && radioUsarCredito.checked;
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const btnAdicionarFrete = document.getElementById('btn-adicionar-frete');
+      let valorFinalFornecedores = totalGeralFornecedores;
+      let valorFinalFretes = totalGeralFretes;
+      let totalCreditoAplicado = 0;
 
-    if (btnAdicionarFrete) {
-      btnAdicionarFrete.addEventListener('click', function () {
-        const idsRegistros = document.querySelector('input[name="ids_registros"]').value;
+      if (usandoCredito) {
+        let totalCreditosSelecionados = 0;
 
-        const url = `{{ url_for('listagem_fretes_a_pagar') }}?agrupar_fornecedores=${encodeURIComponent(idsRegistros)}`;
-        window.location.href = url;
-      });
-    }
-  });
-</script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const radioSim = document.querySelector('input[name="usar_credito"][value="sim"]');
-    const radioNao = document.querySelector('input[name="usar_credito"][value="nao"]');
-    const resumoCreditos = document.getElementById('resumo-creditos');
-
-    function toggleResumo() {
-      const creditosSections = document.querySelectorAll('.creditos-section');
-
-      if (radioSim && radioSim.checked) {
-        resumoCreditos.style.display = 'block';
-        resumoCreditos.style.opacity = '0';
-        resumoCreditos.style.transform = 'translateY(20px)';
-
-        setTimeout(() => {
-          resumoCreditos.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-          resumoCreditos.style.opacity = '1';
-          resumoCreditos.style.transform = 'translateY(0)';
-        }, 10);
-
-        creditosSections.forEach(section => {
-          section.style.display = 'block';
-          section.style.opacity = '0';
-          section.style.transform = 'translateY(10px)';
-
-          setTimeout(() => {
-            section.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-            section.style.opacity = '1';
-            section.style.transform = 'translateY(0)';
-          }, 100);
+        Object.keys(creditosSelecionados.fornecedor).forEach(fornecedorId => {
+          if (creditosSelecionados.fornecedor[fornecedorId]) {
+            const creditoFornecedor = creditosSelecionados.fornecedor[fornecedorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
+            totalCreditosSelecionados += creditoFornecedor;
+          }
         });
 
+        // Somar créditos de transportadoras
+        Object.keys(creditosSelecionados.transportadora).forEach(transportadoraId => {
+          if (creditosSelecionados.transportadora[transportadoraId]) {
+            const creditoTransportadora = creditosSelecionados.transportadora[transportadoraId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
+            totalCreditosSelecionados += creditoTransportadora;
+          }
+        });
+
+        totalCreditoAplicado = totalCreditosSelecionados;
+
+        let valorFinalGlobal;
+        if (totalCreditoAplicado < 0) {
+          valorFinalGlobal = totalGeralCompleto + Math.abs(totalCreditoAplicado);
+        } else {
+          valorFinalGlobal = totalGeralCompleto - totalCreditoAplicado;
+        }
+
+        if (totalGeralCompleto > 0) {
+          const proporcaoFornecedores = totalGeralFornecedores / totalGeralCompleto;
+          const proporcaoFretes = totalGeralFretes / totalGeralCompleto;
+
+          valorFinalFornecedores = valorFinalGlobal * proporcaoFornecedores;
+          valorFinalFretes = valorFinalGlobal * proporcaoFretes;
+        } else {
+          valorFinalFornecedores = 0;
+          valorFinalFretes = 0;
+        }
+      }
+
+      const valorFinalAPagar = valorFinalFornecedores + valorFinalFretes;
+
+      atualizarInterface(totalGeralCompleto, valorFinalAPagar, usandoCredito, totalCreditoAplicado, totaisPorFornecedor, totaisPorTransportadora, totalGeralFornecedores, totalGeralFretes);
+      atualizarCamposHidden();
+    }
+
+    function atualizarInterface(totalBruto, valorFinal, usandoCredito, creditoAplicado, totaisPorFornecedor, totaisPorTransportadora, totalFornecedores, totalFretes) {
+      atualizarCardTotalFaturar(totalBruto, valorFinal, usandoCredito, creditoAplicado);
+      atualizarSubtotais(totalFornecedores, totalFretes);
+      atualizarBadgesEntidades(totaisPorFornecedor, totaisPorTransportadora);
+      atualizarResumoFinal(totalBruto, valorFinal, usandoCredito, totaisPorFornecedor, totaisPorTransportadora);
+    }
+
+    function atualizarCardTotalFaturar(totalBruto, valorFinal, usandoCredito, creditoAplicado) {
+      const elements = {
+        total: document.getElementById('total-pagar'),
+        label: document.getElementById('total-pagar-label'),
+        status: document.getElementById('credito-status'),
+        brutoMini: document.getElementById('total-bruto-mini'),
+        badge: document.getElementById('credito-aplicado-badge')
+      };
+
+      if (!elements.total) return;
+
+      if (usandoCredito) {
+        elements.total.textContent = formatarMoeda(valorFinal);
+        elements.label.textContent = "Valor Final a Faturar";
+
+        if (elements.status) {
+          elements.status.style.display = 'block';
+          if (elements.brutoMini) elements.brutoMini.textContent = formatarMoeda(totalBruto);
+
+          if (elements.badge) {
+            if (creditoAplicado < 0) {
+              elements.badge.textContent = `Débito aplicado: +${formatarMoeda(Math.abs(creditoAplicado))}`;
+              elements.badge.className = 'badge bg-orange-lt';
+              elements.badge.textContent += ` (Total: ${formatarMoeda(valorFinal)})`;
+            } else {
+              elements.badge.textContent = `Crédito aplicado: ${formatarMoeda(creditoAplicado || 0)}`;
+
+              if (valorFinal === 0) {
+                elements.badge.className = 'badge bg-success-lt';
+                elements.badge.textContent += ' ✓ Totalmente coberto';
+              } else {
+                elements.badge.className = 'badge bg-warning-lt';
+                if (creditoAplicado > 0) {
+                  elements.badge.textContent += ` (Restante: ${formatarMoeda(valorFinal)})`;
+                }
+              }
+            }
+          }
+        }
+
+        elements.total.style.color = valorFinal === 0 ? '#1B5E20' :
+          creditoAplicado < 0 ? '#fd7e14' :
+            creditoAplicado > 0 ? '#28a745' :
+              '#dc3545';
       } else {
-        resumoCreditos.style.transition = 'all 0.3s ease-out';
-        resumoCreditos.style.opacity = '0';
-        resumoCreditos.style.transform = 'translateY(-20px)';
+        elements.total.textContent = formatarMoeda(totalBruto);
+        elements.label.textContent = "Total a Faturar";
+        elements.total.style.color = '#1B5E20';
 
-        setTimeout(() => {
-          resumoCreditos.style.display = 'none';
-        }, 300);
-
-        creditosSections.forEach(section => {
-          section.style.transition = 'all 0.3s ease-out';
-          section.style.opacity = '0';
-          section.style.transform = 'translateY(-10px)';
-
-          setTimeout(() => {
-            section.style.display = 'none';
-          }, 300);
-        });
-
-        document.querySelectorAll('.credito-checkbox').forEach(checkbox => {
-          checkbox.checked = false;
-        });
-
-        calcularCreditosSelecionados();
+        if (elements.status) elements.status.style.display = 'none';
       }
     }
 
-    if (radioSim) radioSim.addEventListener('change', toggleResumo);
-    if (radioNao) radioNao.addEventListener('change', toggleResumo);
+    function atualizarSubtotais(totalFornecedores, totalFretes) {
+      const fornecedoresElement = document.getElementById('fornecedores-subtotal');
+      const fretesElement = document.getElementById('fretes-subtotal');
+      const totalFretesElement = document.getElementById('total-fretes');
 
-    toggleResumo();
-  });
-</script>
+      if (fornecedoresElement) fornecedoresElement.textContent = formatarMoeda(totalFornecedores);
+      if (fretesElement) fretesElement.textContent = formatarMoeda(totalFretes);
+      if (totalFretesElement) totalFretesElement.textContent = formatarMoeda(totalFretes);
+    }
 
-<!-- Modal para Lançamento de Crédito -->
-<div class="modal fade" id="modalLancarCredito" tabindex="-1" aria-labelledby="modalLancarCreditoLabel"
-  aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalLancarCreditoLabel">
-          Lançar Crédito
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="formLancarCredito">
-          <input type="hidden" id="creditoTipoEntidade" name="tipo_entidade">
-          <input type="hidden" id="creditoEntidadeId" name="entidade_id">
+    function atualizarBadgesEntidades(totaisPorFornecedor, totaisPorTransportadora) {
+      Object.keys(totaisPorFornecedor).forEach(fornecedorId => {
+        const badge = document.getElementById(`total-fornecedor-${fornecedorId}`);
+        if (badge) {
+          badge.textContent = `Total: ${formatarMoeda(totaisPorFornecedor[fornecedorId])}`;
+        }
+      });
 
-          <div class="bg-white shadow-sm alert alert-info d-flex align-items-center" role="alert">
-            <i class="ti ti-info-circle me-2"></i>
-            <div>
-              <span id="creditoNomeEntidade">-</span><br>
-              <small class="text-muted">O crédito será lançado e os saldos atualizados automaticamente.</small>
-            </div>
-          </div>
+      Object.keys(totaisPorTransportadora).forEach(transportadoraId => {
+        const badge = document.getElementById(`total-transportadora-${transportadoraId}`);
+        if (badge) {
+          badge.textContent = `Total: ${formatarMoeda(totaisPorTransportadora[transportadoraId])}`;
+        }
+      });
+    }
 
-          <div class="row">
-            <div class="col-md-12 mb-3">
-              <div class="form-label required">Tipo de Valor</div>
+    function atualizarResumoFinal(totalGeral, valorFinalPagar, usandoCredito, totaisPorFornecedor, totaisPorTransportadora) {
+      const resumoCreditos = document.getElementById('resumo-creditos');
+      if (!resumoCreditos) return;
+
+      const elements = {
+        totalPagar: document.getElementById('resumo-total-pagar'),
+        creditosTotais: document.getElementById('resumo-creditos-totais'),
+        saldoFinal: document.getElementById('resumo-saldo-final'),
+        saldoCard: document.getElementById('resumo-saldo-final-card'),
+        saldoLabel: document.getElementById('resumo-saldo-final-label')
+      };
+
+      if (elements.totalPagar) elements.totalPagar.textContent = formatarMoeda(totalGeral);
+
+      if (elements.creditosTotais) {
+        let totalCreditosSelecionados = 0;
+
+        Object.keys(creditosSelecionados.fornecedor).forEach(fornecedorId => {
+          if (creditosSelecionados.fornecedor[fornecedorId]) {
+            totalCreditosSelecionados += creditosSelecionados.fornecedor[fornecedorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
+          }
+        });
+
+        Object.keys(creditosSelecionados.transportadora).forEach(transportadoraId => {
+          if (creditosSelecionados.transportadora[transportadoraId]) {
+            totalCreditosSelecionados += creditosSelecionados.transportadora[transportadoraId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
+          }
+        });
+
+        const creditosUtilizados = totalCreditosSelecionados < 0 ? totalCreditosSelecionados : Math.min(totalCreditosSelecionados, totalGeral);
+        elements.creditosTotais.textContent = formatarMoeda(creditosUtilizados);
+      }
+
+      if (elements.saldoFinal && elements.saldoCard && elements.saldoLabel) {
+        if (usandoCredito) {
+          elements.saldoFinal.textContent = formatarMoeda(valorFinalPagar);
+          elements.saldoLabel.textContent = 'VALOR FINAL A FATURAR';
+
+          elements.saldoCard.style.background = valorFinalPagar === 0 ? 'rgba(76, 175, 80, 0.25)' :
+            valorFinalPagar < totalGeral ? 'rgba(255,255,255,0.15)' :
+              'rgba(255,255,255,0.25)';
+        } else {
+          elements.saldoFinal.textContent = formatarMoeda(totalGeral);
+          elements.saldoLabel.textContent = 'SALDO FINAL A FATURAR';
+          elements.saldoCard.style.background = 'rgba(255,255,255,0.25)';
+        }
+      }
+
+      atualizarStatusEntidades(totaisPorFornecedor, totaisPorTransportadora);
+    }
+
+    function atualizarStatusEntidades(totaisPorFornecedor, totaisPorTransportadora) {
+      Object.keys(totaisPorFornecedor).forEach(fornecedorId => {
+        const valorElement = document.getElementById(`resumo-valor-fornecedor-${fornecedorId}`);
+        const statusElement = document.getElementById(`resumo-status-fornecedor-${fornecedorId}`);
+
+        if (valorElement) {
+          valorElement.textContent = formatarMoeda(totaisPorFornecedor[fornecedorId]);
+        }
+
+        if (statusElement) {
+          const valorPagar = totaisPorFornecedor[fornecedorId] || 0;
+          let creditoSelecionado = 0;
+
+          if (creditosSelecionados.fornecedor[fornecedorId]) {
+            creditoSelecionado = creditosSelecionados.fornecedor[fornecedorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
+          }
+
+          if (creditoSelecionado < 0) {
+            const valorDebito = Math.abs(creditoSelecionado);
+            statusElement.innerHTML = `<div class="small fw-bold text-warning">DÉBITO</div>
+                                      <div class="small text-warning">+${formatarMoeda(valorDebito)}</div>`;
+          } else {
+            const diferenca = creditoSelecionado - valorPagar;
+            statusElement.innerHTML = diferenca >= 0 ?
+              '<div class="small fw-bold text-success">COBERTO</div>' :
+              `<div class="small fw-bold text-warning">FALTA</div>
+               <div class="small text-warning">${formatarMoeda(Math.abs(diferenca))}</div>`;
+          }
+        }
+      });
+
+      Object.keys(totaisPorTransportadora).forEach(transportadoraId => {
+        const valorElement = document.getElementById(`resumo-valor-transportadora-${transportadoraId}`);
+        const statusElement = document.getElementById(`resumo-status-transportadora-${transportadoraId}`);
+
+        if (valorElement) {
+          valorElement.textContent = formatarMoeda(totaisPorTransportadora[transportadoraId]);
+        }
+
+        if (statusElement) {
+          const valorPagar = totaisPorTransportadora[transportadoraId] || 0;
+          let creditoSelecionado = 0;
+
+          if (creditosSelecionados.transportadora[transportadoraId]) {
+            creditoSelecionado = creditosSelecionados.transportadora[transportadoraId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
+          }
+
+          if (creditoSelecionado < 0) {
+            const valorDebito = Math.abs(creditoSelecionado);
+            statusElement.innerHTML = `<div class="small fw-bold text-warning">DÉBITO</div>
+                                      <div class="small text-warning">+${formatarMoeda(valorDebito)}</div>`;
+          } else {
+            const diferenca = creditoSelecionado - valorPagar;
+            statusElement.innerHTML = diferenca >= 0 ?
+              '<div class="small fw-bold text-success">COBERTO</div>' :
+              `<div class="small fw-bold text-warning">FALTA</div>
+               <div class="small text-warning">${formatarMoeda(Math.abs(diferenca))}</div>`;
+          }
+        }
+      });
+    }
+
+    function atualizarCamposHidden() {
+      const hiddenInput = document.getElementById('valores-calculados-hidden');
+      if (hiddenInput) hiddenInput.value = JSON.stringify(valoresCalculados);
+
+      const hiddenFretes = document.getElementById('valores-calculados-fretes-hidden');
+      if (hiddenFretes) hiddenFretes.value = JSON.stringify(valoresCalculadosFretes);
+    }
+
+    function inicializarValoresOriginais() {
+      document.querySelectorAll('tr[data-registro-id]').forEach(row => {
+        const registroId = row.dataset.registroId;
+        const precoCustoInput = row.querySelector('.preco-custo-input');
+        const pesoCell = row.querySelector('td[data-peso]');
+        const valorBadge = row.querySelector('.valor-pagar-badge');
+
+        if (precoCustoInput && pesoCell && valorBadge) {
+          const precoCusto = extrairValorNumerico(precoCustoInput.value);
+          const peso = parseFloat(pesoCell.dataset.peso) || 0;
+          const valorOriginal = extrairValorNumerico(valorBadge.textContent);
+
+          valoresCalculados[registroId] = {
+            preco_custo: precoCusto,
+            peso: peso,
+            valor_total: valorOriginal
+          };
+        }
+      });
+    }
+
+    function inicializarValoresOriginaisFretes() {
+      document.querySelectorAll('tr[data-frete-id]').forEach(row => {
+        const freteId = row.dataset.freteId;
+        const precoCustoInput = row.querySelector('.preco-custo-frete-input');
+        const pesoCell = row.querySelector('td[data-peso-frete]');
+        const valorBadge = row.querySelector('.valor-frete-badge');
+
+        if (precoCustoInput && pesoCell && valorBadge) {
+          const precoCusto = extrairValorNumerico(precoCustoInput.value);
+          const peso = parseFloat(pesoCell.dataset.pesoFrete) || 0;
+          const valorOriginal = extrairValorNumerico(valorBadge.textContent);
+
+          valoresCalculadosFretes[freteId] = {
+            preco_custo: precoCusto,
+            peso: peso,
+            valor_total: valorOriginal
+          };
+        }
+      });
+    }
+
+    function configurarEventListeners() {
+      const radioSim = document.querySelector('input[name="usar_credito"][value="sim"]');
+      const radioNao = document.querySelector('input[name="usar_credito"][value="nao"]');
+
+      if (radioSim) radioSim.addEventListener('change', calcularTotaisGerais);
+      if (radioNao) radioNao.addEventListener('change', calcularTotaisGerais);
+
+      document.querySelectorAll('.preco-custo-input').forEach(input => {
+        const row = input.closest('tr[data-registro-id]');
+        if (!row) return;
+
+        const registroId = row.dataset.registroId;
+        ['input', 'blur', 'keyup'].forEach(event => {
+          input.addEventListener(event, () => setTimeout(() => calcularValorRegistro(registroId), 10));
+        });
+      });
+
+      document.querySelectorAll('.preco-custo-frete-input').forEach(input => {
+        const row = input.closest('tr[data-frete-id]');
+        if (!row) return;
+
+        const freteId = row.dataset.freteId;
+        ['input', 'blur', 'keyup'].forEach(event => {
+          input.addEventListener(event, () => setTimeout(() => calcularValorFrete(freteId), 10));
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      inicializarValoresOriginais();
+      inicializarValoresOriginaisFretes();
+      configurarEventListeners();
+      calcularCreditosSelecionados();
+      calcularTotaisGerais();
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      function aplicarMascaraMoeda(input) {
+        let valor = input.value.replace(/\D/g, '');
+        if (valor === '') {
+          input.value = 'R$ 0,00';
+          return;
+        }
+        valor = (parseInt(valor) / 100).toFixed(2) + '';
+        valor = valor.replace(".", ",");
+        valor = valor.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+        valor = valor.replace(/(\d)(\d{3}),/g, "$1.$2,");
+        input.value = 'R$ ' + valor;
+      }
+
+      document.querySelectorAll('.campo-moeda-brl').forEach(input => {
+        input.addEventListener('input', function () {
+          aplicarMascaraMoeda(this);
+        });
+
+        input.addEventListener('focus', function () {
+          if (this.value === 'R$ 0,00') {
+            this.value = '';
+          }
+        });
+
+        input.addEventListener('blur', function () {
+          if (this.value === '' || this.value === 'R$ ') {
+            this.value = 'R$ 0,00';
+          }
+        });
+
+        input.addEventListener('keypress', function (e) {
+          const char = String.fromCharCode(e.which);
+          if (!/[0-9,.]/.test(char)) {
+            e.preventDefault();
+          }
+        });
+      });
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const btnAdicionarFrete = document.getElementById('btn-adicionar-frete');
+
+      if (btnAdicionarFrete) {
+        btnAdicionarFrete.addEventListener('click', function () {
+          const idsRegistros = document.querySelector('input[name="ids_registros"]').value;
+
+          const url = `{{ url_for('listagem_fretes_a_pagar') }}?agrupar_fornecedores=${encodeURIComponent(idsRegistros)}`;
+          window.location.href = url;
+        });
+      }
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const radioSim = document.querySelector('input[name="usar_credito"][value="sim"]');
+      const radioNao = document.querySelector('input[name="usar_credito"][value="nao"]');
+      const resumoCreditos = document.getElementById('resumo-creditos');
+
+      function toggleResumo() {
+        const creditosSections = document.querySelectorAll('.creditos-section');
+
+        if (radioSim && radioSim.checked) {
+          resumoCreditos.style.display = 'block';
+          resumoCreditos.style.opacity = '0';
+          resumoCreditos.style.transform = 'translateY(20px)';
+
+          setTimeout(() => {
+            resumoCreditos.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            resumoCreditos.style.opacity = '1';
+            resumoCreditos.style.transform = 'translateY(0)';
+          }, 10);
+
+          creditosSections.forEach(section => {
+            section.style.display = 'block';
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(10px)';
+
+            setTimeout(() => {
+              section.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+              section.style.opacity = '1';
+              section.style.transform = 'translateY(0)';
+            }, 100);
+          });
+
+        } else {
+          resumoCreditos.style.transition = 'all 0.3s ease-out';
+          resumoCreditos.style.opacity = '0';
+          resumoCreditos.style.transform = 'translateY(-20px)';
+
+          setTimeout(() => {
+            resumoCreditos.style.display = 'none';
+          }, 300);
+
+          creditosSections.forEach(section => {
+            section.style.transition = 'all 0.3s ease-out';
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(-10px)';
+
+            setTimeout(() => {
+              section.style.display = 'none';
+            }, 300);
+          });
+
+          document.querySelectorAll('.credito-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+          });
+
+          calcularCreditosSelecionados();
+        }
+      }
+
+      if (radioSim) radioSim.addEventListener('change', toggleResumo);
+      if (radioNao) radioNao.addEventListener('change', toggleResumo);
+
+      toggleResumo();
+    });
+  </script>
+
+  <!-- Modal para Lançamento de Crédito -->
+  <div class="modal fade" id="modalLancarCredito" tabindex="-1" aria-labelledby="modalLancarCreditoLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalLancarCreditoLabel">
+            Lançar Crédito
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formLancarCredito">
+            <input type="hidden" id="creditoTipoEntidade" name="tipo_entidade">
+            <input type="hidden" id="creditoEntidadeId" name="entidade_id">
+
+            <div class="bg-white shadow-sm alert alert-info d-flex align-items-center" role="alert">
+              <i class="ti ti-info-circle me-2"></i>
               <div>
-                <label class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="tipo_valor" value="positivo" checked>
-                  <span class="form-check-label">Crédito</span>
-                </label>
-                <label class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="tipo_valor" value="negativo">
-                  <span class="form-check-label">Débito</span>
-                </label>
+                <span id="creditoNomeEntidade">-</span><br>
+                <small class="text-muted">O crédito será lançado e os saldos atualizados automaticamente.</small>
               </div>
             </div>
 
-            <div class="col-md-4 mb-3">
-              <label class="form-label required">Data Movimentação</label>
-              <input type="date" name="data_movimentacao" class="form-control" id="creditoDataMovimentacao" required>
-            </div>
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <div class="form-label required">Tipo de Valor</div>
+                <div>
+                  <label class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="tipo_valor" value="positivo" checked>
+                    <span class="form-check-label">Crédito</span>
+                  </label>
+                  <label class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="tipo_valor" value="negativo">
+                    <span class="form-check-label">Débito</span>
+                  </label>
+                </div>
+              </div>
 
-            <div class="col-md-4 mb-3">
-              <label class="form-label required">Valor</label>
-              <input type="text" name="valor_credito" class="form-control campo-moeda-brl" id="creditoValor"
-                placeholder="R$ 0,00" required>
-            </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label required">Data Movimentação</label>
+                <input type="date" name="data_movimentacao" class="form-control" id="creditoDataMovimentacao" required>
+              </div>
 
-            <div class="col-md-4 mb-3">
-              <label class="form-label required">Conta Bancária</label>
-              <select name="contaBancaria" class="form-select" id="creditoContaBancaria" required>
-                <option value="">Selecione...</option>
-                {% for conta in contas_bancarias %}
-                <option value="{{ conta.id }}">{{ conta.identificacao }} - {{ conta.nome_banco }}</option>
-                {% endfor %}
-              </select>
-            </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label required">Valor</label>
+                <input type="text" name="valor_credito" class="form-control campo-moeda-brl" id="creditoValor"
+                  placeholder="R$ 0,00" required>
+              </div>
 
-            <div class="col-md-12 mb-3">
-              <label class="form-label required">Descrição</label>
-              <input type="text" name="descricao" class="form-control" id="creditoDescricao"
-                placeholder="Descrição do lançamento" required>
+              <div class="col-md-4 mb-3">
+                <label class="form-label required">Conta Bancária</label>
+                <select name="contaBancaria" class="form-select" id="creditoContaBancaria" required>
+                  <option value="">Selecione...</option>
+                  {% for conta in contas_bancarias %}
+                  <option value="{{ conta.id }}">{{ conta.identificacao }} - {{ conta.nome_banco }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-12 mb-3">
+                <label class="form-label required">Descrição</label>
+                <input type="text" name="descricao" class="form-control" id="creditoDescricao"
+                  placeholder="Descrição do lançamento" required>
+              </div>
             </div>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary" id="btnSalvarCredito">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <path d="M12 5l0 14" />
-            <path d="M5 12l14 0" />
-          </svg>
-          Salvar
-        </button>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btnSalvarCredito">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M12 5l0 14" />
+              <path d="M5 12l14 0" />
+            </svg>
+            Salvar
+          </button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<script>
+  <script>
 
-  document.getElementById('modalLancarCredito').addEventListener('show.bs.modal', function (event) {
-    const button = event.relatedTarget;
+    document.getElementById('modalLancarCredito').addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
 
-    const tipoEntidade = button.getAttribute('data-tipo');
-    const entidadeId = button.getAttribute('data-id');
-    const nomeEntidade = button.getAttribute('data-nome');
+      const tipoEntidade = button.getAttribute('data-tipo');
+      const entidadeId = button.getAttribute('data-id');
+      const nomeEntidade = button.getAttribute('data-nome');
 
-    document.getElementById('creditoTipoEntidade').value = tipoEntidade;
-    document.getElementById('creditoEntidadeId').value = entidadeId;
-    document.getElementById('creditoNomeEntidade').textContent = nomeEntidade;
+      document.getElementById('creditoTipoEntidade').value = tipoEntidade;
+      document.getElementById('creditoEntidadeId').value = entidadeId;
+      document.getElementById('creditoNomeEntidade').textContent = nomeEntidade;
 
-    const hoje = new Date().toISOString().split('T')[0];
-    document.getElementById('creditoDataMovimentacao').value = hoje;
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('creditoDataMovimentacao').value = hoje;
 
-    document.getElementById('creditoValor').value = '';
-    document.getElementById('creditoDescricao').value = '';
-    document.getElementById('creditoContaBancaria').value = '';
+      document.getElementById('creditoValor').value = '';
+      document.getElementById('creditoDescricao').value = '';
+      document.getElementById('creditoContaBancaria').value = '';
 
-    document.querySelector('input[name="tipo_valor"][value="positivo"]').checked = true;
-  });
+      document.querySelector('input[name="tipo_valor"][value="positivo"]').checked = true;
+    });
 
-  document.getElementById('btnSalvarCredito').addEventListener('click', async function () {
-    const form = document.getElementById('formLancarCredito');
-    const formData = new FormData(form);
+    document.getElementById('btnSalvarCredito').addEventListener('click', async function () {
+      const form = document.getElementById('formLancarCredito');
+      const formData = new FormData(form);
 
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return;
-    }
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
 
-    const tipoEntidade = document.getElementById('creditoTipoEntidade').value;
-    const entidadeId = document.getElementById('creditoEntidadeId').value;
+      const tipoEntidade = document.getElementById('creditoTipoEntidade').value;
+      const entidadeId = document.getElementById('creditoEntidadeId').value;
 
-    let endpoint;
-    if (tipoEntidade === 'fornecedor') {
-      endpoint = `/financeiro/extrato-terceiros/fornecedores/lancar-credito/${entidadeId}`;
-    } else if (tipoEntidade === 'freteiro') {
-      endpoint = `/financeiro/extrato-terceiros/freteiros/lancar-credito/${entidadeId}`;
-    } else {
-      alert('Tipo de entidade inválido!');
-      return;
-    }
-
-    try {
-      const btnSalvar = this;
-      const textoOriginal = btnSalvar.innerHTML;
-      btnSalvar.disabled = true;
-      btnSalvar.innerHTML = '<i class="ti ti-loader-2 animate-spin me-1"></i> Salvando...';
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.ok) {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalLancarCredito'));
-        modal.hide();
-
-        const nomeEntidade = document.getElementById('creditoNomeEntidade').textContent;
-        const tipoTexto = tipoEntidade === 'fornecedor' ? 'Fornecedor' : 'Transportadora';
-
-        mostrarToast(`Crédito lançado com sucesso para ${tipoTexto}: ${nomeEntidade}`, 'success');
-
-        // Recarregar a página após um breve delay para mostrar o toast
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-
+      let endpoint;
+      if (tipoEntidade === 'fornecedor') {
+        endpoint = `/financeiro/extrato-terceiros/fornecedores/lancar-credito/${entidadeId}`;
+      } else if (tipoEntidade === 'freteiro') {
+        endpoint = `/financeiro/extrato-terceiros/freteiros/lancar-credito/${entidadeId}`;
       } else {
-        const errorText = await response.text();
-        console.error('Erro na resposta:', errorText);
-        mostrarToast('Erro ao lançar crédito. Verifique os dados e tente novamente.', 'error');
+        alert('Tipo de entidade inválido!');
+        return;
       }
 
-    } catch (error) {
-      console.error('Erro ao salvar lançamento:', error);
-      mostrarToast('Erro de conexão. Tente novamente.', 'error');
-    } finally {
-      const btnSalvar = document.getElementById('btnSalvarCredito');
-      if (btnSalvar) {
-        btnSalvar.disabled = false;
-        btnSalvar.innerHTML = '<i class="ti ti-device-floppy me-1"></i> Salvar Lançamento';
-      }
-    }
-  });
+      try {
+        const btnSalvar = this;
+        const textoOriginal = btnSalvar.innerHTML;
+        btnSalvar.disabled = true;
+        btnSalvar.innerHTML = '<i class="ti ti-loader-2 animate-spin me-1"></i> Salvando...';
 
-  function mostrarToast(mensagem, tipo) {
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${tipo === 'success' ? 'success' : 'danger'} position-fixed`;
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; background-color: rgba(255, 255, 255, 0.9); box-shadow: 0 2px 6px rgba(0,0,0,0.2);';
-    toast.innerHTML = `
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          const modal = bootstrap.Modal.getInstance(document.getElementById('modalLancarCredito'));
+          modal.hide();
+
+          const nomeEntidade = document.getElementById('creditoNomeEntidade').textContent;
+          const tipoTexto = tipoEntidade === 'fornecedor' ? 'Fornecedor' : 'Transportadora';
+
+          mostrarToast(`Crédito lançado com sucesso para ${tipoTexto}: ${nomeEntidade}`, 'success');
+
+          // Recarregar a página após um breve delay para mostrar o toast
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+
+        } else {
+          const errorText = await response.text();
+          console.error('Erro na resposta:', errorText);
+          mostrarToast('Erro ao lançar crédito. Verifique os dados e tente novamente.', 'error');
+        }
+
+      } catch (error) {
+        console.error('Erro ao salvar lançamento:', error);
+        mostrarToast('Erro de conexão. Tente novamente.', 'error');
+      } finally {
+        const btnSalvar = document.getElementById('btnSalvarCredito');
+        if (btnSalvar) {
+          btnSalvar.disabled = false;
+          btnSalvar.innerHTML = '<i class="ti ti-device-floppy me-1"></i> Salvar Lançamento';
+        }
+      }
+    });
+
+    function mostrarToast(mensagem, tipo) {
+      const toast = document.createElement('div');
+      toast.className = `alert alert-${tipo === 'success' ? 'success' : 'danger'} position-fixed`;
+      toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; background-color: rgba(255, 255, 255, 0.9); box-shadow: 0 2px 6px rgba(0,0,0,0.2);';
+      toast.innerHTML = `
         <i class="ti ti-${tipo === 'success' ? 'check' : 'x'} me-2"></i>
         ${mensagem}
       `;
 
-    document.body.appendChild(toast);
+      document.body.appendChild(toast);
 
-    setTimeout(() => {
-      if (toast.parentNode) {
-        toast.parentNode.removeChild(toast);
-      }
-    }, 3000);
-  }
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 3000);
+    }
 
-  function formatarMoeda(valor) {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor);
-  }
+    function formatarMoeda(valor) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(valor);
+    }
 
 
-</script>
+  </script>
 
-{% include 'estrutura/footer.html' %}
+  {% include 'estrutura/footer.html' %}
 </div>
 {% endblock conteudo %}

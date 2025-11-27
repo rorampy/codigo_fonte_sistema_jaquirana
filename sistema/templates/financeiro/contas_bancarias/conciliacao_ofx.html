@@ -1,0 +1,928 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/conciliacao-ofx.css') }}">
+<script src="{{ url_for('static', filename='js/pages/conciliacao-ofx.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/conciliacao-ofx-buscar-existente.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/conciliacao-ofx-filtros.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/conciliacao-ofx-reversao.js') }}"></script>
+
+<div class="page-wrapper conciliacao-ofx-container">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle text-muted">FINANCEIRO</div>
+          <h2 class="page-title fw-bold display-6">CONCILIAÇÃO BANCÁRIA</h2>
+          {% if arquivo_nome %}
+          <div class="page-subtitle text-primary fw-semibold mt-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-file-import" aria-hidden="true">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+              <path d="M5 13v-8a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5.5m-9.5 -2h7m-3 -3l3 3l-3 3" />
+            </svg>
+            {{ arquivo_nome }}
+          </div>
+          {% endif %}
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+          <div class="btn-list">
+            <a href="{{ url_for('importar_ofx') }}" class="btn btn-outline-dark">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-2" width="16" height="16"
+                viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                stroke-linejoin="round" aria-hidden="true">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-12"></path>
+                <path d="M9 15l3 -3l3 3"></path>
+                <path d="M12 12l0 9"></path>
+              </svg>
+              Importar Novo OFX
+            </a>
+            <a href="{{ url_for('conciliacao_ofx', conta_id=conta_id) }}" class="btn btn-outline-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-list">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M9 6l11 0" />
+                <path d="M9 12l11 0" />
+                <path d="M9 18l11 0" />
+                <path d="M5 6l0 .01" />
+                <path d="M5 12l0 .01" />
+                <path d="M5 18l0 .01" />
+              </svg>
+              Todos
+            </a>
+            <a href="{{ url_for('conciliacao_ofx', conta_id=conta_id, tipo_movimentacao='entrada') }}" class="btn btn-outline-success">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-trending-up">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M3 17l6 -6l4 4l8 -8" />
+                <path d="M14 7l7 0l0 7" />
+              </svg>
+              Entradas
+            </a>
+            <a href="{{ url_for('conciliacao_ofx', conta_id=conta_id, tipo_movimentacao='saida') }}" class="btn btn-outline-danger">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-trending-down">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M3 7l6 6l4 -4l8 8" />
+                <path d="M21 10l0 7l-7 0" />
+              </svg>
+              Saídas
+            </a>
+            <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#modalFiltros">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="row mb-5">
+        <div class="col-12">
+          <div class="account-info-card">
+            <div class="row align-items-center mb-4">
+              <div class="col-auto">
+                <div class="account-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z"></path>
+                    <path d="M3 10l18 0"></path>
+                    <path d="M7 15l.01 0"></path>
+                    <path d="M11 15l2 0"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="col">
+                <h3 class="account-title mb-0">Informações da Conta</h3>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-3 col-sm-6">
+                <div class="detail-item">
+                  <div class="detail-label">Banco</div>
+                  <div class="detail-value">
+                    {% if instituicao_info and instituicao_info.organization %}
+                    {{ instituicao_info.organization | truncate(20, true) }}
+                    {% elif conta_info and conta_info.bank_id %}
+                    {{ conta_info.bank_id }}
+                    {% else %}
+                    N/A
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 col-sm-6">
+                <div class="detail-item">
+                  <div class="detail-label">Agência</div>
+                  <div class="detail-value">
+                    {% if conta_info and conta_info.branch_id %}
+                    {{ conta_info.branch_id }}
+                    {% else %}
+                    N/A
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 col-sm-6">
+                <div class="detail-item">
+                  <div class="detail-label">Conta</div>
+                  <div class="detail-value">
+                    {% if conta_info and conta_info.account_id %}
+                    {{ conta_info.account_id }}
+                    {% else %}
+                    N/A
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 col-sm-6">
+                <div class="detail-item">
+                  <div class="detail-label">Período</div>
+                  <div class="detail-value">
+                    {% if periodo_info and periodo_info.primeira_transacao and
+                    periodo_info.ultima_transacao %}
+                    {{ periodo_info.primeira_transacao |
+                    converte_data_para_datetime_converte_data_brl }} a {{
+                    periodo_info.ultima_transacao |
+                    converte_data_para_datetime_converte_data_brl }}
+                    {% else %}
+                    N/A
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cards de Resumo -->
+      <div class="row mb-4">
+        <div class="col-sm-6 col-lg-3">
+          <div class="summary-card success">
+            <div class="row align-items-center">
+              <div class="col-auto">
+                <div class="summary-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-moneybag" aria-hidden="true">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path
+                      d="M9.5 3h5a1.5 1.5 0 0 1 1.5 1.5a3.5 3.5 0 0 1 -3.5 3.5h-1a3.5 3.5 0 0 1 -3.5 -3.5a1.5 1.5 0 0 1 1.5 -1.5" />
+                    <path d="M4 17v-1a8 8 0 1 1 16 0v1a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4" />
+                  </svg>
+                </div>
+              </div>
+              <div class="col">
+                <div class="summary-content">
+                  <div class="summary-label">Total Créditos</div>
+                  <div class="summary-value">{{ estatisticas.creditos_formatado
+                    if estatisticas else 'R$ 0,00' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+          <div class="summary-card danger">
+            <div class="row align-items-center">
+              <div class="col-auto">
+                <div class="summary-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-moneybag" aria-hidden="true">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path
+                      d="M9.5 3h5a1.5 1.5 0 0 1 1.5 1.5a3.5 3.5 0 0 1 -3.5 3.5h-1a3.5 3.5 0 0 1 -3.5 -3.5a1.5 1.5 0 0 1 1.5 -1.5" />
+                    <path d="M4 17v-1a8 8 0 1 1 16 0v1a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4" />
+                  </svg>
+                </div>
+              </div>
+              <div class="col">
+                <div class="summary-content">
+                  <div class="summary-label">Total Débitos</div>
+                  <div class="summary-value">{{ estatisticas.debitos_formatado
+                    if estatisticas else 'R$ 0,00' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+          <div class="summary-card primary">
+            <div class="row align-items-center">
+              <div class="col-auto">
+                <div class="summary-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-moneybag" aria-hidden="true">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path
+                      d="M9.5 3h5a1.5 1.5 0 0 1 1.5 1.5a3.5 3.5 0 0 1 -3.5 3.5h-1a3.5 3.5 0 0 1 -3.5 -3.5a1.5 1.5 0 0 1 1.5 -1.5" />
+                    <path d="M4 17v-1a8 8 0 1 1 16 0v1a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4" />
+                  </svg>
+                </div>
+              </div>
+              <div class="col">
+                <div class="summary-content">
+                  <div class="summary-label">Saldo Final</div>
+                  <div class="summary-value">{{ estatisticas.saldo_formatado if
+                    estatisticas else 'R$ 0,00' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+          <div class="summary-card info">
+            <div class="row align-items-center">
+              <div class="col-auto">
+                <div class="summary-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"></path>
+                    <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"></path>
+                    <path d="M9 12l0 .01"></path>
+                    <path d="M13 12l2 0"></path>
+                    <path d="M9 16l0 .01"></path>
+                    <path d="M13 16l2 0"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="col">
+                <div class="summary-content">
+                  <div class="summary-label">Transações</div>
+                  <div class="summary-value">{{ total_transacoes if
+                    total_transacoes else 0 }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% for transacao in transacoes_ofx %}
+      <div class="row row-cards conciliacao-ofx-id-{{ transacao.id }} mt-2">
+        <!-- Área destinada para informação de transações -->
+        <div class="col-12 col-md-3 col-lg-3">
+          <div class="card conciliacao-card" data-transacao-id="{{ transacao.id }}"
+            data-transacao-valor="{{ transacao.valor_formatado }}" data-transacao-valor-original="{{ transacao.valor }}"
+            data-transacao-data="{{ transacao.data_transacao.strftime('%d/%m/%Y') if transacao.data_transacao else 'N/A' }}"
+            data-transacao-descricao="{{ transacao.descricao_limpa or transacao.memo or 'Sem descrição' }}"
+            data-transacao-fitid="{{ transacao.fitid }}">
+            <div class="card-header">
+              <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
+                <li class="nav-item">
+                  <a href="#tabs-transacao-{{ transacao.id }}" class="nav-link active" data-bs-toggle="tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon icon-tabler icons-tabler-outline icon-tabler-cash-banknote">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                      <path d="M3 8a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" />
+                      <path d="M18 12h.01" />
+                      <path d="M6 12h.01" />
+                    </svg>Transação</a>
+                </li>
+                {%if not transacao.conciliado%}
+                <li class="nav-item ms-auto">
+                  <a href="#" class="nav-link" title="Settings" data-bs-toggle="modal"
+                    data-bs-target="#modal-excluir-ativar-transacao-{{ transacao.id }}">
+                    {%if not transacao.ofx_deletada%}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M4 7l16 0" />
+                      <path d="M10 11l0 6" />
+                      <path d="M14 11l0 6" />
+                      <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                      <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                    </svg>
+                    {%else%}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon icon-tabler icons-tabler-outline icon-tabler-reload">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M19.933 13.041a8 8 0 1 1 -9.925 -8.788c3.899 -1 7.935 1.007 9.425 4.747" />
+                      <path d="M20 4v5h-5" />
+                    </svg>
+                    {%endif%}
+                  </a>
+                  {% set transacao_id = transacao.id %}
+                  {% set transacao_ativa = not transacao.ofx_deletada %}
+                  {% include 'financeiro/contas_bancarias/modal-excluir-transacao.html' %}
+                </li>
+                {%endif%}
+              </ul>
+            </div>
+            <div class="card-body">
+              <div class="tab-content">
+                <div class="tab-pane active show" id="tabs-transacao-{{ transacao.id }}">
+                  <!-- Tab de transação -->
+                  <div class="tab-content-wrapper">
+                    <div class="tab-content-text">
+                      <strong class="{{ 'text-success' if transacao.valor > 0 else 'text-danger' }} fs-5">
+                        {{ transacao.valor_formatado or 'R$ 0,00' }} <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                          height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-bar-right">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M20 12l-10 0" />
+                          <path d="M20 12l-4 4" />
+                          <path d="M20 12l-4 -4" />
+                          <path d="M4 4l0 16" />
+                        </svg>
+                      </strong>
+                      <small class="text-muted ms-2">
+                        {{transacao.data_transacao.strftime('%d/%m/%Y') if transacao.data_transacao else 'N/A' }}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-line-dashed">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M5 12h2" />
+                          <path d="M17 12h2" />
+                          <path d="M11 12h2" />
+                        </svg>
+                        {{ transacao.fitid }}
+                      </small>
+                      <div class="text-muted small">
+                        {{ transacao.descricao_limpa or transacao.memo or 'Sem descrição' | truncate(60) }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-9 col-lg-9">
+
+          <!-- Área destinada para sugestões e criação de transações -->
+          <div class="card conciliacao-card {{ 'card-deletada' if transacao.ofx_deletada else '' }}">
+            {%if not transacao.conciliado%}
+            {% if not transacao.ofx_deletada %}
+            <div class="card-header">
+              <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
+                <li class="nav-item">
+                  <a href="#tabs-sugestao-{{ transacao.id }}" class="nav-link active" data-bs-toggle="tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon icon-tabler icons-tabler-outline icon-tabler-bulb">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7" />
+                      <path d="M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0 -1 3a2 2 0 0 1 -4 0a3.5 3.5 0 0 0 -1 -3" />
+                      <path d="M9.7 17l4.6 0" />
+                    </svg>
+                    Sugestão</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#tabs-nova-transacao-{{ transacao.id }}" class="nav-link" data-bs-toggle="tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M12 5l0 14" />
+                      <path d="M5 12l14 0" />
+                    </svg>Nova Transação</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#tabs-buscar-existente-{{transacao.id}}" class="nav-link" data-bs-toggle="tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon icon-tabler icons-tabler-outline icon-tabler-search">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                      <path d="M21 21l-6 -6" />
+                    </svg>Buscar Existente</a>
+                </li>
+              </ul>
+            </div>
+            <div class="card-body">
+              <div class="tab-content">
+                <div class="tab-pane active show" id="tabs-sugestao-{{ transacao.id }}">
+                  <!-- Tab de sugestão - Carregamento via AJAX -->
+                  <div class="w-100 text-center py-4">
+                    <div class="spinner-border text-primary"></div>
+                    <h5 class="text-muted mt-2">Carregando sugestões...</h5>
+                  </div>
+                </div>
+                <div class="tab-pane" id="tabs-nova-transacao-{{ transacao.id }}">
+                  <!-- Tab de nova transação -->
+                  <h4>Nova Transação</h4>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="col-12">
+                      <div class="card">
+                        <div class="card-body">
+                          {% set transacao_id = transacao.id %}
+                          {% set valor_transacao = transacao.valor %}
+                          {% set tipo_movimento = 'CREDITO' if transacao.valor > 0 else 'DEBITO' %}
+                          {% set data_vencimento = transacao.data_transacao %}
+                          {% set data_competencia = transacao.data_transacao.strftime('%m/%Y') if transacao.data_transacao else '' %}
+                          {% set descricao_transacao = transacao.descricao_limpa %}
+                          {% set campos_obrigatorios = {} %}
+                          {% set campos_erros = {} %}
+                          {% set dados_corretos = {} %}
+                          {% include 'financeiro/contas_bancarias/conciliação_ofx_nova_transacao.html' %}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="tab-pane" id="tabs-buscar-existente-{{transacao.id}}">
+                  <!-- Tab de buscar existente -->
+                  <h4>Buscar Existente</h4>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="tab-content-text">Selecione uma ou mais transações na lista abaixo ou <a href="#"
+                        class="conciliacao-link">crie um
+                        novo recebimento</a>, caso esta seja uma conciliação múltipla.</div>
+                    <button type="button"
+                      class="btn btn-primary conciliacao-btn ms-3 conciliar-multiplos-{{ transacao.id }} d-none">Conciliar
+                      Selecionados</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {%else%}
+            <!-- Card para transação deletada -->
+            <div class="card-body text-center py-5">
+              <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-trash text-muted mb-3">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M4 7l16 0" />
+                  <path d="M10 11l0 6" />
+                  <path d="M14 11l0 6" />
+                  <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                  <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                </svg>
+                <h3 class="text-muted">Transação Oculta de Visualização</h3>
+                <p class="text-muted">Esta transação foi marcada como oculta e não pode ser conciliada.</p>
+              </div>
+            </div>
+            {%endif%}
+            {% else %}
+            <!-- Área para transação conciliada -->
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-12">
+                  <h3 class="mb-1">Esta transação já foi conciliada</h3>
+                  <p class="mb-0 small opacity-75">
+                    {% if transacao.observacoes_conciliacao %}
+                    {{ transacao.observacoes_conciliacao }}
+                    {% else %}
+                    A transação foi processada e vinculada aos registros financeiros do sistema.
+                    {% endif %}
+                  </p>
+                  <!-- Mostrar informações da conciliação se disponível -->
+                  {% if transacao.dados_conciliacao_json %}
+                  <div class="mt-3">
+                    <h6>Detalhes da Conciliação:</h6>
+                    <div class="table-responsive">
+                      <table class="table table-sm">
+                        <thead class="table-light">
+                          <tr>
+                            <th class="text-center">Tipo</th>
+                            <th class="text-center">Data/Hora</th>
+                            <th class="text-center">Observações</th>
+                            <th class="text-center">Ação</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="text-center">
+                              <span class="badge badge-outline text-dark">
+                                {{ transacao.dados_conciliacao_json.get('tipo_conciliacao', 'Conciliação').replace('_',
+                                ' ').title() }}
+                              </span>
+                            </td>
+                            <td class="text-center">
+                              <small class="text-muted">
+                                {{ transacao.data_conciliacao.strftime('%d/%m/%Y às %H:%M:%S') if
+                                transacao.data_conciliacao else 'N/A' }}
+                              </small>
+                            </td>
+                            <td class="text-center">
+                              <small class="text-muted">
+                                {{ transacao.dados_conciliacao_json.get('observacoes', 'Sem observações') }}
+                              </small>
+                            </td>
+                            <td class="text-center">
+                              <button type="button" class="btn btn-icon btn-outline-danger"
+                                onclick="abrirModalReversao({{ transacao.id }}, '{{ transacao.fitid }}', '{{ transacao.valor_formatado }}', '{{ transacao.data_transacao.strftime('%d/%m/%Y') if transacao.data_transacao else 'N/A' }}')"
+                                title="Reverter conciliação desta transação">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up-double">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M13 14l-4 -4l4 -4" />
+                                  <path d="M8 14l-4 -4l4 -4" />
+                                  <path d="M9 10h7a4 4 0 1 1 0 8h-1" />
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {%endif%}
+          </div>
+        </div>
+
+        {% set transacao_id = transacao.id %}
+        {% set valor_transacao = transacao.valor %}
+        {% set tipo_movimento = 'CREDITO' if transacao.valor > 0 else 'DEBITO' %}
+        {% include 'financeiro/contas_bancarias/conciliacao_buscar_existente.html' %}
+      </div>
+      {% endfor %}
+
+      <!-- Paginação das transações -->
+      {% if total_paginas > 1 %}
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="d-flex justify-content-between align-items-center">
+            <!-- Informações da paginação -->
+            <div>
+              <small class="text-muted">
+                Mostrando {{ (pagina - 1) * por_pagina + 1 }} até {{ pagina * por_pagina if pagina * por_pagina <=
+                  total_transacoes else total_transacoes }} de {{ total_transacoes }} transações </small>
+            </div>
+
+            <!-- Controles de paginação -->
+            <nav aria-label="Paginação de transações">
+              <ul class="pagination mb-0">
+                <!-- Botão Anterior -->
+                <li class="page-item {{ 'disabled' if pagina <= 1 else '' }}">
+                  <a class="page-link" href="{{ url_for('conciliacao_ofx', conta_id=conta_id, pagina=pagina-1, 
+                    conciliado=filtro_conciliado, 
+                    fitid=filtro_fitid,
+                    valor=filtro_valor,
+                    descricao=filtro_descricao,
+                    tipo_movimentacao=filtro_tipo_movimentacao,
+                    dataInicio=filtro_data_inicio,
+                    dataFim=filtro_data_fim) if pagina > 1 else '#' }}" {{ 'tabindex="-1" aria-disabled="true"' if
+                    pagina <=1 else '' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="icon">
+                      <path d="M15 6l-6 6l6 6" />
+                    </svg>
+                    Anterior
+                  </a>
+                </li>
+
+                <!-- Primeira página -->
+                {% if pagina > 3 %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('conciliacao_ofx', conta_id=conta_id, pagina=1,
+                    conciliado=filtro_conciliado, 
+                    fitid=filtro_fitid,
+                    valor=filtro_valor,
+                    descricao=filtro_descricao,
+                    tipo_movimentacao=filtro_tipo_movimentacao,
+                    dataInicio=filtro_data_inicio,
+                    dataFim=filtro_data_fim) }}">1</a>
+                </li>
+                {% if pagina > 4 %}
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+                {% endif %}
+                {% endif %}
+
+                <!-- Páginas ao redor da atual -->
+                {% for num_pagina in range([pagina - 2, 1]|max, [pagina + 3, total_paginas + 1]|min) %}
+                <li class="page-item {{ 'active' if num_pagina == pagina else '' }}">
+                  <a class="page-link" href="{{ url_for('conciliacao_ofx', conta_id=conta_id, pagina=num_pagina,
+                    conciliado=filtro_conciliado, 
+                    fitid=filtro_fitid,
+                    valor=filtro_valor,
+                    descricao=filtro_descricao,
+                    tipo_movimentacao=filtro_tipo_movimentacao,
+                    dataInicio=filtro_data_inicio,
+                    dataFim=filtro_data_fim) }}">{{ num_pagina }}</a>
+                </li>
+                {% endfor %}
+
+                <!-- Última página -->
+                {% if pagina < total_paginas - 2 %} {% if pagina < total_paginas - 3 %} <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                  </li>
+                  {% endif %}
+                  <li class="page-item">
+                    <a class="page-link" href="{{ url_for('conciliacao_ofx', conta_id=conta_id, pagina=total_paginas,
+                      conciliado=filtro_conciliado, 
+                      fitid=filtro_fitid,
+                      valor=filtro_valor,
+                      descricao=filtro_descricao,
+                      tipo_movimentacao=filtro_tipo_movimentacao,
+                      dataInicio=filtro_data_inicio,
+                      dataFim=filtro_data_fim) }}">{{ total_paginas
+                      }}</a>
+                  </li>
+                  {% endif %}
+
+                  <!-- Botão Próximo -->
+                  <li class="page-item {{ 'disabled' if pagina >= total_paginas else '' }}">
+                    <a class="page-link" href="{{ url_for('conciliacao_ofx', conta_id=conta_id, pagina=pagina+1,
+                        conciliado=filtro_conciliado, 
+                        fitid=filtro_fitid,
+                        valor=filtro_valor,
+                        descricao=filtro_descricao,
+                        tipo_movimentacao=filtro_tipo_movimentacao,
+                        dataInicio=filtro_data_inicio,
+                        dataFim=filtro_data_fim) if pagina < total_paginas else '#' }}"
+                      {{ 'tabindex="-1" aria-disabled="true"' if pagina>= total_paginas else '' }}>
+                      Próximo
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon">
+                        <path d="M9 6l6 6l-6 6" />
+                      </svg>
+                    </a>
+                  </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Incluir Modal de Conciliação -->
+  {% include 'financeiro/contas_bancarias/modal_confirmar_conciliacao.html' %}
+
+  <!-- Incluir Modal de Conciliação em Massa -->
+  {% include 'financeiro/contas_bancarias/modal_conciliacao_massa.html' %}
+
+  <!-- Include Modal de Reversão de Conciliação -->
+  {% include 'financeiro/contas_bancarias/modal-reverter-conciliacao.html' %}
+
+  <!-- Modal de Conciliação Parcial -->
+  <div class="modal fade" id="modalConciliacaoParcial" tabindex="-1" aria-labelledby="modalConciliacaoParcialLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalConciliacaoParcialLabel">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-coin me-2">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+              <path d="M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1 -1.8 -1" />
+              <path d="M12 7v10" />
+            </svg>
+            Conciliação Parcial
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row g-3">
+            <!-- Informações da Transação -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h6 class="card-title">Transação OFX</h6>
+                </div>
+                <div class="card-body">
+                  <div class="mb-2">
+                    <strong>Valor:</strong>
+                    <span id="parcial-transacao-valor" class="badge bg-light"></span>
+                  </div>
+                  <div class="mb-2">
+                    <strong>Data:</strong>
+                    <span id="parcial-transacao-data"></span>
+                  </div>
+                  <div class="mb-0">
+                    <strong>Descrição:</strong>
+                    <span id="parcial-transacao-descricao" class="text-muted"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Informações do Agendamento -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h6 class="card-title">Agendamento</h6>
+                </div>
+                <div class="card-body">
+                  <div class="mb-2">
+                    <strong>Valor Total:</strong>
+                    <span id="parcial-agendamento-valor-total" class="badge bg-light"></span>
+                  </div>
+                  <div class="mb-2">
+                    <strong>Já Conciliado:</strong>
+                    <span id="parcial-agendamento-valor-conciliado" class="badge bg-light"></span>
+                  </div>
+                  <div class="mb-0">
+                    <strong>Pendente:</strong>
+                    <span id="parcial-agendamento-valor-pendente" class="badge bg-light"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Formulário de Valor Parcial -->
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <h6 class="card-title">Valor a Conciliar</h6>
+                </div>
+                <div class="card-body">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label for="valor-parcial-input" class="form-label">Valor da Conciliação Parcial</label>
+                      <div class="input-group">
+                        <span class="input-group-text">R$</span>
+                        <input type="number" class="form-control" id="valor-parcial-input" placeholder="0,00"
+                          step="0.01" min="0.01" required>
+                      </div>
+                      <div class="form-text">Digite o valor que será conciliado parcialmente</div>
+                    </div>
+                    <div class="col-md-6">
+                      <label for="observacoes-parcial" class="form-label">Observações</label>
+                      <textarea class="form-control" id="observacoes-parcial" rows="3"
+                        placeholder="Observações sobre a conciliação parcial..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btn-confirmar-conciliacao-parcial">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-check me-1">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M5 12l5 5l10 -10" />
+            </svg>
+            Confirmar Conciliação Parcial
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Filtros -->
+  <div class="modal modal-blur fade" id="modalFiltros" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-filter me-2">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path
+                d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+            </svg>
+            Filtrar Transações
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form method="get" id="filtroForm">
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="dataInicio" class="form-control" value="{{ filtro_data_inicio or '' }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="dataFim" class="form-control" value="{{ filtro_data_fim or '' }}">
+              </div>
+              <div class="col-12 col-md-6 mb-3">
+                <label class="form-label" for="selectConciliado"><strong>Status de
+                    Conciliação:</strong></label>
+                <select id="selectConciliado" name="conciliado" class="form-select">
+                  <option value="nao" {% if filtro_conciliado=='nao' or not filtro_conciliado %}selected{% endif %}>
+                    Não conciliados
+                  </option>
+                  <option value="sim" {% if filtro_conciliado=='sim' %}selected{% endif %}>Conciliados</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-6 mb-3">
+                <label class="form-label" for="selectOfxIgnorada"><strong>Ofx Ignorada:</strong></label>
+                <select id="selectOfxIgnorada" name="ofx_ignorada" class="form-select">
+                  <option value="nao" {% if filtro_ofx_ignorada=='nao' or not filtro_ofx_ignorada %}selected{% endif %}>
+                    Não ignoradas
+                  </option>
+                  <option value="sim" {% if filtro_ofx_ignorada=='sim' %}selected{% endif %}>Ignoradas</option>
+                </select>
+              </div>
+
+              <div class="col-12 col-md-6 mb-3">
+                <label class="form-label" for="inputFitid"><strong>FITID:</strong></label>
+                <input type="text" id="inputFitid" name="fitid" class="form-control"
+                  placeholder="Digite o FITID para buscar..." value="{{ filtro_fitid or '' }}">
+              </div>
+              <div class="col-12 col-md-6 mb-3">
+                <label class="form-label" for="selectTipoMovimentacao"><strong>Tipo de Movimentação:</strong></label>
+                <select id="selectTipoMovimentacao" name="tipo_movimentacao" class="form-select">
+                  <option value="">Todos os tipos</option>
+                  <option value="entrada" {% if filtro_tipo_movimentacao=='entrada' %}selected{% endif %}>Entradas
+                  </option>
+                  <option value="saida" {% if filtro_tipo_movimentacao=='saida' %}selected{% endif %}>Saídas</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-3 mb-3">
+                <label class="form-label" for="inputValor"><strong>Valor</strong></label>
+                <input type="text" id="inputValor" name="valor" class="form-control campo-moeda-brl"
+                  placeholder="Digite o valor para buscar..." value="{{ filtro_valor or '' }}">
+              </div>
+              <div class="col-12 col-md-9 mb-3">
+                <label class="form-label" for="inputDescricao"><strong>Descrição:</strong></label>
+                <input type="text" id="inputDescricao" name="descricao" class="form-control"
+                  placeholder="Digite a descrição para buscar..." value="{{ filtro_descricao or '' }}">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <a href="{{ url_for('conciliacao_ofx', conta_id=conta_id) }}" class="btn btn-outline-secondary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M18 6l-12 12" />
+                <path d="M6 6l12 12" />
+              </svg>
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                <path d="M21 21l-6 -6" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Incluir Toasts de Notificação -->
+  {% include 'financeiro/contas_bancarias/toasts_conciliacao.html' %}
+
+  <!-- Script para Conciliação de Sugestões -->
+  <script src="{{ url_for('static', filename='js/pages/conciliacao-sugestoes.js') }}"></script>
+
+  <!-- Script para Nova Transação OFX -->
+  <script src="{{ url_for('static', filename='js/pages/conciliacao-ofx-nova-transacao-es6.js') }}"></script>
+
+  <script>
+    // Configuração global para conciliação OFX
+    window.contaBancariaId = {{ conta_id }};
+    
+    // Função global simples para notificar conciliações
+    window.notificarConciliacao = function (transacaoId, agendamentoId) {
+      console.log('[Global] Conciliação realizada:', { transacaoId, agendamentoId });
+      document.dispatchEvent(new CustomEvent('conciliacao-realizada', {
+        detail: { transacaoId, agendamentoId }
+      }));
+    };
+  </script>
+
+  {% endblock conteudo %}

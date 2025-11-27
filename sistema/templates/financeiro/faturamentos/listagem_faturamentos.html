@@ -296,7 +296,7 @@
                       </button>
 
                       <a href="#"
-                        class="btn btn-icon btn-outline-danger excluir  {%if faturamento.situacao_pagamento_id == 6%} disabled {%endif%}"
+                        class="btn btn-icon btn-outline-danger excluir  {%if faturamento.situacao_pagamento_id == 6 and current_user.role_id != 1%} disabled {%endif%}"
                         data-bs-toggle="modal" data-bs-target="#modal-desativar-{{faturamento.id}}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -1110,7 +1110,6 @@
     let totalGeral = 0;
 
     transportadoras.forEach(item => {
-      console.log(item);
       const nome = item.transportadora_identificacao;
       if (!grupos[nome]) {
         grupos[nome] = { registros: [], total: 0 };
@@ -1201,7 +1200,6 @@
     let totalGeral = 0;
 
     extratores.forEach(item => {
-      console.log(item);
       const nome = item.nome;
       if (!grupos[nome]) {
         grupos[nome] = { registros: [], total: 0 };
@@ -1292,7 +1290,6 @@
     let totalGeral = 0;
 
     comissionados.forEach(item => {
-      console.log(item);
       const nome = item.nome;
       if (!grupos[nome]) {
         grupos[nome] = { registros: [], total: 0 };

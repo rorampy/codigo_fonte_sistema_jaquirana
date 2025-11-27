@@ -277,7 +277,7 @@ class NfComplementarModel(BaseModel):
         Raises:
             Exception: Se houver erro na criação ou se os registros não forem do mesmo cliente
         """
-        from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+        from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
         
         if not registros_operacionais:
             raise Exception("Nenhum registro operacional fornecido")

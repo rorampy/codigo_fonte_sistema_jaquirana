@@ -1,0 +1,174 @@
+<!-- Modal Confirmação de Conciliação em Massa -->
+<div class="modal modal-blur fade" id="modal-confirmar-conciliacao-massa" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-checks me-2">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M7 12l5 5l10 -10" />
+            <path d="M2 12l5 5m5 -5l5 -5" />
+          </svg>
+          Confirmar Conciliação em Massa
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Resumo da Operação -->
+        <div class="card mb-3">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-info-circle me-2">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/>
+                <path d="M12 9h.01"/>
+                <path d="M11 12h1v4h1"/>
+              </svg>
+              Resumo da Operação
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <!-- Informações da Transação -->
+              <div class="col-md-6">
+                <h4 class="text-primary mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-cash-banknote me-1">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                    <path d="M3 8a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" />
+                    <path d="M18 12h.01" />
+                    <path d="M6 12h.01" />
+                  </svg>
+                  Transação OFX
+                </h4>
+                <table class="table table-sm">
+                  <tr>
+                    <td><strong>Valor:</strong></td>
+                    <td id="modal-massa-transacao-valor" class="text-end fw-bold">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Data:</strong></td>
+                    <td id="modal-massa-transacao-data" class="text-end">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Descrição:</strong></td>
+                    <td id="modal-massa-transacao-descricao" class="text-end">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>FITID:</strong></td>
+                    <td id="modal-massa-transacao-fitid" class="text-end text-muted small">-</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Resumo dos Agendamentos -->
+              <div class="col-md-6">
+                <h4 class="text-success mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-list-check me-1">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M3.5 5.5l1.5 1.5l2.5 -2.5"/>
+                    <path d="M3.5 11.5l1.5 1.5l2.5 -2.5"/>
+                    <path d="M3.5 17.5l1.5 1.5l2.5 -2.5"/>
+                    <path d="M11 6l9 0"/>
+                    <path d="M11 12l9 0"/>
+                    <path d="M11 18l9 0"/>
+                  </svg>
+                  Agendamentos Selecionados
+                </h4>
+                <table class="table table-sm">
+                  <tr>
+                    <td><strong>Quantidade:</strong></td>
+                    <td id="modal-massa-quantidade-agendamentos" class="text-end fw-bold">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Valor Total:</strong></td>
+                    <td id="modal-massa-valor-total-agendamentos" class="text-end fw-bold">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Diferença:</strong></td>
+                    <td id="modal-massa-diferenca" class="text-end">-</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Status:</strong></td>
+                    <td id="modal-massa-status" class="text-end">
+                      <span class="badge bg-secondary">Calculando...</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de Agendamentos Selecionados -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-list me-2">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M9 6l11 0"/>
+                <path d="M9 12l11 0"/>
+                <path d="M9 18l11 0"/>
+                <path d="M5 6l0 .01"/>
+                <path d="M5 12l0 .01"/>
+                <path d="M5 18l0 .01"/>
+              </svg>
+              Detalhes dos Agendamentos
+            </h3>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 400px;">
+              <table class="table table-sm table-striped">
+                <thead class="table-light">
+                  <tr>
+                    <th>Origem</th>
+                    <th>Vencimento</th>
+                    <th>Beneficiário</th>
+                    <th>Descrição</th>
+                    <th>Categorias</th>
+                    <th class="text-end">Valor</th>
+                  </tr>
+                </thead>
+                <tbody id="modal-massa-lista-agendamentos">
+                  <!-- Agendamentos serão inseridos aqui via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+            <path d="M18 6l-12 12" />
+            <path d="M6 6l12 12" />
+          </svg>
+          Cancelar
+        </button>
+
+        <button type="button" class="btn btn-success" id="btn-confirmar-conciliacao-massa">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+            <path d="M7 12l5 5l10 -10" />
+            <path d="M2 12l5 5m5 -5l5 -5" />
+          </svg>
+          <span class="btn-text">Confirmar Conciliação</span>
+          <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

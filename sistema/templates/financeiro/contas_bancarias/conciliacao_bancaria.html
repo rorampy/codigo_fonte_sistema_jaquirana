@@ -2396,6 +2396,13 @@
 
 <!-- Dados estruturados para Alpine.js -->
 <script>
+  // Configurar variáveis globais da página
+  window.contaBancariaId = (() => {
+    const urlPath = window.location.pathname;
+    const contaIdMatch = urlPath.match(/\/conciliacao-ofx\/(\d+)/);
+    return contaIdMatch ? contaIdMatch[1] : null;
+  })();
+  
   // Sugestões agora são renderizadas diretamente no template HTML
 
   window.estruturaPlanoContas = {
@@ -2789,9 +2796,15 @@
     const transacaoId = botao.getAttribute('data-transacao-id');
     const ehCredito = botao.getAttribute('data-is-credit');
 
+    // Extrair conta_bancaria_id da URL atual (formato: /conciliacao-ofx/<conta_id>)
+    const urlPath = window.location.pathname;
+    const contaIdMatch = urlPath.match(/\/conciliacao-ofx\/(\d+)/);
+    const contaBancariaId = contaIdMatch ? contaIdMatch[1] : null;
+
     // Coletar dados dos filtros
     const filtros = {
       is_credit: ehCredito,
+      conta_bancaria_id: contaBancariaId,
       valor_min: document.getElementById(`filtro-valor-min-${transacaoId}`)?.value || '',
       valor_max: document.getElementById(`filtro-valor-max-${transacaoId}`)?.value || '',
       data_inicio: document.getElementById(`filtro-data-inicio-${transacaoId}`)?.value || '',

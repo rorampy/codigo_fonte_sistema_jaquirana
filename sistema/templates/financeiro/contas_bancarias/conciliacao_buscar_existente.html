@@ -1,0 +1,187 @@
+<div class="col-12 mt-2 conciliacao-ofx-buscar-existente-{{ transacao_id }} d-none">
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h3 class="card-title">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="icon icon-tabler icons-tabler-outline icon-tabler-search me-2">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+          <path d="M21 21l-6 -6" />
+        </svg>
+        Buscar Agendamentos
+      </h3>
+      <div class="card-actions">
+        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-atualizar-{{ transacao_id }}" title="Atualizar lista" style="display: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-refresh">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/>
+            <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtros de Busca -->
+    <div class="card-body border-bottom">
+      <!-- Primeira linha de filtros -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-2">
+          <label class="form-label small">Valor Mínimo</label>
+          <input type="text" class="form-control campo-moeda-brl" name="valor_min"
+            id="filtro-valor-min-{{ transacao_id }}" placeholder="R$ 0,00">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small">Valor Máximo</label>
+          <input type="text" class="form-control campo-moeda-brl" name="valor_max"
+            id="filtro-valor-max-{{ transacao_id }}" placeholder="R$ 0,00">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small">Data Início</label>
+          <input type="date" class="form-control" name="data_inicio"
+            id="filtro-data-inicio-{{ transacao_id }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small">Data Fim</label>
+          <input type="date" class="form-control" name="data_fim"
+            id="filtro-data-fim-{{ transacao_id }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small">Categoria</label>
+          <select name="categoria_id" class="form-select categoria-select"
+            id="filtro-categoria-{{ transacao_id }}">
+            <option value="">Todas as categorias</option>
+            {% if estrutura_plano %}
+              {% for item in estrutura_plano %}
+                {% if item.tem_filhos %}
+                  <option value="{{ item.id }}" disabled
+                    style="font-weight: bold; color: #2c3e50; background-color: #f8f9fa; font-style: italic;">
+                    {{ item.indentacao_visual|safe }}{{ item.nome }}
+                  </option>
+                {% else %}
+                  <option value="{{ item.id }}" style="color: #495057;">
+                    {{ item.indentacao_visual|safe }}{{ item.nome }}
+                  </option>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Segunda linha de filtros -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-6">
+          <label class="form-label small">Beneficiário</label>
+          <select name="beneficiario_id" class="form-select" id="filtro-beneficiario-{{ transacao_id }}">
+            <option value="">Todos os beneficiários</option>
+            {% for pessoa in pessoas_financeiro %}
+              <option value="{{ pessoa.id }}">
+                {{ pessoa.identificacao }} ({{ pessoa.documento_formatado }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small">Descrição</label>
+          <input type="text" class="form-control" name="descricao"
+            id="filtro-descricao-{{ transacao_id }}" placeholder="Digite a descrição...">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small">&nbsp;</label>
+          <button type="button" class="btn btn-primary w-100" id="btn-buscar-agendamentos-{{ transacao_id }}"
+            data-transacao-id="{{ transacao_id }}"
+            data-is-credit="{{ 'true' if valor_transacao > 0 else 'false' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon me-1">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+              <path d="M21 21l-6 -6" />
+            </svg>
+            Buscar
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Loading Spinner -->
+    <div id="loading-agendamentos-{{ transacao_id }}" class="d-flex justify-content-center align-items-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando agendamentos...</span>
+      </div>
+      <span class="ms-2">Carregando agendamentos...</span>
+    </div>
+
+    <!-- Tabela de Agendamentos -->
+    <div id="tabela-agendamentos-{{ transacao_id }}" class="d-none">
+      <div class="table-responsive">
+        <table class="table card-table table-vcenter text-nowrap datatable">
+          <thead>
+            <tr>
+              <th class="w-1">
+                <input class="form-check-input m-0 align-middle" type="checkbox" id="selecionar-todos-{{ transacao_id }}" aria-label="Selecionar todos">
+              </th>
+              <th style="text-align: center;">Origem</th>
+              <th style="text-align: center;">Data Vencimento</th>
+              <th style="text-align: center;">Beneficiário</th>
+              <th style="text-align: center;">Descrição</th>
+              <th style="text-align: center;">Categoria</th>
+              <th style="text-align: center;">Valor</th>
+              <th style="text-align: center;" class="w-1">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-agendamentos-{{ transacao_id }}">
+            <!-- Conteúdo será preenchido via AJAX -->
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer d-flex align-items-center">
+        <p class="m-0 text-secondary">
+          <span id="info-agendamentos-{{ transacao_id }}">Carregando...</span>
+        </p>
+        <div class="ms-auto">
+          <button type="button" class="btn btn-sm btn-primary conciliar-multiplos-{{ transacao_id }} d-none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-checks me-1">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M7 12l5 5l10 -10" />
+              <path d="M2 12l5 5m5 -5l5 -5" />
+            </svg>
+            Conciliar Selecionados (<span class="contador-selecionados-{{ transacao_id }}">0</span>)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado Vazio -->
+    <div id="estado-vazio-{{ transacao_id }}" class="d-none text-center py-5">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+        class="icon icon-tabler icons-tabler-outline icon-tabler-search-off mb-2 text-muted">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M3 3l18 18" />
+        <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+        <path d="M21 21l-6 -6" />
+      </svg>
+      <p class="mb-0 text-muted">Nenhum agendamento recente encontrado para este tipo de movimentação</p>
+    </div>
+
+    <!-- Estado de Erro -->
+    <div id="estado-erro-{{ transacao_id }}" class="d-none text-center py-5">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+        class="icon icon-tabler icons-tabler-outline icon-tabler-alert-circle mb-2 text-danger">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/>
+        <path d="M12 8v4"/>
+        <path d="M12 16h.01"/>
+      </svg>
+      <p class="mb-2 text-danger">Erro ao carregar agendamentos</p>
+      <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.conciliacaoOfxBuscarExistente.carregarAgendamentos('{{ transacao_id }}')">
+        Tentar Novamente
+      </button>
+    </div>
+  </div>
+</div>

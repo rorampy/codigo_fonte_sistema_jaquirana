@@ -438,19 +438,9 @@
                 {%endif%}
               </div>
               <div class="mt-4">
-                <a href="{{url_for('editar_emissao', id=registro.id)}}" class="btn btn-outline-success">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
-                    <path d="M13.5 6.5l4 4" />
-                  </svg>
-                  Editar {%if registro.carga_frf%}FRF{%else%}NF{%endif%}
-                </a>
                 {% if registro.arquivo_nota_id %}
                 <a href="#" class="btn btn-outline-success btn-visualizar-arquivo"
-                  data-url="{%if registro.estorno_nf and registro.arquivo_nota_estorno and registro.arquivo_nota_estorno.caminho%}{{ url_for('diretorio_uploads_arquivo_estorno', filename=registro.arquivo_nota_estorno.caminho.split('/')[-1]) }}{%elif registro.arquivo_nota and registro.arquivo_nota.caminho%}{{ url_for('diretorio_uploads_nota_fiscal', filename=registro.arquivo_nota.caminho.split('/')[-1]) }}{%endif%}"
+                  data-url="{%if registro.estorno_nf%}{{ url_for('diretorio_uploads_arquivo_estorno', filename=registro.arquivo_nota_estorno.caminho.split('/')[-1]) }}{%else%}{{ url_for('diretorio_uploads_nota_fiscal', filename=registro.arquivo_nota.caminho.split('/')[-1]) }}{%endif%}"
                   data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
@@ -461,22 +451,16 @@
                   Visualizar {%if registro.carga_frf%}FRF{%else%}NF{%endif%}
                 </a>
                 {% endif %}
-                {% if registro.arquivo_nota_xml_id and registro.arquivo_nota_xml and registro.arquivo_nota_xml.caminho %}
-                <a href="{% if registro.estorno_nf %}{{ url_for('diretorio_uploads_arquivo_estorno', filename=registro.arquivo_nota_xml.caminho.split('/')[-1]) }}{% else %}{{ url_for('diretorio_uploads_nota_fiscal', filename=registro.arquivo_nota_xml.caminho.split('/')[-1]) }}{% endif %}"
-                  class="btn btn-outline-success" download="{{ registro.arquivo_nota_xml.caminho.split('/')[-1] }}">
+                <a href="{{url_for('editar_emissao', id=registro.id)}}" class="btn btn-outline-success">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                    <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
-                    <path d="M4 15l4 6" />
-                    <path d="M4 21l4 -6" />
-                    <path d="M19 15v6h3" />
-                    <path d="M11 21v-6l2.5 3l2.5 -3v6" />
+                    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                    <path d="M13.5 6.5l4 4" />
                   </svg>
-                  Baixar XML
+                  Editar {%if registro.carga_frf%}FRF{%else%}NF{%endif%}
                 </a>
-                {% endif %}
               </div>
             </div>
           </div>
@@ -484,7 +468,7 @@
       </div>
       {%endif%}
 
-      {% if registro.peso_ton_nf_excesso %}
+      {%if registro.peso_ton_nf_excesso%}
       <!-- Dados da NFe de Excesso -->
       <div class="row mb-4">
         <div class="col-12">
@@ -535,19 +519,8 @@
                   </div>
                 </div>
               </div>
-              {% if registro.arquivo_nota_excesso_id or registro.arquivo_nota_excesso_xml %}
+              {% if registro.arquivo_nota_excesso_id %}
               <div class="mt-4">
-                <a href="{{url_for('editar_emissao', id=registro.id)}}" class="btn btn-outline-warning">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
-                    <path d="M13.5 6.5l4 4" />
-                  </svg>
-                  Editar NF
-                </a>
-                {% if registro.arquivo_nota_excesso_id and registro.arquivo_nota_excesso and registro.arquivo_nota_excesso.caminho %}
                 <a href="#" class="btn btn-outline-warning btn-visualizar-arquivo"
                   data-url="{{ url_for('diretorio_uploads_nf_excessao', filename=registro.arquivo_nota_excesso.caminho.split('/')[-1]) }}"
                   data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
@@ -559,25 +532,16 @@
                   </svg>
                   Visualizar NFe Excesso
                 </a>
-                {% endif %}
-
-                {% if registro.arquivo_nota_excesso_xml and registro.arquivo_nota_excesso_xml.caminho %}
-                <a href="{{ url_for('diretorio_uploads_nf_excessao', filename=registro.arquivo_nota_excesso_xml.caminho.split('/')[-1]) }}"
-                  class="btn btn-outline-warning"
-                  download="{{ registro.arquivo_nota_excesso_xml.caminho.split('/')[-1] }}">
+                <a href="{{url_for('editar_emissao', id=registro.id)}}" class="btn btn-outline-warning">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path d="M14 3v4a1 1 0 0 1 1h4" />
-                    <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
-                    <path d="M4 15l4 6" />
-                    <path d="M4 21l4 -6" />
-                    <path d="M19 15v6h3" />
-                    <path d="M11 21v-6l2.5 3l2.5 -3v6" />
+                    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                    <path d="M13.5 6.5l4 4" />
                   </svg>
-                  Baixar XML Excesso
+                  Editar NF
                 </a>
-                {% endif %}
               </div>
               {% endif %}
             </div>
@@ -666,7 +630,7 @@
 
       <!-- Botão de Voltar -->
       <div class="text-end mt-4 mb-5">
-        <a href="{{ url_for('listagem_registros_operacionais') }}"
+        <a href="javascript:history.back()"
           class="btn btn-primary px-4 py-2 d-inline-flex align-items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2"
             stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">

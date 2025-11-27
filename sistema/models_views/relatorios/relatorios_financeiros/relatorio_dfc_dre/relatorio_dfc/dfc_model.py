@@ -2,7 +2,7 @@ from datetime import datetime, date
 from sistema.models_views.base_model import BaseModel, db
 from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
-from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
+from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
 from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
 from sqlalchemy import and_, or_, extract
 import json

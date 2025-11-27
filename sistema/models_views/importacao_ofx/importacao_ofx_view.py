@@ -1,157 +1,220 @@
 from datetime import datetime
-from sqlalchemy import func, and_
-from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem
+from sistema import app, requires_roles, db
 from werkzeug.utils import secure_filename
-from flask import render_template, request, redirect, url_for, flash, session, jsonify, Response
-from flask_login import login_required, current_user
+from flask import render_template, request, redirect, url_for, flash, session
+from flask_login import login_required
 from sistema.models_views.importacao_ofx.importacao_ofx_model import ImportacaoOfx
+from sistema.models_views.configuracoes_gerais.conta_bancaria.conta_bancaria_model import ContaBancariaModel
 from sistema._utilitarios import *
 
 @app.route("/financeiro/movimentacoes-financeiras/importar-ofx", methods=["GET", "POST"])
 @login_required
 @requires_roles
 def importar_ofx():
+    # Limpar dados de sessão da importação anterior
     chaves_ofx = ['ofx_transacoes', 'ofx_resumo', 'arquivo_nome', 'data_importacao']
     for key in chaves_ofx:
         if key in session:
             del session[key]
-    
     session.modified = True
 
+    # Obter conta bancária selecionada via parâmetro (para pré-selecionar)
+    conta_bancaria_selecionada_id = request.args.get('conta_bancaria_id', type=int)
+
+    # Obter dados para o template
     stats_transacoes = ImportacaoOfx.obter_estatisticas_transacoes()
+    contas_bancarias = ContaBancariaModel.obter_contas_bancarias_ativas()
     
     total_transacoes_existentes = stats_transacoes.get('total', 0)
     transacoes_conciliadas = stats_transacoes.get('conciliadas', 0) 
     transacoes_nao_conciliadas = stats_transacoes.get('nao_conciliadas', 0)
 
+    # Inicializar variáveis de validação seguindo o padrão cadastrar_cliente
+    validacao_campos_obrigatorios = {}
+    validacao_campos_erros = {}
+    dados_corretos = {}
+    gravar_banco = True
+
     if request.method == "POST":
+        # Obter dados do formulário
+        arquivo = request.files.get('arquivo_ofx')
+        conta_bancaria_id = request.form.get('conta_bancaria')
         
-        if 'arquivo_ofx' not in request.files:
-            flash(('Nenhum arquivo foi selecionado!', 'danger'))
-            return redirect(request.url)
-        
-        arquivo = request.files['arquivo_ofx']
-        
-        if arquivo.filename == '':
-            flash(('Nenhum arquivo foi selecionado!', 'danger'))
-            return redirect(request.url)
-        
-        # Validação de tamanho (10MB)
-        if arquivo.content_length and arquivo.content_length > 10 * 1024 * 1024:
-            flash(('Arquivo muito grande! Máximo permitido: 10MB', 'danger'))
-            return redirect(request.url)
-        
-        if not allowed_file(arquivo.filename):
-            flash(('Formato de arquivo não suportado! Use apenas .ofx ou .qfx', 'danger'))
-            return redirect(request.url)
-        
-        try:
-            # Ler conteúdo do arquivo
-            arquivo_conteudo = arquivo.read()
+        # Campos obrigatórios seguindo o padrão cadastrar_cliente
+        campos = {
+            "arquivo_ofx": ["Arquivo OFX", arquivo.filename if arquivo else ""],
+            "conta_bancaria": ["Conta Bancária", conta_bancaria_id]
+        }
+
+        validacao_campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)
+
+        if not "validado" in validacao_campos_obrigatorios:
+            gravar_banco = False
+            dados_corretos = request.form.to_dict()
+            flash(("Verifique os campos destacados em vermelho!", "warning"))
+
+        # Validações específicas do arquivo OFX
+        if arquivo and arquivo.filename:
+            # Validação de extensão
+            if not allowed_file(arquivo.filename):
+                gravar_banco = False
+                dados_corretos = request.form.to_dict()
+                validacao_campos_erros["arquivo_ofx"] = "Formato de arquivo não suportado! Use apenas .ofx ou .qfx"
             
-            # Validação adicional de tamanho após leitura
-            if len(arquivo_conteudo) > 10 * 1024 * 1024:
-                flash(('Arquivo muito grande! Máximo permitido: 10MB', 'danger'))
-                return redirect(request.url)
+            # Validação de tamanho (10MB)
+            if arquivo.content_length and arquivo.content_length > 10 * 1024 * 1024:
+                gravar_banco = False
+                dados_corretos = request.form.to_dict()
+                validacao_campos_erros["arquivo_ofx"] = "Arquivo muito grande! Máximo permitido: 10MB"
+
+        # Validação da conta bancária
+        if conta_bancaria_id:
+            conta_existe = ContaBancariaModel.query.filter_by(id=conta_bancaria_id, ativo=True).first()
+            if not conta_existe:
+                gravar_banco = False
+                dados_corretos = request.form.to_dict()
+                validacao_campos_erros["conta_bancaria"] = "Conta bancária selecionada não é válida ou está inativa"
+
+        # Se passou nas validações básicas, processar o arquivo
+        if gravar_banco == True and arquivo:
+            # Manter dados do formulário para o template
+            dados_corretos = request.form.to_dict()
             
-            # Validação básica de formato OFX
-            if not arquivo_conteudo or b'<OFX>' not in arquivo_conteudo:
-                flash(('Arquivo não parece ser um OFX válido!', 'danger'))
-                return redirect(request.url)
-            
-            # Processar arquivo
-            processor = OFXProcessor()
-            sucesso, mensagem = processor.processar_arquivo(arquivo_conteudo)
-            
-            if sucesso:
-                resumo = processor.get_resumo()
-                transacoes = processor.get_transacoes()
+            try:
+                # Ler conteúdo do arquivo
+                arquivo_conteudo = arquivo.read()
                 
-                # Verificar se há transações
-                if not transacoes:
-                    flash(('Arquivo OFX válido, mas não contém transações!', 'warning'))
-                    return redirect(request.url)
+                # Validação adicional de tamanho após leitura
+                if len(arquivo_conteudo) > 10 * 1024 * 1024:
+                    gravar_banco = False
+                    dados_corretos = request.form.to_dict()
+                    validacao_campos_erros["arquivo_ofx"] = "Arquivo muito grande! Máximo permitido: 10MB"
                 
-                # Preparar dados das transações com todos os campos necessários
-                transacoes_completas = []
-                for t in transacoes:
-                    transacao_data = {
-                        'date': t.get('date'),
-                        'amount': t.get('amount'),
-                        'memo': t.get('memo'),
-                        'tipo_movimento': t.get('tipo_movimento'),
-                        'categoria_automatica': t.get('categoria_automatica'),
-                        'descricao_limpa': t.get('descricao_limpa'),
-                        'valor_formatado': t.get('valor_formatado'),
-                        'fitid': t.get('fitid'),
-                        'refnum': t.get('refnum')
-                    }
-                    transacoes_completas.append(transacao_data)
+                # Validação básica de formato OFX
+                if not arquivo_conteudo or b'<OFX>' not in arquivo_conteudo:
+                    gravar_banco = False
+                    dados_corretos = request.form.to_dict()
+                    validacao_campos_erros["arquivo_ofx"] = "Arquivo não parece ser um OFX válido!"
                 
-                # Preparar informações do arquivo para gravação no banco
-                arquivo_info = {
-                    'arquivo_nome': secure_filename(arquivo.filename),
-                    'data_importacao': datetime.now().isoformat(),
-                    'resumo': {
-                        'total_transacoes': resumo.get('total_transacoes', 0),
-                        'totais': resumo.get('totais', {}),
-                        'conta': resumo.get('conta', {}),
-                        'instituicao': resumo.get('instituicao', {}),
-                        'periodo': resumo.get('periodo', {}),
-                        'moeda': resumo.get('moeda', 'BRL'),
-                        'data_processamento': resumo.get('data_processamento', '')
-                    }
-                }
-                
-                # Gravar transações no banco de dados
-                sucesso_bd, resultado = ImportacaoOfx.inserir_transacoes_lote(
-                    transacoes_completas, 
-                    arquivo_info
-                )
-                
-                if sucesso_bd:
-                    total_inseridas = resultado.get('total', 0) if isinstance(resultado, dict) else resultado
-                    batch_id = resultado.get('batch_id') if isinstance(resultado, dict) else None
+                if gravar_banco == True:
+                    # Processar arquivo
+                    processor = OFXProcessor()
+                    sucesso, mensagem = processor.processar_arquivo(arquivo_conteudo)
                     
-                    resumo_bd = ImportacaoOfx.obter_resumo_importacao(batch_id)
-                    
-                    if resumo_bd:
-                        total = resumo_bd.get('total_transacoes', 0)
-                        creditos = resumo_bd.get('creditos_formatado', 'R$ 0,00')
-                        debitos = resumo_bd.get('debitos_formatado', 'R$ 0,00')
+                    if sucesso:
+                        resumo = processor.get_resumo()
+                        transacoes = processor.get_transacoes()
                         
-                        flash((
-                            f'Arquivo importado com sucesso! {total} transações processadas e salvas no banco de dados. '
-                            f'Créditos: {creditos} | Débitos: {debitos}', 
-                            'success'
-                        ))
+                        # Verificar se há transações
+                        if not transacoes:
+                            gravar_banco = False
+                            dados_corretos = request.form.to_dict()
+                            validacao_campos_erros["arquivo_ofx"] = "Arquivo OFX válido, mas não contém transações!"
+                        
+                        if gravar_banco == True:
+                            # Preparar dados das transações com todos os campos necessários
+                            transacoes_completas = []
+                            for t in transacoes:
+                                transacao_data = {
+                                    'date': t.get('date'),
+                                    'amount': t.get('amount'),
+                                    'memo': t.get('memo'),
+                                    'tipo_movimento': t.get('tipo_movimento'),
+                                    'categoria_automatica': t.get('categoria_automatica'),
+                                    'descricao_limpa': t.get('descricao_limpa'),
+                                    'valor_formatado': t.get('valor_formatado'),
+                                    'fitid': t.get('fitid'),
+                                    'refnum': t.get('refnum')
+                                }
+                                transacoes_completas.append(transacao_data)
+                            
+                            # Preparar informações do arquivo para gravação no banco
+                            arquivo_info = {
+                                'arquivo_nome': secure_filename(arquivo.filename),
+                                'data_importacao': datetime.now().isoformat(),
+                                'resumo': {
+                                    'total_transacoes': resumo.get('total_transacoes', 0),
+                                    'totais': resumo.get('totais', {}),
+                                    'conta': resumo.get('conta', {}),
+                                    'instituicao': resumo.get('instituicao', {}),
+                                    'periodo': resumo.get('periodo', {}),
+                                    'moeda': resumo.get('moeda', 'BRL'),
+                                    'data_processamento': resumo.get('data_processamento', '')
+                                }
+                            }
+                            
+                            # Gravar transações no banco de dados
+                            sucesso_bd, resultado = ImportacaoOfx.inserir_transacoes_lote(
+                                transacoes_completas, 
+                                arquivo_info,
+                                conta_bancaria_id
+                            )
+                            
+                            if sucesso_bd:
+                                total_inseridas = resultado.get('total', 0) if isinstance(resultado, dict) else resultado
+                                batch_id = resultado.get('batch_id') if isinstance(resultado, dict) else None
+                                duplicadas = resultado.get('duplicadas', 0) if isinstance(resultado, dict) else 0
+                                mensagem_duplicadas = resultado.get('mensagem_duplicadas', '') if isinstance(resultado, dict) else ''
+                                
+                                # Se não houve inserções mas havia duplicadas
+                                if total_inseridas == 0 and duplicadas > 0:
+                                    flash((
+                                        f'Nenhuma transação nova encontrada. {mensagem_duplicadas}',
+                                        'warning'
+                                    ))
+                                    return redirect(url_for('importar_ofx'))
+                                
+                                resumo_bd = ImportacaoOfx.obter_resumo_importacao(batch_id)
+                                
+                                if resumo_bd:
+                                    total = resumo_bd.get('total_transacoes', 0)
+                                    creditos = resumo_bd.get('creditos_formatado', 'R$ 0,00')
+                                    debitos = resumo_bd.get('debitos_formatado', 'R$ 0,00')
+                                    
+                                    mensagem_sucesso = f'Arquivo importado com sucesso! {total} transações processadas e salvas no banco de dados. Créditos: {creditos} | Débitos: {debitos}'
+                                    
+                                    if duplicadas > 0:
+                                        mensagem_sucesso += f'. {mensagem_duplicadas}'
+                                    
+                                    flash((mensagem_sucesso, 'success'))
+                                else:
+                                    mensagem_sucesso = f'Arquivo importado com sucesso! {total_inseridas} transações processadas e salvas no banco de dados.'
+                                    
+                                    if duplicadas > 0:
+                                        mensagem_sucesso += f' {mensagem_duplicadas}'
+                                    
+                                    flash((mensagem_sucesso, 'success'))
+                                
+                                session['current_batch_id'] = batch_id
+                                session.modified = True
+                                
+                                return redirect(url_for('conciliacao_ofx', conta_id=conta_bancaria_id))
+                                
+                            else:
+                                gravar_banco = False
+                                dados_corretos = request.form.to_dict()
+                                validacao_campos_erros["arquivo_ofx"] = f"Erro ao salvar dados no banco: {resultado}"
+                                
                     else:
-                        flash((
-                            f'Arquivo importado com sucesso! {total_inseridas} transações processadas e salvas no banco de dados.', 
-                            'success'
-                        ))
-                    
-                    session['current_batch_id'] = batch_id
-                    session.modified = True
-                    
-                    return redirect(url_for('listagem_ofx'))
-                    
-                else:
-                    flash((f'Erro ao salvar dados no banco: {resultado}', 'danger'))
-                    return redirect(request.url)
-                    
-            else:
-                flash((f'Erro ao processar arquivo: {mensagem}', 'danger'))
-                return redirect(request.url)
-        
-        except Exception as e:
-            flash((f'Erro inesperado ao processar arquivo: {str(e)}', 'danger'))
-            return redirect(request.url)
-            
+                        gravar_banco = False
+                        dados_corretos = request.form.to_dict()
+                        validacao_campos_erros["arquivo_ofx"] = f"Erro ao processar arquivo: {mensagem}"
+                        
+            except Exception as e:
+                gravar_banco = False
+                dados_corretos = request.form.to_dict()
+                validacao_campos_erros["arquivo_ofx"] = f"Erro inesperado ao processar arquivo: {str(e)}"
+
     return render_template("financeiro/importar_ofx/importar_ofx.html",
         total_transacoes_existentes=total_transacoes_existentes,
         transacoes_conciliadas=transacoes_conciliadas,
-        transacoes_nao_conciliadas=transacoes_nao_conciliadas)
+        transacoes_nao_conciliadas=transacoes_nao_conciliadas,
+        contas_bancarias=contas_bancarias,
+        conta_bancaria_selecionada_id=conta_bancaria_selecionada_id,
+        campos_obrigatorios=validacao_campos_obrigatorios,
+        campos_erros=validacao_campos_erros,
+        dados_corretos=dados_corretos if request.method == "POST" else {}
+    )
 
 @app.route("/cancelar-conciliacao", methods=["GET", "POST"])
 @login_required
@@ -275,6 +338,47 @@ def conciliar_transacao(transacao_id, tipo):
     except Exception as e:
         print(f"[ERROR] Erro detalhado na conciliação: {str(e)}")
         flash((f'Erro ao processar transação: {str(e)}', 'error'))
+        return redirect(url_for('listagem_ofx'))
+
+@app.route("/financeiro/ignorar-movimentacao/<int:id>", methods=["GET", "POST"])
+@login_required
+@requires_roles
+def ignorar_movimentacao_ofx(id):
+    """Rota para ignorar/deletar uma movimentação OFX com justificativa"""
+    try:
+        transacao = ImportacaoOfx.obter_transacao_por_fitid(id)
+        justificativa = request.form.get('justificativa', '').strip()
+        
+        if not transacao:
+            flash(('Transação não encontrada', 'danger'))
+            return redirect(url_for('listagem_ofx'))
+            
+        if not justificativa:
+            flash(('Justificativa é obrigatória', 'danger'))
+            return redirect(url_for('listagem_ofx'))
+            
+        if len(justificativa) > 50:
+            flash(('Justificativa deve ter no máximo 50 caracteres', 'danger'))
+            return redirect(url_for('listagem_ofx'))
+            
+        # Verificar se já está conciliada
+        if transacao.conciliado:
+            flash(('Não é possível ignorar uma transação já conciliada', 'warning'))
+            return redirect(url_for('listagem_ofx'))
+        
+        # Marcar como deletada
+        transacao.ofx_deletada = True
+        transacao.ofx_justificativa_deletada = justificativa
+        
+        db.session.commit()
+        
+        flash(('Movimentação ignorada com sucesso', 'success'))
+        return redirect(url_for('listagem_ofx'))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] Erro ao ignorar movimentação: {str(e)}")
+        flash(('Erro interno do servidor', 'danger'))
         return redirect(url_for('listagem_ofx'))
 
 def allowed_file(filename):

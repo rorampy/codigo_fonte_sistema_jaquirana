@@ -54,8 +54,8 @@ def sincronizar_precos_fornecedores(data_inicio=None, data_fim=None, fornecedor_
     """
     from sistema import db, app
     from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
-    from sistema.models_views.faturamento.cargas_a_pagar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
-    from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+    from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
+    from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
     from datetime import datetime
     from sqlalchemy.orm import joinedload
 
@@ -204,8 +204,8 @@ def sincronizar_precos_transportadoras(data_inicio=None, data_fim=None, transpor
         dict: Resultado da sincronização com estatísticas
     """
     from sistema import db, app
-    from sistema.models_views.faturamento.cargas_a_pagar.transportadora.frete_a_pagar_model import FretePagarModel
-    from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+    from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
+    from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
     from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
     from datetime import datetime
     from sqlalchemy.orm import joinedload

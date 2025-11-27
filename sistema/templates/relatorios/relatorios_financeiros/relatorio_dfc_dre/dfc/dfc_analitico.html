@@ -386,8 +386,15 @@
                   <tr class="border-0">
                     <td
                       class="{% if grupos_ordenados|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-green{% endif %} py-2 border-0">
-
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados|length > 1 or itens|length > 1) %}fw-medium text-green{% else %}text-dark{% endif %}">
@@ -449,8 +456,15 @@
                   <tr>
                     <td
                       class="{% if grupos_ordenados_nao_op|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-green{% endif %} py-2 border-0">
-
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados_nao_op|length > 1 or itens|length > 1) %}fw-medium text-green{% else %}text-dark{% endif %}">
@@ -535,8 +549,15 @@
                   <tr class="border-0">
                     <td
                       class="{% if grupos_ordenados_custos|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-red{% endif %} py-2 border-0">
-
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados_custos|length > 1 or itens|length > 1) %}fw-medium text-red{% else %}text-dark{% endif %}">
@@ -657,8 +678,15 @@
                   <tr class="border-0">
                     <td
                       class="{% if grupos_ordenados_despesas|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-orange{% endif %} py-2 border-0">
-
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados_despesas|length > 1 or itens|length > 1) %}fw-medium text-orange{% else %}text-dark{% endif %}">
@@ -776,8 +804,15 @@
                   <tr class="border-0">
                     <td
                       class="{% if grupos_ordenados_inv|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-orange{% endif %} py-2 border-0">
-
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados_inv|length > 1 or itens|length > 1) %}fw-medium text-orange{% else %}text-dark{% endif %}">
@@ -896,8 +931,15 @@
                   <tr class="border-0">
                     <td
                       class="{% if grupos_ordenados_fin|length > 1 or itens|length > 1 %}ps-5{% else %}ps-3 fw-medium text-gray{% endif %} py-2 border-0">
-
-                      <span class="text-dark">{{ item.nome }}</span>
+                      <a href="#" class="categoria-link text-decoration-none text-dark d-flex align-items-center"
+                        data-categoria-id="{{ item.categoria_id }}" data-categoria-nome="{{ item.nome }}">
+                        <span>{{ item.nome }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="ms-auto opacity-50">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </a>
                     </td>
                     <td
                       class="text-end py-2 border-0 {% if not (grupos_ordenados_fin|length > 1 or itens|length > 1) %}fw-medium text-gray{% else %}text-dark{% endif %}">
@@ -1048,7 +1090,7 @@
               </div>
             </div>
 
-           
+
           </div>
           <div class="modal-footer">
             <a href="{{ url_for('dfc_analitico') }}" class="btn btn-link link-secondary">
@@ -1073,6 +1115,81 @@
   {% include 'estrutura/footer.html' %}
 </div>
 
+<!-- Modal para exibir detalhes da categoria -->
+<div class="modal fade" id="modalDetalhesCategoria" tabindex="-1" aria-labelledby="modalDetalhesCategoriaLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalDetalhesCategoriaLabel">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14,2 14,8 20,8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10,9 9,9 8,9" />
+          </svg>
+          Detalhes da Categoria: <span id="nomeCategoria"></span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <div class="card bg-light">
+              <div class="card-body text-center py-2">
+                <h6 class="mb-1">Total de Registros</h6>
+                <h4 class="mb-0 text-primary" id="totalRegistros">-</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card bg-primary text-white">
+              <div class="card-body text-center py-2">
+                <h6 class="mb-1">Valor Total</h6>
+                <h4 class="mb-0" id="valorTotal">-</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive" id="tabelaDetalhesContainer">
+          <table class="table table-striped table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Data</th>
+                <th>Documento</th>
+                <th>Beneficiário</th>
+                <th>Origem</th>
+                <th>Observações</th>
+                <th class="text-end">Valor</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaDetalhes">
+              <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="loadingDetalhes" class="text-center py-4" style="display: none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+          <p class="mt-2 text-muted">Carregando detalhes...</p>
+        </div>
+
+        <div id="erroDetalhes" class="alert alert-danger" style="display: none;">
+          <strong>Erro:</strong> <span id="mensagemErro"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   document.querySelectorAll('select.form-select').forEach(function (select) {
     new TomSelect(select, {
@@ -1080,6 +1197,7 @@
       allowEmptyOption: false,
     });
   });
+
   function limparDatasPersonalizadas() {
     const exercicio = document.querySelector('select[name="exercicio"]');
     if (exercicio.value) {
@@ -1107,7 +1225,103 @@
         }
       });
     }
+
+    // Event listener para links de categoria
+    document.querySelectorAll('.categoria-link').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const categoriaId = this.getAttribute('data-categoria-id');
+        const categoriaNome = this.getAttribute('data-categoria-nome');
+
+        // Obter datas do filtro atual
+        const dataInicio = '{{ dados_form.data_inicio }}';
+        const dataFim = '{{ dados_form.data_fim }}';
+
+        carregarDetalhesCategoria(categoriaId, categoriaNome, dataInicio, dataFim);
+      });
+    });
   });
+
+  function carregarDetalhesCategoria(categoriaId, categoriaNome, dataInicio, dataFim) {
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('modalDetalhesCategoria'));
+    document.getElementById('nomeCategoria').textContent = categoriaNome;
+
+    // Mostrar loading
+    document.getElementById('loadingDetalhes').style.display = 'block';
+    document.getElementById('tabelaDetalhesContainer').style.display = 'none';
+    document.getElementById('erroDetalhes').style.display = 'none';
+    document.getElementById('totalRegistros').textContent = '-';
+    document.getElementById('valorTotal').textContent = '-';
+
+    modal.show();
+
+    // Fazer requisição AJAX
+    const url = `/relatorios/relatorios-financeiros/dfc-categoria-detalhes/${categoriaId}?data_inicio=${dataInicio}&data_fim=${dataFim}`;
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Erro na requisição: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Ocultar loading
+        document.getElementById('loadingDetalhes').style.display = 'none';
+
+        // Debug: verificar se os dados chegaram
+        console.log('Dados recebidos:', data);
+
+        // Atualizar contadores
+        document.getElementById('totalRegistros').textContent = data.quantidade;
+        document.getElementById('valorTotal').textContent = data.total_formatado || new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        }).format(data.total);
+
+        // Preencher tabela
+        const tbody = document.getElementById('tabelaDetalhes');
+        tbody.innerHTML = '';
+
+        if (data.registros.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum registro encontrado</td></tr>';
+        } else {
+          data.registros.forEach(registro => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td class="text-nowrap">${registro.data_competencia}</td>
+              <td class="text-nowrap">
+                <span class="badge bg-light text-dark">${registro.codigo_documento}</span>
+              </td>
+              <td class="text-truncate" style="max-width: 150px;" title="${registro.beneficiario}">${registro.beneficiario}</td>
+              <td class="text-nowrap">
+                <span class="badge bg-primary-lt">${registro.origem}</span>
+              </td>
+              <td title="${registro.descricao}">${registro.descricao}</td>
+              <td class="text-end fw-medium">${registro.valor_formatado}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        }
+
+        // Mostrar tabela
+        const tableContainer = document.getElementById('tabelaDetalhesContainer');
+        tableContainer.style.display = 'block';
+        tableContainer.style.visibility = 'visible';
+      })
+      .catch(error => {
+        // Ocultar loading
+        document.getElementById('loadingDetalhes').style.display = 'none';
+
+        // Mostrar erro
+        document.getElementById('mensagemErro').textContent = error.message;
+        document.getElementById('erroDetalhes').style.display = 'block';
+
+        console.error('Erro ao carregar detalhes:', error);
+      });
+  }
 </script>
 
 {% endblock conteudo %}

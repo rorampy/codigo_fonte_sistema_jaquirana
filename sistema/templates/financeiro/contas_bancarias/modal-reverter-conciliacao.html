@@ -1,0 +1,275 @@
+<!-- Modal para Reverter Conciliação -->
+<div class="modal modal-blur fade" id="modalReverterConciliacao" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Reverter Conciliação
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Carregando -->
+        <div id="reverterCarregando" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+          <p class="mt-2">Carregando detalhes da conciliação...</p>
+        </div>
+
+        <!-- Conteúdo do Modal -->
+        <div id="reverterConteudo" style="display: none;">
+          <!-- Resumo da Operação -->
+          <div class="card mb-3">
+            <div class="card-header">
+              <h3 class="card-title">
+                Resumo da Operação
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <!-- Informações da Transação -->
+                <div class="col-md-12">
+                  <h4 class="text-primary mb-3">
+                    Transação OFX
+                  </h4>
+                  <table class="table table-sm">
+                    <tr>
+                      <td><strong>Valor:</strong></td>
+                      <td id="reverterValorTransacao" class="text-end fw-bold">-</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Data:</strong></td>
+                      <td id="reverterDataTransacao" class="text-end">-</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Descrição:</strong></td>
+                      <td id="reverterDescricaoTransacao" class="text-end">-</td>
+                    </tr>
+                    <tr>
+                      <td><strong>FITID:</strong></td>
+                      <td id="reverterFitidTransacao" class="text-end text-muted small">-</td>
+                    </tr>
+                  </table>
+                </div>
+
+                <!-- Detalhes da Conciliação -->
+                <div class="col-md-6 d-none">
+                  <h4 class="text-warning mb-3">
+                    Conciliação Atual
+                  </h4>
+                  <table class="table table-sm">
+                    <tr>
+                      <td><strong>Tipo:</strong></td>
+                      <td id="reverterTipoConciliacao" class="text-end">-</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Data:</strong></td>
+                      <td id="reverterDataConciliacao" class="text-end text-muted small">-</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Status:</strong></td>
+                      <td class="text-end">
+                        <span class="badge badge-outline text-red">Será Revertido</span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agendamentos Vinculados -->
+          <div id="reverterAgendamentosContainer" class="card mb-3" style="display: none;">
+            <div class="card-header">
+              <h3 class="card-title">
+                Agendamentos que serão Desvinculados
+              </h3>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive" style="max-height: 300px;">
+                <table class="table table-sm table-striped">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="text-center">Tipo</th>
+                      <th class="text-center">Código</th>
+                      <th class="text-center">Valor</th>
+                      <th class="text-center">Observações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reverterAgendamentosList">
+                    <!-- Agendamentos serão inseridos aqui via JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Movimentações Vinculadas -->
+          <div id="reverterMovimentacoesContainer" class="card mb-3" style="display: none;">
+            <div class="card-header">
+              <h3 class="card-title">
+                Movimentações que serão Desvinculadas
+              </h3>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive" style="max-height: 300px;">
+                <table class="table table-sm table-striped">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="text-center">Data</th>
+                      <th class="text-center">Valor</th>
+                      <th class="text-center">Conta</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reverterMovimentacoesList">
+                    <!-- Movimentações serão inseridas aqui via JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Aviso de Consequências -->
+          <div class="alert alert-warning">
+            <h4 class="alert-heading">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-alert-triangle me-2">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 9v2m0 4v.01" />
+                <path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75" />
+              </svg>
+              Atenção! Consequências da Reversão:
+            </h4>
+            <ul class="mb-0">
+              <li>A transação voltará para status <strong>"Não Conciliado"</strong></li>
+              <li>Agendamentos serão desvinculados e voltarão para <strong>"Pendente"</strong></li>
+              <li>Movimentações financeiras serão removidas</li>
+              <li>Saldos das contas serão recalculados automaticamente</li>
+              <li><strong>Esta ação não pode ser desfeita automaticamente</strong></li>
+            </ul>
+          </div>
+
+          <!-- Confirmação -->
+          <div class="form-check p-3 bg-light rounded">
+            <div class="d-flex justify-content-end">
+              <input class="form-check-input mr-2" type="checkbox" id="confirmarReversao">
+              <label class="form-check-label fw-bold text-danger" for="confirmarReversao" style="margin-left: 5px;">
+                Confirmo que entendo as consequências e desejo reverter esta conciliação
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Erro -->
+        <div id="reverterErro" style="display: none;" class="alert alert-danger">
+          <h4 class="alert-heading">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-x-circle me-2">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+              <path d="M10 10l4 4m0 -4l-4 4" />
+            </svg>
+            Erro ao carregar detalhes
+          </h4>
+          <p id="reverterErroMensagem" class="mb-0">-</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+            <path d="M18 6l-12 12" />
+            <path d="M6 6l12 12" />
+          </svg>
+          Cancelar
+        </button>
+
+        <button type="button" class="btn btn-danger" id="btnConfirmarReversao" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+            <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+          </svg>
+          <span class="btn-text">Confirmar Reversão</span>
+          <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Sucesso -->
+<div class="modal modal-blur fade" id="modal-reversao-sucesso" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-status bg-success"></div>
+      <div class="modal-body text-center py-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="icon mb-2 text-green icon-lg">
+          <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+          <path d="M9 12l2 2l4 -4" />
+        </svg>
+        <h3>Reversão Realizada</h3>
+        <div class="text-secondary">A conciliação foi revertida com sucesso. 
+          A transação voltou ao status "Não Conciliado" e todos os vínculos foram desfeitos.</div>
+      </div>
+      <div class="modal-footer">
+        <div class="w-100">
+          <div class="row">
+            <div class="col">
+              <a href="#" class="btn btn-success w-100" data-bs-dismiss="modal" onclick="window.location.reload()">
+                Atualizar Página
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Erro -->
+<div class="modal modal-blur fade" id="modal-reversao-erro" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-status bg-danger"></div>
+      <div class="modal-body text-center py-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="icon mb-2 text-red icon-lg">
+          <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+          <path d="M10 10l4 4m0 -4l-4 4" />
+        </svg>
+        <h3>Erro na Reversão</h3>
+        <div class="text-secondary" id="mensagem-erro-reversao">
+          Ocorreu um erro ao tentar reverter a conciliação. Tente novamente ou contate o suporte.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="w-100">
+          <div class="row">
+            <div class="col">
+              <a href="#" class="btn btn-outline-danger w-100" data-bs-dismiss="modal">
+                Fechar
+              </a>
+            </div>
+            <div class="col">
+              <a href="#" class="btn btn-danger w-100" data-bs-dismiss="modal" onclick="window.location.reload()">
+                Tentar Novamente
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

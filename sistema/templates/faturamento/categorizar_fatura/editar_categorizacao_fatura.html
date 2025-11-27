@@ -1,5 +1,6 @@
 {% extends 'estrutura/base.html' %}
 {% block conteudo %}
+
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="{{ url_for('static', filename='js/sistema/utilitarios.js') }}"></script>
 {% include 'estrutura/header.html' %}
@@ -27,7 +28,7 @@
         <div class="col-12">
           <div class="card">
             <div class="card-body">
-              <form method="POST" x-data="categorias()" x-init="init()" @submit="prepararEnvio()">
+              <form method="POST" enctype="multipart/form-data" x-data="categorias()" x-init="init()" @submit="prepararEnvio()">
                 <div class="row mb-4">
                   <div class="col-md-3">
                     <label class="form-label required">Data Vencimento</label>
@@ -453,11 +454,125 @@
                   </div>
                 </div>
 
+                <!-- Anexos -->
+                <div class="row mb-4">
+                  <div class="col-12">
+                    <div class="card bg-light">
+                      <div class="card-body">
+                        <h4 class="card-title mb-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-paperclip me-2">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5" />
+                          </svg>
+                          Anexos <span class="text-muted">(opcional)</span>
+                        </h4>
+                        
+                        <!-- Anexos Existentes -->
+                        {% if anexos_existentes and anexos_existentes|length > 0 %}
+                        <div class="mb-4">
+                          <h6 class="text-muted mb-3">Arquivos anexados:</h6>
+                          <div class="list-group" id="listaAnexosExistentes">
+                            {% for anexo in anexos_existentes %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center" id="anexo-{{ anexo.id }}">
+                              <div class="d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-text me-2 text-primary">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                                  <path d="M9 9l1 0" />
+                                  <path d="M9 13l6 0" />
+                                  <path d="M9 17l6 0" />
+                                </svg>
+                                <div>
+                                  <div class="fw-bold">{{ anexo.upload_arquivo.nome_arquivo_original }}</div>
+                                  <small class="text-muted">
+                                    Enviado em {{ anexo.data_cadastro.strftime('%d/%m/%Y às %H:%M') }}
+                                    {% if anexo.upload_arquivo.tamanho_bytes %}
+                                      • {{ (anexo.upload_arquivo.tamanho_bytes / 1024)|round(2) }} KB
+                                    {% endif %}
+                                  </small>
+                                </div>
+                              </div>
+                              <div>
+                                <a href="{{ url_for('diretorio_uploads_anexo_comprovante_receita_despesa', filename=anexo.upload_arquivo.caminho.split('/')[-1]) }}" 
+                                   target="_blank" 
+                                   class="btn btn-icon btn-sm btn-outline-primary me-2"
+                                   title="Visualizar arquivo">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="icon icon-tabler icons-tabler-outline icon-tabler-eye">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                    <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                                  </svg>
+                                </a>
+                                <a href="{{ url_for('diretorio_uploads_anexo_comprovante_receita_despesa', filename=anexo.upload_arquivo.caminho.split('/')[-1]) }}" 
+                                   download 
+                                   class="btn btn-icon btn-sm btn-outline-success me-2"
+                                   title="Baixar arquivo">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="icon icon-tabler icons-tabler-outline icon-tabler-download">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M7 11l5 5l5 -5" />
+                                    <path d="M12 4l0 12" />
+                                  </svg>
+                                </a>
+                                <button type="button" class="btn btn-icon btn-sm btn-outline-danger" 
+                                        onclick="excluirAnexo({{ anexo.id }})"
+                                        title="Excluir arquivo">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M4 7l16 0" />
+                                    <path d="M10 11l0 6" />
+                                    <path d="M14 11l0 6" />
+                                    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                    <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                            {% endfor %}
+                          </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Upload de Novos Anexos -->
+                        <div class="border border-2 border-dashed rounded p-4 text-center" style="border-color: #dee2e6 !important;">
+                          <div class="mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                              class="icon icon-tabler icons-tabler-outline icon-tabler-upload text-muted">
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                              <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                              <path d="M7 9l5 -5l5 5" />
+                              <path d="M12 4l0 12" />
+                            </svg>
+                          </div>
+                          <h5 class="mb-2">{% if anexos_existentes and anexos_existentes|length > 0 %}Adicionar mais arquivos{% else %}Selecione os arquivos{% endif %}</h5>
+                          <p class="text-muted mb-3">PDF, imagens, documentos (máx. 10MB por arquivo)</p>
+                          <input type="file" name="anexos" id="anexos" class="form-control" multiple 
+                                 accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                          <div id="listaArquivos" class="mt-3"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Campos hidden para envio dos dados JSON -->
                 <input type="hidden" name="categorias_json" id="categorias_json">
                 <input type="hidden" name="centros_custo_json" id="centros_custo_json">
                 <input type="hidden" name="parcelas_json" id="parcelas_json">
                 <input type="hidden" name="valores_detalhados_ativo" id="valores_detalhados_ativo" value="false">
+                <input type="hidden" name="anexos_excluir" id="anexos_excluir" value="[]">
 
                 <!-- Botões de ação -->
                 <div class="row">
@@ -904,6 +1019,104 @@
       }
     }
   }
+</script>
+
+<script>
+  // Mostrar arquivos selecionados com opção de remover
+  document.addEventListener('DOMContentLoaded', function() {
+    const inputAnexos = document.getElementById('anexos');
+    const listaArquivos = document.getElementById('listaArquivos');
+    let arquivosSelecionados = [];
+    
+    if (inputAnexos) {
+      inputAnexos.addEventListener('change', function(e) {
+        // Adicionar novos arquivos à lista existente
+        arquivosSelecionados = [...arquivosSelecionados, ...Array.from(e.target.files)];
+        atualizarListaArquivos();
+      });
+    }
+    
+    function atualizarListaArquivos() {
+      listaArquivos.innerHTML = '';
+      
+      if (arquivosSelecionados.length > 0) {
+        const lista = document.createElement('div');
+        lista.className = 'list-group text-start';
+        
+        arquivosSelecionados.forEach((file, index) => {
+          const item = document.createElement('div');
+          item.className = 'list-group-item d-flex justify-content-between align-items-center';
+          item.innerHTML = `
+            <span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-file me-2">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+              </svg>
+              ${file.name}
+            </span>
+            <div>
+              <span class="badge badge-outline text-cyan me-2">${(file.size / 1024).toFixed(2)} KB</span>
+              <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removerArquivo(${index})" title="Remover arquivo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-x">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M18 6l-12 12" />
+                  <path d="M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          `;
+          lista.appendChild(item);
+        });
+        
+        listaArquivos.appendChild(lista);
+        atualizarInputFile();
+      }
+    }
+    
+    function atualizarInputFile() {
+      // Criar novo DataTransfer para atualizar o input file
+      const dt = new DataTransfer();
+      arquivosSelecionados.forEach(file => dt.items.add(file));
+      inputAnexos.files = dt.files;
+    }
+    
+    window.removerArquivo = function(index) {
+      arquivosSelecionados.splice(index, 1);
+      atualizarListaArquivos();
+    };
+    
+    // Função para excluir anexos existentes
+    window.excluirAnexo = function(anexoId) {
+      if (confirm('Tem certeza que deseja excluir este anexo?')) {
+        // Adicionar o ID ao campo hidden de anexos a excluir
+        const inputExcluir = document.getElementById('anexos_excluir');
+        let anexosParaExcluir = JSON.parse(inputExcluir.value);
+        anexosParaExcluir.push(anexoId);
+        inputExcluir.value = JSON.stringify(anexosParaExcluir);
+        
+        // Remover visualmente o anexo da lista
+        const anexoElement = document.getElementById('anexo-' + anexoId);
+        if (anexoElement) {
+          anexoElement.style.transition = 'opacity 0.3s';
+          anexoElement.style.opacity = '0';
+          setTimeout(() => {
+            anexoElement.remove();
+            
+            // Verificar se não há mais anexos e ocultar a seção
+            const listaAnexos = document.getElementById('listaAnexosExistentes');
+            if (listaAnexos && listaAnexos.children.length === 0) {
+              listaAnexos.parentElement.style.display = 'none';
+            }
+          }, 300);
+        }
+      }
+    };
+  });
 </script>
 
 {% include 'estrutura/footer.html' %}

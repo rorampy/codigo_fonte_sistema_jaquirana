@@ -7,7 +7,7 @@
     <div class="navbar-brand navbar-brand-autodark">
       <a href="{{ url_for('principal') }}">
         <img src="{{ url_for('static', filename='images/logo.png') }}"
-          style="width: 110px !important; height: 45px !important;" alt="Logomarca Jaquirana" class="navbar-brand-image">
+          style="width: 110px !important; height: 45px !important;" alt="Logomarca MBR" class="navbar-brand-image">
       </a>
     </div>
 
@@ -152,11 +152,22 @@
             <div class="dropdown-menu-columns">
               <div class="dropdown-menu-column">
                 <a class="dropdown-item" href="{{url_for('listagem_solicitacoes')}}">
-                  Solicitações e NF
+                  Pedido de Venda
                 </a>
-                <a class="dropdown-item" href="{{url_for('listagem_registros_operacionais')}}">
-                  Registro Operacional
-                </a>
+                <div class="dropend">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside" role="button" aria-expanded="false">
+                    Vendas
+                  </a>
+                  <div class="dropdown-menu">
+                    <a class="dropdown-item" href="{{url_for('vendas_em_transito')}}">
+                      Vendas em Trânsito
+                    </a>
+                    <a class="dropdown-item" href="{{url_for('vendas_entregues')}}">
+                      Vendas Entregues
+                    </a>
+                  </div>
+                </div>
                 <a class="dropdown-item" href="{{url_for('listagem_nf_complementar')}}">
                   NF Complementar
                 </a>
@@ -210,6 +221,9 @@
                 </a>
                 <a class="dropdown-item" href="{{ url_for('listar_extratores')}}">
                   Extratores
+                </a>
+                <a class="dropdown-item" href="{{ url_for('listar_certificacoes')}}">
+                  Certificações
                 </a>
                 <a class="dropdown-item" href="{{ url_for('listar_clientes')}}">
                   Clientes
@@ -284,7 +298,7 @@
                 <div class="dropend">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
                     data-bs-auto-close="outside" role="button" aria-expanded="false">
-                    Controle de Créditos
+                    Controle de Adiantamentos
                   </a>
                   <div class="dropdown-menu">
                     <a class="dropdown-item" href="{{url_for('saldo_fornecedores')}}">
@@ -352,7 +366,7 @@
                       Despesas
                     </a> -->
                     <a class="dropdown-item" href="{{url_for('listagem_faturamentos_controle_credito')}}">
-                      Controle de Créditos
+                      Adiantamentos de Créditos
                     </a>
                   </div>
                 </div>
@@ -398,7 +412,8 @@
                       </a>
                       <div class="dropdown-menu">
                         <a class="dropdown-item" href="#" data-bs-toggle="modal"
-                          data-bs-target="#modal-controle-estoque-fornecedor" href="{{url_for('listar_empresa_emissora')}}">
+                          data-bs-target="#modal-controle-estoque-fornecedor"
+                          href="{{url_for('listar_empresa_emissora')}}">
                           Controle Estoque Fornecedor
                         </a>
                       </div>

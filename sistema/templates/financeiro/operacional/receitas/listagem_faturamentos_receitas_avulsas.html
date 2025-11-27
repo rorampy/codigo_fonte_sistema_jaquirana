@@ -112,9 +112,9 @@
                         </svg>
                       </a>
                       {% endif %}
-                      <a href="{{ url_for('exportar_receita_avulsa_pdf', faturamento_id=faturamento.id) }}"  target="_blank"
-                         class="btn btn-icon btn-outline-danger" data-bs-toggle="tooltip"
-                         data-bs-placement="top" title="Exportar Relatório PDF">
+                      <a href="{{ url_for('exportar_receita_avulsa_pdf', faturamento_id=faturamento.id) }}"
+                        target="_blank" class="btn btn-icon btn-outline-danger" data-bs-toggle="tooltip"
+                        data-bs-placement="top" title="Exportar Relatório PDF">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                           class="icon icon-tabler icons-tabler-outline icon-tabler-pdf">
@@ -125,9 +125,9 @@
                           <path d="M21 8h-4v8" />
                         </svg>
                       </a>
-                      <a href="{{ url_for('exportar_receita_avulsa_imagem', faturamento_id=faturamento.id) }}"  target="_blank"
-                         class="btn btn-icon btn-outline-warning" data-bs-toggle="tooltip"
-                         data-bs-placement="top" title="Exportar Relatório como Imagem">
+                      <a href="{{ url_for('exportar_receita_avulsa_imagem', faturamento_id=faturamento.id) }}"
+                        target="_blank" class="btn btn-icon btn-outline-warning" data-bs-toggle="tooltip"
+                        data-bs-placement="top" title="Exportar Relatório como Imagem">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                           class="icon icon-tabler icons-tabler-outline icon-tabler-photo-scan">
@@ -153,7 +153,8 @@
         <div class="area-info-card"
           style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">
           <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
-          <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">Nenhuma receita avulsa disponível para faturamento</h2>
+          <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">Nenhuma receita avulsa disponível para
+            faturamento</h2>
           <p style="color: #777;">No momento não há faturamentos de receitas avulsas para serem exibidos.</p>
         </div>
         {%endif%}
@@ -695,7 +696,7 @@
     document.getElementById('loading-categorizacao').style.display = 'block';
     document.getElementById('conteudo-categorizacao').style.display = 'none';
 
-    // Fazer requisição para controle de créditos
+    // Fazer requisição para Adiantamentos de Créditos
     fetch(`/financeiro/operacional/categorizacao/receitas-avulsas/detalhes-json/${faturamentoId}`)
       .then(response => response.json())
       .then(data => {
@@ -1087,12 +1088,12 @@
 
       data.centros_custo.forEach(centro => {
         console.log('Debug centro individual:', centro);
-        
+
         // Tratar valores que podem vir do backend de diferentes formas
         const valorCentro = centro.valor || 0;
         const nomeCentro = centro.nome || centro.descricao || centro.centro || 'Centro não informado';
         const percentualCentro = centro.percentual || 0;
-        
+
         html += `
               <tr>
                 <td class="text-center">${nomeCentro}</td>

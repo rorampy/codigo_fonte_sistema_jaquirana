@@ -4,7 +4,7 @@ from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem, forma
 from sistema._utilitarios.data_e_hora import DataHora
 from flask import render_template, request, redirect, url_for, flash, session, jsonify, make_response, send_file
 from flask_login import login_required
-from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
 from sistema.models_views.relatorios.relatorios_financeiros.relatorio_dfc_dre.relatorio_dre.dre_model import DREModel
 from sistema._utilitarios import *
@@ -309,7 +309,7 @@ def dre_categoria_detalhes(categoria_id):
             return jsonify({'error': 'Formato de data inválido. Use YYYY-MM-DD'}), 400
         
         # Importar models necessários
-        from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
+        from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
         from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
         from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
         

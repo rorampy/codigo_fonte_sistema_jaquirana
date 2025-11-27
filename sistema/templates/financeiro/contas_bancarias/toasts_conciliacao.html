@@ -1,0 +1,59 @@
+<!-- Container para Toasts -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1060;">
+  
+  <!-- Toast Sucesso Conciliação -->
+  <div id="toast-conciliacao-sucesso" class="toast align-items-center text-bg-success border-0" role="alert" 
+       aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+    <div class="d-flex">
+      <div class="toast-body d-flex align-items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" 
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+             class="icon me-2">
+          <path d="M20 6l-11 11l-4 -4"/>
+        </svg>
+        <div>
+          <strong>Conciliação realizada!</strong>
+          <div class="small" id="toast-conciliacao-detalhes">Agendamento conciliado com sucesso.</div>
+        </div>
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" 
+              aria-label="Close"></button>
+    </div>
+  </div>
+  
+  <!-- Toast Erro Conciliação -->
+  <div id="toast-conciliacao-erro" class="toast align-items-center text-bg-danger border-0" role="alert" 
+       aria-live="assertive" aria-atomic="true" data-bs-delay="8000">
+    <div class="d-flex">
+      <div class="toast-body d-flex align-items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" 
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+             class="icon me-2">
+          <path d="M18 6l-12 12"/>
+          <path d="M6 6l12 12"/>
+        </svg>
+        <div>
+          <strong>Erro na conciliação</strong>
+          <div class="small" id="toast-conciliacao-erro-detalhes">Ocorreu um erro ao processar a conciliação.</div>
+        </div>
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" 
+              aria-label="Close"></button>
+    </div>
+  </div>
+  
+  <!-- Toast Loading Conciliação -->
+  <div id="toast-conciliacao-loading" class="toast align-items-center text-bg-primary border-0" role="alert" 
+       aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+    <div class="d-flex">
+      <div class="toast-body d-flex align-items-center">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        <div>
+          <strong>Processando conciliação...</strong>
+          <div class="small">Aguarde enquanto processamos a conciliação.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+</div>

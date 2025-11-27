@@ -132,7 +132,7 @@
                                   <input type="checkbox" class="form-check-input registro-checkbox"
                                     data-id="{{ item.registro.id }}" data-group="{{ groupId }}"
                                     data-diff="{{ item.registro.valor_total_a_pagar_100 / 100 or 0 }}" {% if
-                                    item.registro.situacao_pagamento_id==1 %}disabled{% endif %}>
+                                    item.registro.situacao_pagamento_id in [5, 6, 8, 9, 10] %}disabled{% endif %}>
                                 </td>
                                 <td class="text-center text-primary">{{
                                   item.registro.data_entrega_ticket |
@@ -189,8 +189,18 @@
                                   formatar_float_para_brl }}{% else
                                   %}-{% endif %}</td>
                                 <td class="text-center">
-                                  <span
-                                    class="badge badge-outline {%if item.registro.situacao_pagamento_id == 5%}text-success{%else%} text-warning{%endif%}">{{item.registro.situacao.situacao}}</span>
+                                  {% if item.registro.situacao_pagamento_id == 5 %}
+                                  <span class="badge badge-outline text-success" 
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        title="Faturamento: {{ item.cod_faturamento or 'N/A' }}">
+                                    {{ item.registro.situacao.situacao }}
+                                  </span>
+                                  {% else %}
+                                  <span class="badge badge-outline text-warning">
+                                    {{ item.registro.situacao.situacao }}
+                                  </span>
+                                  {% endif %}
                                 </td>
                                 <td class="text-center">{% if
                                   item.registro.valor_total_a_pagar_100 %}<span class="badge bg-green-lt p-2">{{

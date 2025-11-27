@@ -25,7 +25,7 @@
           <div class="card-body">
             <div class="row">
 
-              <div class="col-sm-4 col-md-4">
+              <div class="col-sm-3 col-md-3">
                 <div class="mb-3">
                   <label class="form-label required">Empresa Emissora</label>
                   <select name="empresaEmissora"
@@ -43,7 +43,7 @@
                 </div>
               </div>
 
-              <div class="col-sm-4 col-md-4">
+              <div class="col-sm-3 col-md-3">
                 <div class="mb-3">
                   <label class="form-label required">Cliente</label>
                   <select name="clienteSolicitacao"
@@ -94,7 +94,7 @@
                 </div>
               </div>
 
-              <div class="col-sm-3 col-md-3">
+              <div class="col-sm-2 col-md-2">
                 <div class="mb-3">
                   <label class="form-label">Nome grupo</label>
                   <select name="nomeGrupo"
@@ -113,7 +113,25 @@
                 </div>
               </div>
 
-              <div class="col-sm-2 col-md-2">
+              <!-- Grupo Certificações -->
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Certificação</label>
+                  <select name="certificacao_solicitacao"
+                    class="form-select {% if 'certificacao_solicitacao' in campos_obrigatorios or 'certificacao_solicitacao' in campos_erros %}is-invalid{% endif %}">
+                    <option value selected>Selecione...</option>
+                    {% for c in certificacoes %}
+                    <option value="{{ c.id }}" {% if solicitacao.certificacao_id == c.id %}selected{% endif %}>{{ c.nome }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {{ campos_obrigatorios.get('certificacao_solicitacao') or
+                    campos_erros.get('certificacao_solicitacao') }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- <div class="col-sm-2 col-md-2">
                 <div class="mb-3">
                   <label class="form-label">Data e hora MSG Grupo</label>
                   <input type="datetime-local" name="dataHoraSolicitacao"
@@ -123,7 +141,7 @@
                     {{ campos_obrigatorios.get('dataHoraSolicitacao') }}
                   </div>
                 </div>
-              </div>
+              </div> -->
 
               <div class="row">
                 <h3 class="text-primary">Informações de transporte</h3>

@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Relatório de Controle de Créditos - {{ faturamento.codigo_faturamento }}</title>
+  <title>Relatório de Adiantamentos de Créditos - {{ faturamento.codigo_faturamento }}</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -231,20 +231,20 @@
     <table>
       <tr>
         <td style="width: 200px;">
-          <img src="{{ logo_path }}" alt="Logo Jaquirana Florestal" />
+          <img src="{{ logo_path }}" alt="Logo MBR Extração" />
         </td>
         <td class="system-info">
-          <div><strong>Sistema de Gestão Jaquirana</strong></div>
+          <div><strong>Sistema de Gestão MBR</strong></div>
           <div><strong>Relatório gerado em:</strong> {{ data_geracao }}</div>
         </td>
       </tr>
     </table>
   </div>
 
-  <div class="relatorio-title">Relatório de Controle de Créditos | {{ faturamento.codigo_faturamento }}</div>
+  <div class="relatorio-title">Relatório de Adiantamentos de Créditos | {{ faturamento.codigo_faturamento }}</div>
 
-  <!-- Dados do Controle de Créditos -->
-  <div class="section-title">DADOS DO CONTROLE DE CRÉDITOS</div>
+  <!-- Dados do Adiantamentos de Créditos -->
+  <div class="section-title">DADOS DO Adiantamentos de Créditos</div>
   <div class="simple-info">
     <strong>Código:</strong> {{ faturamento.codigo_faturamento }}
   </div>
@@ -501,9 +501,9 @@
   </table>
 
   <div class="footer">
-    <p><strong>Jaquirana Florestal &copy; 2025</strong> - Todos os direitos reservados</p>
-    <p><strong>Sistema de Gestão Jaquirana - Módulo Financeiro</strong></p>
-    <p>Relatório de Controle de Créditos gerado automaticamente pelo Sistema de Gestão Jaquirana</p>
+    <p><strong>MBR Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão MBR - Módulo Financeiro</strong></p>
+    <p>Relatório de Adiantamentos de Créditos gerado automaticamente pelo Sistema de Gestão MBR</p>
   </div>
 </body>
 

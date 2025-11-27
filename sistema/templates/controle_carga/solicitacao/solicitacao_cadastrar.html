@@ -7,7 +7,7 @@
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <div class="page-pretitle">SOLICITAÇÃO</div>
+          <div class="page-pretitle">Pedido de Venda</div>
           <h2 class="page-title">Cadastrar</h2>
         </div>
       </div>
@@ -24,7 +24,7 @@
             <div class="row">
 
               <!-- Empresa Emissora-->
-              <div class="col-sm-4 col-md-4">
+              <div class="col-sm-3 col-md-3">
                 <div class="mb-3">
                   <label class="form-label required">Empresa Emissora</label>
                   <select name="empresaEmissora"
@@ -45,7 +45,7 @@
               </div>
 
               <!-- Cliente -->
-              <div class="col-sm-4 col-md4">
+              <div class="col-sm-3 col-md-3">
                 <div class="mb-3">
                   <label class="form-label required">Cliente</label>
                   <select name="clienteSolicitacao"
@@ -101,7 +101,7 @@
               </div>
 
               <!-- Grupo WhatsApp -->
-              <div class="col-sm-3 col-md-3">
+              <div class="col-sm-2 col-md-2">
                 <div class="mb-3">
                   <label class="form-label">Nome grupo</label>
                   <select name="nomeGrupo"
@@ -117,9 +117,27 @@
                   </div>
                 </div>
               </div>
+              
+              <!-- Grupo Certificações -->
+              <div class="col-sm-3 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label required">Certificação</label>
+                  <select name="certificacao_solicitacao"
+                    class="form-select {% if 'certificacao_solicitacao' in campos_obrigatorios or 'certificacao_solicitacao' in campos_erros %}is-invalid{% endif %}">
+                    <option value selected>Selecione...</option>
+                    {% for c in certificacoes %}
+                    <option value="{{ c.id }}">{{ c.nome }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {{ campos_obrigatorios.get('certificacao_solicitacao') or
+                    campos_erros.get('certificacao_solicitacao') }}
+                  </div>
+                </div>
+              </div>
 
               <!-- Data e hora msg grupo-->
-              <div class="col-sm-2 col-md-2">
+              <!-- <div class="col-sm-2 col-md-2">
                 <div class="mb-3">
                   <label class="form-label">Data/hora MSG Grupo</label>
                   <input type="datetime-local" name="dataHoraSolicitacao"
@@ -130,7 +148,7 @@
                     campos_erros.get('dataHoraSolicitacao') }}
                   </div>
                 </div>
-              </div>
+              </div> -->
 
               <div class="row">
                 <h3 class="text-primary">Informações de transporte</h3>
@@ -198,7 +216,7 @@
           </div>
 
           <div class="card-footer text-center text-md-end">
-            <a href="{{ url_for('listagem_solicitacoes') }}" class="btn btn-primary">
+            <a href="javascript:history.back()" class="btn btn-primary">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
                 height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
                 stroke-linecap="round" stroke-linejoin="round">

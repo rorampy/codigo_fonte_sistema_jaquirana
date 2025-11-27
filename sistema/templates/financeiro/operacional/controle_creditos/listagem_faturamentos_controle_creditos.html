@@ -7,7 +7,7 @@
       <div class="row g-2 align-items-center">
         <div class="col">
           <div class="page-pretitle">
-            CONTROLE DE CRÉDITOS
+            Adiantamentos de Créditos
           </div>
           <h2 class="page-title">
             Faturamentos de Créditos
@@ -1168,7 +1168,7 @@
     document.getElementById('loading-categorizacao').style.display = 'block';
     document.getElementById('conteudo-categorizacao').style.display = 'none';
 
-    // Fazer requisição para controle de créditos
+    // Fazer requisição para Adiantamentos de Créditos
     fetch(`/financeiro/operacional/categorizacao/controle-creditos/detalhes-json/${faturamentoId}`)
       .then(response => response.text())
       .then(text => {

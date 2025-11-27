@@ -1,0 +1,554 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">
+            VENDAS EM TRÂNSITO
+          </div>
+          <h2 class="page-title">
+            Listagem
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-filtro-vendas-transito">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar </a>
+            <a href="{{ url_for('cadastrar_solicitacao') }}" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Nova Venda
+            </a>
+            {% if dados_corretos %}
+            <a href="{{ url_for('vendas_em_transito_exportar_pdf', **dados_corretos) }}" target="_blank" class="btn btn-danger">
+            {% else %}
+            <a href="{{ url_for('vendas_em_transito_exportar_pdf') }}" target="_blank" class="btn btn-danger">
+            {% endif %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-pdf">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M10 8v8h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-2z" />
+                <path d="M3 12h2a2 2 0 1 0 0 -4h-2v8" />
+                <path d="M17 12h3" />
+                <path d="M21 8h-4v8" />
+              </svg>
+              Exportar PDF
+            </a>
+            {% if dados_corretos %}
+            <a href="{{ url_for('vendas_em_transito_exportar_excel', **dados_corretos) }}" target="_blank" class="btn btn-green">
+            {% else %}
+            <a href="{{ url_for('vendas_em_transito_exportar_excel') }}" target="_blank" class="btn btn-green">
+            {% endif %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-xls">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
+                <path d="M4 15l4 6" />
+                <path d="M4 21l4 -6" />
+                <path
+                  d="M17 20.25c0 .414 .336 .75 .75 .75h1.25a1 1 0 0 0 1 -1v-1a1 1 0 0 0 -1 -1h-1a1 1 0 0 1 -1 -1v-1a1 1 0 0 1 1 -1h1.25a.75 .75 0 0 1 .75 .75" />
+                <path d="M11 15v6h3" />
+              </svg>
+              Exportar Excel
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <div class="card" data-ajax-url="{{ url_for('vendas_em_transito_filtrar_ajax') }}">
+          <div class="card-header">
+            <div class="row w-100 align-items-end">
+              <div class="col-md-12">
+                <div class="row g-2 align-items-end">
+
+                  <!-- Filtros de Data -->
+                  <div class="col-md-2">
+                    <label class="form-label mb-1 small text-muted">Data Início</label>
+                    <input type="date" id="data-inicio" class="form-control busca-rapida"
+                      value="{{ dados_corretos.get('data_inicio', '') if dados_corretos else '' }}"
+                      title="Data início do vencimento">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label mb-1 small text-muted">Data Fim</label>
+                    <input type="date" id="data-fim" class="form-control busca-rapida"
+                      value="{{ dados_corretos.get('data_fim', '') if dados_corretos else '' }}"
+                      title="Data fim do vencimento">
+                  </div>
+
+                  <!-- Campo Fornecedor -->
+                  <div class="col-md-3">
+                    <label class="form-label mb-1 small text-muted">Transportadora</label>
+                    <input type="text"
+                      value="{{ dados_corretos.get('transportadora_venda', '') if dados_corretos else '' }}"
+                      class="form-control busca-rapida" id="search-transportadora"
+                      placeholder="Buscar transportadora...">
+                  </div>
+
+                  <!-- Campo de NF -->
+                  <div class="col-md-2">
+                    <label class="form-label mb-1 small text-muted">NF</label>
+                    <input type="text" value="{{ dados_corretos.get('nf_venda', '') if dados_corretos else '' }}"
+                      class="form-control busca-rapida" id="search-nf" placeholder="Buscar NF...">
+                  </div>
+
+                  <!-- Campo Cliente -->
+                  <div class="col-md-3">
+                    <label class="form-label mb-1 small text-muted">Cliente</label>
+                    <input type="text" value="{{ dados_corretos.get('cliente_venda', '') if dados_corretos else '' }}"
+                      class="form-control busca-rapida" id="search-cliente" placeholder="Buscar cliente...">
+                  </div>
+                </div>
+                <!-- Loading indicator -->
+                <div id="loading-indicator" class="text-center mt-2" style="display: none;">
+                  <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                  </div>
+                  <span class="ms-2">Buscando...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: center;">Cliente</th>
+                  <th style="text-align: center;">Produto | Bitola</th>
+                  <th style="text-align: center;">Número NF</th>
+                  <th style="text-align: center;">Placa/Motorista</th>
+                  <th style="text-align: center;">Transportadora</th>
+                  <th style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-resultados">
+                {% for registro in vendas_em_transito %}
+                <tr>
+                  <td class="text-secondary text-center">
+                    {{ registro.solicitacao.cliente.identificacao | truncate(40, '...') or '-' }}
+                  </td>
+                  <td class="text-secondary text-center">
+                    {{ registro.solicitacao.produto.nome }} | {{ registro.solicitacao.bitola.bitola }}
+                  </td>
+                  <td class="text-secondary text-center">
+                    {% if registro.estorno_nf%}
+                    {{ registro.numero_nota_fiscal_estorno }} *
+                    {% elif registro.numero_nota_fiscal %}
+                    {{ registro.numero_nota_fiscal }}
+                    {%else%}
+                    -
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary text-center">
+                    {%if registro.solicitacao.veiculo.placa_veiculo %}
+                    {{ registro.solicitacao.veiculo.placa_veiculo }}
+                    {%else%}-{%endif%} |
+                    {% set nome_split =
+                    registro.solicitacao.motorista.nome_completo.split() %}
+                    {% if nome_split|length > 1 %}
+                    {{ nome_split[0] }} {{ nome_split[1][0] }}.
+                    {% elif nome_split|length >= 0 %} {{ nome_split[0] }}
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary text-center">
+                    {{ registro.solicitacao.transportadora_exibicao.identificacao | truncate(40,
+                    '...') or '-' }}
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-list flex-nowrap justify-content-center">
+                      <a href="{{url_for('detalhe_registro_operacional', id=registro.id)}}"
+                        class="btn btn-icon btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Ver detalhes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-eye">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                          <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                        </svg>
+                      </a>
+                      <a href="{{url_for('split_carga', id=registro.id)}}"
+                        class="btn btn-icon btn-outline-warning {% if registro.solicitacao.nf_emitida != 1 or registro.realizado_split == True %}disabled{% endif %}"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Realizar Split">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-arrows-split-2">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M21 17h-5.397a5 5 0 0 1 -4.096 -2.133l-.514 -.734a5 5 0 0 0 -4.096 -2.133h-3.897" />
+                          <path d="M21 7h-5.395a5 5 0 0 0 -4.098 2.135l-.51 .73a5 5 0 0 1 -4.097 2.135h-3.9" />
+                          <path d="M18 10l3 -3l-3 -3" />
+                          <path d="M18 20l3 -3l-3 -3" />
+                        </svg>
+                      </a>
+                      <a href="{{url_for('cadastrar_ticket', id=registro.solicitacao.id)}}"
+                        class="btn btn-icon btn-outline-info {% if registro.solicitacao.ticket_emitido == 1 %}disabled{% endif %}"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Lançar Ticket">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-ticket" width="24"
+                          height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                          <path d="M15 5l0 2"></path>
+                          <path d="M15 11l0 2"></path>
+                          <path d="M15 17l0 2"></path>
+                          <path
+                            d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2">
+                          </path>
+                        </svg>
+                      </a>
+                      {% if registro.deletado == 0%}
+                      <a href="#"
+                        class="btn btn-icon btn-outline-danger excluir {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%}"
+                        data-bs-toggle="modal" data-bs-target="#modal-excluir-{{registro.id}}"
+                        title="Cancelar Solicitação">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24"
+                          height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                          <path d="M18 6l-12 12"></path>
+                          <path d="M6 6l12 12"></path>
+                        </svg>
+                      </a>
+
+                      <div class="modal modal-blur fade" id="modal-excluir-{{registro.id}}" tabindex="-1" role="dialog"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                          <div class="modal-content">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-status bg-danger"></div>
+                            <div class="modal-body text-center py-4">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-danger icon-lg" width="24"
+                                height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none">
+                                </path>
+                                <path d="M12 9v4"></path>
+                                <path
+                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z">
+                                </path>
+                                <path d="M12 16h.01"></path>
+                              </svg>
+                              <div class="text-secondary">
+                                Você realmente deseja excluir esta venda?
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <div class="w-100">
+                                <div class="row">
+                                  <div class="col">
+                                    <a href="#" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal">
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x"
+                                        width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+                                        stroke="currentColor" fill="none" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                        <path d="M18 6l-12 12"></path>
+                                        <path d="M6 6l12 12"></path>
+                                      </svg>
+                                      Fechar
+                                    </a>
+                                  </div>
+                                  <div class="col">
+                                    <a href="{{url_for('excluir_venda', id=registro.id, retorno='transito')}}"
+                                      class="btn btn-danger w-100">
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check"
+                                        width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+                                        stroke="currentColor" fill="none" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                        <path d="M5 12l5 5l10 -10"></path>
+                                      </svg>
+                                      Sim
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+
+            </table>
+          </div>
+          <div class="card-footer">
+            {% if paginacao %}
+            <div class="d-flex align-items-center">
+              <p class="m-0 text-secondary">
+                Mostrando <span>{{ ((paginacao.pagina - 1) * paginacao.por_pagina) + 1 }}</span>
+                a <span>{{ [paginacao.pagina * paginacao.por_pagina, paginacao.total] | min }}</span>
+                de <span>{{ paginacao.total }}</span> registros
+              </p>
+
+              <ul class="pagination m-0 ms-auto">
+                <!-- Primeira página -->
+                {% if paginacao.pagina > 1 %}
+                <li class="page-item">
+                  {% if dados_corretos %}
+                  <a class="page-link" href="{{ url_for('vendas_em_transito_filtrar', pagina=1, **dados_corretos) }}">
+                    {% else %}
+                    <a class="page-link" href="{{ url_for('vendas_em_transito', pagina=1) }}">
+                      {% endif %}
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                        stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M11 7l-5 5l5 5" />
+                        <path d="M17 7l-5 5l5 5" />
+                      </svg>
+                      primeira
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                      stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M11 7l-5 5l5 5" />
+                      <path d="M17 7l-5 5l5 5" />
+                    </svg>
+                    primeira
+                  </span>
+                </li>
+                {% endif %}
+
+                <!-- Página anterior -->
+                {% if paginacao.tem_anterior %}
+                <li class="page-item">
+                  {% if dados_corretos %}
+                  <a class="page-link"
+                    href="{{ url_for('vendas_em_transito_filtrar', pagina=paginacao.pagina - 1, **dados_corretos) }}">
+                    {% else %}
+                    <a class="page-link" href="{{ url_for('vendas_em_transito', pagina=paginacao.pagina - 1) }}">
+                      {% endif %}
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                        stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M15 6l-6 6l6 6" />
+                      </svg>
+                      anterior
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                      stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M15 6l-6 6l6 6" />
+                    </svg>
+                    anterior
+                  </span>
+                </li>
+                {% endif %}
+
+                <!-- Páginas numeradas -->
+                {% for num_pagina in range([1, paginacao.pagina - 2] | max, [paginacao.total_paginas, paginacao.pagina +
+                3] | min + 1) %}
+                {% if num_pagina == paginacao.pagina %}
+                <li class="page-item active">
+                  <span class="page-link">{{ num_pagina }}</span>
+                </li>
+                {% else %}
+                <li class="page-item">
+                  {% if dados_corretos %}
+                  <a class="page-link"
+                    href="{{ url_for('vendas_em_transito_filtrar', pagina=num_pagina, **dados_corretos) }}">{{
+                    num_pagina }}</a>
+                  {% else %}
+                  <a class="page-link" href="{{ url_for('vendas_em_transito', pagina=num_pagina) }}">{{ num_pagina
+                    }}</a>
+                  {% endif %}
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                <!-- Próxima página -->
+                {% if paginacao.tem_proximo %}
+                <li class="page-item">
+                  {% if dados_corretos %}
+                  <a class="page-link"
+                    href="{{ url_for('vendas_em_transito_filtrar', pagina=paginacao.pagina + 1, **dados_corretos) }}">
+                    {% else %}
+                    <a class="page-link" href="{{ url_for('vendas_em_transito', pagina=paginacao.pagina + 1) }}">
+                      {% endif %}
+                      próxima
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                        stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M9 6l6 6l-6 6" />
+                      </svg>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">
+                    próxima
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                      stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M9 6l6 6l-6 6" />
+                    </svg>
+                  </span>
+                </li>
+                {% endif %}
+
+                <!-- Última página -->
+                {% if paginacao.pagina < paginacao.total_paginas %} <li class="page-item">
+                  {% if dados_corretos %}
+                  <a class="page-link"
+                    href="{{ url_for('vendas_em_transito_filtrar', pagina=paginacao.total_paginas, **dados_corretos) }}">
+                    {% else %}
+                    <a class="page-link" href="{{ url_for('vendas_em_transito', pagina=paginacao.total_paginas) }}">
+                      {% endif %}
+                      última
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                        stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M7 7l5 5l-5 5" />
+                        <path d="M13 7l5 5l-5 5" />
+                      </svg>
+                    </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                      <span class="page-link">
+                        última
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                          stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M7 7l5 5l-5 5" />
+                          <path d="M13 7l5 5l-5 5" />
+                        </svg>
+                      </span>
+                    </li>
+                    {% endif %}
+              </ul>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Área de modais -->
+  <div class="modal modal-blur fade" id="modal-filtro-vendas-transito" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
+      <form action="{{ url_for('vendas_em_transito_filtrar') }}" method="GET">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar Vendas em Trânsito</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-9 mb-3">
+                <label class="form-label">Cliente</label>
+                <input type="text" name="cliente_venda" class="form-control"
+                  value="{{ dados_corretos.get('cliente_venda', '') }}">
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Número NF</label>
+                <input type="text" name="nf_venda" class="form-control"
+                  value="{{ dados_corretos.get('nf_venda', '') }}">
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Produto</label>
+                <select name="produto_venda" class="form-select">
+                  <option value="{{ dados_corretos.get('produto_venda', '') }}" selected>
+                    {{ dados_corretos.get('produto_venda', 'Selecione..') }}</option>
+                  {% for p in produtos %}
+                  <option value="{{ p.id }}">{{ p.nome }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Bitola</label>
+                <select name="bitola_venda" class="form-select">
+                  <option value selected>{{ dados_corretos.get('bitola_venda',
+                    'Selecione...') }}</option>
+                  {% for b in bitolas %}
+                  <option value="{{ b.id }}">{{ b.bitola }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Placa</label>
+                <input type="text" name="placa_venda" class="form-control"
+                  value="{{ dados_corretos.get('placa_venda', '') }}">
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Transportadora</label>
+                <input type="text" name="transportadora_venda" class="form-control"
+                  value="{{ dados_corretos.get('transportadora_venda', '') }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Motorista</label>
+                <input type="text" name="motorista_venda" class="form-control"
+                  value="{{ dados_corretos.get('motorista_venda', '') }}">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <a href="{{url_for('vendas_em_transito')}}" class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+<!-- Script específico da página -->
+<script src="{{ url_for('static', filename='js/pages/vendas-em-transito-listagem.js') }}"></script>
+{% endblock conteudo %}

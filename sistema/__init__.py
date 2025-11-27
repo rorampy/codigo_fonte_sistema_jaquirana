@@ -78,6 +78,8 @@ app.config['UPLOAD_COMPROVANTE_PAGAMENTO_COMPLEMENTAR_COMISSIONADO'] = UPLOAD_CO
 app.config['UPLOAD_COMPROVANTE_RECEBIMENTO_CLIENTE'] = UPLOAD_COMPROVANTE_RECEBIMENTO_CLIENTE
 app.config['UPLOAD_NOTA_COMPLEMENTAR'] = UPLOAD_NOTA_COMPLEMENTAR
 app.config['UPLOAD_NOTA_SERVICO'] = UPLOAD_NOTA_SERVICO
+app.config['UPLOAD_ESTOQUE_CERTIFICACOES'] = UPLOAD_ESTOQUE_CERTIFICACOES
+app.config['UPLOAD_COMPROVANTE_RECEITA_DESPESA'] = UPLOAD_COMPROVANTE_RECEITA_DESPESA
 
 # tornando a pasta 'uploads' acessível no front
 # determinar o caminho para a pasta raiz do projeto
@@ -266,6 +268,31 @@ def diretorio_uploads_nf_servico(filename):
         filename
     )
 
+# NOVA ROTA PARA CERTIFICAÇÕES
+@app.route('/uploads/_estoque_certificacoes/<filename>')
+def diretorio_uploads_estoque_certificacoes(filename):
+    # Valida se o arquivo existe
+    caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_estoque_certificacoes', filename)
+    if not os.path.isfile(caminho_arquivo):
+        abort(404)  # Retorna erro 404 se o arquivo não existir
+    
+    return send_from_directory(
+        os.path.join(PROJECT_ROOT, '..', 'uploads/_estoque_certificacoes'),
+        filename
+    )
+    
+@app.route('/uploads/_anexo_comprovante_receita_despesa/<filename>')
+def diretorio_uploads_anexo_comprovante_receita_despesa(filename):
+    # Valida se o arquivo existe
+    caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_anexo_comprovante_receita_despesa', filename)
+    if not os.path.isfile(caminho_arquivo):
+        abort(404)  # Retorna erro 404 se o arquivo não existir
+    
+    return send_from_directory(
+        os.path.join(PROJECT_ROOT, '..', 'uploads/_anexo_comprovante_receita_despesa'),
+        filename
+    )
+
 
 def obter_url_absoluta_de_imagem(nome_imagem):
     # Obtem o caminho absoluto para a pasta 'static'
@@ -402,20 +429,23 @@ from sistema.models_views.autenticacao import usuario_model
 from sistema.models_views.autenticacao import login_view
 from sistema.models_views.autenticacao import role_view
 from sistema.models_views.autenticacao import usuario_view
+from sistema.models_views.autenticacao import dashboard_model
 
 # Notas fiscais
-from sistema.models_views.controle_carga import carga_model
-from sistema.models_views.controle_carga import carga_view
-from sistema.models_views.controle_carga import registro_operacional_model
-from sistema.models_views.controle_carga import registro_operacional_view
+from sistema.models_views.controle_carga.solicitacao_nf import carga_model
+from sistema.models_views.controle_carga.solicitacao_nf import carga_view
+from sistema.models_views.controle_carga.vendas.vendas_entregues import vendas_entregues_view
+from sistema.models_views.controle_carga.vendas.vendas_transito import vendas_transito_view
+from sistema.models_views.controle_carga.registro_operacional import registro_operacional_model
+from sistema.models_views.controle_carga.registro_operacional import registro_operacional_view
 from sistema.models_views.controle_carga import emissao_nota_fiscal_model
 from sistema.models_views.controle_carga import lancamento_nota_fiscal_view
-from sistema.models_views.controle_carga import ticket_model
-from sistema.models_views.controle_carga import ticket_view
-from sistema.models_views.controle_carga import produto_model
-from sistema.models_views.controle_carga import nf_complementar_view
-from sistema.models_views.controle_carga import nf_entrada_model
-from sistema.models_views.controle_carga import nf_entrada_view
+from sistema.models_views.controle_carga.lancamento_ticket import ticket_model
+from sistema.models_views.controle_carga.lancamento_ticket import ticket_view
+from sistema.models_views.controle_carga.produto import produto_model
+from sistema.models_views.controle_carga.nf_complementar import nf_complementar_view
+from sistema.models_views.controle_carga.nf_complementar import nf_entrada_model
+from sistema.models_views.controle_carga.nf_entrada import nf_entrada_view
 
 # Gerenciamento
 from sistema.models_views.gerenciar.cliente import cliente_model
@@ -427,9 +457,9 @@ from sistema.models_views.gerenciar.floresta import floresta_view
 from sistema.models_views.gerenciar.fornecedor import fornecedor_model
 from sistema.models_views.gerenciar.fornecedor import fornecedor_madeira_posta_model
 from sistema.models_views.gerenciar.fornecedor import fornecedor_view
-from sistema.models_views.gerenciar.fornecedor import fornecedor_tag_model
-from sistema.models_views.faturamento.cargas_a_pagar.extrator import extrator_a_pagar_model
-from sistema.models_views.faturamento.cargas_a_pagar.extrator import extrator_a_pagar_view
+from sistema.models_views.gerenciar.fornecedor.fornecedor_tag_model import FornecedorTag
+from sistema.models_views.faturamento.cargas_a_faturar.extrator import extrator_a_pagar_model
+from sistema.models_views.faturamento.cargas_a_faturar.extrator import extrator_a_pagar_view
 
 from sistema.models_views.gerenciar.motorista import motorista_model
 from sistema.models_views.gerenciar.motorista import transportadora_motorista_associado_model
@@ -463,19 +493,26 @@ from sistema.models_views.parametros.nome_grupo_whats import nome_grupo_whats_mo
 from sistema.models_views.parametros.nome_grupo_whats import nome_grupo_whats_view
 
 # Relatorios
-from sistema.models_views.relatorios.relatorios_cargas import relatorio_carga_cliente_view
-from sistema.models_views.relatorios.relatorios_cargas import relatorio_carga_fornecedor_floresta_view
-from sistema.models_views.relatorios.relatorio_semanal import relatorio_prestacao_fornecedor_view
-from sistema.models_views.relatorios.relatorio_semanal import relatorio_prestacao_transportadora_view
-from sistema.models_views.relatorios.relatorios_cargas import relatorio_carga_transportadora_view
-from sistema.models_views.relatorios.relatorio_semanal import relatorio_unificado_cargas_view
-from sistema.models_views.relatorios.relatorios_cargas import relatorio_nf_complementar_view
-from sistema.models_views.relatorios.relatorios_cargas import relatorio_sintetico_carga_cliente_view
-from sistema.models_views.relatorios.relatorio_semanal import relatorio_sintetico_fornecedor_floresta_view
-from sistema.models_views.relatorios.relatorio_semanal import relatorio_sintetico_transportadora_view
-from sistema.models_views.relatorios.relatorios_sinteticos import relatorio_sintetico_semanal_cargas_view
-from sistema.models_views.relatorios.controle_funrural_senar import controle_funrural_senar_view
+from sistema.models_views.relatorios.relatorios_cargas.relatorio_nf_entrada import relatorio_nf_entrada_view
+from sistema.models_views.relatorios.relatorios_cargas.relatorio_carga_cliente import relatorio_carga_cliente_view
+from sistema.models_views.relatorios.relatorios_cargas.relatorio_carga_fornecedor import relatorio_carga_fornecedor_floresta_view
+from sistema.models_views.relatorios.relatorio_semanal.relatorio_prestacao_fornecedor import relatorio_prestacao_fornecedor_view
+from sistema.models_views.relatorios.relatorio_semanal.relatorio_prestacao_transportadora import relatorio_prestacao_transportadora_view
+from sistema.models_views.relatorios.relatorios_cargas.relatorio_carga_transportadora import relatorio_carga_transportadora_view
+from sistema.models_views.relatorios.relatorio_semanal.relatorio_unificado_cargas import relatorio_unificado_cargas_view
+from sistema.models_views.relatorios.relatorio_controle_nf_complementar import relatorio_nf_complementar_view
+from sistema.models_views.relatorios.relatorios_cargas.relatorio_carga_sintetico_cliente import relatorio_sintetico_carga_cliente_view
+from sistema.models_views.relatorios.relatorio_semanal.relatorio_carga_sintetico_fornecedor import relatorio_sintetico_fornecedor_floresta_view
+from sistema.models_views.relatorios.relatorio_semanal.relatorio_sintetico_transportadora import relatorio_sintetico_transportadora_view
+from sistema.models_views.relatorios.relatorio_controle_funrural_senar import controle_funrural_senar_view
 from sistema.models_views.relatorios.relatorios_cargas.relatorio_dashboard import relatorio_dashboard_view
+from sistema.models_views.relatorios.relatorios_financeiros.relatorio_a_pagar_fornecedores import relatorio_a_pagar_fornecedores_view
+from sistema.models_views.relatorios.relatorios_financeiros.relatorio_a_pagar_transportadora import relatorio_a_pagar_transportadora_view
+from sistema.models_views.relatorios.relatorios_financeiros.relatorio_a_pagar_extratores import relatorio_a_pagar_extratores_view
+from sistema.models_views.relatorios.relatorios_financeiros.relatorio_a_pagar_comissionado import relatorio_a_pagar_comissionado_view
+from sistema.models_views.relatorios.relatorios_financeiros.relatorio_cargas_a_receber import relatorio_cargas_a_receber_view
+from sistema.models_views.relatorios.relatorio_movimentacao_financeira import relatorio_movimentacao_financeira_view
+from sistema.models_views.relatorios.relatorio_controle_emissao import relatorio_controle_emissao_view
 
 # Configurações
 from sistema.models_views.configuracoes_gerais.empresa_emissora import empresa_emissora_model
@@ -495,16 +532,16 @@ from sistema.models_views.configuracoes_gerais.tag import tag_view
 from sistema.models_views.parametros.imposto import imposto_model
 
 # Financeiro
-from sistema.models_views.financeiro import situacao_pagamento_model
-from sistema.models_views.faturamento.cargas_a_receber.recebimento_model import RecebimentoModel
-from sistema.models_views.faturamento.cargas_a_receber import cargas_a_receber_view
+from sistema.models_views.configuracoes_gerais.situacao_pagamento import situacao_pagamento_model
+from sistema.models_views.faturamento.cargas_a_receber.vendas.recebimento_model import RecebimentoModel
+from sistema.models_views.faturamento.cargas_a_receber.vendas import cargas_a_receber_view
 from sistema.models_views.financeiro.movimentacao_financeira import movimentacao_financeira_model
 from sistema.models_views.financeiro.movimentacao_financeira.saldo_movimentacao_financeira_model import SaldoMovimentacaoFinanceiraModel
 from sistema.models_views.financeiro.movimentacao_financeira import movimentacao_financeira_view
 from sistema.models_views.financeiro.movimentacao_financeira import lancamento_movimentacao_extra_model
 from sistema.models_views.importacao_ofx import importacao_ofx_model
 from sistema.models_views.importacao_ofx import importacao_ofx_view
-from sistema.models_views.financeiro.precificacao_mbr import precificacao_view
+from sistema.models_views.precificacao_mbr import precificacao_view
 from sistema.models_views.financeiro.lancamento_avulso.despesas_avulsas import despesas_avulsas_view
 from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
 from sistema.models_views.financeiro.lancamento_avulso.receitas_avulsas import receitas_avulsas_view
@@ -518,16 +555,16 @@ from sistema.models_views.faturamento.cargas_a_receber.nf_servico import nf_serv
 from sistema.models_views.faturamento.cargas_a_receber.nf_servico import nf_servico_view
 
 # Faturamento
-from sistema.models_views.faturamento.cargas_a_pagar.fornecedor import fornecedor_a_pagar_model
-from sistema.models_views.faturamento.cargas_a_pagar.transportadora import frete_a_pagar_model
-from sistema.models_views.faturamento.cargas_a_pagar.fornecedor import fornecedor_a_pagar_view
-from sistema.models_views.faturamento.cargas_a_pagar.transportadora import frete_a_pagar_view
+from sistema.models_views.faturamento.cargas_a_faturar.fornecedor import fornecedor_a_pagar_model
+from sistema.models_views.faturamento.cargas_a_faturar.transportadora import frete_a_pagar_model
+from sistema.models_views.faturamento.cargas_a_faturar.fornecedor import fornecedor_a_pagar_view
+from sistema.models_views.faturamento.cargas_a_faturar.transportadora import frete_a_pagar_view
 from sistema.models_views.faturamento.controle_credito.extrato_terceiros import saldo_fornecedores_view
 from sistema.models_views.faturamento.controle_credito.extrato_terceiros import saldo_extratores_view
 from sistema.models_views.faturamento.controle_credito.extrato_terceiros import saldo_freteiros_view
-from sistema.models_views.faturamento.cargas_a_pagar.comissionado import comissionado_a_pagar_model
-from sistema.models_views.faturamento.cargas_a_pagar.comissionado import comissionado_a_pagar_view
-from sistema.models_views.faturamento import faturamento_model
+from sistema.models_views.faturamento.cargas_a_faturar.comissionado import comissionado_a_pagar_model
+from sistema.models_views.faturamento.cargas_a_faturar.comissionado import comissionado_a_pagar_view
+from sistema.models_views.financeiro.operacional.faturamento_model import faturamento_model
 from sistema.models_views.faturamento.controle_credito.extrato_credito import extrato_credito_extrator_model
 from sistema.models_views.faturamento.controle_credito.extrato_credito import extrato_credito_fornecedor_model
 from sistema.models_views.faturamento.controle_credito.extrato_credito import extrato_credito_freteiro_model
@@ -536,6 +573,7 @@ from sistema.models_views.faturamento.controle_credito.credito_agrupado import c
 from sistema.models_views.faturamento.controle_credito.credito_agrupado import credito_freteiro_model
 from sistema.models_views.financeiro.operacional.categorizar_fatura import categorizacao_fatura_view
 from sistema.models_views.financeiro.operacional.categorizar_fatura import categorizacao_model
+from sistema.models_views.financeiro.operacional.categorizar_fatura import categorizacao_anexo_model
 from sistema.models_views.financeiro.operacional.categorizar_fatura.parcela_categorizacao import parcela_categorizacao_model
 from sistema.models_views.financeiro.operacional.carga_a_receber import cargas_a_receber_view
 from sistema.models_views.relatorios.relatorios_financeiros.relatorio_dfc_dre.relatorio_dfc import relatorio_financeiro_dfc_view
@@ -546,3 +584,7 @@ from sistema.models_views.financeiro.operacional.carga_a_pagar import carga_a_pa
 
 # Pontuacao Usuario
 from sistema.models_views.pontuacao_usuario import pontuacao_usuario_model
+
+# Certificações
+from sistema.models_views.gerenciar.certificacoes import certificacoes_model
+from sistema.models_views.gerenciar.certificacoes import certificacoes_view
