@@ -361,17 +361,23 @@ class FornecedorModel(BaseModel):
 
         # Se o fornecedor possui madeira posta, cliente_id e transportadora_id foram fornecidos
         # Verifica se há transportadora vinculada para usar preços de madeira posta
-        if fornecedor.madeira_posta and cliente_id and transportadora_id:
+        if fornecedor.madeira_posta and cliente_id:
             # Importa aqui para evitar dependência circular
             from sistema.models_views.gerenciar.fornecedor.fornecedor_madeira_posta_model import FornecedorMadeiraPostaModel
             
-            madeira_posta = FornecedorMadeiraPostaModel.query.filter(
+            # Monta a query base
+            query_filters = [
                 FornecedorMadeiraPostaModel.fornecedor_id == fornecedor.id,
                 FornecedorMadeiraPostaModel.cliente_id == cliente_id,
-                FornecedorMadeiraPostaModel.transportadora_id == transportadora_id,
                 FornecedorMadeiraPostaModel.ativo == True,
                 FornecedorMadeiraPostaModel.deletado == False
-            ).first()
+            ]
+            
+            # Adiciona filtro de transportadora apenas se for fornecida
+            if transportadora_id:
+                query_filters.append(FornecedorMadeiraPostaModel.transportadora_id == transportadora_id)
+            
+            madeira_posta = FornecedorMadeiraPostaModel.query.filter(*query_filters).first()
             
             if madeira_posta:
                 # Mapeia as bitolas e preços de madeira posta para cada produto

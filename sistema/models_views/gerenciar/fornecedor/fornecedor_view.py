@@ -150,10 +150,6 @@ def cadastrar_fornecedor():
                 if not lista_clientes_mp or all(not cid for cid in lista_clientes_mp):
                     campos["clienteMadeiraPosta"] = ["Cliente", ""]
 
-                lista_transportadora_mp = request.form.getlist("transportadoraMadeiraPosta[]")
-                if not lista_transportadora_mp or all(not cid for cid in lista_transportadora_mp):
-                    campos["transportadoraMadeiraPosta"] = ["Transportadora", ""]
-
             # Validação de campos obrigatórios
             validacao_campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)
             if "validado" not in validacao_campos_obrigatorios:
@@ -371,9 +367,6 @@ def cadastrar_fornecedor():
                         
                         vinculos_json = json.dumps(vinculos_operacionais)
 
-                           
-                        print(f"JSON de vínculos: {vinculos_json}")
-
                         tem_fornecedor, tem_transportadora, tem_extrator, tem_comissionado, vinculos_data = \
                         PessoaFinanceiroModel.processar_vinculos(vinculos_json)
 
@@ -482,7 +475,7 @@ def cadastrar_fornecedor():
                         except ValueError:
                             continue
                         
-                        # Obter transportadora correspondente (mesmo índice)
+                        # Obter transportadora correspondente
                         tid = None
                         if idx < len(transportadora_ids_list):
                             try:
@@ -799,10 +792,6 @@ def editar_fornecedor(id):
                 lista_clientes_mp = request.form.getlist("clienteMadeiraPosta[]")
                 if not lista_clientes_mp or all(not cid for cid in lista_clientes_mp):
                     campos["clienteMadeiraPosta"] = ["Cliente", ""]
-
-                lista_transportadoras_mp = request.form.getlist("transportadoraMadeiraPosta[]")
-                if not lista_transportadoras_mp or all(not cid for cid in lista_transportadoras_mp):
-                    campos["transportadoraMadeiraPosta"] = ["Transportadora", ""]
 
             # Validação de campos obrigatórios
             validacao_campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)

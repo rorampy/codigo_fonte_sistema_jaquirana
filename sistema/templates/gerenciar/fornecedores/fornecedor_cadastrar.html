@@ -913,7 +913,7 @@
 
                   <!-- SELECIONAR TRANSPORTADORA -->
                   <div class="col-md-6 mb-4 grupoPossuiMadeiraPosta">
-                    <label class="form-label required">Vincular Transportadora</label>
+                    <label class="form-label">Vincular Transportadora</label>
                     <select name="transportadoraMadeiraPosta[]"
                       class="form-select {% if 'transportadoraMadeiraPosta' in campos_obrigatorios %}is-invalid{% endif %}">
                       <option value selected>Selecione...</option>
@@ -1433,29 +1433,10 @@
       });
       alternarCampos(); // estado inicial
 
-      // 2) função que obtém todos os IDs atualmente selecionados em qualquer select
       function obterSelecionados() {
-        const clientesSelecionados = new Set();
-        const transportadorasSelecionadas = new Set();
-
-        container.querySelectorAll('select[name="clienteMadeiraPosta[]"]').forEach(select => {
-          const val = select.value;
-          if (val && val !== 'Selecione...') {
-            clientesSelecionados.add(val);
-          }
-        });
-
-        container.querySelectorAll('select[name="transportadoraMadeiraPosta[]"]').forEach(select => {
-          const val = select.value;
-          if (val && val !== 'Selecione...') {
-            transportadorasSelecionadas.add(val);
-          }
-        });
-
-        return { clientesSelecionados, transportadorasSelecionadas };
+        return { clientesSelecionados: new Set(), transportadorasSelecionadas: new Set() };
       }
 
-      // 3) atualiza cada <select> para só exibir opções que não estejam em "selecionados", salvo a própria opção escolhida
       function atualizarTodosSelects() {
         const { clientesSelecionados, transportadorasSelecionadas } = obterSelecionados();
         container.querySelectorAll('select[name="clienteMadeiraPosta[]"]').forEach(select => {
@@ -1468,8 +1449,8 @@
               option.disabled = false;
               option.hidden = false;
             } else if (clientesSelecionados.has(option.value)) {
-              option.disabled = true;
-              option.hidden = true;
+              option.disabled = false;
+              option.hidden = false;
             } else {
               option.disabled = false;
               option.hidden = false;
@@ -1487,8 +1468,8 @@
               option.disabled = false;
               option.hidden = false;
             } else if (transportadorasSelecionadas.has(option.value)) {
-              option.disabled = true;
-              option.hidden = true;
+              option.disabled = false;
+              option.hidden = false;
             } else {
               option.disabled = false;
               option.hidden = false;
@@ -1744,12 +1725,9 @@
         }
       };
 
-      // Array com os seletores dos elementos
       const selectors = [
         '#selectExtrator',
-        'select[name="instituicao_financeira"]',
-        'select[name="transportadoraMadeiraPosta[]"]',
-        'select[name="clienteMadeiraPosta[]"]'
+        'select[name="instituicao_financeira"]'
       ];
 
       // Inicializa TomSelect em cada elemento encontrado
