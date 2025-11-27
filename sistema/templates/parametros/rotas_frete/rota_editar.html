@@ -87,9 +87,12 @@
                   <label class="form-label required">Transportadora</label>
                   <select name="transportadoraFrete"
                     class="form-select {% if 'transportadoraFrete' in campos_obrigatorios or 'transportadoraFrete' in campos_erros %}is-invalid{% endif %}">
-                    <option value>Selecione...</option>
+                    <option value="">Selecione...</option>
+                    <option value="todos" {% if dados_corretos.get('transportadoraFrete') == 'todos' %}selected{% endif %}>
+                      Todos (Preço Padronizado)
+                    </option>
                     {% for t in transportadoras %}
-                    <option value="{{ t.id }}" {% if dados_corretos['transportadoraFrete']==t.id %}selected{% endif %}>
+                    <option value="{{ t.id }}" {% if dados_corretos.get('transportadoraFrete')==t.id %}selected{% endif %}>
                       {{ t.identificacao }}</option>
                     {% endfor %}
                   </select>

@@ -20,7 +20,7 @@ class RotaFreteModel(BaseModel):
     cliente_id = db.Column(db.Integer, db.ForeignKey('cli_cliente.id'), nullable=False)
     cliente = db.relationship('ClienteModel', backref=db.backref('cliente_rota', lazy=True))
 
-    transportadora_id = db.Column(db.Integer, db.ForeignKey('transp_transportadora.id'), nullable=False)
+    transportadora_id = db.Column(db.Integer, db.ForeignKey('transp_transportadora.id'), nullable=True)  # Nullable para opção "Todos"
     transportadora = db.relationship('TransportadoraModel', backref=db.backref('transportadora_rota', lazy=True))
 
     # Bitolas e preços de custo para Eucalipto (opcionais)
@@ -143,6 +143,7 @@ class RotaFreteModel(BaseModel):
         return rotas
     
     def obter_rotas_relacionadas_transportadora(cliente_id, transportadora_id, fornecedor_id):
+        # Primeiro tenta encontrar rota específica para a transportadora
         rota = RotaFreteModel.query.filter(
             RotaFreteModel.cliente_id == cliente_id,
             RotaFreteModel.transportadora_id == transportadora_id,
@@ -150,5 +151,15 @@ class RotaFreteModel(BaseModel):
             RotaFreteModel.ativo == 1,
             RotaFreteModel.deletado == 0
         ).first()
+        
+        # Se não encontrar rota específica, busca a rota "Todos" (transportadora_id = None)
+        if not rota:
+            rota = RotaFreteModel.query.filter(
+                RotaFreteModel.cliente_id == cliente_id,
+                RotaFreteModel.transportadora_id.is_(None),  # Rota "Todos"
+                RotaFreteModel.fornecedor_id == fornecedor_id,
+                RotaFreteModel.ativo == 1,
+                RotaFreteModel.deletado == 0
+            ).first()
 
         return rota

@@ -141,6 +141,8 @@ class TransportadoraModel(BaseModel):
     def obter_preco_frete(cliente_id, transportadora_id, fornecedor_identificacao, produto, bitola_solicitacao):
         """
         Obtém o preço de frete baseado na rota, produto e bitola.
+        Primeiro tenta encontrar rota específica para a transportadora.
+        Se não encontrar, busca a rota "Todos" (transportadora_id = None).
         
         Args:
             cliente_id (int): ID do cliente de destino
@@ -156,14 +158,24 @@ class TransportadoraModel(BaseModel):
                 - rota_frete: Objeto da rota de frete encontrada
         """
         
-        # Busca rota existente
+        # Primeiro busca rota específica para a transportadora
         rota_frete = RotaFreteModel.query.filter_by(
             cliente_id=cliente_id,
             transportadora_id=transportadora_id,
             fornecedor_id=fornecedor_identificacao,
-        ).first()
+            ativo=True
+        ).filter(RotaFreteModel.deletado == False).first()
         
-        # Se não houver rota cadastrada
+        # Se não encontrar rota específica, busca a rota "Todos" (transportadora_id = None)
+        if not rota_frete:
+            rota_frete = RotaFreteModel.query.filter_by(
+                cliente_id=cliente_id,
+                transportadora_id=None,  # Rota "Todos"
+                fornecedor_id=fornecedor_identificacao,
+                ativo=True
+            ).filter(RotaFreteModel.deletado == False).first()
+        
+        # Se ainda não houver rota cadastrada
         if not rota_frete:
             return {
                 'preco_frete': 0,

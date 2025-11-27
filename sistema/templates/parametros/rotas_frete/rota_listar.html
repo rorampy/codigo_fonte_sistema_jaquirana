@@ -97,9 +97,12 @@
                           </td>
                           <td class="{%if verde%}text-success{%else%}text-secondary{%endif%}"
                             style="text-align: center;">
-                            {{ r.transportadora.identificacao[:40] }}
-                            {% if r.transportadora.identificacao|length > 40
-                            %}...{% endif %}
+                            {% if r.transportadora %}
+                              {{ r.transportadora.identificacao[:40] }}
+                              {% if r.transportadora.identificacao|length > 40 %}...{% endif %}
+                            {% else %}
+                              Todos (Preço Padronizado)
+                            {% endif %}
                           </td>
                           <td class="{%if verde%}text-success{%else%}text-secondary{%endif%}"
                             style="text-align: center;">

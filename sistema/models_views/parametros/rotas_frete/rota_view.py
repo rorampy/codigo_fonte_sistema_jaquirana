@@ -43,7 +43,10 @@ def cadastrar_rota():
 
             bioPrecoCusto5 = request.form["bioPrecoCusto5"]
             
-            # Campo comuns
+            # Tratar a opção "Todos" - converter para None
+            transportadora_id_final = None if transportadoraFrete == "todos" or not transportadoraFrete else int(transportadoraFrete)
+            
+            # Campo comuns - validar que pelo menos uma transportadora foi selecionada
             campos = {
                 "clienteDestino": ["Cliente destino", clienteDestino],
                 "transportadoraFrete": ["Transportadora", transportadoraFrete],
@@ -60,7 +63,7 @@ def cadastrar_rota():
                 # Query padrão
                 query = RotaFreteModel.query.filter_by(
                     cliente_id=clienteDestino,
-                    transportadora_id=transportadoraFrete
+                    transportadora_id=transportadora_id_final
                 )
 
                 query = query.filter_by(fornecedor_id=fornecedorIdentificacao)
@@ -107,7 +110,7 @@ def cadastrar_rota():
                     floresta_id= None,
                     fornecedor_id=fornecedorIdentificacao,
                     cliente_id=clienteDestino,
-                    transportadora_id=transportadoraFrete,
+                    transportadora_id=transportadora_id_final,
                     # Bitolas e preços de Eucalipto
                     euca_bitola_1_id=1,
                     euca_bitola_2_id=2,
@@ -147,6 +150,7 @@ def cadastrar_rota():
                 flash(("Rota de frete cadastrada com sucesso!", "success"))
                 return redirect(url_for("listar_rotas"))
     except Exception as e:
+        print(f"Erro ao cadastrar nova rota: {e}")
         flash(('Houve um erro ao tentar cadastrar nova rota! Entre em contato com o suporte!', 'warning'))
         return redirect(url_for('listar_rotas'))
     return render_template(
@@ -193,6 +197,9 @@ def editar_rota(id):
             cliente_id = request.form.get("clienteDestino")
             transportadora_id = request.form.get("transportadoraFrete")
             
+            # Tratar a opção "Todos" - converter para None
+            transportadora_id_final = None if transportadora_id == "todos" or not transportadora_id else int(transportadora_id)
+            
             eucaPrecoCusto1 = request.form["eucaPrecoCusto1"]
             eucaPrecoCusto2 = request.form["eucaPrecoCusto2"]
             eucaPrecoCusto3 = request.form["eucaPrecoCusto3"]
@@ -222,7 +229,7 @@ def editar_rota(id):
             if gravar_banco:
                 query = RotaFreteModel.query.filter(
                     RotaFreteModel.cliente_id == cliente_id,
-                    RotaFreteModel.transportadora_id == transportadora_id
+                    RotaFreteModel.transportadora_id == transportadora_id_final
                 )
 
                 query = query.filter(RotaFreteModel.fornecedor_id == fornecedor_id)
@@ -271,7 +278,7 @@ def editar_rota(id):
                 obj1 = {
                     "fornecedorIdentificacao": str(rota.fornecedor_id or ""),
                     "clienteDestino": str(rota.cliente_id or ""),
-                    "transportadoraFrete": str(rota.transportadora_id or ""),
+                    "transportadoraFrete": "todos" if rota.transportadora_id is None else str(rota.transportadora_id or ""),
                     "bioPrecoCusto5":rota.bio_preco_custo_frete_bitola_5_100,
                     "eucaPrecoCusto1":rota.euca_preco_custo_frete_bitola_1_100,
                     "eucaPrecoCusto2":rota.euca_preco_custo_frete_bitola_2_100,
@@ -285,9 +292,9 @@ def editar_rota(id):
                 }
 
                 obj2 = {
-                    "fornecedorIdentificacao": fornecedor_id or "",
-                    "clienteDestino": cliente_id or "",
-                    "transportadoraFrete": transportadora_id or "",
+                    "fornecedorIdentificacao": str(fornecedor_id or ""),
+                    "clienteDestino": str(cliente_id or ""),
+                    "transportadoraFrete": "todos" if transportadora_id_final is None else str(transportadora_id_final or ""),
                     "bioPrecoCusto5":bio_preco_custo_5_100,
                     "eucaPrecoCusto1": euca_preco_custo_1_100,
                     "eucaPrecoCusto2": euca_preco_custo_2_100,
@@ -313,7 +320,7 @@ def editar_rota(id):
                 rota.floresta_id =  None
                 rota.fornecedor_id = fornecedor_id
                 rota.cliente_id = cliente_id
-                rota.transportadora_id = transportadora_id
+                rota.transportadora_id = transportadora_id_final
                 # Bitolas e preços de Eucalipto
                 rota.euca_bitola_1_id=1
                 rota.euca_bitola_2_id=2
@@ -350,7 +357,7 @@ def editar_rota(id):
             "florestaIdentificacao": rota.floresta_id or "",
             "fornecedorIdentificacao": rota.fornecedor_id or "",
             "clienteDestino": rota.cliente_id,
-            "transportadoraFrete": rota.transportadora_id,
+            "transportadoraFrete": "todos" if rota.transportadora_id is None else rota.transportadora_id,
             "bioPrecoCusto5": rota.bio_preco_custo_frete_bitola_5_100,
             "eucaPrecoCusto1": rota.euca_preco_custo_frete_bitola_1_100,
             "eucaPrecoCusto2": rota.euca_preco_custo_frete_bitola_2_100,

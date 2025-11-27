@@ -92,9 +92,14 @@
                     class="form-select {% if 'transportadoraFrete' in campos_obrigatorios or 'transportadoraFrete' in campos_erros %}
                                                 is-invalid
                                             {% endif %}">
-                    <option value selected>Selecione...</option>
+                    <option value="" selected>Selecione...</option>
+                    <option value="todos" {% if dados_corretos.get('transportadoraFrete') == 'todos' %}selected{% endif %}>
+                      Todos (Preço Padronizado)
+                    </option>
                     {% for t in transportadoras %}
-                    <option value="{{t.id}}">{{t.identificacao}}</option>
+                    <option value="{{t.id}}" {% if dados_corretos.get('transportadoraFrete') == t.id|string %}selected{% endif %}>
+                      {{t.identificacao}}
+                    </option>
                     {% endfor %}
                   </select>
                   <div class="invalid-feedback">
