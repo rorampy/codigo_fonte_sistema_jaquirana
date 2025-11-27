@@ -1,0 +1,538 @@
+/*
+ * Estilos para a página de Conciliação OFX
+ * Sistema Madeireira - Financeiro
+ * Cores principais: #417052 (Verde) | #FFFFFF (Branco)
+ */
+
+/* Variáveis CSS */
+:root {
+  --primary-color: #205038;
+  --primary-light: #2d6b48;
+  --primary-lighter: #f0f8f4;
+  --white: #FFFFFF;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #3b82f6;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 5px;
+  --radius-xl: 20px;
+}
+
+/* Animações */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Container principal */
+.conciliacao-ofx-container {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+/* Informações da Conta */
+.account-info-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-100);
+  animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.account-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--primary-lighter);
+  color: var(--primary-color);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.account-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.detail-item {
+  margin-bottom: 20px;
+}
+
+.detail-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.detail-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+/* ESTILOS PARA CARDS DE RESUMO */
+.summary-card {
+  background: white;
+  border: 2px solid rgba(51, 91, 69, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(51, 91, 69, 0.08);
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #335B45 0%, #4a7c59 100%);
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(51, 91, 69, 0.15);
+  border-color: rgba(51, 91, 69, 0.2);
+}
+
+.summary-card.success::before {
+  background: linear-gradient(90deg, #335B45 0%, #4a7c59 100%);
+}
+
+.summary-card.danger::before {
+  background: linear-gradient(90deg, #335B45 0%, #4a7c59 100%);
+}
+
+.summary-card.primary::before {
+  background: linear-gradient(90deg, #335B45 0%, #4a7c59 100%);
+}
+
+.summary-card.info::before {
+  background: linear-gradient(90deg, #335B45 0%, #4a7c59 100%);
+}
+
+.summary-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.summary-card.success .summary-icon {
+  background: linear-gradient(135deg, rgba(51, 91, 69, 0.15) 0%, rgba(51, 91, 69, 0.08) 100%);
+  color: #335B45;
+  border: 2px solid rgba(51, 91, 69, 0.1);
+}
+
+.summary-card.danger .summary-icon {
+  background: linear-gradient(135deg, rgba(51, 91, 69, 0.15) 0%, rgba(51, 91, 69, 0.08) 100%);
+  color: #335B45;
+  border: 2px solid rgba(51, 91, 69, 0.1);
+}
+
+.summary-card.primary .summary-icon {
+  background: linear-gradient(135deg, rgba(51, 91, 69, 0.15) 0%, rgba(51, 91, 69, 0.08) 100%);
+  color: #335B45;
+  border: 2px solid rgba(51, 91, 69, 0.1);
+}
+
+.summary-card.info .summary-icon {
+  background: linear-gradient(135deg, rgba(51, 91, 69, 0.15) 0%, rgba(51, 91, 69, 0.08) 100%);
+  color: #335B45;
+  border: 2px solid rgba(51, 91, 69, 0.1);
+}
+
+.summary-content {
+  margin-left: 16px;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #335B45;
+  line-height: 1.2;
+}
+
+/* Estilos para transações e abas */
+.conciliacao-card .nav-tabs {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.conciliacao-card .nav-tabs .nav-link {
+  color: #9DA5AF !important;
+  border: none !important;
+  padding: 12px 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  margin-right: 8px;
+  transition: all 0.3s ease;
+  background: transparent !important;
+}
+
+.conciliacao-card .nav-tabs .nav-link:hover {
+  color: var(--primary-color) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.conciliacao-card .nav-tabs .nav-link.active {
+  color: var(--primary-color) !important;
+  background: white !important;
+  font-weight: 600;
+}
+
+/* Estilos para forms e inputs */
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(32, 80, 56, 0.25);
+}
+
+.input-group-text {
+  background-color: var(--primary-lighter);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* Estilos para badges */
+.badge {
+}
+
+/* Estilos para paginação */
+.pagination .page-link {
+  color: var(--primary-color);
+  border: 1px solid var(--gray-300);
+  transition: all 0.3s ease;
+}
+
+.pagination .page-link:hover {
+  background-color: var(--primary-lighter);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: var(--white);
+}
+
+.pagination .page-item.disabled .page-link {
+  color: var(--gray-400);
+  background-color: var(--gray-100);
+  border-color: var(--gray-300);
+}
+
+/* Responsividade adicional */
+@media (max-width: 768px) {
+  .account-info-card {
+    padding: 24px;
+  }
+  
+  .summary-card {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .summary-icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .detail-value {
+    font-size: 14px;
+  }
+  
+  .account-title {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 576px) {
+  .account-info-card {
+    padding: 16px;
+  }
+  
+  .summary-card {
+    padding: 12px;
+  }
+  
+  .summary-content {
+    margin-left: 12px;
+  }
+  
+  .conciliacao-card {
+    margin-bottom: 16px;
+  }
+}
+
+/* Estilização dos cards */
+.conciliacao-card {
+  border: none;
+  box-shadow: 0 4px 20px rgba(65, 112, 82, 0.08);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+/* Header dos cards */
+.conciliacao-card .card-header {
+  border-bottom: none;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 15px 20px;
+}
+
+/* Navegação - Tabs */
+.conciliacao-card .nav-tabs {
+  border-bottom: none;
+}
+
+.conciliacao-card .nav-link {
+  color: #9DA5AF !important;
+  border: none !important;
+  padding: 8px 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  margin-right: 8px;
+  transition: all 0.3s ease;
+  background: transparent !important;
+}
+
+.conciliacao-card .nav-link:hover {
+  color: #417052 !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.conciliacao-card .nav-link.active {
+  color: #417052 !important;
+  background: white !important;
+  font-weight: 600;
+}
+
+/* Corpo dos cards */
+.conciliacao-card .card-body {
+  padding: 25px;
+}
+
+/* Títulos */
+.conciliacao-card h4 {
+  color: #417052;
+  font-weight: 600;
+  margin-bottom: 15px;
+  font-size: 1.25rem;
+}
+
+/* Texto do conteúdo */
+.tab-content-text {
+  color: #6c757d;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+/* Wrapper do conteúdo das tabs */
+.tab-content-wrapper {
+  background: rgba(65, 112, 82, 0.02);
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+/* Botões customizados */
+.conciliacao-btn {
+  background: linear-gradient(135deg, #417052 0%, #2d4d37 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(65, 112, 82, 0.2);
+}
+
+.conciliacao-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(65, 112, 82, 0.3);
+  background: linear-gradient(135deg, #2d4d37 0%, #417052 100%);
+}
+
+/* Links customizados */
+.conciliacao-link {
+  color: #417052;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.conciliacao-link:hover {
+  color: #2d4d37;
+  text-decoration: underline;
+}
+
+/* Ícone do lixo customizado */
+.conciliacao-card .nav-link[title="Settings"] svg {
+  transition: all 0.3s ease;
+}
+
+.conciliacao-card .nav-link[title="Settings"]:hover svg {
+  transform: scale(1.1);
+  stroke: red;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .conciliacao-ofx-container {
+    padding: 10px 0;
+  }
+  
+  .conciliacao-card .card-body {
+    padding: 20px;
+  }
+  
+  .conciliacao-card .nav-link {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Estilos para as Sugestões */
+.sugestao-card {
+  border: 2px solid #f1f3f4 !important;
+  border-radius: 10px !important;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+}
+
+.sugestao-card:hover {
+  border-color: #417052 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(65, 112, 82, 0.15) !important;
+}
+
+/* Área de valor */
+.valor-sugestao strong {
+  color: #198754;
+  font-size: 1.1rem;
+}
+
+/* Área de data */
+.data-sugestao {
+  color: #6c757d;
+}
+
+/* Área do beneficiário */
+.beneficiario-sugestao .fw-medium {
+  color: #495057;
+  font-size: 0.95rem;
+}
+
+/* Área de descrição */
+.descricao-sugestao span {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Área de categorias */
+.categorias-sugestao .badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid #dee2e6;
+  color: #495057 !important;
+  background: #f8f9fa !important;
+}
+
+.categorias-sugestao .badge:hover {
+  background: #417052 !important;
+  color: white !important;
+  border-color: #417052;
+}
+
+/* Estado vazio */
+.empty-state {
+  padding: 40px 20px;
+}
+
+.empty-state svg {
+  opacity: 0.6;
+}
+
+.empty-state h5 {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  line-height: 1.5;
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+/* Botão de conciliar */
+.btn-success.btn-sm {
+  background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 6px 16px;
+  transition: all 0.3s ease;
+}
+
+.btn-success.btn-sm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(25, 135, 84, 0.3);
+}
+
+/* Seções de informação */
+.valor-sugestao small,
+.data-sugestao small,
+.beneficiario-sugestao small,
+.descricao-sugestao small,
+.categorias-sugestao small {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #8c9196 !important;
+}

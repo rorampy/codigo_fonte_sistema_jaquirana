@@ -1,0 +1,217 @@
+/**
+ * CSS para a página de Contas Bancárias
+ * Responsável pelos estilos específicos da interface de listagem e seleção de contas bancárias
+ */
+
+/* ========================================================
+   CURSOR E INTERATIVIDADE
+   ======================================================== */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* ========================================================
+   CONTAS BANCÁRIAS - SIDEBAR
+   ======================================================== */
+.conta-bancaria:hover {
+  background-color: #f8f9fa !important;
+  transition: all 0.2s ease;
+  transform: translateX(2px);
+}
+
+/* Indicação visual da conta selecionada */
+.conta-bancaria.bg-warning-lt {
+  background-color: #fff3cd !important;
+  border-left: 4px solid #ffc107;
+}
+
+/* ========================================================
+   CARDS DE INFORMAÇÕES
+   ======================================================== */
+.card:hover {
+  transform: translateY(-1px);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(51, 91, 69, 0.08) !important;
+}
+
+/* Cards de estatísticas com cor personalizada */
+.card-border-madeireira {
+  border-color: #335B45 !important;
+}
+
+.avatar-madeireira {
+  background-color: #335B45;
+}
+
+.text-madeireira {
+  color: #335B45;
+}
+
+/* ========================================================
+   BOTÕES E INTERAÇÕES
+   ======================================================== */
+.btn:hover {
+  transform: translateY(-0.5px);
+  transition: all 0.2s ease;
+}
+
+.btn-madeireira {
+  background-color: #335B45;
+  color: white;
+  border: 1px solid #335B45;
+}
+
+.btn-madeireira:hover {
+  background-color: #2a4d3a;
+  border-color: #2a4d3a;
+  color: white;
+}
+
+.btn-outline-madeireira {
+  border-color: #335B45;
+  color: #335B45;
+}
+
+.btn-outline-madeireira:hover {
+  background-color: #335B45;
+  color: white;
+}
+
+/* ========================================================
+   HEADER DA PÁGINA
+   ======================================================== */
+.page-title-madeireira {
+  color: #335B45;
+}
+
+.card-header-gradient {
+  background: linear-gradient(135deg, #335B45 0%, #4a7c59 100%);
+  color: white;
+}
+
+/* ========================================================
+   EXTRATO E MOVIMENTAÇÕES
+   ======================================================== */
+.area-info-extrato {
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.icon-extrato {
+  font-size: 60px;
+  color: #fc7801;
+  margin-bottom: 15px;
+}
+
+/* Estilos para os tipos de movimentação */
+.movimentacao-entrada {
+  color: #28a745;
+}
+
+.movimentacao-saida {
+  color: #dc3545;
+}
+
+.movimentacao-cancelamento {
+  color: #ffc107;
+}
+
+.movimentacao-estorno {
+  color: #007bff;
+}
+
+/* ========================================================
+   MODAIS
+   ======================================================== */
+.modal-header-madeireira {
+  background: linear-gradient(135deg, #335B45 0%, #4a7c59 100%);
+  color: white;
+}
+
+/* ========================================================
+   RESPONSIVIDADE
+   ======================================================== */
+@media (max-width: 992px) {
+  .col-lg-3 {
+    margin-bottom: 1rem;
+  }
+  
+  .card-header-gradient h4 {
+    font-size: 1.1rem;
+  }
+  
+  .conta-bancaria .fw-bold {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-title-madeireira {
+    font-size: 1.5rem !important;
+  }
+  
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .conta-bancaria .d-flex {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  .conta-bancaria .text-end {
+    align-self: flex-end;
+  }
+}
+
+/* ========================================================
+   ANIMAÇÕES
+   ======================================================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.conta-bancaria {
+  transition: all 0.2s ease;
+}
+
+.conta-bancaria:hover {
+  transform: translateX(2px);
+}
+
+/* ========================================================
+   CORES AUXILIARES
+   ======================================================== */
+.bg-madeireira {
+  background-color: #335B45 !important;
+}
+
+.border-madeireira {
+  border-color: #335B45 !important;
+}
+
+.text-madeireira-light {
+  color: #4a7c59;
+}
+
+.text-madeireira-dark {
+  color: #2a4d3a;
+}
