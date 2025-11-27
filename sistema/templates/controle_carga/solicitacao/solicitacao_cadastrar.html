@@ -31,7 +31,7 @@
                     class="form-select {% if 'empresaEmissora' in campos_obrigatorios or 'empresaEmissora' in campos_erros %}is-invalid{% endif %}">
                     <option value selected>Selecione...</option>
                     {% for e in empresas %}
-                    <option value="{{ e.id }}" {% if e.identificacao=="MBR Transportes e Extracao Florestal LTDA"
+                    <option value="{{ e.id }}" {% if e.id==1
                       %}selected{% endif %}>
                       {{ e.identificacao }}
                     </option>
@@ -52,8 +52,6 @@
                     class="form-select {% if 'clienteSolicitacao' in campos_obrigatorios or 'clienteSolicitacao' in campos_erros %}is-invalid{% endif %}">
                     <option value selected>Selecione...</option>
                     {% for c in cliente %}
-                    <option value="{{ c.id }}" {% if c.identificacao=="Fibraplac Paineis de Madeira LTDA" %}selected{%
-                      endif %}>
                       {{ c.identificacao }}
                     </option>
                     {% endfor %}
