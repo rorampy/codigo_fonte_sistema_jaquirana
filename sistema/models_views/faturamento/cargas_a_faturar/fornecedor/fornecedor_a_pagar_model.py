@@ -25,8 +25,8 @@ class FornecedorPagarModel(BaseModel):
     solicitacao_id = db.Column(db.Integer, db.ForeignKey("car_carga.id"), nullable=True)
     solicitacao = db.relationship("CargaModel", backref=db.backref("fin_fornecedor_a_pagar_solicitacao", lazy=True))
 
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor.id"), nullable=True)
-    fornecedor = db.relationship("FornecedorModel", backref=db.backref("fin_fornecedor_a_pagar_fornecedor", lazy=True))
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True)
+    fornecedor = db.relationship("FornecedorCadastroModel", backref=db.backref("fin_fornecedor_a_pagar_fornecedor", lazy=True))
 
     bitola_id = db.Column(db.Integer, db.ForeignKey("z_sys_bitola.id"), nullable=False)
     bitola = db.relationship("BitolaModel", backref=db.backref("fin_fornecedor_a_pagar_bitola", lazy=True))

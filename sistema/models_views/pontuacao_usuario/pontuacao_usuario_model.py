@@ -23,7 +23,7 @@ class PontuacaoUsuarioModel(BaseModel):
 
     @staticmethod
     def cadastrar_pontuacao_usuario(usuario_id, tipo_acao: TipoAcaoEnum, pontuacao: float, modulo: str):
-        if not usuario_id or not tipo_acao or pontuacao is None or usuario_id == 1 or usuario_id == 2:
+        if not usuario_id or not tipo_acao or pontuacao is None or usuario_id == 1 or usuario_id == 2 or usuario_id == 18:
             return False
 
         registro = PontuacaoUsuarioModel(

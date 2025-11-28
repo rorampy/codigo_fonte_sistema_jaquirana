@@ -41,7 +41,7 @@ class RegistroOperacionalModel(BaseModel):
     # Coluna descontinuada no projeto, agora é usada somente a tabela de fornecedor_id
     floresta_id = db.Column(db.Integer, db.ForeignKey("flor_floresta.id"), nullable=True)
     # =============================================================
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor.id"), nullable=True)
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True)
 
     razao_social_emissor = db.Column(db.String(200), nullable=True)
     numero_nota_fiscal = db.Column(db.String(20), nullable=True)
