@@ -29,8 +29,8 @@ class FretePagarModel(BaseModel):
     transportadora_id = db.Column(db.Integer, db.ForeignKey("transp_transportadora.id"), nullable=True)
     transportadora = db.relationship("TransportadoraModel", backref=db.backref("fin_frete_a_pagar_transportadora", lazy=True),)
 
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True)
-    fornecedor = db.relationship("FornecedorCadastroModel", backref=db.backref("fin_frete_a_pagar_fornecedor", lazy=True))
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor.id"), nullable=True)
+    fornecedor = db.relationship("FornecedorModel", backref=db.backref("fin_frete_a_pagar_fornecedor", lazy=True))
 
     bitola_id = db.Column(db.Integer, db.ForeignKey("z_sys_bitola.id"), nullable=False)
     bitola = db.relationship("BitolaModel", backref=db.backref("fin_frete_a_pagar_bitola", lazy=True))

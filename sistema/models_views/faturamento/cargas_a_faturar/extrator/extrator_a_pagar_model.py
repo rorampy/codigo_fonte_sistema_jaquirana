@@ -23,10 +23,10 @@ class ExtratorPagarModel(BaseModel):
         "CargaModel", backref=db.backref("fin_extrator_a_pagar_solicitacao", lazy=True)
     )
     fornecedor_id = db.Column(
-        db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True
+        db.Integer, db.ForeignKey("for_fornecedor.id"), nullable=True
     )
     fornecedor = db.relationship(
-        "FornecedorCadastroModel",
+        "FornecedorModel",
         backref=db.backref("fin_extrator_a_pagar_fornecedor", lazy=True),
     )
     bitola_id = db.Column(db.Integer, db.ForeignKey("z_sys_bitola.id"), nullable=False)

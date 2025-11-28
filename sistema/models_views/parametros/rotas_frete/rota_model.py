@@ -14,8 +14,8 @@ class RotaFreteModel(BaseModel):
     floresta_id = db.Column(db.Integer, db.ForeignKey('flor_floresta.id'), nullable=True)
     floresta = db.relationship('FlorestaModel', backref=db.backref('floresta_rota', lazy=True))
 
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey('for_fornecedor_cadastro.id'), nullable=True)
-    fornecedor = db.relationship('FornecedorCadastroModel', backref=db.backref('fornecedor_rota_frete', lazy=True))
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey('for_fornecedor.id'), nullable=True)
+    fornecedor = db.relationship('FornecedorModel', backref=db.backref('fornecedor_rota_frete', lazy=True))
 
     cliente_id = db.Column(db.Integer, db.ForeignKey('cli_cliente.id'), nullable=False)
     cliente = db.relationship('ClienteModel', backref=db.backref('cliente_rota', lazy=True))
