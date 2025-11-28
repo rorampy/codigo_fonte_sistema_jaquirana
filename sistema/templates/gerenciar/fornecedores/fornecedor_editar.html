@@ -32,14 +32,13 @@
       {% include 'estrutura/mensagens_flash.html' %}
 
       <div class="col-12">
-        <form class="card" action="{{ url_for('editar_fornecedor', id=fornecedor.id) }}" method="POST"
-          enctype="multipart/form-data">
+        <form class="card" action="{{ url_for('editar_fornecedor', id=fornecedor.id) }}" method="POST" enctype="multipart/form-data">
           <div class="card-body">
+            <!-- Imposto Funrural ou Senar -->
 
-            <!-- ========== DADOS TIPO CONTRIBUIÇÃO ========== -->
             <div class="row">
               <h3 class="text-primary">Informações Iniciais</h3>
-              <div class="col-sm-6 col-md-6">
+              <div class="col-sm-2 col-md-2">
                 <div class="mb-3">
                   <div class="form-label">Contribuição Social</div>
                   <div>
@@ -57,26 +56,48 @@
                   </div>
                 </div>
               </div>
+              <div class="col-sm-8 col-md-8 grupoSenar">
+                <div class="mb-3">
+                  <label class="form-label required">Declaração Senar</label>
+                  <input type="file" name="declaracaoSenar" value="{{ dados_corretos['declaracaoSenar'] }}" class="form-control {% if 'declaracaoSenar' in campos_obrigatorios or 'declaracaoSenar' in campos_erros %}
+                            is-invalid
+                          {% endif %}" accept=".pdf, .jpg, .png">
+                  <div class="invalid-feedback">
+                    {% if 'declaracaoSenar' in
+                    campos_obrigatorios %}
+                    {{ campos_obrigatorios['declaracaoSenar']
+                    }}
+                    {% elif 'declaracaoSenar' in campos_erros
+                    %}
+                    {{ campos_erros['declaracaoSenar'] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-2 col-md-2 grupoSenar">
+                <div class="mb-3">
+                  <label class="form-label required">Imposto Senar
+                    <small>(%)</small></label>
+                  <input name="declaracaoSenar" class="form-control" value="0.2" readonly disabled>
+                </div>
+              </div>
             </div>
 
-            <!-- ========== FLORESTA ========== -->
-            <div class="row">
-              <div class="col-sm-2 col-md-2">
-                <div class="mb-3">
-                  <div class="form-label">Floresta</div>
-                  <div>
-                    <label class="form-check form-check-inline">
-                      <input class="form-check-input" type="radio" name="classeFornecedor" value="nao" {% if
-                        dados_corretos['classeFornecedor']=='nao' or not dados_corretos['classeFornecedor'] %}checked{%
-                        endif %}>
-                      <span class="form-check-label">Não</span>
-                    </label>
-                    <label class="form-check form-check-inline">
-                      <input class="form-check-input" type="radio" name="classeFornecedor" value="sim" {% if
-                        dados_corretos['classeFornecedor']=='sim' %}checked{% endif %}>
-                      <span class="form-check-label">Sim</span>
-                    </label>
-                  </div>
+            <div class="col-sm-2 col-md-2">
+              <div class="mb-3">
+                <div class="form-label">Floresta</div>
+                <div>
+                  <label class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="classeFornecedor" value="nao" {% if
+                      dados_corretos['classeFornecedor']=='nao' or not dados_corretos['classeFornecedor'] %}checked{%
+                      endif %}>
+                    <span class="form-check-label">Não</span>
+                  </label>
+                  <label class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="classeFornecedor" value="sim" {% if
+                      dados_corretos['classeFornecedor']=='sim' %}checked{% endif %}>
+                    <span class="form-check-label">Sim</span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -100,7 +121,6 @@
                   </div>
                 </div>
               </div>
-
 
               <!--NOVO CAMPO: Estimativa Toneladas-->
 
@@ -140,75 +160,6 @@
               </div>
             </div>
 
-            <!-- ========== DECLARAÇÃO SENAR ========== -->
-            {% if fornecedor.arquivo_senar_id %}
-            <div class="row mb-4 grupoSenar">
-              <div class="col-sm-12 col-md-12">
-                <div class="d-flex gap-4 mb-2">
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="opcaoDeclaracao" value="manter"
-                      id="opcaoDeclaracaoManter" checked>
-                    <label class="form-check-label" for="opcaoDeclaracaoManter">Manter Declaração</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="opcaoDeclaracao" value="alterar"
-                      id="opcaoDeclaracaoAlterar">
-                    <label class="form-check-label" for="opcaoDeclaracaoAlterar">Enviar nova Declaração</label>
-                  </div>
-                </div>
-                <!-- Botão Visualizar -->
-                <a href="#" id="visualizar-declaracao-senar" class="btn btn-visualizar-arquivo mb-3"
-                  data-url="{{ url_for('diretorio_uploads_declaracao_senar', filename=fornecedor.arquivo_senar.caminho.split('/')[-1]) }}"
-                  data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="icon icon-tabler icons-tabler-outline icon-tabler-receipt">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path
-                      d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" />
-                  </svg>
-                  Visualizar Declaração Atual
-                </a>
-                <!-- Input de upload (oculto inicialmente) -->
-                <div id="inputUploadDeclaracao" class="d-none">
-                  <input type="file" name="declaracaoSenar" value="{{ dados_corretos['declaracaoSenar'] }}" class="form-control {% if 'declaracaoSenar' in campos_obrigatorios or 'declaracaoSenar' in campos_erros %}
-                            is-invalid
-                          {% endif %}" accept=".pdf, .jpg, .png">
-                  <div class="invalid-feedback">
-                    {% if 'declaracaoSenar' in
-                    campos_obrigatorios %}
-                    {{ campos_obrigatorios['declaracaoSenar']
-                    }}
-                    {% elif 'declaracaoSenar' in campos_erros
-                    %}
-                    {{ campos_erros['declaracaoSenar'] }}
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {% else %}
-            <div class="row mb-4 grupoSenar">
-              <div class="col-sm-12 col-md-12">
-                <label class="form-label required">Declaração Senar</label>
-                <input type="file" name="declaracaoSenar" value="{{ dados_corretos['declaracaoSenar'] }}" class="form-control {% if 'declaracaoSenar' in campos_obrigatorios or 'declaracaoSenar' in campos_erros %}
-                            is-invalid
-                          {% endif %}" accept=".pdf, .jpg, .png">
-                <div class="invalid-feedback">
-                  {% if 'declaracaoSenar' in
-                  campos_obrigatorios %}
-                  {{ campos_obrigatorios['declaracaoSenar']
-                  }}
-                  {% elif 'declaracaoSenar' in campos_erros
-                  %}
-                  {{ campos_erros['declaracaoSenar'] }}
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-            {% endif %}
-
-            <!-- ========== DADOS BÁSICOS ========== -->
             <div class="row">
               <div class="col-sm-6 col-md-6">
                 <div class="mb-3">
@@ -218,43 +169,81 @@
                       <input class="form-check-input" type="radio" name="tipoCadastro" value="cpf" {% if
                         dados_corretos['tipoCadastro']=='cpf' or not dados_corretos['tipoCadastro'] %}checked{% endif
                         %}>
-                      <span class="form-check-label">Por CPF</span>
+                      <span class="form-check-label">Por
+                        CPF</span>
                     </label>
                     <label class="form-check form-check-inline">
                       <input class="form-check-input" type="radio" name="tipoCadastro" value="cnpj" {% if
                         dados_corretos['tipoCadastro']=='cnpj' %}checked{% endif %}>
-                      <span class="form-check-label">Por CNPJ</span>
+                      <span class="form-check-label">Por
+                        CNPJ</span>
                     </label>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="row">
-              <!-- Nome Completo (CPF) -->
-              <div class="col-sm-6 col-md-6 grupoCPF">
+            <!-- Cadastro Financeiro - Automático -->
+            <div class="row mb-3">
+              <div class="col-sm-6 col-md-6">
                 <div class="mb-3">
-                  <label class="form-label required">Nome Completo</label>
-                  <input type="text" name="nomeCompleto" value="{{ dados_corretos['nomeCompleto'] }}"
-                    class="form-control {% if 'nomeCompleto' in campos_obrigatorios or 'nomeCompleto' in campos_erros %}is-invalid{% endif %}">
+                  <div class="form-label">Cadastrar em Pessoas Financeiro</div>
+                  <div>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="criarPessoaFinanceiro" value="sim" {% if
+                        dados_corretos['criarPessoaFinanceiro']=='sim' or not dados_corretos['criarPessoaFinanceiro'] %}
+                        checked {% endif %}>
+                      <span class="form-check-label"><strong>Sim</strong> - Criar cadastro financeiro
+                        automaticamente</span>
+                    </label>
+
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="criarPessoaFinanceiro" value="nao" {% if
+                        dados_corretos['criarPessoaFinanceiro']=='nao' %} checked {% endif %}>
+                      <span class="form-check-label"><strong>Não</strong> - Cadastrar apenas como fornecedor</span>
+                    </label>
+                  </div>
+                  <small class="form-hint">
+                    Escolha esta opção caso deseje que o sistema gere <span
+                      style="font-weight: bold; font-style: italic;">automaticamente</span> o registro financeiro
+                    associado a
+                    esta pessoa.
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-sm-8 col-md-8 grupoCPF">
+                <div class="mb-3">
+                  <label class="form-label required">Nome
+                    Completo</label>
+                  <input type="text" name="nomeCompleto" value="{{ dados_corretos['nomeCompleto'] }}" class="form-control {% if 'nomeCompleto' in campos_obrigatorios or 'nomeCompleto' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
                   <div class="invalid-feedback">
-                    {% if 'nomeCompleto' in campos_obrigatorios %}
-                    {{ campos_obrigatorios['nomeCompleto'] }}
-                    {% elif 'nomeCompleto' in campos_erros %}
+                    {% if 'nomeCompleto' in
+                    campos_obrigatorios %}
+                    {{ campos_obrigatorios['nomeCompleto']
+                    }}
+                    {% elif 'nomeCompleto' in campos_erros
+                    %}
                     {{ campos_erros['nomeCompleto'] }}
                     {% endif %}
                   </div>
                 </div>
               </div>
 
-              <!-- Razão Social (CNPJ) -->
-              <div class="col-sm-6 col-md-6 grupoCNPJ">
+              <div class="col-sm-8 col-md-8 grupoCNPJ">
                 <div class="mb-3">
-                  <label class="form-label required">Razão Social</label>
-                  <input type="text" name="razaoSocial" value="{{ dados_corretos['razaoSocial'] }}"
-                    class="form-control {% if 'razaoSocial' in campos_obrigatorios or 'razaoSocial' in campos_erros %}is-invalid{% endif %}">
+                  <label class="form-label required">Razão
+                    Social</label>
+                  <input type="text" name="razaoSocial" value="{{ dados_corretos['razaoSocial'] }}" class="form-control {% if 'razaoSocial' in campos_obrigatorios or 'razaoSocial' in campos_erros %}
+                            is-invalid
+                          {% endif %}">
                   <div class="invalid-feedback">
-                    {% if 'razaoSocial' in campos_obrigatorios %}
+                    {% if 'razaoSocial' in
+                    campos_obrigatorios %}
                     {{ campos_obrigatorios['razaoSocial'] }}
                     {% elif 'razaoSocial' in campos_erros %}
                     {{ campos_erros['razaoSocial'] }}
@@ -263,13 +252,13 @@
                 </div>
               </div>
 
-              <!-- CPF -->
               <div class="col-sm-2 col-md-2 grupoCPF">
                 <div class="mb-3">
                   <label class="form-label required">CPF</label>
                   <input type="text" name="cpf" value="{{ dados_corretos['cpf'] }}" data-mask="000.000.000-00"
-                    placeholder="xxx.xxx.xxx-xx" data-mask-visible="true" autocomplete="off"
-                    class="form-control {% if 'cpf' in campos_obrigatorios or 'cpf' in campos_erros %}is-invalid{% endif %}">
+                    placeholder="xxx.xxx.xxx-xx" data-mask-visible="true" autocomplete="off" class="form-control {% if 'cpf' in campos_obrigatorios or 'cpf' in campos_erros %}
+                          is-invalid
+                        {% endif %}">
                   <div class="invalid-feedback">
                     {% if 'cpf' in campos_obrigatorios %}
                     {{ campos_obrigatorios['cpf'] }}
@@ -280,13 +269,13 @@
                 </div>
               </div>
 
-              <!-- CNPJ -->
               <div class="col-sm-2 col-md-2 grupoCNPJ">
                 <div class="mb-3">
                   <label class="form-label required">CNPJ</label>
                   <input type="text" name="cnpj" value="{{ dados_corretos['cnpj'] }}" data-mask="00.000.000/0000-00"
-                    placeholder="xx.xxx.xxx/xxxx-xx" data-mask-visible="true" autocomplete="off"
-                    class="form-control {% if 'cnpj' in campos_obrigatorios or 'cnpj' in campos_erros %}is-invalid{% endif %}">
+                    placeholder="xx.xxx.xxx/xxxx-xx" data-mask-visible="true" autocomplete="off" class="form-control {% if 'cnpj' in campos_obrigatorios or 'cnpj' in campos_erros %}
+                          is-invalid
+                        {% endif %}">
                   <div class="invalid-feedback">
                     {% if 'cnpj' in campos_obrigatorios %}
                     {{ campos_obrigatorios['cnpj'] }}
@@ -297,7 +286,6 @@
                 </div>
               </div>
 
-              <!-- Telefone -->
               <div class="col-sm-2 col-md-2">
                 <div class="mb-3">
                   <label class="form-label required">Telefone</label>
@@ -306,7 +294,8 @@
                     autocomplete="off"
                     class="form-control {% if 'telefone' in campos_obrigatorios %}is-invalid{% endif %}">
                   <div class="invalid-feedback">
-                    {% if 'telefone' in campos_obrigatorios %}
+                    {% if 'telefone' in campos_obrigatorios
+                    %}
                     {{ campos_obrigatorios['telefone'] }}
                     {% elif 'telefone' in campos_erros %}
                     {{ campos_erros['telefone'] }}
@@ -315,88 +304,26 @@
                 </div>
               </div>
 
-              <!-- Crédito -->
-              <div class="col-sm-2 col-md-2">
-                <div class="mb-3">
-                  <label class="form-label">Crédito (R$)</label>
-                  <input type="text" name="credito_fornecedor" value="{{ dados_corretos['credito_fornecedor'] }}"
-                    class="form-control campo-moeda-brl {% if 'credito_fornecedor' in campos_obrigatorios %}is-invalid{% endif %}">
-                  <div class="invalid-feedback">
-                    {% if 'credito_fornecedor' in campos_obrigatorios %}
-                    {{ campos_obrigatorios['credito_fornecedor'] }}
-                    {% elif 'credito_fornecedor' in campos_erros %}
-                    {{ campos_erros['credito_fornecedor'] }}
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- ========== /DADOS BÁSICOS ========== -->
-
-            <!-- ========== CONTRATO FORNECEDOR ========== -->
-            {% if fornecedor.contrato_fornecedor_id %}
-            <div class="row mb-4">
               <div class="col-sm-4 col-md-4">
-                <h3 class="text-primary">Contrato do fornecedor</h3>
-                <div class="d-flex gap-4 mb-2">
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="opcaoContrato" value="manter"
-                      id="opcaoContratoManter" checked>
-                    <label class="form-check-label" for="opcaoContratoManter">Manter atual</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="opcaoContrato" value="alterar"
-                      id="opcaoContratoAlterar">
-                    <label class="form-check-label" for="opcaoContratoAlterar">Enviar novo</label>
-                  </div>
-                </div>
-                <!-- Botão Visualizar -->
-                <a href="#" id="visualizar-contrato-fornecedor" class="btn btn-visualizar-arquivo mb-3"
-                  data-url="{{ url_for('diretorio_uploads_contrato_fornecedor', filename=fornecedor.contrato_fornecedor.caminho.split('/')[-1]) }}"
-                  data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="icon icon-tabler icons-tabler-outline icon-tabler-receipt">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path
-                      d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" />
-                  </svg>
-                  Visualizar Contrato Atual
-                </a>
-                <!-- Input de upload (oculto inicialmente) -->
-                <div id="inputUploadContrato" class="d-none">
-                  <input type="file" name="contratoFornecedor"
-                    class="form-control {% if 'contratoFornecedor' in campos_obrigatorios or 'contratoFornecedor' in campos_erros %}is-invalid{% endif %}"
-                    accept=".pdf">
+                <div class="mb-3">
+                  <label class="form-label">Contrato Fornecedor</label>
+                  <input type="file" name="contratoFornecedor" class="form-control contratoFornecedor {% if 'contratoFornecedor' in campos_obrigatorios or 'contratoFornecedor' in campos_erros %}
+                            is-invalid
+                          {% endif %}" accept=".pdf">
                   <div class="invalid-feedback">
-                    {% if 'contratoFornecedor' in campos_obrigatorios %}
-                    {{ campos_obrigatorios['contratoFornecedor'] }}
-                    {% elif 'contratoFornecedor' in campos_erros %}
+                    {% if 'contratoFornecedor' in
+                    campos_obrigatorios %}
+                    {{ campos_obrigatorios['contratoFornecedor']
+                    }}
+                    {% elif 'contratoFornecedor' in campos_erros
+                    %}
                     {{ campos_erros['contratoFornecedor'] }}
                     {% endif %}
                   </div>
                 </div>
               </div>
-            </div>
-            {% else %}
-            <div class="row mb-4">
-              <div class="col-sm-4 col-md-4">
-                <label class="form-label">Contrato Fornecedor</label>
-                <input type="file" name="contratoFornecedor"
-                  class="form-control {% if 'contratoFornecedor' in campos_obrigatorios or 'contratoFornecedor' in campos_erros %}is-invalid{% endif %}"
-                  accept=".pdf">
-                <div class="invalid-feedback">
-                  {% if 'contratoFornecedor' in campos_obrigatorios %}
-                  {{ campos_obrigatorios['contratoFornecedor'] }}
-                  {% elif 'contratoFornecedor' in campos_erros %}
-                  {{ campos_erros['contratoFornecedor'] }}
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-            {% endif %}
 
-            {%if tags%}
+              {%if tags %}
               <h3 class="text-primary mb-4">Informações de Tags</h3>
               <div class="row">
                 <div class="col-12 mb-3">
@@ -405,9 +332,8 @@
                     <div class="form-selectgroup">
                       {% for tag in tags %}
                       <label class="form-selectgroup-item">
-                        <input type="checkbox" name="tags_fornecedor" value="{{ tag.id }}" 
-                              class="form-selectgroup-input"
-                              {% if tag.id in tags_fornecedor_selecionadas %}checked{% endif %}>
+                        <input type="checkbox" name="tags_fornecedor" value="{{ tag.id }}"
+                          class="form-selectgroup-input" {% if tag.id in tags_fornecedor_selecionadas %}checked{% endif %}>
                         <span class="form-selectgroup-label">{{ tag.nome_tag }}</span>
                       </label>
                       {%endfor%}
@@ -415,793 +341,222 @@
                   </div>
                 </div>
               </div>
-            {%endif%}
+              {% endif %}
 
-            <h3 class="text-primary mb-4">Informações Bancárias</h3>
-            <div class="row">
-              <div class="col-12 col-sm-12 col-md-3 mb-3">
-                <label class="form-label">Selecione um banco</label>
-                <select name="instituicao_financeira" class="form-select">
-                  <option value>Selecione</option>
-                  {% for banco in bancos %}
-                  <option value="{{ banco.id }}" {% if banco.id==dados_corretos['instituicao_financeira'] %}selected{%
-                    endif %}>{{ banco.nome }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-
-              <div class="col-12 col-sm-12 col-md-3 mb-3">
-                <label class="form-label">Agência</label>
-                <input type="text" name="agencia_bancaria" class="form-control"
-                  value="{{ dados_corretos['agencia_bancaria'] }}">
-                <div class="invalid-feedback">
-                  {% if 'agencia_bancaria' in campos_obrigatorios %}
-                  {{ campos_obrigatorios['agencia_bancaria'] }}
-                  {% elif 'agencia_bancaria' in campos_erros %}
-                  {{ campos_erros['agencia_bancaria'] }}
-                  {% endif %}
-                </div>
-              </div>
-
-              <div class="col-12 col-sm-12 col-md-3 mb-3">
-                <label class="form-label">Conta</label>
-                <input type="text" name="conta_bancaria" class="form-control"
-                  value="{{ dados_corretos['conta_bancaria'] }}">
-                <div class="invalid-feedback">
-                  {% if 'conta_bancaria' in campos_obrigatorios %}
-                  {{ campos_obrigatorios['conta_bancaria'] }}
-                  {% elif 'conta_bancaria' in campos_erros %}
-                  {{ campos_erros['conta_bancaria'] }}
-                  {% endif %}
-                </div>
-              </div>
-
-              <div class="col-12 col-sm-12 col-md-3 mb-3">
-                <label class="form-label">Chave PIX</label>
-                <input type="text" name="chave_pix" class="form-control" value="{{ dados_corretos['chave_pix'] }}">
-                <div class="invalid-feedback">
-                  {% if 'chave_pix' in campos_obrigatorios %}
-                  {{ campos_obrigatorios['chave_pix'] }}
-                  {% elif 'chave_pix' in campos_erros %}
-                  {{ campos_erros['chave_pix'] }}
-                  {% endif %}
-                </div>
-              </div>
-
-            </div>
-
-            <h3 class="text-primary mb-4">Preços de custo por Bitola</h3>
-            <div class="row">
-              <!-- Eucalipto (Preço Custo) -->
-              <div class="col-md-4">
-                <div class="card border-0 shadow-sm mb-4">
-                  <div class="card-header text-dark">
-                    <strong>Eucalipto</strong>
-                  </div>
-                  <div class="card-body">
-                    <!-- Bitola 1 Eucalipto -->
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label class="form-label">Bitola</label>
-                        <input type="text" name="eucaBitolaId1" value="Torete" disabled
-                          class="form-control {% if 'eucaBitolaId1' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                      <div class="col-md-8">
-                        <label class="form-label">Preço Custo Bitola
-                          (Ton.)</label>
-                        <input type="text" name="eucaPrecoCusto1" value="{{ dados_corretos['eucaPrecoCusto1'] }}"
-                          class="form-control campo-moeda-brl {% if 'eucaPrecoCusto1' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                    </div>
-                    <!-- Bitola 2 Eucalipto -->
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label class="form-label">Bitola</label>
-                        <input type="text" name="eucaBitolaId2" value="18-25" disabled
-                          class="form-control {% if 'eucaBitolaId2' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                      <div class="col-md-8">
-                        <label class="form-label">Preço Custo Bitola
-                          (Ton.)</label>
-                        <input type="text" name="eucaPrecoCusto2" value="{{ dados_corretos['eucaPrecoCusto2'] }}"
-                          class="form-control campo-moeda-brl {% if 'eucaPrecoCusto2' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                    </div>
-                    <!-- Bitola 3 Eucalipto -->
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label class="form-label">Bitola</label>
-                        <input type="text" name="eucaBitolaId3" value="25-32" disabled
-                          class="form-control {% if 'eucaBitolaId3' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                      <div class="col-md-8">
-                        <label class="form-label">Preço Custo Bitola
-                          (Ton.)</label>
-                        <input type="text" name="eucaPrecoCusto3" value="{{ dados_corretos['eucaPrecoCusto3'] }}"
-                          class="form-control campo-moeda-brl {% if 'eucaPrecoCusto3' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                    </div>
-                    <!-- Bitola 4 Eucalipto -->
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label class="form-label">Bitola</label>
-                        <input type="text" name="eucaBitolaId4" value="33+" disabled
-                          class="form-control {% if 'eucaBitolaId4' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                      <div class="col-md-8">
-                        <label class="form-label">Preço Custo Bitola
-                          (Ton.)</label>
-                        <input type="text" name="eucaPrecoCusto4" value="{{ dados_corretos['eucaPrecoCusto4'] }}"
-                          class="form-control campo-moeda-brl {% if 'eucaPrecoCusto4' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Pinus (Preço Custo) -->
-              <div class="col-md-4">
-                <div class="card border-0 shadow-sm mb-4">
-                  <div class="card-header text-dark">
-                    <strong>Pinus</strong>
-                  </div>
-                  <div class="card-body">
-                    <!-- Bitola 1 Pinus -->
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label class="form-label">Bitola</label>
-                        <input type="text" name="pinusBitolaId1" value="Torete" disabled
-                          class="form-control {% if 'pinusBitolaId1' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                      <div class="col-md-8">
-                        <label class="form-label">Preço Custo Bitola
-                          (Ton.)</label>
-                        <input type="text" name="pinusPrecoCusto1" value="{{ dados_corretos['pinusPrecoCusto1'] }}"
-                          class="form-control campo-moeda-brl {% if 'pinusPrecoCusto1' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                    </div>
-                    <!-- Bitola 2 Pinus -->
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label class="form-label">Bitola</label>
-                        <input type="text" name="pinusBitolaId2" value="18-25" disabled
-                          class="form-control {% if 'pinusBitolaId2' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                      <div class="col-md-8">
-                        <label class="form-label">Preço Custo Bitola
-                          (Ton.)</label>
-                        <input type="text" name="pinusPrecoCusto2" value="{{ dados_corretos['pinusPrecoCusto2'] }}"
-                          class="form-control campo-moeda-brl {% if 'pinusPrecoCusto2' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                    </div>
-                    <!-- Bitola 3 Pinus -->
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label class="form-label">Bitola</label>
-                        <input type="text" name="pinusBitolaId3" value="25-32" disabled
-                          class="form-control {% if 'pinusBitolaId3' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                      <div class="col-md-8">
-                        <label class="form-label">Preço Custo Bitola
-                          (Ton.)</label>
-                        <input type="text" name="pinusPrecoCusto3" value="{{ dados_corretos['pinusPrecoCusto3'] }}"
-                          class="form-control campo-moeda-brl {% if 'pinusPrecoCusto3' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                    </div>
-                    <!-- Bitola 4 Pinus -->
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label class="form-label">Bitola</label>
-                        <input type="text" name="pinusBitolaId4" value="33+" disabled
-                          class="form-control {% if 'pinusBitolaId4' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                      <div class="col-md-8">
-                        <label class="form-label">Preço Custo Bitola
-                          (Ton.)</label>
-                        <input type="text" name="pinusPrecoCusto4" value="{{ dados_corretos['pinusPrecoCusto4'] }}"
-                          class="form-control campo-moeda-brl {% if 'pinusPrecoCusto4' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                    </div>
-                    <!-- Bitola 5  -->
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label class="form-label">Bitola</label>
-                        <input type="text" name="pinusBitolaId5" value="Madeira Serrada" disabled
-                          class="form-control {% if 'pinusBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                      <div class="col-md-8">
-                        <label class="form-label">Preço Custo Bitola
-                          (Ton.)</label>
-                        <input type="text" name="pinusPrecoCusto5" value="{{ dados_corretos['pinusPrecoCusto5'] }}"
-                          class="form-control campo-moeda-brl {% if 'pinusPrecoCusto5' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Biomassa -->
-              <div class="col-md-4">
-                <div class="card border-0 shadow-sm mb-4">
-                  <div class="card-header text-dark">
-                    <strong>Biomassa</strong>
-                  </div>
-                  <div class="card-body">
-
-                    <!-- Bitola -->
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label class="form-label">Tipo</label>
-                        <input type="text" name="bioBitolaId5" value="Cavaco" disabled
-                          class="form-control {% if 'bioBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                      <div class="col-md-8">
-                        <label class="form-label">Preço Custo (Ton.)</label>
-                        <input type="text" name="bioPrecoCusto5" value="{{ dados_corretos['bioPrecoCusto5'] }}"
-                          class="form-control campo-moeda-brl {% if 'bioPrecoCusto5' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                    </div>
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label class="form-label">Tipo</label>
-                        <input type="text" name="bioBitolaId7" value="Madeira" disabled
-                          class="form-control {% if 'bioBitolaId7' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                      <div class="col-md-8">
-                        <label class="form-label">Preço Custo (Ton.)</label>
-                        <input type="text" name="bioPrecoCusto7" value="{{ dados_corretos['bioPrecoCusto7'] }}"
-                          class="form-control campo-moeda-brl {% if 'bioPrecoCusto7' in campos_obrigatorios %}is-invalid{% endif %}">
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-
-            <h3 class="text-primary mb-4">Custo de extração</h3>
-            <div class="row">
-              <div class="col-sm-6 col-md-6">
-                <div class="mb-3">
-                  <div class="form-label required">Possui custo de
-                    extração?</div>
-                  <div>
-                    <label class="form-check form-check-inline">
-                      <input class="form-check-input" type="radio" name="custoExtracao" value="possui" {% if
-                        dados_corretos['custoExtracao']=='possui' or not dados_corretos['custoExtracao'] %}checked{%
-                        endif %}>
-                      <span class="form-check-label">Sim</span>
-                    </label>
-                    <label class="form-check form-check-inline">
-                      <input class="form-check-input" type="radio" name="custoExtracao" value="nao_possui" {% if
-                        dados_corretos['custoExtracao']=='nao_possui' %}checked{% endif %}>
-                      <span class="form-check-label">Não</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-4 grupoPossuiExtracao">
-                <label class="form-label required">Selecione um extrator</label>
-                <select id="selectExtrator" name="extratorNome"
-                  class="form-select {% if 'extratorNome' in campos_obrigatorios %}is-invalid{% endif %}">
-                  <option value selected>Selecione...</option>
-                  {% for e in extratores %}
-                  <option value="{{ e.id }}" {% if fornecedor.extrator_id==e.id %}selected{% endif %}>
-                    {{ e.identificacao }}
-                  </option>
-                  {% endfor %}
-                </select>
-                <div class="invalid-feedback">
-                  {% if 'extratorNome' in campos_obrigatorios %}
-                  {{ campos_obrigatorios['extratorNome'] }}
-                  {% elif 'extratorNome' in campos_erros %}
-                  {{ campos_erros['extratorNome'] }}
-                  {% endif %}
-                </div>
-              </div>
-
+              <h3 class="text-primary mb-4">Informações Bancárias</h3>
               <div class="row">
-                <!-- Eucalipto (Custo Extração) -->
-                <div class="col-md-4 grupoPossuiExtracao">
-                  <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header text-dark">
-                      <strong>Eucalipto</strong>
-                    </div>
-                    <div class="card-body">
+                <div class="col-12 col-sm-12 col-md-3 mb-3">
+                  <label class="form-label">Selecione um banco</label>
+                  <select name="instituicao_financeira" class="form-select">
+                    <option value>Selecione</option>
+                    {% for banco in bancos %}
+                    <option value="{{ banco.id }}" {% if banco.id==dados_corretos['instituicao_financeira'] %}selected{%
+                      endif %}>{{ banco.nome }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
 
-                      <!-- Bitola 1 Eucalipto -->
-                      <div class="row mb-3">
-                        <div class="col-md-4">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" value="Torete" disabled class="form-control">
-                        </div>
-                        <div class="col-md-8">
-                          <label class="form-label">Preço Custo Extração Bitola
-                            (Ton.)</label>
-                          <input type="text" name="eucaCustoExtracao1"
-                            value="{{ dados_corretos['eucaCustoExtracao1'] }}"
-                            class="form-control campo-moeda-brl {% if 'eucaCustoExtracao1' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 2 Eucalipto -->
-                      <div class="row mb-3">
-                        <div class="col-md-4">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" value="18-25" disabled class="form-control">
-                        </div>
-                        <div class="col-md-8">
-                          <label class="form-label">Preço Custo Extração Bitola
-                            (Ton.)</label>
-                          <input type="text" name="eucaCustoExtracao2"
-                            value="{{ dados_corretos['eucaCustoExtracao2'] }}"
-                            class="form-control campo-moeda-brl {% if 'eucaCustoExtracao2' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 3 Eucalipto -->
-                      <div class="row mb-3">
-                        <div class="col-md-4">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" value="25-32" disabled class="form-control">
-                        </div>
-                        <div class="col-md-8">
-                          <label class="form-label">Preço Custo Extração Bitola
-                            (Ton.)</label>
-                          <input type="text" name="eucaCustoExtracao3"
-                            value="{{ dados_corretos['eucaCustoExtracao3'] }}"
-                            class="form-control campo-moeda-brl {% if 'eucaCustoExtracao3' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 4 Eucalipto -->
-                      <div class="row mb-3">
-                        <div class="col-md-4">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" value="33+" disabled class="form-control">
-                        </div>
-                        <div class="col-md-8">
-                          <label class="form-label">Preço Custo Extração Bitola
-                            (Ton.)</label>
-                          <input type="text" name="eucaCustoExtracao4"
-                            value="{{ dados_corretos['eucaCustoExtracao4'] }}"
-                            class="form-control campo-moeda-brl {% if 'eucaCustoExtracao4' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                    </div>
+                <div class="col-12 col-sm-12 col-md-3 mb-3">
+                  <label class="form-label">Agência</label>
+                  <input type="text" name="agencia_bancaria" class="form-control"
+                    value="{{ dados_corretos['agencia_bancaria'] }}">
+                  <div class="invalid-feedback">
+                    {% if 'agencia_bancaria' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['agencia_bancaria'] }}
+                    {% elif 'agencia_bancaria' in campos_erros %}
+                    {{ campos_erros['agencia_bancaria'] }}
+                    {% endif %}
                   </div>
                 </div>
 
-                <!-- Pinus (Custo Extração) -->
-                <div class="col-md-4 grupoPossuiExtracao">
-                  <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header text-dark">
-                      <strong>Pinus</strong>
-                    </div>
-                    <div class="card-body">
-
-                      <!-- Bitola 1 Pinus -->
-                      <div class="row mb-3">
-                        <div class="col-md-4">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" value="Torete" disabled class="form-control">
-                        </div>
-                        <div class="col-md-8">
-                          <label class="form-label">Preço Custo Extração Bitola
-                            (Ton.)</label>
-                          <input type="text" name="pinusCustoExtracao1"
-                            value="{{ dados_corretos['pinusCustoExtracao1'] }}"
-                            class="form-control campo-moeda-brl {% if 'pinusCustoExtracao1' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 2 Pinus -->
-                      <div class="row mb-3">
-                        <div class="col-md-4">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" value="18-25" disabled class="form-control">
-                        </div>
-                        <div class="col-md-8">
-                          <label class="form-label">Preço Custo Extração Bitola
-                            (Ton.)</label>
-                          <input type="text" name="pinusCustoExtracao2"
-                            value="{{ dados_corretos['pinusCustoExtracao2'] }}"
-                            class="form-control campo-moeda-brl {% if 'pinusCustoExtracao2' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 3 Pinus -->
-                      <div class="row mb-3">
-                        <div class="col-md-4">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" value="25-32" disabled class="form-control">
-                        </div>
-                        <div class="col-md-8">
-                          <label class="form-label">Preço Custo Extração Bitola
-                            (Ton.)</label>
-                          <input type="text" name="pinusCustoExtracao3"
-                            value="{{ dados_corretos['pinusCustoExtracao3'] }}"
-                            class="form-control campo-moeda-brl {% if 'pinusCustoExtracao3' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 4 Pinus -->
-                      <div class="row mb-3">
-                        <div class="col-md-4">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" value="33+" disabled class="form-control">
-                        </div>
-                        <div class="col-md-8">
-                          <label class="form-label">Preço Custo Extração Bitola
-                            (Ton.)</label>
-                          <input type="text" name="pinusCustoExtracao4"
-                            value="{{ dados_corretos['pinusCustoExtracao4'] }}"
-                            class="form-control campo-moeda-brl {% if 'pinusCustoExtracao4' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 5 Pinus -->
-                      <div class="row mb-3">
-                        <div class="col-md-4">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" value="Madeira Serrada" disabled class="form-control">
-                        </div>
-                        <div class="col-md-8">
-                          <label class="form-label">Preço Custo Extração Bitola
-                            (Ton.)</label>
-                          <input type="text" name="pinusCustoExtracao5"
-                            value="{{ dados_corretos['pinusCustoExtracao5'] }}"
-                            class="form-control campo-moeda-brl {% if 'pinusCustoExtracao5' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                    </div>
+                <div class="col-12 col-sm-12 col-md-3 mb-3">
+                  <label class="form-label">Conta</label>
+                  <input type="text" name="conta_bancaria" class="form-control"
+                    value="{{ dados_corretos['conta_bancaria'] }}">
+                  <div class="invalid-feedback">
+                    {% if 'conta_bancaria' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['conta_bancaria'] }}
+                    {% elif 'conta_bancaria' in campos_erros %}
+                    {{ campos_erros['conta_bancaria'] }}
+                    {% endif %}
                   </div>
                 </div>
 
-                <!-- Biomassa -->
-                <div class="col-md-4 grupoPossuiExtracao">
-                  <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header text-dark">
-                      <strong>Biomassa</strong>
-                    </div>
-                    <div class="card-body">
-
-                      <!-- Bitola 5 Cavaco -->
-                      <div class="row mb-3">
-                        <div class="col-md-4">
-                          <label class="form-label">Tipo</label>
-                          <input type="text" name="bioBitolaId5" value="Cavaco" disabled
-                            class="form-control {% if 'bioBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-8">
-                          <label class="form-label">Preço Custo (Ton.)</label>
-                          <input type="text" name="bioCustoExtracao5" value="{{ dados_corretos['bioCustoExtracao5'] }}"
-                            class="form-control campo-moeda-brl {% if 'bioCustoExtracao5' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col-md-4">
-                          <label class="form-label">Tipo</label>
-                          <input type="text" name="bioBitolaId7" value="Madeira" disabled
-                            class="form-control {% if 'bioBitolaId7' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-8">
-                          <label class="form-label">Preço Extração
-                            (Ton.)</label>
-                          <input type="text" name="bioCustoExtracao7" value="{{ dados_corretos['bioCustoExtracao7'] }}"
-                            class="form-control campo-moeda-brl {% if 'bioCustoExtracao7' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-                    </div>
+                <div class="col-12 col-sm-12 col-md-3 mb-3">
+                  <label class="form-label">Chave PIX</label>
+                  <input type="text" name="chave_pix" class="form-control" value="{{ dados_corretos['chave_pix'] }}">
+                  <div class="invalid-feedback">
+                    {% if 'chave_pix' in campos_obrigatorios %}
+                    {{ campos_obrigatorios['chave_pix'] }}
+                    {% elif 'chave_pix' in campos_erros %}
+                    {{ campos_erros['chave_pix'] }}
+                    {% endif %}
                   </div>
                 </div>
+
               </div>
 
-            </div>
+              <h3 class="text-primary mb-4">Preços de custo por Bitola</h3>
+              <div class="row">
 
+                {% for produto_id, produto_data in produtos_bitolas.items() %}
+                <!-- {{ produto_data.nome }} -->
+                <div class="col-md-12">
+                  <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header text-dark">
+                      <strong>{{ produto_data.nome }}</strong>
+                    </div>
+                    <div class="card-body">
 
-            <h3 class="text-primary mb-4">Madeira Posta</h3>
+                      {% for loop_index in range(produto_data.bitolas|length) %}
+                      {% set bitola = produto_data.bitolas[loop_index] %}
+                      {% set nome_produto_lower = produto_data.nome.lower() %}
+                      {% if nome_produto_lower == 'eucalipto' %}
+                        {% set prefix = 'euca' %}
+                      {% elif nome_produto_lower == 'pinus' %}
+                        {% set prefix = 'pinus' %}
+                      {% elif nome_produto_lower == 'biomassa' %}
+                        {% set prefix = 'bio' %}
+                      {% else %}
+                        {% set prefix = nome_produto_lower[:5] %}
+                      {% endif %}
+                      
+                      <!-- Bitola {{ loop_index + 1 }} {{ produto_data.nome }} -->
+                      <div class="row mb-3">
+                        <div class="col-md-6">
+                          <label class="form-label">{% if produto_data.nome == 'Biomassa' %}Tipo{% else %}Bitola{% endif %}</label>
+                          <input type="text" name="{{ prefix }}BitolaId{{ loop_index + 1 }}" value="{{ bitola.nome }}" disabled
+                            class="form-control {% if prefix + 'BitolaId' + (loop_index + 1)|string in campos_obrigatorios %}is-invalid{% endif %}">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Preço Custo {% if produto_data.nome == 'Biomassa' %}(Ton.){% else %}Bitola (Ton.){% endif %}</label>
+                          <input type="text" name="{{ prefix }}PrecoCusto{{ loop_index + 1 }}" value="{{ dados_corretos[prefix + 'PrecoCusto' + (loop_index + 1)|string] }}"
+                            class="form-control campo-moeda-brl {% if prefix + 'PrecoCusto' + (loop_index + 1)|string in campos_obrigatorios %}is-invalid{% endif %}">
+                        </div>
+                      </div>
+                      {% endfor %}
 
-            <div class="mb-3">
-              <div class="form-label required">Possui madeira posta?</div>
-              <label class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="madeiraPosta" value="possui" {% if
-                  dados_corretos['madeiraPosta']=='possui' or not dados_corretos['madeiraPosta'] %}checked{% endif %}>
-                <span class="form-check-label">Sim</span>
-              </label>
-              <label class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="madeiraPosta" value="nao_possui" {% if
-                  dados_corretos['madeiraPosta']=='nao_possui' %}checked{% endif %}>
-                <span class="form-check-label">Não</span>
-              </label>
-            </div>
-
-            <!-- Container principal que agrupa todos os blocos de "Madeira Posta" -->
-            <div id="container-madeira-posta">
-              {% set total_mp = dados_corretos['clienteMadeiraPosta']|length %}
-              {% if total_mp > 0 %}
-              {% for idx in range(total_mp) %}
-              <div class="row mb-3 madeira-item">
-
-                <!-- SELECIONAR CLIENTE -->
-                <div class="col-md-6 mb-4 grupoPossuiMadeiraPosta">
-                  <label class="form-label required">Selecione um
-                    cliente</label>
-                  <select name="clienteMadeiraPosta[]"
-                    class="form-select {% if 'clienteMadeiraPosta' in campos_obrigatorios %}is-invalid{% endif %}">
-                    <option value selected>Selecione...</option>
-                    {% for c in clientes %}
-                    <option value="{{ c.id }}" {% if dados_corretos['clienteMadeiraPosta'][idx]==c.id %}selected{% endif
-                      %}>
-                      {{ c.identificacao }}
-                    </option>
-                    {% endfor %}
-                  </select>
-                  <div class="invalid-feedback">
-                    {% if 'clienteMadeiraPosta' in campos_obrigatorios %}
-                    {{ campos_obrigatorios['clienteMadeiraPosta'] }}
-                    {% elif 'clienteMadeiraPosta' in campos_erros %}
-                    {{ campos_erros['clienteMadeiraPosta'] }}
-                    {% endif %}
+                    </div>
                   </div>
                 </div>
+                {% endfor %}
 
-                <div class="col-md-6 mb-4 grupoPossuiMadeiraPosta">
-                  <label class="form-label">Vincular Transportadora</label>
-                  <select name="transportadoraMadeiraPosta[]"
-                    class="form-select {% if 'transportadoraMadeiraPosta' in campos_obrigatorios %}is-invalid{% endif %}">
-                    <option value selected>Selecione...</option>
-                    {% for t in transportadoras %}
-                    <option value="{{ t.id }}" {% if dados_corretos['transportadoraMadeiraPosta'][idx]==t.id
-                      %}selected{% endif %}>
-                      {{ t.identificacao }}
-                    </option>
-                    {% endfor %}
-                  </select>
-                  <div class="invalid-feedback">
-                    {% if 'transportadoraMadeiraPosta' in campos_obrigatorios %}
-                    {{ campos_obrigatorios['transportadoraMadeiraPosta'] }}
-                    {% elif 'transportadoraMadeiraPosta' in campos_erros %}
-                    {{ campos_erros['transportadoraMadeiraPosta'] }}
-                    {% endif %}
+              </div>
+
+              <!-- Nova implementação adicionando custo de extração se houver -->
+
+              <h3 class="text-primary mb-4">Custo de extração</h3>
+              <div class="row">
+                <div class="col-sm-6 col-md-6">
+                  <div class="mb-3">
+                    <div class="form-label required">Possui custo de
+                      extração?</div>
+                    <div>
+                      <label class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="custoExtracao" value="possui" {% if
+                          dados_corretos['custoExtracao']=='possui' %}checked{% endif %}>
+                        <span class="form-check-label">Sim</span>
+                      </label>
+                      <label class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="custoExtracao" value="nao_possui" {% if
+                          dados_corretos['custoExtracao']=='nao_possui' or not dados_corretos['custoExtracao'] %}checked{% endif %}>
+                        <span class="form-check-label">Não</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
                 <div class="row">
-                  <!-- EUCALIPTO -->
-                  <div class="col-md-4 grupoPossuiMadeiraPosta">
-                    <div class="card border-0 shadow-sm mb-4">
-                      <div class="card-header text-dark">
-                        <strong>Eucalipto</strong>
-                      </div>
-                      <div class="card-body">
 
-                        <!-- Bitola 1 Eucalipto -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" value="Torete" disabled class="form-control">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Madeira Posta Bitola
-                              (Ton.)</label>
-                            <input type="text" name="eucaMadeiraPosta1[]"
-                              value="{{ dados_corretos['eucaMadeiraPosta1'][idx] }}"
-                              class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta1' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola 2 Eucalipto -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" value="18-25" disabled class="form-control">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Madeira Posta Bitola
-                              (Ton.)</label>
-                            <input type="text" name="eucaMadeiraPosta2[]"
-                              value="{{ dados_corretos['eucaMadeiraPosta2'][idx] }}"
-                              class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta2' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola 3 Eucalipto -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" value="25-32" disabled class="form-control">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Madeira Posta Bitola
-                              (Ton.)</label>
-                            <input type="text" name="eucaMadeiraPosta3[]"
-                              value="{{ dados_corretos['eucaMadeiraPosta3'][idx] }}"
-                              class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta3' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola 4 Eucalipto -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" value="33+" disabled class="form-control">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Madeira Posta Bitola
-                              (Ton.)</label>
-                            <input type="text" name="eucaMadeiraPosta4[]"
-                              value="{{ dados_corretos['eucaMadeiraPosta4'][idx] }}"
-                              class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta4' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
+                  <div class="row">
+                    <div class="col-md-6 mb-4 grupoPossuiExtracao">
+                      <label class="form-label required">Selecione um
+                        extrator</label>
+                      <select type="text" id="selectExtrator" name="extratorNome"
+                        class="form-select {% if 'extratorNome' in campos_obrigatorios %}is-invalid{% endif %}">
+                        <option value selected>Selecione...</option>
+                        {%for e in extratores%}
+                        <option value="{{e.id}}" {% if dados_corretos['extratorNome']==e.id %}selected{% endif %}>{{e.identificacao}}</option>
+                        {%endfor%}
+                      </select>
+                      <div class="invalid-feedback">
+                        {% if 'extratorNome' in campos_obrigatorios %}
+                        {{ campos_obrigatorios['extratorNome'] }}
+                        {% elif 'extratorNome' in campos_erros %}
+                        {{ campos_erros['extratorNome'] }}
+                        {% endif %}
                       </div>
                     </div>
                   </div>
 
-                  <!-- PINUS -->
-                  <div class="col-md-4 grupoPossuiMadeiraPosta">
+                  {% for produto_id, produto_data in produtos_bitolas.items() %}
+                  <!-- {{ produto_data.nome }} -->
+                  <div class="col-md-12 grupoPossuiExtracao">
                     <div class="card border-0 shadow-sm mb-4">
                       <div class="card-header text-dark">
-                        <strong>Pinus</strong>
+                        <strong>{{ produto_data.nome }}</strong>
                       </div>
                       <div class="card-body">
 
-                        <!-- Bitola 1 Pinus -->
+                        {% for loop_index in range(produto_data.bitolas|length) %}
+                        {% set bitola = produto_data.bitolas[loop_index] %}
+                        {% set nome_produto_lower = produto_data.nome.lower() %}
+                        {% if nome_produto_lower == 'eucalipto' %}
+                          {% set prefix = 'euca' %}
+                        {% elif nome_produto_lower == 'pinus' %}
+                          {% set prefix = 'pinus' %}
+                        {% elif nome_produto_lower == 'biomassa' %}
+                          {% set prefix = 'bio' %}
+                        {% else %}
+                          {% set prefix = nome_produto_lower[:5] %}
+                        {% endif %}
+                        
+                        <!-- Bitola {{ loop_index + 1 }} {{ produto_data.nome }} -->
                         <div class="row mb-3">
                           <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" value="Torete" disabled class="form-control">
+                            <label class="form-label">{% if produto_data.nome == 'Biomassa' %}Tipo{% else %}Bitola{% endif %}</label>
+                            <input type="text" name="{{ prefix }}BitolaId{{ loop_index + 1 }}" value="{{ bitola.nome }}" disabled
+                              class="form-control {% if prefix + 'BitolaId' + (loop_index + 1)|string in campos_obrigatorios %}is-invalid{% endif %}">
                           </div>
                           <div class="col-md-8">
-                            <label class="form-label">Preço Madeira Posta Bitola
-                              (Ton.)</label>
-                            <input type="text" name="pinusMadeiraPosta1[]"
-                              value="{{ dados_corretos['pinusMadeiraPosta1'][idx] }}"
-                              class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta1' in campos_obrigatorios %}is-invalid{% endif %}">
+                            <label class="form-label">Custo de Extração (Ton.)</label>
+                            <input type="text" name="{{ prefix }}CustoExtracao{{ loop_index + 1 }}"
+                              value="{{ dados_corretos[prefix + 'CustoExtracao' + (loop_index + 1)|string] }}"
+                              class="form-control campo-moeda-brl {% if prefix + 'CustoExtracao' + (loop_index + 1)|string in campos_obrigatorios %}is-invalid{% endif %}">
                           </div>
                         </div>
-
-                        <!-- Bitola 2 Pinus -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" value="18-25" disabled class="form-control">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Madeira Posta Bitola
-                              (Ton.)</label>
-                            <input type="text" name="pinusMadeiraPosta2[]"
-                              value="{{ dados_corretos['pinusMadeiraPosta2'][idx] }}"
-                              class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta2' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola 3 Pinus -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" value="25-32" disabled class="form-control">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Madeira Posta Bitola
-                              (Ton.)</label>
-                            <input type="text" name="pinusMadeiraPosta3[]"
-                              value="{{ dados_corretos['pinusMadeiraPosta3'][idx] }}"
-                              class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta3' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola 4 Pinus -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" value="33+" disabled class="form-control">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Madeira Posta Bitola
-                              (Ton.)</label>
-                            <input type="text" name="pinusMadeiraPosta4[]"
-                              value="{{ dados_corretos['pinusMadeiraPosta4'][idx] }}"
-                              class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta4' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola 5 Pinus -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" value="Madeira Serrada" disabled class="form-control">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Madeira Posta Bitola
-                              (Ton.)</label>
-                            <input type="text" name="pinusMadeiraPosta5[]"
-                              value="{{ dados_corretos['pinusMadeiraPosta5'][idx] }}"
-                              class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta5' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
+                        {% endfor %}
 
                       </div>
                     </div>
                   </div>
-
-                  <!-- Biomassa -->
-                  <div class="col-md-4 grupoPossuiMadeiraPosta">
-                    <div class="card border-0 shadow-sm mb-4">
-                      <div class="card-header text-dark">
-                        <strong>Biomassa</strong>
-                      </div>
-                      <div class="card-body">
-
-                        <!-- Bitola 5 Cavaco -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Tipo</label>
-                            <input type="text" name="bioBitolaId5" value="Cavaco" disabled
-                              class="form-control {% if 'bioBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Custo (Ton.)</label>
-                            <input type="text" name="bioMadeiraPosta5[]"
-                              value="{{ dados_corretos['bioMadeiraPosta5'] }}"
-                              class="form-control campo-moeda-brl {% if 'bioMadeiraPosta5' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-                        <!-- Bitola 5 Cavaco -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Tipo</label>
-                            <input type="text" name="bioBitolaId7" value="Madeira" disabled
-                              class="form-control {% if 'bioBitolaId7' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Custo (Ton.)</label>
-                            <input type="text" name="bioMadeiraPosta7[]"
-                              value="{{ dados_corretos['bioMadeiraPosta7'] }}"
-                              class="form-control campo-moeda-brl {% if 'bioMadeiraPosta7' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
+                  {% endfor %}
                 </div>
-                <!-- BOTÕES DE ADICIONAR / REMOVER (ao final do bloco) -->
-                <div class="col-md-12 d-flex justify-content-center mb-4">
-                  <button type="button" class="btn btn-danger btn-remover me-2" {% if total_mp <=1 %}disabled{% endif
-                    %}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                      class="icon icon-tabler icon-tabler-trash">
-                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                      <path d="M4 7l16 0" />
-                      <path d="M10 11l0 6" />
-                      <path d="M14 11l0 6" />
-                      <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                      <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-                    </svg>
-                  </button>
-                  <button type="button" class="btn btn-primary btn-adicionar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                      class="icon icon-tabler icon-tabler-plus">
-                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                      <path d="M12 5l0 14" />
-                      <path d="M5 12l14 0" />
-                    </svg>
-                  </button>
-                </div>
-                {% endfor %}
-                {% else %}
-                <!-- Se não houver registro, exibe um bloco vazio para preencher -->
+              </div>
+
+
+              <!-- Nova implementação adicionando madeira posta se houver -->
+
+              <h3 class="text-primary mb-4">Madeira Posta</h3>
+
+              <div class="mb-3">
+                <!-- Radio: Possui / Não possui madeira posta -->
+                <div class="form-label required">Possui madeira posta?</div>
+                <label class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="madeiraPosta" value="possui" {% if
+                    dados_corretos['madeiraPosta']=='possui' %}checked{% endif %}>
+                  <span class="form-check-label">Sim</span>
+                </label>
+                <label class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="madeiraPosta" value="nao_possui" {% if
+                    dados_corretos['madeiraPosta']=='nao_possui' or not dados_corretos['madeiraPosta'] %}checked{% endif %}>
+                  <span class="form-check-label">Não</span>
+                </label>
+              </div>
+
+              <!-- Container principal que agrupa todos os blocos de “Madeira Posta” -->
+              <div id="container-madeira-posta">
+                <!-- Bloco “modelo” (será clonado) -->
                 <div class="row mb-3 madeira-item">
 
                   <!-- SELECIONAR CLIENTE -->
@@ -1212,7 +567,10 @@
                       class="form-select {% if 'clienteMadeiraPosta' in campos_obrigatorios %}is-invalid{% endif %}">
                       <option value selected>Selecione...</option>
                       {% for c in clientes %}
-                      <option value="{{ c.id }}">{{ c.identificacao }}</option>
+                      <option value="{{ c.id }}" {% if dados_corretos['clienteMadeiraPosta'] is defined and
+                        dados_corretos['clienteMadeiraPosta']==c.id %}selected{% endif %}>
+                        {{ c.identificacao }}
+                      </option>
                       {% endfor %}
                     </select>
                     <div class="invalid-feedback">
@@ -1226,12 +584,15 @@
 
                   <!-- SELECIONAR TRANSPORTADORA -->
                   <div class="col-md-6 mb-4 grupoPossuiMadeiraPosta">
-                    <label class="form-label required">Vincular Transportadora</label>
+                    <label class="form-label">Vincular Transportadora</label>
                     <select name="transportadoraMadeiraPosta[]"
                       class="form-select {% if 'transportadoraMadeiraPosta' in campos_obrigatorios %}is-invalid{% endif %}">
                       <option value selected>Selecione...</option>
                       {% for t in transportadoras %}
-                      <option value="{{ t.id }}">{{ t.identificacao }}</option>
+                      <option value="{{ t.id }}" {% if dados_corretos['transportadoraMadeiraPosta'] is defined and
+                        dados_corretos['transportadoraMadeiraPosta']==t.id %}selected{% endif %}>
+                        {{ t.identificacao }}
+                      </option>
                       {% endfor %}
                     </select>
                     <div class="invalid-feedback">
@@ -1244,196 +605,41 @@
                   </div>
 
                   <div class="row">
-                    <!-- EUCALIPTO -->
-                    <div class="col-md-4 grupoPossuiMadeiraPosta">
+                    <!-- PRODUTOS MADEIRA POSTA - DINÂMICO -->
+                    {% for produto_id, produto_data in produtos_bitolas.items() %}
+                    <div class="col-md-12 grupoPossuiMadeiraPosta">
                       <div class="card border-0 shadow-sm mb-4">
                         <div class="card-header text-dark">
-                          <strong>Eucalipto</strong>
+                          <strong>{{ produto_data.nome }}</strong>
                         </div>
                         <div class="card-body">
-                          <!-- Bitola 1 Eucalipto -->
+                          
+                          {% for bitola in produto_data.bitolas %}
                           <div class="row mb-3">
                             <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="Torete" disabled class="form-control">
+                              <label class="form-label">{% if produto_data.nome == 'Biomassa' %}Tipo{% else %}Bitola{% endif %}</label>
+                              <input type="text" value="{{ bitola.nome }}" disabled class="form-control">
                             </div>
                             <div class="col-md-8">
                               <label class="form-label">Preço Madeira Posta
-                                Bitola (Ton.)</label>
-                              <input type="text" name="eucaMadeiraPosta1[]"
-                                value="{{ dados_corretos['eucaMadeiraPosta1'][idx] if dados_corretos['eucaMadeiraPosta1'] and dados_corretos['eucaMadeiraPosta1']|length > idx else '' }}"
-                                class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta1' in campos_obrigatorios %}is-invalid{% endif %}">
+                                {% if produto_data.nome != 'Biomassa' %}Bitola{% endif %}
+                                (Ton.)</label>
+                              <input type="text" 
+                                name="{{ produto_data.nome.lower() }}MadeiraPosta{{ loop.index }}[]"
+                                value="{{ dados_corretos[produto_data.nome.lower() + 'MadeiraPosta' + loop.index|string] or '' }}"
+                                class="form-control campo-moeda-brl {% if produto_data.nome.lower() + 'MadeiraPosta' + loop.index|string in campos_obrigatorios %}is-invalid{% endif %}">
                             </div>
                           </div>
-                          <!-- Bitola 2 Eucalipto -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="18-25" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola (Ton.)</label>
-                              <input type="text" name="eucaMadeiraPosta2[]"
-                                value="{{ dados_corretos['eucaMadeiraPosta2'][idx] if dados_corretos['eucaMadeiraPosta2'] and dados_corretos['eucaMadeiraPosta2']|length > idx else '' }}"
-                                class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta2' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-                          <!-- Bitola 3 Eucalipto -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="25-32" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola (Ton.)</label>
-                              <input type="text" name="eucaMadeiraPosta3[]"
-                                value="{{ dados_corretos['eucaMadeiraPosta3'][idx] if dados_corretos['eucaMadeiraPosta3'] and dados_corretos['eucaMadeiraPosta3']|length > idx else '' }}"
-                                class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta3' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-                          <!-- Bitola 4 Eucalipto -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="33+" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola (Ton.)</label>
-                              <input type="text" name="eucaMadeiraPosta4[]"
-                                value="{{ dados_corretos['eucaMadeiraPosta4'][idx] if dados_corretos['eucaMadeiraPosta4'] and dados_corretos['eucaMadeiraPosta4']|length > idx else '' }}"
-                                class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta4' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
+                          {% endfor %}
+
                         </div>
                       </div>
                     </div>
-
-                    <!-- PINUS -->
-                    <div class="col-md-4 grupoPossuiMadeiraPosta">
-                      <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header text-dark">
-                          <strong>Pinus</strong>
-                        </div>
-                        <div class="card-body">
-                          <!-- Bitola 1 Pinus -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="Torete" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola (Ton.)</label>
-                              <input type="text" name="pinusMadeiraPosta1[]"
-                                value="{{ dados_corretos['pinusMadeiraPosta1'][idx] if dados_corretos['pinusMadeiraPosta1'] and dados_corretos['pinusMadeiraPosta1']|length > idx else '' }}"
-                                class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta1' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-                          <!-- Bitola 2 Pinus -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="18-25" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola (Ton.)</label>
-                              <input type="text" name="pinusMadeiraPosta2[]"
-                                value="{{ dados_corretos['pinusMadeiraPosta2'][idx] if dados_corretos['pinusMadeiraPosta2'] and dados_corretos['pinusMadeiraPosta2']|length > idx else '' }}"
-                                class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta2' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-                          <!-- Bitola 3 Pinus -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="25-32" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola (Ton.)</label>
-                              <input type="text" name="pinusMadeiraPosta3[]"
-                                value="{{ dados_corretos['pinusMadeiraPosta3'][idx] if dados_corretos['pinusMadeiraPosta3'] and dados_corretos['pinusMadeiraPosta3']|length > idx else '' }}"
-                                class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta3' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-                          <!-- Bitola 4 Pinus -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="33+" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola (Ton.)</label>
-                              <input type="text" name="pinusMadeiraPosta4[]"
-                                value="{{ dados_corretos['pinusMadeiraPosta4'][idx] if dados_corretos['pinusMadeiraPosta4'] and dados_corretos['pinusMadeiraPosta4']|length > idx else '' }}"
-                                class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta4' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-                          <!-- Bitola 5 Pinus -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="Madeira Serrada" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola (Ton.)</label>
-                              <input type="text" name="pinusMadeiraPosta5[]"
-                                value="{{ dados_corretos['pinusMadeiraPosta5'][idx] if dados_corretos['pinusMadeiraPosta5'] and dados_corretos['pinusMadeiraPosta5']|length > idx else '' }}"
-                                class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta5' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Biomassa -->
-                    <div class="col-md-4 grupoPossuiMadeiraPosta">
-                      <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header text-dark">
-                          <strong>Biomassa</strong>
-                        </div>
-                        <div class="card-body">
-
-                          <!-- Bitola Cavaco -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Tipo</label>
-                              <input type="text" name="bioBitolaId5" value="Cavaco" disabled
-                                class="form-control {% if 'bioBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta (Ton.)</label>
-                              <input type="text" name="bioMadeiraPosta5[]"
-                                value="{{ dados_corretos['bioMadeiraPosta5'] }}"
-                                class="form-control campo-moeda-brl {% if 'bioMadeiraPosta5' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Tipo</label>
-                              <input type="text" name="bioBitolaId7" value="Madeira" disabled
-                                class="form-control {% if 'bioBitolaId7' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta (Ton.)</label>
-                              <input type="text" name="bioMadeiraPosta7[]"
-                                value="{{ dados_corretos['bioMadeiraPosta7'] }}"
-                                class="form-control campo-moeda-brl {% if 'bioMadeiraPosta7' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
+                    {% endfor %}
                     <!-- BOTÕES DE ADICIONAR / REMOVER (ao final do bloco) -->
                     <div class="col-md-12 d-flex justify-content-center mb-4">
                       <button type="button" class="btn btn-danger btn-remover me-2" disabled>
+                        <!-- ícone de lixeira -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                           class="icon icon-tabler icon-tabler-trash">
@@ -1446,6 +652,7 @@
                         </svg>
                       </button>
                       <button type="button" class="btn btn-primary btn-adicionar">
+                        <!-- ícone de + -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                           class="icon icon-tabler icon-tabler-plus">
@@ -1455,234 +662,202 @@
                         </svg>
                       </button>
                     </div>
-                    {% endif %}
                   </div>
-                  <!-- Mensagem de erro geral -->
-                  <div class="invalid-feedback d-block">
-                    {% if 'madeiraPosta' in campos_obrigatorios %}
-                    {{ campos_obrigatorios['madeiraPosta'] }}
-                    {% elif 'madeiraPosta' in campos_erros %}
-                    {{ campos_erros['madeiraPosta'] }}
-                    {% endif %}
-                  </div>
-                </div> <!--==========/MADEIRA POSTA==========-->
-
-                <!-- ========== COMISSIONADOS ========== -->
-                <h3 class="text-primary mb-4">Comissionados</h3>
-                <div class="mb-3">
-                  <div class="form-label required">Possui comissionado?</div>
-                  <label class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="possuiComissionado" value="possui" {% if
-                      dados_corretos.get('possuiComissionado')=='possui' %}checked{% endif %}>
-                    <span class="form-check-label">Sim</span>
-                  </label>
-                  <label class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="possuiComissionado" value="nao_possui" {% if
-                      dados_corretos.get('possuiComissionado')=='nao_possui' %}checked{% endif %}>
-                    <span class="form-check-label">Não</span>
-                  </label>
                 </div>
 
-                <!-- Container principal que agrupa todos os blocos de "Comissionados" -->
-                <div id="container-comissionados">
-                  {% set total_comissionados = fornecedor_comissionados|length if fornecedor_comissionados else 0 %}
-                  {% if total_comissionados > 0 %}
-                  {% for idx in range(total_comissionados) %}
-                  <div class="row mb-3 comissionado-item grupoPossuiComissionado">
-
-                    <!-- SELECIONAR COMISSIONADO -->
-                    <div class="col-md-4 mb-4">
-                      <label class="form-label required">Selecione um Comissionado</label>
-                      <select name="comissionados[]"
-                        class="form-select {% if 'comissionados' in campos_obrigatorios %}is-invalid{% endif %}">
-                        <option value="">Selecione...</option>
-                        {% for c in comissionados %}
-                        <option value="{{ c.id }}" {% if fornecedor_comissionados[idx].comissionado_id==c.id
-                          %}selected{% endif %}>
-                          {{ c.identificacao }}
-                        </option>
-                        {% endfor %}
-                      </select>
-                      <div class="invalid-feedback">
-                        {% if 'comissionados' in campos_obrigatorios %}
-                        {{ campos_obrigatorios['comissionados'] }}
-                        {% elif 'comissionados' in campos_erros %}
-                        {{ campos_erros['comissionados'] }}
-                        {% endif %}
-                      </div>
-                    </div>
-
-                    <!-- TIPO COMISSÃO -->
-                    <div class="col-md-2 mb-4">
-                      <label class="form-label required">Tipo</label>
-                      <select name="tipoComissao[]" class="form-select tipo-comissao-select">
-                        <option value="valor" {% if fornecedor_comissionados[idx].tipo_comissao == 0 %}selected{% endif %}>Valor (R$/ton)</option>
-                        <option value="porcentagem" {% if fornecedor_comissionados[idx].tipo_comissao == 1 %}selected{% endif %}>Porcentagem (%)</option>
-                      </select>
-                    </div>
-
-                    <!-- VALOR COMISSÃO -->
-                    <div class="col-md-4 mb-4">
-                      <label class="form-label required valor-label">
-                        {% if fornecedor_comissionados[idx].tipo_comissao == 1 %}
-                        Porcentagem (%)
-                        {% else %}
-                        Valor Comissão/Ton
-                        {% endif %}
-                      </label>
-                      <input type="text" name="valorComissaoTon[]"
-                        value="{{ fornecedor_comissionados[idx].valor_comissao_ton_100/100 }}"
-                        class="form-control valor-input {% if fornecedor_comissionados[idx].tipo_comissao == 1 %}campo-float{% else %}campo-moeda-brl{% endif %} {% if 'valorComissaoTon' in campos_obrigatorios %}is-invalid{% endif %}"
-                        placeholder="{% if fornecedor_comissionados[idx].tipo_comissao == 1 %}0.00{% else %}R$ 0,00{% endif %}">
-                      <div class="invalid-feedback">
-                        {% if 'valorComissaoTon' in campos_obrigatorios %}
-                        {{ campos_obrigatorios['valorComissaoTon'] }}
-                        {% elif 'valorComissaoTon' in campos_erros %}
-                        {{ campos_erros['valorComissaoTon'] }}
-                        {% endif %}
-                      </div>
-                    </div>
-
-                    <!-- BOTÕES -->
-                    <div class="col-md-2 mb-4 d-flex align-items-end">
-                      <button type="button" class="btn btn-danger btn-remover-comissionado me-2" {% if
-                        total_comissionados <=1 %}disabled{% endif %}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icon-tabler-trash">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M4 7l16 0" />
-                          <path d="M10 11l0 6" />
-                          <path d="M14 11l0 6" />
-                          <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                          <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-                        </svg>
-                      </button>
-                      <button type="button" class="btn btn-primary btn-adicionar-comissionado">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icon-tabler-plus">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M12 5l0 14" />
-                          <path d="M5 12l14 0" />
-                        </svg>
-                      </button>
-                    </div>
-
-                  </div>
-                  {% endfor %}
-                  {% else %}
-                  <!-- Se não houver registro, exibe um bloco vazio para preencher -->
-                  <div class="row mb-3 comissionado-item grupoPossuiComissionado">
-
-                    <!-- SELECIONAR COMISSIONADO -->
-                    <div class="col-md-4 mb-4">
-                      <label class="form-label required">Selecione um Comissionado</label>
-                      <select name="comissionados[]"
-                        class="form-select {% if 'comissionados' in campos_obrigatorios %}is-invalid{% endif %}">
-                        <option value="">Selecione...</option>
-                        {% for c in comissionados %}
-                        <option value="{{ c.id }}">{{ c.identificacao }}</option>
-                        {% endfor %}
-                      </select>
-                      <div class="invalid-feedback">
-                        {% if 'comissionados' in campos_obrigatorios %}
-                        {{ campos_obrigatorios['comissionados'] }}
-                        {% elif 'comissionados' in campos_erros %}
-                        {{ campos_erros['comissionados'] }}
-                        {% endif %}
-                      </div>
-                    </div>
-
-                    <!-- TIPO COMISSÃO -->
-                    <div class="col-md-2 mb-4">
-                      <label class="form-label required">Tipo</label>
-                      <select name="tipoComissao[]" class="form-select tipo-comissao-select">
-                        <option value="valor" selected>Valor (R$/ton)</option>
-                        <option value="porcentagem">Porcentagem (%)</option>
-                      </select>
-                    </div>
-
-                    <!-- VALOR COMISSÃO -->
-                    <div class="col-md-4 mb-4">
-                      <label class="form-label required valor-label">Valor Comissão/Ton</label>
-                      <input type="text" name="valorComissaoTon[]"
-                        class="form-control campo-moeda-brl valor-input {% if 'valorComissaoTon' in campos_obrigatorios %}is-invalid{% endif %}"
-                        placeholder="R$ 0,00">
-                      <div class="invalid-feedback">
-                        {% if 'valorComissaoTon' in campos_obrigatorios %}
-                        {{ campos_obrigatorios['valorComissaoTon'] }}
-                        {% elif 'valorComissaoTon' in campos_erros %}
-                        {{ campos_erros['valorComissaoTon'] }}
-                        {% endif %}
-                      </div>
-                    </div>
-
-                    <!-- BOTÕES -->
-                    <div class="col-md-2 mb-4 d-flex align-items-end">
-                      <button type="button" class="btn btn-danger btn-remover-comissionado me-2" disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icon-tabler-trash">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M4 7l16 0" />
-                          <path d="M10 11l0 6" />
-                          <path d="M14 11l0 6" />
-                          <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                          <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-                        </svg>
-                      </button>
-                      <button type="button" class="btn btn-primary btn-adicionar-comissionado">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icon-tabler-plus">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M12 5l0 14" />
-                          <path d="M5 12l14 0" />
-                        </svg>
-                      </button>
-                    </div>
-
-                  </div>
+                <!-- Mensagem de erro geral (opcional) -->
+                <div class="invalid-feedback d-block">
+                  {% if 'madeiraPosta' in campos_obrigatorios %}
+                  {{ campos_obrigatorios['madeiraPosta'] }}
+                  {% elif 'madeiraPosta' in campos_erros %}
+                  {{ campos_erros['madeiraPosta'] }}
                   {% endif %}
                 </div>
-                <!-- ========== /COMISSIONADOS ========== -->
 
-              </div><!-- /.card-body -->
-
-              <!-- ========== RODAPÉ COM BOTÕES ========== -->
-              <div class="card-footer text-center text-md-end">
-                <a href="{{ url_for('listar_fornecedores') }}" class="btn btn-primary">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
-                    height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M5 12l14 0"></path>
-                    <path d="M5 12l6 6"></path>
-                    <path d="M5 12l6 -6"></path>
-                  </svg>
-                  Voltar
-                </a>
-                <button type="submit" class="btn btn-primary">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24"
-                    height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M12 5l0 14"></path>
-                    <path d="M5 12l14 0"></path>
-                  </svg>
-                  Editar
-                </button>
               </div>
-              <!-- ========== /RODAPÉ ========== -->
+
+              <!-- ========== SEÇÃO DE COMISSIONADOS ========== -->
+              <h3 class="text-primary mb-3">Comissionados</h3>
+
+              <div class="mb-3">
+                <div class="form-label required">Possui comissionado?</div>
+                <label class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="possuiComissionado" value="possui" {% if
+                    dados_corretos['possuiComissionado']=='possui' %}checked{% endif %}>
+                  <span class="form-check-label">Sim</span>
+                </label>
+                <label class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="possuiComissionado" value="nao_possui" {% if
+                    dados_corretos['possuiComissionado']=='nao_possui' or not dados_corretos['possuiComissionado']
+                    %}checked{% endif %}>
+                  <span class="form-check-label">Não</span>
+                </label>
+              </div>
+
+              <div class="row">
+                <!-- Container principal que agrupa todos os blocos de "Comissionados" -->
+                <div id="container-comissionados">
+                  
+                  {% if dados_corretos.get('comissionados') and dados_corretos['comissionados']|length > 0 %}
+                    <!-- Renderizar comissionados existentes -->
+                    {% for comiss in dados_corretos['comissionados'] %}
+                    <div class="row mb-3 comissionado-item grupoPossuiComissionado">
+
+                      <!-- SELECIONAR COMISSIONADO -->
+                      <div class="col-md-4 mb-4">
+                        <label class="form-label">Selecione um Comissionado</label>
+                        <select name="comissionados[]" class="form-select">
+                          <option value>Selecione...</option>
+                          {% for c in comissionados %}
+                          <option value="{{ c.id }}" {% if c.id == comiss.id %}selected{% endif %}>{{ c.identificacao }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <!-- TIPO COMISSÃO -->
+                      <div class="col-md-2 mb-4">
+                        <label class="form-label">Tipo</label>
+                        <select name="tipoComissao[]" class="form-select tipo-comissao-select">
+                          <option value="valor" {% if comiss.tipo == 'valor' %}selected{% endif %}>Valor (R$/ton)</option>
+                          <option value="porcentagem" {% if comiss.tipo == 'porcentagem' %}selected{% endif %}>Porcentagem (%)</option>
+                        </select>
+                      </div>
+
+                      <!-- VALOR COMISSÃO -->
+                      <div class="col-md-4 mb-4">
+                        <label class="form-label valor-label">
+                          {% if comiss.tipo == 'porcentagem' %}Porcentagem (%){% else %}Valor Comissão/Ton{% endif %}
+                        </label>
+                        <input type="text" name="valorComissaoTon[]" 
+                          class="form-control {% if comiss.tipo == 'porcentagem' %}campo-float{% else %}campo-moeda-brl{% endif %} valor-input"
+                          value="{{ comiss.valor }}"
+                          placeholder="{% if comiss.tipo == 'porcentagem' %}0.00{% else %}R$ 0,00{% endif %}">
+                      </div>
+
+                      <!-- BOTÕES -->
+                      <div class="col-md-2 mb-4 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger btn-remover me-2" {% if loop.first and loop.length == 1 %}disabled{% endif %}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icon-tabler-trash">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 7l16 0" />
+                            <path d="M10 11l0 6" />
+                            <path d="M14 11l0 6" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                          </svg>
+                        </button>
+                        <button type="button" class="btn btn-primary btn-adicionar-comissionado">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icon-tabler-plus">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 5l0 14" />
+                            <path d="M5 12l14 0" />
+                          </svg>
+                        </button>
+                      </div>
+
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <!-- Bloco "modelo" (será clonado quando não há comissionados) -->
+                    <div class="row mb-3 comissionado-item grupoPossuiComissionado">
+
+                      <!-- SELECIONAR COMISSIONADO -->
+                      <div class="col-md-4 mb-4">
+                        <label class="form-label">Selecione um Comissionado</label>
+                        <select name="comissionados[]" class="form-select">
+                          <option value>Selecione...</option>
+                          {% for c in comissionados %}
+                          <option value="{{ c.id }}">{{ c.identificacao }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <!-- TIPO COMISSÃO -->
+                      <div class="col-md-2 mb-4">
+                        <label class="form-label">Tipo</label>
+                        <select name="tipoComissao[]" class="form-select tipo-comissao-select">
+                          <option value="valor" selected>Valor (R$/ton)</option>
+                          <option value="porcentagem">Porcentagem (%)</option>
+                        </select>
+                      </div>
+
+                      <!-- VALOR COMISSÃO -->
+                      <div class="col-md-4 mb-4">
+                        <label class="form-label valor-label">Valor Comissão/Ton</label>
+                        <input type="text" name="valorComissaoTon[]" class="form-control campo-moeda-brl valor-input"
+                          placeholder="R$ 0,00">
+                      </div>
+
+                      <!-- BOTÕES -->
+                      <div class="col-md-2 mb-4 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger btn-remover me-2" disabled>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icon-tabler-trash">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 7l16 0" />
+                            <path d="M10 11l0 6" />
+                            <path d="M14 11l0 6" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                          </svg>
+                        </button>
+                        <button type="button" class="btn btn-primary btn-adicionar-comissionado">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icon-tabler-plus">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 5l0 14" />
+                            <path d="M5 12l14 0" />
+                          </svg>
+                        </button>
+                      </div>
+
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+              <!-- ========== /SEÇÃO DE COMISSIONADOS ========== -->
+
+            </div>
+            <div class="card-footer text-center text-md-end">
+              <a href="{{ url_for('listar_fornecedores') }}" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
+                  height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                  <path d="M5 12l14 0"></path>
+                  <path d="M5 12l6 6"></path>
+                  <path d="M5 12l6 -6"></path>
+                </svg>
+                Voltar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-edit" width="24" height="24"
+                  viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                  <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
+                  <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"></path>
+                  <path d="M16 5l3 3"></path>
+                </svg>
+                Atualizar
+              </button>
+            </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- ========== SCRIPTS TIPO CONTRIBUIÇÃO ========== -->
+  <!-- Oculta exibe campos a partir da radio e também limpa a tela não usada -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+
+
       function limparCampos(grupoClasse) {
         document.querySelectorAll('.' + grupoClasse + ' input[type="text"]').forEach(function (input) {
           input.value = '';
@@ -1733,32 +908,10 @@
 
       // Configura o estado inicial do campo Floresta
       alternarCampoFloresta();
-
-      // Gerenciar exibição do upload de contrato
-      const radioManter = document.getElementById("opcaoDeclaracaoManter");
-      const radioAlterar = document.getElementById("opcaoDeclaracaoAlterar");
-      const inputUpload = document.getElementById("inputUploadDeclaracao");
-      const linkVisualizar = document.getElementById("visualizar-declaracao-senar");
-
-      if (radioManter && radioAlterar && inputUpload) {
-        function atualizarExibicaoUpload() {
-          if (radioAlterar.checked) {
-            inputUpload.classList.remove("d-none");
-            linkVisualizar.classList.add("d-none");
-          } else {
-            inputUpload.classList.add("d-none");
-            linkVisualizar.classList.remove("d-none");
-          }
-        }
-
-        radioManter.addEventListener("change", atualizarExibicaoUpload);
-        radioAlterar.addEventListener("change", atualizarExibicaoUpload);
-        atualizarExibicaoUpload();
-      }
     });
   </script>
 
-  <!-- ========== SCRIPTS TIPO CADASTRO ========== -->
+  <!-- Oculta exibe campos a partir da radio e também limpa a tela não usada -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       function limparCampos(grupoClasse) {
@@ -1767,78 +920,75 @@
         });
       }
 
-      function alternarCamposTipo() {
+      function alternarCampos() {
         var radioCPF = document.querySelector('input[name="tipoCadastro"][value="cpf"]');
+
         var grupoCPF = document.querySelectorAll('.grupoCPF');
         var grupoCNPJ = document.querySelectorAll('.grupoCNPJ');
 
         if (radioCPF.checked) {
           grupoCPF.forEach(el => el.style.display = 'block');
           grupoCNPJ.forEach(el => el.style.display = 'none');
-          limparCampos('grupoCNPJ');
+          limparCampos('grupoCNPJ'); // Limpa campos do grupo CNPJ
         } else {
           grupoCPF.forEach(el => el.style.display = 'none');
           grupoCNPJ.forEach(el => el.style.display = 'block');
-          limparCampos('grupoCPF');
+          limparCampos('grupoCPF'); // Limpa campos do grupo CPF
         }
       }
 
       document.querySelectorAll('input[name="tipoCadastro"]').forEach(radio => {
-        radio.addEventListener('change', alternarCamposTipo);
+        radio.addEventListener('change', alternarCampos);
       });
-      alternarCamposTipo();
 
-      // Gerenciar exibição do upload de contrato
-      const radioManter = document.getElementById("opcaoContratoManter");
-      const radioAlterar = document.getElementById("opcaoContratoAlterar");
-      const inputUpload = document.getElementById("inputUploadContrato");
-      const linkVisualizar = document.getElementById("visualizar-contrato-fornecedor");
-
-      if (radioManter && radioAlterar && inputUpload) {
-        function atualizarExibicaoUpload() {
-          if (radioAlterar.checked) {
-            inputUpload.classList.remove("d-none");
-            linkVisualizar.classList.add("d-none");
-          } else {
-            inputUpload.classList.add("d-none");
-            linkVisualizar.classList.remove("d-none");
-          }
-        }
-
-        radioManter.addEventListener("change", atualizarExibicaoUpload);
-        radioAlterar.addEventListener("change", atualizarExibicaoUpload);
-        atualizarExibicaoUpload();
-      }
+      alternarCampos(); // Configura o estado inicial dos campos
     });
   </script>
 
-  <!-- ========== SCRIPTS CUSTO EXTRAÇÃO ========== -->
+  <!-- GRUPO DE EXTRAÇÃO -->
+
+  <!-- Oculta exibe campos a partir da radio e também limpa a tela não usada -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      function alternarCamposExtracao() {
+
+
+      function alternarCampos() {
         var radioPossui = document.querySelector('input[name="custoExtracao"][value="possui"]');
         var grupoPossuiExtracao = document.querySelectorAll('.grupoPossuiExtracao');
-        if (radioPossui.checked) {
+
+        if (radioPossui && radioPossui.checked) {
           grupoPossuiExtracao.forEach(el => el.style.display = 'block');
         } else {
           grupoPossuiExtracao.forEach(el => el.style.display = 'none');
         }
       }
 
+      // Verificação inicial baseada nos dados do backend
+      setTimeout(() => {
+        const valorCustoExtracao = '{{ dados_corretos.custoExtracao }}';
+        if (valorCustoExtracao === 'possui') {
+          const radioPossui = document.querySelector('input[name="custoExtracao"][value="possui"]');
+          if (radioPossui && !radioPossui.checked) {
+            radioPossui.checked = true;
+          }
+        }
+        alternarCampos();
+      }, 100);
+
       document.querySelectorAll('input[name="custoExtracao"]').forEach(radio => {
-        radio.addEventListener('change', alternarCamposExtracao);
+        radio.addEventListener('change', alternarCampos);
       });
-      alternarCamposExtracao();
+
+      alternarCampos(); // Configura o estado inicial dos campos
     });
   </script>
 
-  <!-- ========== SCRIPTS MADEIRA POSTA ========== -->
   <!-- GRUPO DE MADEIRA POSTA -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const container = document.getElementById('container-madeira-posta');
 
-      // 1) alterna visibilidade dos blocos conforme radio "possui" / "não possui"
+      // 1) alterna visibilidade dos blocos conforme radio “possui” / “não possui”
       function alternarCampos() {
         const radioPossui = document.querySelector('input[name="madeiraPosta"][value="possui"]');
         const blocos = container.querySelectorAll('.madeira-item');
@@ -1856,30 +1006,47 @@
       });
       alternarCampos(); // estado inicial
 
-      // 2) função que obtém todos os IDs atualmente selecionados em qualquer select
       function obterSelecionados() {
-        // Removido controle de duplicação - permite seleções livres
         return { clientesSelecionados: new Set(), transportadorasSelecionadas: new Set() };
       }
 
-      // 3) atualiza cada <select> para só exibir opções que não estejam em "selecionados", salvo a própria opção escolhida
       function atualizarTodosSelects() {
-        // Removido controle de duplicação - todas as opções ficam sempre disponíveis
         const { clientesSelecionados, transportadorasSelecionadas } = obterSelecionados();
-
-        // Atualizar selects de clientes - todas as opções sempre disponíveis
         container.querySelectorAll('select[name="clienteMadeiraPosta[]"]').forEach(select => {
+          const atual = select.value;
+          // Para cada option neste select: se o value estiver em “selecionados” e for diferente do atual, esconder/desabilitar
           Array.from(select.options).forEach(option => {
-            option.disabled = false;
-            option.hidden = false;
+            if (!option.value) return; // primeira opção “Selecione...”
+            if (option.value === atual) {
+              // mantém habilitado
+              option.disabled = false;
+              option.hidden = false;
+            } else if (clientesSelecionados.has(option.value)) {
+              option.disabled = false;
+              option.hidden = false;
+            } else {
+              option.disabled = false;
+              option.hidden = false;
+            }
           });
         });
 
-        // Atualizar selects de transportadoras - todas as opções sempre disponíveis
+        // Atualizar selects de transportadoras
         container.querySelectorAll('select[name="transportadoraMadeiraPosta[]"]').forEach(select => {
+          const atual = select.value;
           Array.from(select.options).forEach(option => {
-            option.disabled = false;
-            option.hidden = false;
+            if (!option.value) return; // primeira opção "Selecione..."
+            if (option.value === atual) {
+              // mantém habilitado
+              option.disabled = false;
+              option.hidden = false;
+            } else if (transportadorasSelecionadas.has(option.value)) {
+              option.disabled = false;
+              option.hidden = false;
+            } else {
+              option.disabled = false;
+              option.hidden = false;
+            }
           });
         });
       }
@@ -1907,7 +1074,7 @@
           input.removeAttribute('data-mascara-aplicada');
         });
 
-        // habilitar botão "remover"
+        // habilitar botão “remover”
         const btnRemover = novoBloco.querySelector('.btn-remover');
         if (btnRemover) {
           btnRemover.disabled = false;
@@ -1922,25 +1089,21 @@
         vincularChangeSelect(novoBloco);
       }
 
-      // 5) Vincula evento de change em um bloco para atualizar selects quando o valor mudar
+      // Vincula eventos de change nos selects
       function vincularChangeSelect(bloco) {
         const selectCliente = bloco.querySelector('select[name="clienteMadeiraPosta[]"]');
-        if (selectCliente) {
-          selectCliente.addEventListener('change', atualizarTodosSelects);
-        }
+        if (selectCliente) selectCliente.addEventListener('change', atualizarTodosSelects);
 
         const selectTransportadora = bloco.querySelector('select[name="transportadoraMadeiraPosta[]"]');
-        if (selectTransportadora) {
-          selectTransportadora.addEventListener('change', atualizarTodosSelects);
-        }
+        if (selectTransportadora) selectTransportadora.addEventListener('change', atualizarTodosSelects);
       }
 
-      // 6) Depois de carregar a página, vincular change em todos os selects já existentes
+      // Vincular eventos nos blocos existentes
       container.querySelectorAll('.madeira-item').forEach(bloco => {
         vincularChangeSelect(bloco);
       });
 
-      // 7) Gerencia clique em adicionar/remover blocos
+      // Gerencia clique em adicionar/remover blocos
       container.addEventListener('click', function (event) {
         if (event.target.closest('.btn-adicionar')) {
           adicionarNovoBloco();
@@ -1955,15 +1118,106 @@
         }
       });
 
-      // 8) Ao inicializar, reaplica máscara nos campos existentes e atualiza selects
+      // Inicializar máscaras e selects
       if (typeof aplicarMascaraMoeda === 'function') {
         aplicarMascaraMoeda();
       }
       atualizarTodosSelects();
+      
+      // Carregar dados para edição de madeira posta
+      setTimeout(() => {
+        const valorMadeiraPosta = '{{ dados_corretos.madeiraPosta }}';
+        if (valorMadeiraPosta === 'possui') {
+          criarBlocosMadeiraPostaEdicao();
+        }
+      }, 200);
+      
+      // Cria blocos de madeira posta para edição baseado nos dados do banco
+      function criarBlocosMadeiraPostaEdicao() {
+        const clientesMP = {{ dados_corretos.clienteMadeiraPosta | tojson }};
+        const transportadorasMP = {{ dados_corretos.transportadoraMadeiraPosta | tojson }};
+        
+        // Obter estrutura dinâmica de produtos/bitolas do backend
+        const produtosBitolas = {{ produtos_bitolas | tojson }};
+        const dadosCorretos = {{ dados_corretos | tojson }};
+        
+        if (!clientesMP || clientesMP.length === 0) {
+          return;
+        }
+        
+        const primeiroBloco = container.querySelector('.madeira-item');
+        
+        // Criar um bloco para cada cliente
+        for (let i = 0; i < clientesMP.length; i++) {
+          let bloco;
+          
+          if (i === 0) {
+            // Usar o primeiro bloco existente
+            bloco = primeiroBloco;
+          } else {
+            // Clonar o primeiro bloco para os demais
+            bloco = primeiroBloco.cloneNode(true);
+            container.appendChild(bloco);
+            
+            // Habilitar botão remover para blocos adicionais
+            const btnRemover = bloco.querySelector('.btn-remover');
+            if (btnRemover) btnRemover.disabled = false;
+          }
+          
+          // Preencher dados do bloco
+          const selectCliente = bloco.querySelector('select[name="clienteMadeiraPosta[]"]');
+          if (selectCliente && clientesMP[i]) {
+            selectCliente.value = clientesMP[i];
+          }
+          
+          const selectTransportadora = bloco.querySelector('select[name="transportadoraMadeiraPosta[]"]');
+          if (selectTransportadora && transportadorasMP[i]) {
+            selectTransportadora.value = transportadorasMP[i];
+          }
+          
+          // Preencher preços dinamicamente baseado nos produtos/bitolas
+          const preencherPreco = (nome, valor) => {
+            const input = bloco.querySelector(`input[name="${nome}"]`);
+            if (input && valor && valor > 0) {
+              const valorFormatado = formatarMoedaLocal(valor / 100);
+              input.value = valorFormatado;
+            }
+          };
+          
+          // Iterar por todos os produtos e suas bitolas
+          Object.keys(produtosBitolas).forEach(produtoId => {
+            const produto = produtosBitolas[produtoId];
+            const produtoKey = produto.nome.toLowerCase();
+            
+            produto.bitolas.forEach((bitola, bitolaIndex) => {
+              const nomeCampo = `${produtoKey}MadeiraPosta${bitolaIndex + 1}[]`;
+              const valorCampo = dadosCorretos[`${produtoKey}MadeiraPosta${bitolaIndex + 1}`];
+              
+              if (valorCampo && Array.isArray(valorCampo) && valorCampo[i]) {
+                preencherPreco(nomeCampo, valorCampo[i]);
+              }
+            });
+          });
+        }
+        
+        // Reaplicar máscara após preencher valores
+        if (typeof aplicarMascaraMoeda === 'function') {
+          aplicarMascaraMoeda();
+        }
+        atualizarTodosSelects();
+      }
+      
+      // Função auxiliar para formatar valores monetários
+      function formatarMoedaLocal(valor) {
+        return 'R$ ' + valor.toLocaleString('pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
     });
   </script>
 
-  <!-- ========== GESTÃO DE COMISSIONADOS ========== -->
+  <!-- JavaScript para gestão dinâmica de comissionados -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const containerComissionados = document.getElementById('container-comissionados');
@@ -1989,7 +1243,7 @@
       function atualizarBotoesRemoverComissionados() {
         const blocosComissionados = containerComissionados.querySelectorAll('.comissionado-item');
         blocosComissionados.forEach((bloco, index) => {
-          const btnRemover = bloco.querySelector('.btn-remover-comissionado');
+          const btnRemover = bloco.querySelector('.btn-remover');
           if (btnRemover) {
             btnRemover.disabled = blocosComissionados.length <= 1;
           }
@@ -2011,7 +1265,7 @@
             inputValor.value = '';
             inputValor.removeAttribute('data-mascara-aplicada');
             
-            // Remover evento de input antigo (máscara) clonando o elemento
+            // Remover evento de input antigo (máscara)
             const novoInput = inputValor.cloneNode(true);
             inputValor.parentNode.replaceChild(novoInput, inputValor);
             
@@ -2073,7 +1327,7 @@
         }
 
         // Habilitar botão "remover"
-        const btnRemover = novoBloco.querySelector('.btn-remover-comissionado');
+        const btnRemover = novoBloco.querySelector('.btn-remover');
         if (btnRemover) {
           btnRemover.disabled = false;
         }
@@ -2095,7 +1349,7 @@
         if (event.target.closest('.btn-adicionar-comissionado')) {
           adicionarNovoBlocoComissionado();
         }
-        if (event.target.closest('.btn-remover-comissionado')) {
+        if (event.target.closest('.btn-remover')) {
           const todosBlocos = containerComissionados.querySelectorAll('.comissionado-item');
           if (todosBlocos.length > 1) {
             const blocoAtual = event.target.closest('.comissionado-item');
@@ -2110,28 +1364,131 @@
         alternarTipoComissao(bloco);
       });
 
-      // Reaplica máscara nos campos existentes e atualiza botões
+      // Estado inicial dos botões
+      atualizarBotoesRemoverComissionados();
+    });
+  </script>
+
+  <script>
+    // Cria o TOM Select nos selects para melhor UX
+    document.addEventListener('DOMContentLoaded', function () {
+      // Configuração padrão do TomSelect
+      const defaultConfig = {
+        create: false,
+        allowEmptyOption: true,
+        sortField: {
+          field: "text",
+          direction: "asc"
+        }
+      };
+
+      const selectors = [
+        '#selectExtrator',
+        'select[name="instituicao_financeira"]'
+      ];
+
+      // Inicializa TomSelect em cada elemento encontrado
+      selectors.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) {
+          new TomSelect(element, defaultConfig);
+        }
+      });
+
+      // Pré-carregar dados para edição se necessário
+      preCarregarDadosEdicao();
+    });
+
+    function preCarregarDadosEdicao() {
+      const isEdicaoMode = window.location.pathname.includes('/editar/');
+      if (!isEdicaoMode) return;
+      
+      // Atualizar visibilidade dos grupos baseado nos valores carregados
+      setTimeout(() => {
+        // Atualizar grupo de custo de extração
+        const radioCustoExtracao = document.querySelector('input[name="custoExtracao"]:checked');
+        if (radioCustoExtracao) {
+          const grupoPossuiExtracao = document.querySelectorAll('.grupoPossuiExtracao');
+          if (radioCustoExtracao.value === 'possui') {
+            grupoPossuiExtracao.forEach(el => el.style.display = 'block');
+          } else {
+            grupoPossuiExtracao.forEach(el => el.style.display = 'none');
+          }
+        }
+        
+        // Atualizar grupo de madeira posta
+        const radioMadeiraPosta = document.querySelector('input[name="madeiraPosta"]:checked');
+        if (radioMadeiraPosta) {
+          const blocosMadeiraPosta = document.querySelectorAll('.madeira-item');
+          if (radioMadeiraPosta.value === 'possui') {
+            blocosMadeiraPosta.forEach(el => el.style.display = 'flex');
+          } else {
+            blocosMadeiraPosta.forEach(el => el.style.display = 'none');
+          }
+        }
+        
+        // Atualizar grupo de comissionados
+        const radioComissionado = document.querySelector('input[name="possuiComissionado"]:checked');
+        if (radioComissionado) {
+          const gruposComissionado = document.querySelectorAll('.grupoPossuiComissionado');
+          if (radioComissionado.value === 'possui') {
+            gruposComissionado.forEach(el => el.style.display = 'flex');
+          } else {
+            gruposComissionado.forEach(el => el.style.display = 'none');
+          }
+        }
+      }, 100);
+      
+      // Aqui os dados são pré-carregados pelo backend através do dados_corretos
+      // O JavaScript apenas garante que os campos dinâmicos sejam exibidos corretamente
+      
+      // Reaplicar máscaras nos campos carregados
       if (typeof aplicarMascaraMoeda === 'function') {
         aplicarMascaraMoeda();
       }
-      atualizarBotoesRemoverComissionados();
-    });
-  </script>;
-
-  <!-- ========== TOMSELECT ========== -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const fornecedorSelect = document.querySelector('#selectExtrator');
-      if (fornecedorSelect) {
-        new TomSelect(fornecedorSelect, {
-          create: false,
-          allowEmptyOption: false,
-          sortField: { field: "text", direction: "asc" }
-        });
+      if (typeof aplicarComportamentoCampoFloat === 'function') {
+        aplicarComportamentoCampoFloat();
       }
+    }
+  </script>
+
+  <script>
+    // Script específico para corrigir problemas na edição
+    document.addEventListener('DOMContentLoaded', function () {
+      
+      // Correção dos radio buttons para edição
+      function corrigirRadioButtons() {
+        const custoExtracaoValor = '{{ dados_corretos.custoExtracao }}';
+        if (custoExtracaoValor === 'possui') {
+          const radioExtracao = document.querySelector('input[name="custoExtracao"][value="possui"]');
+          if (radioExtracao) {
+            radioExtracao.checked = true;
+            document.querySelectorAll('.grupoPossuiExtracao').forEach(el => {
+              el.style.display = 'block';
+            });
+          }
+        }
+        
+        const madeiraPostaValor = '{{ dados_corretos.madeiraPosta }}';
+        if (madeiraPostaValor === 'possui') {
+          const radioMadeira = document.querySelector('input[name="madeiraPosta"][value="possui"]');
+          if (radioMadeira) {
+            radioMadeira.checked = true;
+            document.querySelectorAll('.madeira-item').forEach(el => {
+              el.style.display = 'flex';
+            });
+          }
+        }
+      }
+      
+      // Executar correção com delay para garantir elementos prontos
+      setTimeout(corrigirRadioButtons, 200);
+      setTimeout(corrigirRadioButtons, 500);
     });
   </script>
 
   {% include 'estrutura/footer.html' %}
+
 </div>
+
 {% endblock conteudo %}

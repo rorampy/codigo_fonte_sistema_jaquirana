@@ -71,12 +71,12 @@ def api_creditos_disponiveis(tipo_entidade, entidade_id):
 @login_required
 @requires_roles
 def listagem_fornecedores_a_pagar():
-    from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+    from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
     
     bitolas = BitolaModel.listar_bitolas_ativas()
     produtos = ProdutoModel.listar_produtos()
     statusPagamentos = SituacaoPagamentoModel.listar_status_filtro()
-    fornecedores = FornecedorModel.listar_fornecedores_ativos()
+    fornecedores = FornecedorCadastroModel.listar_fornecedores_ativos()
     motoristas = MotoristaModel.listar_motoristas_ativos()
     transportadoras = TransportadoraModel.listar_transportadoras_ativas()
     clientes = ClienteModel.listar_clientes_ativos()

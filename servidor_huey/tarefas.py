@@ -53,7 +53,7 @@ def sincronizar_precos_fornecedores(data_inicio=None, data_fim=None, fornecedor_
         dict: Resultado da sincronização com estatísticas
     """
     from sistema import db, app
-    from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+    from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
     from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
     from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
     from datetime import datetime
@@ -124,7 +124,7 @@ def sincronizar_precos_fornecedores(data_inicio=None, data_fim=None, fornecedor_
                         if not solicitacao:
                             continue
                         
-                        resultado_precos = FornecedorModel.obter_precos_custo_fornecedor(
+                        resultado_precos = FornecedorCadastroModel.obter_precos_custo_fornecedor(
                             fornecedor_identificacao=forne.fornecedor_id,
                             produto=solicitacao.produto.nome.strip(),
                             bitola_solicitacao=solicitacao.bitola_id,

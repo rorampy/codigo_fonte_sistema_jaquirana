@@ -8,7 +8,8 @@ from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_m
 from sistema.models_views.autenticacao.usuario_model import UsuarioModel
 from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
 from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_conta_bancaria_model import FornecedorContaBancariaModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
 from sistema.models_views.gerenciar.comissionado.comissionado_model import ComissionadoModel
@@ -364,15 +365,31 @@ def dados_bancarios_faturamento(faturamento_id):
         # Buscar dados bancários dos fornecedores
         fornecedores_dados = []
         for fornecedor_id in fornecedores_ids:
-            fornecedor = FornecedorModel.query.get(fornecedor_id)
+            fornecedor = FornecedorCadastroModel.query.get(fornecedor_id)
             if fornecedor:
-                fornecedores_dados.append({
-                    'identificacao': fornecedor.identificacao,
-                    'instituicao_financeira': fornecedor.instituicao_financeira.nome if fornecedor.instituicao_financeira else 'Banco não informado',
-                    'agencia_bancaria': fornecedor.agencia_bancaria,
-                    'conta_bancaria': fornecedor.conta_bancaria,
-                    'chave_pix': fornecedor.chave_pix
-                })
+                # Buscar conta bancária do fornecedor na tabela normalizada
+                conta_bancaria = FornecedorContaBancariaModel.query.filter_by(
+                    fornecedor_id=fornecedor_id,
+                    ativo=True
+                ).first()
+                
+                if conta_bancaria:
+                    fornecedores_dados.append({
+                        'identificacao': fornecedor.identificacao,
+                        'instituicao_financeira': conta_bancaria.instituicao_financeira.nome if conta_bancaria.instituicao_financeira else 'Banco não informado',
+                        'agencia_bancaria': conta_bancaria.agencia_bancaria,
+                        'conta_bancaria': conta_bancaria.conta_bancaria,
+                        'chave_pix': conta_bancaria.chave_pix
+                    })
+                else:
+                    # Se não houver conta bancária cadastrada, adicionar com dados vazios
+                    fornecedores_dados.append({
+                        'identificacao': fornecedor.identificacao,
+                        'instituicao_financeira': 'Banco não informado',
+                        'agencia_bancaria': 'Não informado',
+                        'conta_bancaria': 'Não informado',
+                        'chave_pix': 'Não informado'
+                    })
         
         # Buscar dados bancários das transportadoras
         transportadoras_dados = []
@@ -454,15 +471,30 @@ def dados_bancarios_faturamento(faturamento_id):
 def dados_bancarios_fornecedor(fornecedor_id):
     """Retorna dados bancários de um fornecedor específico"""
     try:
-        fornecedor = FornecedorModel.query.get_or_404(fornecedor_id)
+        fornecedor = FornecedorCadastroModel.query.get_or_404(fornecedor_id)
         
-        return jsonify({
-            'identificacao': fornecedor.identificacao,
-            'instituicao_financeira': fornecedor.instituicao_financeira.nome if fornecedor.instituicao_financeira else 'Banco não informado',
-            'agencia_bancaria': fornecedor.agencia_bancaria,
-            'conta_bancaria': fornecedor.conta_bancaria,
-            'chave_pix': fornecedor.chave_pix
-        })
+        # Buscar conta bancária do fornecedor na tabela normalizada
+        conta_bancaria = FornecedorContaBancariaModel.query.filter_by(
+            fornecedor_id=fornecedor_id,
+            ativo=True
+        ).first()
+        
+        if conta_bancaria:
+            return jsonify({
+                'identificacao': fornecedor.identificacao,
+                'instituicao_financeira': conta_bancaria.instituicao_financeira.nome if conta_bancaria.instituicao_financeira else 'Banco não informado',
+                'agencia_bancaria': conta_bancaria.agencia_bancaria,
+                'conta_bancaria': conta_bancaria.conta_bancaria,
+                'chave_pix': conta_bancaria.chave_pix
+            })
+        else:
+            return jsonify({
+                'identificacao': fornecedor.identificacao,
+                'instituicao_financeira': 'Banco não informado',
+                'agencia_bancaria': 'Não informado',
+                'conta_bancaria': 'Não informado',
+                'chave_pix': 'Não informado'
+            })
         
     except Exception as e:
         return jsonify({'erro': str(e)}), 500

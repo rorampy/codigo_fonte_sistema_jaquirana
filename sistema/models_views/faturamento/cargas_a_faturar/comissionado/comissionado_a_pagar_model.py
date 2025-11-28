@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, date
 from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.gerenciar.veiculo.veiculo_model import VeiculoModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.gerenciar.comissionado.comissionado_model import ComissionadoModel
 from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
@@ -20,8 +20,8 @@ class ComissionadoPagarModel(BaseModel):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     solicitacao_id = db.Column(db.Integer, db.ForeignKey("car_carga.id"), nullable=True)
     solicitacao = db.relationship("CargaModel", backref=db.backref("fin_comissionado_a_pagar_solicitacao", lazy=True))
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor.id"), nullable=True)
-    fornecedor = db.relationship("FornecedorModel", backref=db.backref("fin_comissionado_a_pagar_fornecedor", lazy=True))
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True)
+    fornecedor = db.relationship("FornecedorCadastroModel", backref=db.backref("fin_comissionado_a_pagar_fornecedor", lazy=True))
     comissionado_id = db.Column(db.Integer, db.ForeignKey("com_comissionado.id"), nullable=True)
     comissionado = db.relationship("ComissionadoModel", backref=db.backref("fin_comissionado_a_pagar", lazy=True))
     bitola_id = db.Column(db.Integer, db.ForeignKey("z_sys_bitola.id"), nullable=False)
@@ -208,7 +208,7 @@ class ComissionadoPagarModel(BaseModel):
         
         if nomeFornecedor:
             query = query.filter(
-                FornecedorModel.identificacao.ilike(f"%{nomeFornecedor}%")
+                FornecedorCadastroModel.identificacao.ilike(f"%{nomeFornecedor}%")
             )
             
         if nomeMotorista:
@@ -351,7 +351,7 @@ class ComissionadoPagarModel(BaseModel):
                 RegistroOperacionalModel,
                 CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id,
             )
-            .join(FornecedorModel, ComissionadoPagarModel.fornecedor)
+            .join(FornecedorCadastroModel, ComissionadoPagarModel.fornecedor)
             .join(ComissionadoModel, ComissionadoPagarModel.comissionado)
             .join(BitolaModel, ComissionadoPagarModel.bitola)
             .join(SituacaoPagamentoModel, ComissionadoPagarModel.situacao)
@@ -438,7 +438,7 @@ class ComissionadoPagarModel(BaseModel):
                 RegistroOperacionalModel,
                 CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id,
             )
-            .join(FornecedorModel, ComissionadoPagarModel.fornecedor)
+            .join(FornecedorCadastroModel, ComissionadoPagarModel.fornecedor)
             .join(ComissionadoModel, ComissionadoPagarModel.comissionado)
             .filter(
                 ComissionadoPagarModel.deletado == False, 
@@ -493,7 +493,7 @@ class ComissionadoPagarModel(BaseModel):
             ).filter(TransportadoraModel.identificacao.ilike(f"%{transportadora}%"))
 
         if fornecedor:
-            query = query.filter(FornecedorModel.identificacao.ilike(f"%{fornecedor}%"))
+            query = query.filter(FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%"))
 
         if placa:
             query = query.join(VeiculoModel, CargaModel.veiculo).filter(VeiculoModel.placa_veiculo.ilike(f"%{placa}%"))

@@ -31,14 +31,14 @@ from sistema._utilitarios.utilitario_semanal import UtilitariosSemana
 @requires_roles
 def listagem_fretes_a_pagar():
     from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
-    from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+    from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
     from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
     
     bitolas = BitolaModel.listar_bitolas_ativas()
     produtos = ProdutoModel.listar_produtos()
     statusPagamentos = SituacaoPagamentoModel.listar_status_filtro()
     transportadoras = TransportadoraModel.listar_transportadoras_ativas()
-    fornecedores = FornecedorModel.listar_fornecedores_ativos()
+    fornecedores = FornecedorCadastroModel.listar_fornecedores_ativos()
     motoristas = MotoristaModel.listar_motoristas_ativos()
     clientes = ClienteModel.listar_clientes_ativos()
 

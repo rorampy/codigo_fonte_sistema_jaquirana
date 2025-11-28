@@ -346,3 +346,135 @@ class DataHora:
         '''
         hoje = date.today()
         return f"{hoje.month:02d}/{hoje.year}"
+
+    @staticmethod
+    def obter_periodo_quinzenal(data_entrega_ou_lista):
+        '''
+        Calcula o período quinzenal baseado na data de entrega ou lista de datas.
+        
+        1ª Quinzena: dia 1 ao 15
+        2ª Quinzena: dia 16 ao último dia do mês
+        
+        Args:
+            data_entrega_ou_lista: Uma data única OU uma lista de datas nos formatos string (DD/MM/YYYY, YYYY-MM-DD) ou objeto date/datetime
+        
+        Returns:
+            str: Período formatado. Ex: "2ª Quinzena - 16/10/2025 a 31/10/2025 e 1ª Quinzena - 01/11/2025 a 15/11/2025"
+        
+        Exemplos:
+            # Para uma data única
+            obter_periodo_quinzenal("25/10/2025") 
+            # Retorna: "2ª Quinzena - 16/10/2025 a 31/10/2025"
+            
+            # Para uma lista de datas
+            obter_periodo_quinzenal(["25/10/2025", "10/11/2025"])
+            # Retorna: "2ª Quinzena - 16/10/2025 a 31/10/2025 e 1ª Quinzena - 01/11/2025 a 15/11/2025"
+        '''
+        if not data_entrega_ou_lista:
+            return None
+        
+        try:
+            # PASSO 1: Verificar se é uma lista ou data única
+            if isinstance(data_entrega_ou_lista, list):
+                todas_datas = data_entrega_ou_lista
+            else:
+                todas_datas = [data_entrega_ou_lista]
+            
+            # PASSO 2: Converter todas as datas para objetos date e filtrar datas válidas
+            datas_convertidas = []
+            for data_item in todas_datas:
+                if not data_item or data_item == '-':
+                    continue
+                    
+                if isinstance(data_item, str):
+                    formatos = ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y']
+                    data_obj = None
+                    for formato in formatos:
+                        try:
+                            data_obj = datetime.strptime(data_item, formato).date()
+                            break
+                        except ValueError:
+                            continue
+                    if data_obj:
+                        datas_convertidas.append(data_obj)
+                elif isinstance(data_item, datetime):
+                    datas_convertidas.append(data_item.date())
+                elif isinstance(data_item, date):
+                    datas_convertidas.append(data_item)
+            
+            if not datas_convertidas:
+                return None
+            
+            # PASSO 3: Se há apenas uma data, retornar quinzena simples
+            if len(datas_convertidas) == 1:
+                data_obj = datas_convertidas[0]
+                dia = data_obj.day
+                if dia <= 15:
+                    inicio = data_obj.replace(day=1)
+                    fim = data_obj.replace(day=15)
+                    return f"1ª Quinzena - {inicio.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}"
+                else:
+                    inicio = data_obj.replace(day=16)
+                    import calendar
+                    ultimo_dia = calendar.monthrange(data_obj.year, data_obj.month)[1]
+                    fim = data_obj.replace(day=ultimo_dia)
+                    return f"2ª Quinzena - {inicio.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}"
+            
+            # PASSO 4: Para múltiplas datas, ordenar e detectar quinzenas abrangidas
+            datas_ordenadas = sorted(datas_convertidas)
+            primeira_data = datas_ordenadas[0]
+            ultima_data = datas_ordenadas[-1]
+            
+            # Verificar se todas as datas estão na mesma quinzena
+            primeira_quinzena = 1 if primeira_data.day <= 15 else 2
+            ultima_quinzena = 1 if ultima_data.day <= 15 else 2
+            
+            # Se mesmo mês e mesma quinzena, retornar quinzena simples
+            if (primeira_data.month == ultima_data.month and 
+                primeira_data.year == ultima_data.year and 
+                primeira_quinzena == ultima_quinzena):
+                return DataHora.obter_periodo_quinzenal(primeira_data)
+            
+            # PASSO 5: Detectar todas as quinzenas no período
+            quinzenas_encontradas = []
+            data_atual = primeira_data
+            
+            while data_atual <= ultima_data:
+                # Determinar quinzena atual
+                if data_atual.day <= 15:
+                    inicio_quinzena = data_atual.replace(day=1)
+                    fim_quinzena = data_atual.replace(day=15)
+                    nome_quinzena = "1ª Quinzena"
+                else:
+                    inicio_quinzena = data_atual.replace(day=16)
+                    import calendar
+                    ultimo_dia = calendar.monthrange(data_atual.year, data_atual.month)[1]
+                    fim_quinzena = data_atual.replace(day=ultimo_dia)
+                    nome_quinzena = "2ª Quinzena"
+                
+                # Verificar se esta quinzena intersecta com o período
+                if inicio_quinzena <= ultima_data and fim_quinzena >= primeira_data:
+                    quinzena_formatada = f"{nome_quinzena} - {inicio_quinzena.strftime('%d/%m/%Y')} a {fim_quinzena.strftime('%d/%m/%Y')}"
+                    if quinzena_formatada not in quinzenas_encontradas:
+                        quinzenas_encontradas.append(quinzena_formatada)
+                
+                # Avançar para próxima quinzena
+                if data_atual.day <= 15:
+                    data_atual = data_atual.replace(day=16)
+                else:
+                    if data_atual.month == 12:
+                        data_atual = data_atual.replace(year=data_atual.year + 1, month=1, day=1)
+                    else:
+                        data_atual = data_atual.replace(month=data_atual.month + 1, day=1)
+            
+            # PASSO 6: Retornar resultado formatado
+            if len(quinzenas_encontradas) == 1:
+                return quinzenas_encontradas[0]
+            elif len(quinzenas_encontradas) > 1:
+                return " e ".join(quinzenas_encontradas)
+            else:
+                # Fallback
+                return DataHora.obter_periodo_quinzenal(primeira_data)
+                
+        except Exception:
+            return None

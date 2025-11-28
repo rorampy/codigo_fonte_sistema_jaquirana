@@ -1,7 +1,7 @@
 from sistema import app, requires_roles, db, current_user
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_madeira_posta_model import FornecedorMadeiraPostaModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
 from sistema.models_views.upload_arquivo.upload_arquivo_view import upload_arquivo
@@ -34,13 +34,13 @@ def listar_fornecedores():
         celular = request.args.get("celular")
         celularFormatado = ValidaDocs.somente_numeros(celular) if celular else None
         
-        fornecedores = FornecedorModel.filtrar_fornecedores(
+        fornecedores = FornecedorCadastroModel.filtrar_fornecedores(
             identificacao=request.args.get("identificacao"),
             numero_documento=numeroDocFormatado,
             celular=celularFormatado,
         )
     else:
-        fornecedores = FornecedorModel.listar_fornecedores()
+        fornecedores = FornecedorCadastroModel.listar_fornecedores()
         
     return render_template(
         "gerenciar/fornecedores/fornecedores_listar.html",
@@ -165,7 +165,7 @@ def cadastrar_fornecedor():
                     validacao_campos_erros.update(verificacao_cpf)
 
                 cpf_tratado = ValidaDocs.remove_pontuacao_cpf(cpf)
-                pesquisa_cpf_banco = FornecedorModel.query.filter_by(
+                pesquisa_cpf_banco = FornecedorCadastroModel.query.filter_by(
                     numero_documento=cpf_tratado
                 ).first()
                 if pesquisa_cpf_banco:
@@ -179,7 +179,7 @@ def cadastrar_fornecedor():
                     validacao_campos_erros.update(verificacao_cnpj)
 
                 cnpj_tratado = ValidaDocs.remove_pontuacao_cnpj(cnpj)
-                pesquisa_cnpj_banco = FornecedorModel.query.filter_by(
+                pesquisa_cnpj_banco = FornecedorCadastroModel.query.filter_by(
                     numero_documento=cnpj_tratado
                 ).first()
                 if pesquisa_cnpj_banco:
@@ -252,7 +252,7 @@ def cadastrar_fornecedor():
                     identificacao = razao_social
                     numero_documento = cnpj_tratado
 
-                fornecedor = FornecedorModel(
+                fornecedor = FornecedorCadastroModel(
                     fatura_via_cpf=fatura_via_cpf,
                     identificacao=identificacao,
                     numero_documento=numero_documento,
@@ -600,7 +600,7 @@ def cadastrar_fornecedor():
 @requires_roles
 def editar_fornecedor(id):
     try:
-        fornecedor = FornecedorModel.obter_fornecedor_por_id(id)
+        fornecedor = FornecedorCadastroModel.obter_fornecedor_por_id(id)
         if fornecedor is None:
             flash(("Fornecedor não encontrado!", "warning"))
             return redirect(url_for("listar_fornecedores"))
@@ -808,7 +808,7 @@ def editar_fornecedor(id):
 
                 cpf_tratado = ValidaDocs.remove_pontuacao_cpf(cpf)
                 if fornecedor.numero_documento != cpf_tratado:
-                    pesquisa_cpf_banco = FornecedorModel.query.filter_by(
+                    pesquisa_cpf_banco = FornecedorCadastroModel.query.filter_by(
                         numero_documento=cpf_tratado
                     ).first()
                     if pesquisa_cpf_banco:
@@ -822,7 +822,7 @@ def editar_fornecedor(id):
 
                 cnpj_tratado = ValidaDocs.remove_pontuacao_cnpj(cnpj)
                 if fornecedor.numero_documento != cnpj_tratado:
-                    pesquisa_cnpj_banco = FornecedorModel.query.filter_by(
+                    pesquisa_cnpj_banco = FornecedorCadastroModel.query.filter_by(
                         numero_documento=cnpj_tratado
                     ).first()
                     if pesquisa_cnpj_banco:
@@ -1370,7 +1370,7 @@ def editar_fornecedor(id):
 @login_required
 @requires_roles
 def desativar_fornecedor(id):
-    fornecedor = FornecedorModel.obter_fornecedor_por_id(id)
+    fornecedor = FornecedorCadastroModel.obter_fornecedor_por_id(id)
     if fornecedor is None:
         flash(("Fornecedor não encontrado!", "warning"))
 
@@ -1384,7 +1384,7 @@ def desativar_fornecedor(id):
 @login_required
 @requires_roles
 def ativar_fornecedor(id):
-    fornecedor = FornecedorModel.obter_fornecedor_por_id(id)
+    fornecedor = FornecedorCadastroModel.obter_fornecedor_por_id(id)
     if fornecedor is None:
         flash(("Fornecedor não encontrado!", "warning"))
 

@@ -16,7 +16,7 @@ from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.gerenciar.veiculo.veiculo_transportadora_veiculo_associado_model import TransportadoraVeiculoAssocModel
 from sistema.models_views.parametros.rotas_frete.rota_model import RotaFreteModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.parametros.bitola.bitola_model import BitolaModel
 from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
@@ -41,7 +41,7 @@ class RegistroOperacionalModel(BaseModel):
     # Coluna descontinuada no projeto, agora é usada somente a tabela de fornecedor_id
     floresta_id = db.Column(db.Integer, db.ForeignKey("flor_floresta.id"), nullable=True)
     # =============================================================
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor.id"), nullable=True)
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True)
 
     razao_social_emissor = db.Column(db.String(200), nullable=True)
     numero_nota_fiscal = db.Column(db.String(20), nullable=True)
@@ -599,7 +599,7 @@ class RegistroOperacionalModel(BaseModel):
                 .filter(
                     or_(
                         FlorestaModel.identificacao.ilike(f"%{floresta_fornecedor}%"),
-                        FornecedorModel.identificacao.ilike(f"%{floresta_fornecedor}%"),
+                        FornecedorCadastroModel.identificacao.ilike(f"%{floresta_fornecedor}%"),
                     )
                 )
             )
@@ -776,7 +776,7 @@ class RegistroOperacionalModel(BaseModel):
             query = query.filter(
                 or_(
                     CargaModel.fornecedor.has(
-                        FornecedorModel.identificacao.ilike(f"%{fornecedor}%")
+                        FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%")
                     ),
                     CargaModel.floresta.has(
                         FlorestaModel.identificacao.ilike(f"%{fornecedor}%")
@@ -919,7 +919,7 @@ class RegistroOperacionalModel(BaseModel):
             query = query.filter(
                 or_(
                     CargaModel.fornecedor.has(
-                        FornecedorModel.identificacao.ilike(f"%{fornecedor}%")
+                        FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%")
                     ),
                     CargaModel.floresta.has(
                         FlorestaModel.identificacao.ilike(f"%{fornecedor}%")
@@ -957,7 +957,7 @@ class RegistroOperacionalModel(BaseModel):
         q = (
             db.session.query(
                 RegistroOperacionalModel,
-                FornecedorModel,
+                FornecedorCadastroModel,
                 FlorestaModel,
                 FornecedorPagarModel,
                 FretePagarModel,
@@ -974,7 +974,7 @@ class RegistroOperacionalModel(BaseModel):
             .join(MotoristaModel, CargaModel.motorista)
             .join(ProdutoModel, CargaModel.produto)
             .join(BitolaModel, CargaModel.bitola)
-            .outerjoin(FornecedorModel, CargaModel.fornecedor)
+            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor)
             .outerjoin(FlorestaModel, CargaModel.floresta)
             .outerjoin(FornecedorPagarModel, FornecedorPagarModel.solicitacao_id == CargaModel.id)
             .outerjoin(FretePagarModel, FretePagarModel.solicitacao_id == CargaModel.id)
@@ -985,7 +985,7 @@ class RegistroOperacionalModel(BaseModel):
             )
             .order_by(
                 case(
-                    (FornecedorModel.identificacao != None, FornecedorModel.identificacao),
+                    (FornecedorCadastroModel.identificacao != None, FornecedorCadastroModel.identificacao),
                     else_=FlorestaModel.identificacao,
                 ),
                 RegistroOperacionalModel.data_entrega_ticket.desc(),
@@ -1085,7 +1085,7 @@ class RegistroOperacionalModel(BaseModel):
         q = (
             db.session.query(
                 RegistroOperacionalModel,
-                FornecedorModel,
+                FornecedorCadastroModel,
                 FlorestaModel,
                 FornecedorPagarModel,
                 FretePagarModel,
@@ -1102,7 +1102,7 @@ class RegistroOperacionalModel(BaseModel):
             .join(MotoristaModel, CargaModel.motorista)
             .join(ProdutoModel, CargaModel.produto)
             .join(BitolaModel, CargaModel.bitola)
-            .outerjoin(FornecedorModel, CargaModel.fornecedor)
+            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor)
             .outerjoin(FlorestaModel, CargaModel.floresta)
             .outerjoin(FornecedorPagarModel, FornecedorPagarModel.solicitacao_id == CargaModel.id)
             .outerjoin(FretePagarModel, FretePagarModel.solicitacao_id == CargaModel.id)
@@ -1113,7 +1113,7 @@ class RegistroOperacionalModel(BaseModel):
             )
             .order_by(
                 case(
-                    (FornecedorModel.identificacao != None, FornecedorModel.identificacao),
+                    (FornecedorCadastroModel.identificacao != None, FornecedorCadastroModel.identificacao),
                     else_=FlorestaModel.identificacao,
                 ),
                 desc(RegistroOperacionalModel.data_entrega_ticket),
@@ -1160,7 +1160,7 @@ class RegistroOperacionalModel(BaseModel):
             
         if fornecedor:
             q = q.filter(or_(
-                CargaModel.fornecedor.has(FornecedorModel.identificacao.ilike(f"%{fornecedor}%")),
+                CargaModel.fornecedor.has(FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%")),
                 CargaModel.floresta.has(FlorestaModel.identificacao.ilike(f"%{fornecedor}%")),
             ))
         
@@ -1241,7 +1241,7 @@ class RegistroOperacionalModel(BaseModel):
             db.session.query(
                 RegistroOperacionalModel,
                 ClienteModel,
-                FornecedorModel,
+                FornecedorCadastroModel,
                 FlorestaModel,
                 FornecedorPagarModel,
             )
@@ -1251,7 +1251,7 @@ class RegistroOperacionalModel(BaseModel):
             .join(MotoristaModel, CargaModel.motorista)
             .join(ProdutoModel, CargaModel.produto)
             .join(BitolaModel, CargaModel.bitola)
-            .outerjoin(FornecedorModel, CargaModel.fornecedor)
+            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor)
             .outerjoin(FlorestaModel, CargaModel.floresta)
             .outerjoin(
                 FornecedorPagarModel,
@@ -1263,7 +1263,7 @@ class RegistroOperacionalModel(BaseModel):
             )
             .order_by(
                 case(
-                    (FornecedorModel.identificacao != None, FornecedorModel.identificacao),
+                    (FornecedorCadastroModel.identificacao != None, FornecedorCadastroModel.identificacao),
                     else_=FlorestaModel.identificacao,
                 ),
                 RegistroOperacionalModel.id.desc(),
@@ -1359,7 +1359,7 @@ class RegistroOperacionalModel(BaseModel):
             db.session.query(
                 RegistroOperacionalModel,
                 ClienteModel,
-                FornecedorModel,
+                FornecedorCadastroModel,
                 FlorestaModel,
                 FornecedorPagarModel,
             )
@@ -1369,7 +1369,7 @@ class RegistroOperacionalModel(BaseModel):
             .join(MotoristaModel, CargaModel.motorista)
             .join(ProdutoModel, CargaModel.produto)
             .join(BitolaModel, CargaModel.bitola)
-            .outerjoin(FornecedorModel, CargaModel.fornecedor)
+            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor)
             .outerjoin(FlorestaModel, CargaModel.floresta)
             .outerjoin(
                 FornecedorPagarModel,
@@ -1432,7 +1432,7 @@ class RegistroOperacionalModel(BaseModel):
             query = query.filter(
                 or_(
                     CargaModel.fornecedor.has(
-                        FornecedorModel.identificacao.ilike(f"%{fornecedor}%")
+                        FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%")
                     ),
                     CargaModel.floresta.has(
                         FlorestaModel.identificacao.ilike(f"%{fornecedor}%")
@@ -1445,7 +1445,7 @@ class RegistroOperacionalModel(BaseModel):
 
         query = query.order_by(
             case(
-                (FornecedorModel.identificacao != None, FornecedorModel.identificacao),
+                (FornecedorCadastroModel.identificacao != None, FornecedorCadastroModel.identificacao),
                 else_=FlorestaModel.identificacao,
             ),
             desc(RegistroOperacionalModel.data_entrega_ticket),
@@ -1499,7 +1499,7 @@ class RegistroOperacionalModel(BaseModel):
             db.session.query(
                 RegistroOperacionalModel,
                 ClienteModel,
-                FornecedorModel,
+                FornecedorCadastroModel,
                 FlorestaModel,
                 FretePagarModel,
             )
@@ -1509,7 +1509,7 @@ class RegistroOperacionalModel(BaseModel):
             .join(MotoristaModel, CargaModel.motorista)
             .join(ProdutoModel, CargaModel.produto)
             .join(BitolaModel, CargaModel.bitola)
-            .outerjoin(FornecedorModel, CargaModel.fornecedor)
+            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor)
             .outerjoin(FlorestaModel, CargaModel.floresta)
             .outerjoin(
                 FretePagarModel,
@@ -1674,7 +1674,7 @@ class RegistroOperacionalModel(BaseModel):
             db.session.query(
                 RegistroOperacionalModel,
                 ClienteModel,
-                FornecedorModel,
+                FornecedorCadastroModel,
                 FlorestaModel,
                 FretePagarModel,
             )
@@ -1684,7 +1684,7 @@ class RegistroOperacionalModel(BaseModel):
             .join(MotoristaModel, CargaModel.motorista)
             .join(ProdutoModel, CargaModel.produto)
             .join(BitolaModel, CargaModel.bitola)
-            .outerjoin(FornecedorModel, CargaModel.fornecedor)
+            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor)
             .outerjoin(FlorestaModel, CargaModel.floresta)
             .outerjoin(
                 FretePagarModel,
@@ -1746,7 +1746,7 @@ class RegistroOperacionalModel(BaseModel):
             query = query.filter(
                 or_(
                     CargaModel.fornecedor.has(
-                        FornecedorModel.identificacao.ilike(f"%{fornecedor}%")
+                        FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%")
                     ),
                     CargaModel.floresta.has(
                         FlorestaModel.identificacao.ilike(f"%{fornecedor}%")
@@ -1756,7 +1756,7 @@ class RegistroOperacionalModel(BaseModel):
 
         if origem:
             query = query.filter(or_(
-                FornecedorModel.identificacao.ilike(f"%{origem}%"),
+                FornecedorCadastroModel.identificacao.ilike(f"%{origem}%"),
                 FlorestaModel.identificacao.ilike(f"%{origem}%"),
             ))
 
@@ -1982,7 +1982,7 @@ class RegistroOperacionalModel(BaseModel):
             .join(CargaModel, RegistroOperacionalModel.solicitacao)
             .join(MotoristaModel, CargaModel.motorista)
             .join(ClienteModel, CargaModel.cliente)
-            .outerjoin(FornecedorModel, CargaModel.fornecedor)
+            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor)
             .outerjoin(FlorestaModel, CargaModel.floresta)
             .join(VeiculoModel, CargaModel.veiculo)
             .join(ProdutoModel, CargaModel.produto)
@@ -2047,7 +2047,7 @@ class RegistroOperacionalModel(BaseModel):
             .join(CargaModel, RegistroOperacionalModel.solicitacao)
             .join(MotoristaModel, CargaModel.motorista)
             .join(ClienteModel, CargaModel.cliente)
-            .outerjoin(FornecedorModel, CargaModel.fornecedor)
+            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor)
             .outerjoin(FlorestaModel, CargaModel.floresta)
             .join(VeiculoModel, CargaModel.veiculo)
             .join(ProdutoModel, CargaModel.produto)
@@ -2093,7 +2093,7 @@ class RegistroOperacionalModel(BaseModel):
             q = q.filter(MotoristaModel.nome_completo.ilike(f"%{motorista}%"))
         if origem:
             q = q.filter(or_(
-                FornecedorModel.identificacao.ilike(f"%{origem}%"),
+                FornecedorCadastroModel.identificacao.ilike(f"%{origem}%"),
                 FlorestaModel.identificacao.ilike(f"%{origem}%"),
             ))
         if placa:
@@ -2137,7 +2137,7 @@ class RegistroOperacionalModel(BaseModel):
         query = (
             db.session.query(
                 RegistroOperacionalModel,
-                FornecedorModel,
+                FornecedorCadastroModel,
                 FornecedorPagarModel,
             )
             .join(CargaModel, RegistroOperacionalModel.solicitacao)
@@ -2162,7 +2162,7 @@ class RegistroOperacionalModel(BaseModel):
                     == TransportadoraMotoristaAssocModel.transportadora_id,
                 ),
             )
-            .outerjoin(FornecedorModel, CargaModel.fornecedor)
+            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor)
             .outerjoin(
                 FornecedorPagarModel,
                 FornecedorPagarModel.solicitacao_id == CargaModel.id,
@@ -2215,15 +2215,15 @@ class RegistroOperacionalModel(BaseModel):
             )
 
         if fornecedor:
-            query = query.filter(FornecedorModel.identificacao.ilike(f"%{fornecedor}%"))
+            query = query.filter(FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%"))
 
         if placa:
             query = query.filter(VeiculoModel.placa_veiculo.ilike(f"%{placa}%"))
 
         # Ordenação
         query = query.order_by(
-            case((FornecedorModel.identificacao == None, 1), else_=0),
-            FornecedorModel.identificacao.asc(),
+            case((FornecedorCadastroModel.identificacao == None, 1), else_=0),
+            FornecedorCadastroModel.identificacao.asc(),
             RegistroOperacionalModel.id.desc(),
         )
 
@@ -2510,9 +2510,9 @@ class RegistroOperacionalModel(BaseModel):
         
         if categoria_venda == 'entregue':
             if origem_venda:
-                query = query.join(FornecedorModel, CargaModel.fornecedor_id == FornecedorModel.id
+                query = query.join(FornecedorCadastroModel, CargaModel.fornecedor_id == FornecedorCadastroModel.id
                 ).filter(
-                    FornecedorModel.identificacao.ilike(f"%{origem_venda}%"),
+                    FornecedorCadastroModel.identificacao.ilike(f"%{origem_venda}%"),
                 )
                 
             if data_inicio:

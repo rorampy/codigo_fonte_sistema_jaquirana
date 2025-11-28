@@ -6,7 +6,7 @@ from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagam
 from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.gerenciar.veiculo.veiculo_model import VeiculoModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
@@ -25,8 +25,8 @@ class FornecedorPagarModel(BaseModel):
     solicitacao_id = db.Column(db.Integer, db.ForeignKey("car_carga.id"), nullable=True)
     solicitacao = db.relationship("CargaModel", backref=db.backref("fin_fornecedor_a_pagar_solicitacao", lazy=True))
 
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor.id"), nullable=True)
-    fornecedor = db.relationship("FornecedorModel", backref=db.backref("fin_fornecedor_a_pagar_fornecedor", lazy=True))
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True)
+    fornecedor = db.relationship("FornecedorCadastroModel", backref=db.backref("fin_fornecedor_a_pagar_fornecedor", lazy=True))
 
     bitola_id = db.Column(db.Integer, db.ForeignKey("z_sys_bitola.id"), nullable=False)
     bitola = db.relationship("BitolaModel", backref=db.backref("fin_fornecedor_a_pagar_bitola", lazy=True))
@@ -281,7 +281,7 @@ class FornecedorPagarModel(BaseModel):
                 RegistroOperacionalModel,
                 CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id,
             )
-            .join(FornecedorModel, FornecedorPagarModel.fornecedor)
+            .join(FornecedorCadastroModel, FornecedorPagarModel.fornecedor)
             .join(BitolaModel, FornecedorPagarModel.bitola)
             .join(SituacaoPagamentoModel, FornecedorPagarModel.situacao)
             .join(ClienteModel, CargaModel.cliente)
@@ -293,8 +293,8 @@ class FornecedorPagarModel(BaseModel):
                 FornecedorPagarModel.situacao_pagamento_id == 2,  # somente pendentes
             )
             .order_by(
-                case((FornecedorModel.identificacao == None, 1), else_=0),
-                FornecedorModel.identificacao.asc(),
+                case((FornecedorCadastroModel.identificacao == None, 1), else_=0),
+                FornecedorCadastroModel.identificacao.asc(),
                 FornecedorPagarModel.id.desc(),
             )
         )
@@ -376,7 +376,7 @@ class FornecedorPagarModel(BaseModel):
             db.session.query(FornecedorPagarModel, RegistroOperacionalModel)
             .join(CargaModel, FornecedorPagarModel.solicitacao)
             .join(RegistroOperacionalModel, CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id)
-            .join(FornecedorModel, FornecedorPagarModel.fornecedor) 
+            .join(FornecedorCadastroModel, FornecedorPagarModel.fornecedor) 
             .filter(
                 FornecedorPagarModel.deletado == False,
                 FornecedorPagarModel.ativo == True,
@@ -429,7 +429,7 @@ class FornecedorPagarModel(BaseModel):
             ).filter(TransportadoraModel.identificacao.ilike(f"%{transportadora}%"))
 
         if fornecedor:
-            query = query.filter(FornecedorModel.identificacao.ilike(f"%{fornecedor}%"))
+            query = query.filter(FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%"))
 
         if placa:
             query = query.join(VeiculoModel, CargaModel.veiculo).filter(VeiculoModel.placa_veiculo.ilike(f"%{placa}%"))
@@ -438,8 +438,8 @@ class FornecedorPagarModel(BaseModel):
             query = query.join(SituacaoPagamentoModel, FornecedorPagarModel.situacao).filter(SituacaoPagamentoModel.id == statusPagamento)
 
         query = query.order_by(
-            case((FornecedorModel.identificacao == None, 1), else_=0),
-            FornecedorModel.identificacao.asc(),
+            case((FornecedorCadastroModel.identificacao == None, 1), else_=0),
+            FornecedorCadastroModel.identificacao.asc(),
             FornecedorPagarModel.id.desc(),
         )
 
@@ -485,7 +485,7 @@ class FornecedorPagarModel(BaseModel):
                 RegistroOperacionalModel,
                 CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id,
             )
-            .join(FornecedorModel, FornecedorPagarModel.fornecedor)
+            .join(FornecedorCadastroModel, FornecedorPagarModel.fornecedor)
             .join(BitolaModel, FornecedorPagarModel.bitola)
             .join(SituacaoPagamentoModel, FornecedorPagarModel.situacao)
             .join(ClienteModel, CargaModel.cliente)
@@ -546,7 +546,7 @@ class FornecedorPagarModel(BaseModel):
             )
 
         if fornecedor:
-            query = query.filter(FornecedorModel.identificacao.ilike(f"%{fornecedor}%"))
+            query = query.filter(FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%"))
 
         if placa:
             query = query.filter(VeiculoModel.placa_veiculo.ilike(f"%{placa}%"))
@@ -561,8 +561,8 @@ class FornecedorPagarModel(BaseModel):
 
         # Ordenação
         query = query.order_by(
-            case((FornecedorModel.identificacao == None, 1), else_=0),
-            FornecedorModel.identificacao.asc(),
+            case((FornecedorCadastroModel.identificacao == None, 1), else_=0),
+            FornecedorCadastroModel.identificacao.asc(),
             FornecedorPagarModel.id.desc(),
         )
 

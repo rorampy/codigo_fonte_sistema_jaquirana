@@ -6,7 +6,7 @@ from sistema.models_views.controle_carga.solicitacao_nf.carga_model import Carga
 from sistema.models_views.controle_carga.emissao_nota_fiscal_model import LancarEmissaoNotaFiscalModel
 from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema.models_views.gerenciar.floresta.floresta_model import FlorestaModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.parametros.bitola.bitola_model import BitolaModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
@@ -625,7 +625,7 @@ def editar_emissao(id):
         return redirect(url_for("listar_emissoes"))
 
     florestas = FlorestaModel.listar_florestas_ativas()
-    fornecedores = FornecedorModel.listar_fornecedores_ativos()
+    fornecedores = FornecedorCadastroModel.listar_fornecedores_ativos()
 
     validacao_campos_obrigatorios = {}
     validacao_campos_erros = {}

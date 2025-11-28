@@ -13,7 +13,7 @@ from sistema.models_views.gerenciar.floresta.floresta_model import FlorestaModel
 from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
 from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
 from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.parametros.bitola.bitola_model import BitolaModel
 from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
@@ -94,7 +94,7 @@ def filtro_excel_dashboard(
     query = (
         db.session.query(
             RegistroOperacionalModel,
-            FornecedorModel,
+            FornecedorCadastroModel,
             FlorestaModel,
             FornecedorPagarModel,
             FretePagarModel,
@@ -113,7 +113,7 @@ def filtro_excel_dashboard(
         .join(MotoristaModel, CargaModel.motorista)
         .join(ProdutoModel, CargaModel.produto)
         .join(BitolaModel, CargaModel.bitola)
-        .outerjoin(FornecedorModel, CargaModel.fornecedor)
+        .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor)
         .outerjoin(FlorestaModel, CargaModel.floresta)
         .outerjoin(FornecedorPagarModel, FornecedorPagarModel.solicitacao_id == CargaModel.id)
         .outerjoin(FretePagarModel, FretePagarModel.solicitacao_id == CargaModel.id)
@@ -171,7 +171,7 @@ def filtro_excel_dashboard(
         
     if fornecedor:
         query = query.filter(or_(
-            CargaModel.fornecedor.has(FornecedorModel.identificacao.ilike(f"%{fornecedor}%")),
+            CargaModel.fornecedor.has(FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%")),
             CargaModel.floresta.has(FlorestaModel.identificacao.ilike(f"%{fornecedor}%")),
         ))
     

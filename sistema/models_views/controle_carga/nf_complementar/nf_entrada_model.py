@@ -3,7 +3,7 @@ from ...base_model import BaseModel, db
 from sistema import request
 from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.gerenciar.floresta.floresta_model import FlorestaModel
 from sqlalchemy import and_, desc, or_
 
@@ -64,7 +64,7 @@ class NfEntradaModel(BaseModel):
         data_fim = date.today()
 
         query = (
-            db.session.query(NfEntradaModel, RegistroOperacionalModel, FornecedorModel, FlorestaModel)
+            db.session.query(NfEntradaModel, RegistroOperacionalModel, FornecedorCadastroModel, FlorestaModel)
             .join(
                 RegistroOperacionalModel,
                 NfEntradaModel.registro_id == RegistroOperacionalModel.id,
@@ -72,7 +72,7 @@ class NfEntradaModel(BaseModel):
             .join(
                 CargaModel, RegistroOperacionalModel.solicitacao_nf_id == CargaModel.id
             )
-            .outerjoin(FornecedorModel, CargaModel.fornecedor_id == FornecedorModel.id)
+            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor_id == FornecedorCadastroModel.id)
             .outerjoin(FlorestaModel, CargaModel.floresta_id == FlorestaModel.id)
             .filter(NfEntradaModel.deletado == False, NfEntradaModel.ativo == True)
             .order_by(desc(NfEntradaModel.id))
@@ -143,7 +143,7 @@ class NfEntradaModel(BaseModel):
             data_fim = date.today()
 
         query = (
-            db.session.query(NfEntradaModel, RegistroOperacionalModel, FornecedorModel, FlorestaModel)
+            db.session.query(NfEntradaModel, RegistroOperacionalModel, FornecedorCadastroModel, FlorestaModel)
             .join(
                 RegistroOperacionalModel,
                 NfEntradaModel.registro_id == RegistroOperacionalModel.id,
@@ -151,7 +151,7 @@ class NfEntradaModel(BaseModel):
             .join(
                 CargaModel, RegistroOperacionalModel.solicitacao_nf_id == CargaModel.id
             )
-            .outerjoin(FornecedorModel, CargaModel.fornecedor_id == FornecedorModel.id)
+            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor_id == FornecedorCadastroModel.id)
             .outerjoin(FlorestaModel, CargaModel.floresta_id == FlorestaModel.id)
             .filter(NfEntradaModel.deletado == False, NfEntradaModel.ativo == True)
         )
@@ -184,7 +184,7 @@ class NfEntradaModel(BaseModel):
         if origem:
             query = query.filter(
                 or_(
-                    FornecedorModel.identificacao.ilike(f"%{origem}%"),
+                    FornecedorCadastroModel.identificacao.ilike(f"%{origem}%"),
                     FlorestaModel.identificacao.ilike(f"%{origem}%"),
                 )
             )

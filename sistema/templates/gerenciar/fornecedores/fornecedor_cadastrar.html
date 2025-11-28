@@ -399,202 +399,47 @@
               <h3 class="text-primary mb-4">Preços de custo por Bitola</h3>
               <div class="row">
 
-                <!-- Eucalipto -->
-                <div class="col-md-4">
+                {% for produto_id, produto_data in produtos_bitolas.items() %}
+                <!-- {{ produto_data.nome }} -->
+                <div class="col-md-12">
                   <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header text-dark">
-                      <strong>Eucalipto</strong>
+                      <strong>{{ produto_data.nome }}</strong>
                     </div>
                     <div class="card-body">
 
-                      <!-- Bitola 1 Eucalipto -->
+                      {% for loop_index in range(produto_data.bitolas|length) %}
+                      {% set bitola = produto_data.bitolas[loop_index] %}
+                      {% set nome_produto_lower = produto_data.nome.lower() %}
+                      {% if nome_produto_lower == 'eucalipto' %}
+                        {% set prefix = 'euca' %}
+                      {% elif nome_produto_lower == 'pinus' %}
+                        {% set prefix = 'pinus' %}
+                      {% elif nome_produto_lower == 'biomassa' %}
+                        {% set prefix = 'bio' %}
+                      {% else %}
+                        {% set prefix = nome_produto_lower[:5] %}
+                      {% endif %}
+                      
+                      <!-- Bitola {{ loop_index + 1 }} {{ produto_data.nome }} -->
                       <div class="row mb-3">
                         <div class="col-md-6">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" name="eucaBitolaId1" value="Torete" disabled
-                            class="form-control {% if 'eucaBitolaId1' in campos_obrigatorios %}is-invalid{% endif %}">
+                          <label class="form-label">{% if produto_data.nome == 'Biomassa' %}Tipo{% else %}Bitola{% endif %}</label>
+                          <input type="text" name="{{ prefix }}BitolaId{{ loop_index + 1 }}" value="{{ bitola.nome }}" disabled
+                            class="form-control {% if prefix + 'BitolaId' + (loop_index + 1)|string in campos_obrigatorios %}is-invalid{% endif %}">
                         </div>
                         <div class="col-md-6">
-                          <label class="form-label">Preço Custo Bitola
-                            (Ton.)</label>
-                          <input type="text" name="eucaPrecoCusto1" value="{{ dados_corretos['eucaPrecoCusto1'] }}"
-                            class="form-control campo-moeda-brl {% if 'eucaPrecoCusto1' in campos_obrigatorios %}is-invalid{% endif %}">
+                          <label class="form-label">Preço Custo {% if produto_data.nome == 'Biomassa' %}(Ton.){% else %}Bitola (Ton.){% endif %}</label>
+                          <input type="text" name="{{ prefix }}PrecoCusto{{ loop_index + 1 }}" value="{{ dados_corretos[prefix + 'PrecoCusto' + (loop_index + 1)|string] }}"
+                            class="form-control campo-moeda-brl {% if prefix + 'PrecoCusto' + (loop_index + 1)|string in campos_obrigatorios %}is-invalid{% endif %}">
                         </div>
                       </div>
-
-                      <!-- Bitola 2 Eucalipto -->
-                      <div class="row mb-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" name="eucaBitolaId2" value="18-25" disabled
-                            class="form-control {% if 'eucaBitolaId2' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Preço Custo Bitola
-                            (Ton.)</label>
-                          <input type="text" name="eucaPrecoCusto2" value="{{ dados_corretos['eucaPrecoCusto2'] }}"
-                            class="form-control campo-moeda-brl {% if 'eucaPrecoCusto2' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 3 Eucalipto -->
-                      <div class="row mb-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" name="eucaBitolaId3" value="25-32" disabled
-                            class="form-control {% if 'eucaBitolaId3' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Preço Custo Bitola
-                            (Ton.)</label>
-                          <input type="text" name="eucaPrecoCusto3" value="{{ dados_corretos['eucaPrecoCusto3'] }}"
-                            class="form-control campo-moeda-brl {% if 'eucaPrecoCusto3' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 4 Eucalipto -->
-                      <div class="row mb-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" name="eucaBitolaId4" value="33+" disabled
-                            class="form-control {% if 'eucaBitolaId4' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Preço Custo Bitola
-                            (Ton.)</label>
-                          <input type="text" name="eucaPrecoCusto4" value="{{ dados_corretos['eucaPrecoCusto4'] }}"
-                            class="form-control campo-moeda-brl {% if 'eucaPrecoCusto4' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
+                      {% endfor %}
 
                     </div>
                   </div>
                 </div>
-
-                <!-- Pinus -->
-                <div class="col-md-4">
-                  <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header text-dark">
-                      <strong>Pinus</strong>
-                    </div>
-                    <div class="card-body">
-
-                      <!-- Bitola 1 Pinus -->
-                      <div class="row mb-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" name="pinusBitolaId1" value="Torete" disabled
-                            class="form-control {% if 'pinusBitolaId1' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Preço Custo Bitola
-                            (Ton.)</label>
-                          <input type="text" name="pinusPrecoCusto1" value="{{ dados_corretos['pinusPrecoCusto1'] }}"
-                            class="form-control campo-moeda-brl {% if 'pinusPrecoCusto1' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 2 Pinus -->
-                      <div class="row mb-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" name="pinusBitolaId2" value="18-25" disabled
-                            class="form-control {% if 'pinusBitolaId2' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Preço Custo Bitola
-                            (Ton.)</label>
-                          <input type="text" name="pinusPrecoCusto2" value="{{ dados_corretos['pinusPrecoCusto2'] }}"
-                            class="form-control campo-moeda-brl {% if 'pinusPrecoCusto2' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 3 Pinus -->
-                      <div class="row mb-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" name="pinusBitolaId3" value="25-32" disabled
-                            class="form-control {% if 'pinusBitolaId3' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Preço Custo Bitola
-                            (Ton.)</label>
-                          <input type="text" name="pinusPrecoCusto3" value="{{ dados_corretos['pinusPrecoCusto3'] }}"
-                            class="form-control campo-moeda-brl {% if 'pinusPrecoCusto3' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 4 Pinus -->
-                      <div class="row mb-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" name="pinusBitolaId4" value="33+" disabled
-                            class="form-control {% if 'pinusBitolaId4' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Preço Custo Bitola
-                            (Ton.)</label>
-                          <input type="text" name="pinusPrecoCusto4" value="{{ dados_corretos['pinusPrecoCusto4'] }}"
-                            class="form-control campo-moeda-brl {% if 'pinusPrecoCusto4' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                      <!-- Bitola 4 Pinus -->
-
-                      <div class="row mb-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Bitola</label>
-                          <input type="text" name="pinusBitolaId5" value="Madeira Serrada" disabled
-                            class="form-control {% if 'pinusBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Preço Custo Bitola
-                            (Ton.)</label>
-                          <input type="text" name="pinusPrecoCusto5" value="{{ dados_corretos['pinusPrecoCusto5'] }}"
-                            class="form-control campo-moeda-brl {% if 'pinusPrecoCusto5' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Biomassa -->
-                <div class="col-md-4">
-                  <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header text-dark">
-                      <strong>Biomassa</strong>
-                    </div>
-                    <div class="card-body">
-
-                      <!-- Bitola  -->
-                      <div class="row mb-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Tipo</label>
-                          <input type="text" name="bioBitolaId5" value="Cavaco" disabled
-                            class="form-control {% if 'bioBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Preço Custo (Ton.)</label>
-                          <input type="text" name="bioPrecoCusto5" value="{{ dados_corretos['bioPrecoCusto5'] }}"
-                            class="form-control campo-moeda-brl {% if 'bioPrecoCusto5' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Tipo</label>
-                          <input type="text" name="bioBitolaId7" value="Madeira" disabled
-                            class="form-control {% if 'bioBitolaId7' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Preço Custo (Ton.)</label>
-                          <input type="text" name="bioPrecoCusto7" value="{{ dados_corretos['bioPrecoCusto7'] }}"
-                            class="form-control campo-moeda-brl {% if 'bioPrecoCusto7' in campos_obrigatorios %}is-invalid{% endif %}">
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {% endfor %}
 
               </div>
 
@@ -645,224 +490,51 @@
                     </div>
                   </div>
 
-                  <!-- Eucalipto -->
+                  {% for produto_id, produto_data in produtos_bitolas.items() %}
+                  <!-- {{ produto_data.nome }} -->
                   <div class="col-md-4 grupoPossuiExtracao">
                     <div class="card border-0 shadow-sm mb-4">
                       <div class="card-header text-dark">
-                        <strong>Eucalipto</strong>
+                        <strong>{{ produto_data.nome }}</strong>
                       </div>
                       <div class="card-body">
 
-                        <!-- Bitola 1 Eucalipto -->
+                        {% for loop_index in range(produto_data.bitolas|length) %}
+                        {% set bitola = produto_data.bitolas[loop_index] %}
+                        {% set nome_produto_lower = produto_data.nome.lower() %}
+                        {% if nome_produto_lower == 'eucalipto' %}
+                          {% set prefix = 'euca' %}
+                        {% elif nome_produto_lower == 'pinus' %}
+                          {% set prefix = 'pinus' %}
+                        {% elif nome_produto_lower == 'biomassa' %}
+                          {% set prefix = 'bio' %}
+                        {% else %}
+                          {% set prefix = nome_produto_lower[:5] %}
+                        {% endif %}
+                        
+                        <!-- Bitola {{ loop_index + 1 }} {{ produto_data.nome }} -->
                         <div class="row mb-3">
                           <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" name="eucaBitolaId1" value="Torete" disabled
-                              class="form-control {% if 'eucaBitolaId1' in campos_obrigatorios %}is-invalid{% endif %}">
+                            <label class="form-label">{% if produto_data.nome == 'Biomassa' %}Tipo{% else %}Bitola{% endif %}</label>
+                            <input type="text" name="{{ prefix }}BitolaId{{ loop_index + 1 }}" value="{{ bitola.nome }}" disabled
+                              class="form-control {% if prefix + 'BitolaId' + (loop_index + 1)|string in campos_obrigatorios %}is-invalid{% endif %}">
                           </div>
                           <div class="col-md-8">
-                            <label class="form-label">Preço Extração
-                              Bitola
-                              (Ton.)</label>
-                            <input type="text" name="eucaCustoExtracao1"
-                              value="{{ dados_corretos['eucaCustoExtracao1'] }}"
-                              class="form-control campo-moeda-brl {% if 'eucaCustoExtracao1' in campos_obrigatorios %}is-invalid{% endif %}">
+                            <label class="form-label">Custo de Extração (Ton.)</label>
+                            <input type="text" name="{{ prefix }}CustoExtracao{{ loop_index + 1 }}"
+                              value="{{ dados_corretos[prefix + 'CustoExtracao' + (loop_index + 1)|string] }}"
+                              class="form-control campo-moeda-brl {% if prefix + 'CustoExtracao' + (loop_index + 1)|string in campos_obrigatorios %}is-invalid{% endif %}">
                           </div>
                         </div>
-
-                        <!-- Bitola 2 Eucalipto -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" name="eucaBitolaId2" value="18-25" disabled
-                              class="form-control {% if 'eucaBitolaId2' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Extração
-                              Bitola
-                              (Ton.)</label>
-                            <input type="text" name="eucaCustoExtracao2"
-                              value="{{ dados_corretos['eucaCustoExtracao2'] }}"
-                              class="form-control campo-moeda-brl {% if 'eucaCustoExtracao2' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola 3 Eucalipto -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" name="eucaBitolaId3" value="25-32" disabled
-                              class="form-control {% if 'eucaBitolaId3' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Extração
-                              Bitola
-                              (Ton.)</label>
-                            <input type="text" name="eucaCustoExtracao3"
-                              value="{{ dados_corretos['eucaCustoExtracao3'] }}"
-                              class="form-control campo-moeda-brl {% if 'eucaCustoExtracao3' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola 4 Eucalipto -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" name="eucaBitolaId4" value="33+" disabled
-                              class="form-control {% if 'eucaBitolaId4' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Extração
-                              Bitola
-                              (Ton.)</label>
-                            <input type="text" name="eucaCustoExtracao4"
-                              value="{{ dados_corretos['eucaCustoExtracao4'] }}"
-                              class="form-control campo-moeda-brl {% if 'eucaCustoExtracao4' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
+                        {% endfor %}
 
                       </div>
                     </div>
                   </div>
-
-                  <!-- Pinus -->
-                  <div class="col-md-4 grupoPossuiExtracao">
-                    <div class="card border-0 shadow-sm mb-4">
-                      <div class="card-header text-dark">
-                        <strong>Pinus</strong>
-                      </div>
-                      <div class="card-body">
-
-                        <!-- Bitola 1 Pinus -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" name="pinusBitolaId1" value="Torete" disabled
-                              class="form-control {% if 'pinusBitolaId1' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Extração
-                              Bitola
-                              (Ton.)</label>
-                            <input type="text" name="pinusCustoExtracao1"
-                              value="{{ dados_corretos['pinusCustoExtracao1'] }}"
-                              class="form-control campo-moeda-brl {% if 'pinusCustoExtracao1' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola 2 Pinus -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" name="pinusBitolaId2" value="18-25" disabled
-                              class="form-control {% if 'pinusBitolaId2' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Extração
-                              Bitola
-                              (Ton.)</label>
-                            <input type="text" name="pinusCustoExtracao2"
-                              value="{{ dados_corretos['pinusCustoExtracao2'] }}"
-                              class="form-control campo-moeda-brl {% if 'pinusCustoExtracao2' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola 3 Pinus -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" name="pinusBitolaId3" value="25-32" disabled
-                              class="form-control {% if 'pinusBitolaId3' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Extração
-                              Bitola
-                              (Ton.)</label>
-                            <input type="text" name="pinusCustoExtracao3"
-                              value="{{ dados_corretos['pinusCustoExtracao3'] }}"
-                              class="form-control campo-moeda-brl {% if 'pinusCustoExtracao3' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola 4 Pinus -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" name="pinusBitolaId4" value="33+" disabled
-                              class="form-control {% if 'pinusBitolaId4' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Extração
-                              Bitola
-                              (Ton.)</label>
-                            <input type="text" name="pinusCustoExtracao4"
-                              value="{{ dados_corretos['pinusCustoExtracao4'] }}"
-                              class="form-control campo-moeda-brl {% if 'pinusCustoExtracao4' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-
-                        <!-- Bitola Madeira Serrada -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Bitola</label>
-                            <input type="text" name="pinusBitolaId5" value="Madeira Serrada" disabled
-                              class="form-control {% if 'pinusBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Extração
-                              Bitola
-                              (Ton.)</label>
-                            <input type="text" name="pinusCustoExtracao5"
-                              value="{{ dados_corretos['pinusCustoExtracao5'] }}"
-                              class="form-control campo-moeda-brl {% if 'pinusCustoExtracao5' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Biomassa -->
-                  <div class="col-md-4 grupoPossuiExtracao">
-                    <div class="card border-0 shadow-sm mb-4">
-                      <div class="card-header text-dark">
-                        <strong>Biomassa</strong>
-                      </div>
-                      <div class="card-body">
-
-                        <!-- Bitola 5 Cavaco -->
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Tipo</label>
-                            <input type="text" name="bioBitolaId5" value="Cavaco" disabled
-                              class="form-control {% if 'bioBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Extração
-                              (Ton.)</label>
-                            <input type="text" name="bioCustoExtracao5"
-                              value="{{ dados_corretos['bioCustoExtracao5'] }}"
-                              class="form-control campo-moeda-brl {% if 'bioCustoExtracao5' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-                        <div class="row mb-3">
-                          <div class="col-md-4">
-                            <label class="form-label">Tipo</label>
-                            <input type="text" name="bioBitolaId7" value="Madeira" disabled
-                              class="form-control {% if 'bioBitolaId7' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                          <div class="col-md-8">
-                            <label class="form-label">Preço Extração
-                              (Ton.)</label>
-                            <input type="text" name="bioCustoExtracao7"
-                              value="{{ dados_corretos['bioCustoExtracao7'] }}"
-                              class="form-control campo-moeda-brl {% if 'bioCustoExtracao7' in campos_obrigatorios %}is-invalid{% endif %}">
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  {% endfor %}
                 </div>
               </div>
+
 
               <!-- Nova implementação adicionando madeira posta se houver -->
 
@@ -934,213 +606,37 @@
                   </div>
 
                   <div class="row">
-                    <!-- EUCALIPTO -->
-                    <div class="col-md-4 grupoPossuiMadeiraPosta">
+                    <!-- PRODUTOS MADEIRA POSTA - DINÂMICO -->
+                    {% for produto_id, produto_data in produtos_bitolas.items() %}
+                    <div class="col-md-12 grupoPossuiMadeiraPosta">
                       <div class="card border-0 shadow-sm mb-4">
                         <div class="card-header text-dark">
-                          <strong>Eucalipto</strong>
+                          <strong>{{ produto_data.nome }}</strong>
                         </div>
                         <div class="card-body">
-
-                          <!-- Bitola 1 Eucalipto -->
+                          
+                          {% for bitola in produto_data.bitolas %}
                           <div class="row mb-3">
                             <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="Torete" disabled class="form-control">
+                              <label class="form-label">{% if produto_data.nome == 'Biomassa' %}Tipo{% else %}Bitola{% endif %}</label>
+                              <input type="text" value="{{ bitola.nome }}" disabled class="form-control">
                             </div>
                             <div class="col-md-8">
                               <label class="form-label">Preço Madeira Posta
-                                Bitola
+                                {% if produto_data.nome != 'Biomassa' %}Bitola{% endif %}
                                 (Ton.)</label>
-                              <input type="text" name="eucaMadeiraPosta1[]"
-                                value="{{ dados_corretos['eucaMadeiraPosta1'] or '' }}"
-                                class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta1' in campos_obrigatorios %}is-invalid{% endif %}">
+                              <input type="text" 
+                                name="{{ produto_data.nome.lower() }}MadeiraPosta{{ loop.index }}[]"
+                                value="{{ dados_corretos[produto_data.nome.lower() + 'MadeiraPosta' + loop.index|string] or '' }}"
+                                class="form-control campo-moeda-brl {% if produto_data.nome.lower() + 'MadeiraPosta' + loop.index|string in campos_obrigatorios %}is-invalid{% endif %}">
                             </div>
                           </div>
-
-                          <!-- Bitola 2 Eucalipto -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="18-25" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola
-                                (Ton.)</label>
-                              <input type="text" name="eucaMadeiraPosta2[]"
-                                value="{{ dados_corretos['eucaMadeiraPosta2'] or '' }}"
-                                class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta2' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-
-                          <!-- Bitola 3 Eucalipto -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="25-32" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola
-                                (Ton.)</label>
-                              <input type="text" name="eucaMadeiraPosta3[]"
-                                value="{{ dados_corretos['eucaMadeiraPosta3'] or '' }}"
-                                class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta3' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-
-                          <!-- Bitola 4 Eucalipto -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="33+" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola
-                                (Ton.)</label>
-                              <input type="text" name="eucaMadeiraPosta4[]"
-                                value="{{ dados_corretos['eucaMadeiraPosta4'] or '' }}"
-                                class="form-control campo-moeda-brl {% if 'eucaMadeiraPosta4' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
+                          {% endfor %}
 
                         </div>
                       </div>
                     </div>
-
-                    <!-- PINUS -->
-                    <div class="col-md-4 grupoPossuiMadeiraPosta">
-                      <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header text-dark">
-                          <strong>Pinus</strong>
-                        </div>
-                        <div class="card-body">
-
-                          <!-- Bitola 1 Pinus -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="Torete" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola
-                                (Ton.)</label>
-                              <input type="text" name="pinusMadeiraPosta1[]"
-                                value="{{ dados_corretos['pinusMadeiraPosta1'] or '' }}"
-                                class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta1' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-
-                          <!-- Bitola 2 Pinus -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="18-25" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola
-                                (Ton.)</label>
-                              <input type="text" name="pinusMadeiraPosta2[]"
-                                value="{{ dados_corretos['pinusMadeiraPosta2'] or '' }}"
-                                class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta2' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-
-                          <!-- Bitola 3 Pinus -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="25-32" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola
-                                (Ton.)</label>
-                              <input type="text" name="pinusMadeiraPosta3[]"
-                                value="{{ dados_corretos['pinusMadeiraPosta3'] or '' }}"
-                                class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta3' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-
-                          <!-- Bitola 4 Pinus -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="33+" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola
-                                (Ton.)</label>
-                              <input type="text" name="pinusMadeiraPosta4[]"
-                                value="{{ dados_corretos['pinusMadeiraPosta4'] or '' }}"
-                                class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta4' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-
-                          <!-- Bitola 5 Madeira Serrada -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Bitola</label>
-                              <input type="text" value="Madeira Serrada" disabled class="form-control">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                Bitola
-                                (Ton.)</label>
-                              <input type="text" name="pinusMadeiraPosta5[]"
-                                value="{{ dados_corretos['pinusMadeiraPosta5'] or '' }}"
-                                class="form-control campo-moeda-brl {% if 'pinusMadeiraPosta5' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Biomassa -->
-                    <div class="col-md-4 grupoPossuiMadeiraPosta">
-                      <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header text-dark">
-                          <strong>Biomassa</strong>
-                        </div>
-                        <div class="card-body">
-
-                          <!-- Bitola Cavaco -->
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Tipo</label>
-                              <input type="text" name="bioBitolaId5" value="Cavaco" disabled
-                                class="form-control {% if 'bioBitolaId5' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                (Ton.)</label>
-                              <input type="text" name="bioMadeiraPosta5[]"
-                                value="{{ dados_corretos['bioMadeiraPosta5'] }}"
-                                class="form-control campo-moeda-brl {% if 'bioMadeiraPosta5' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-                          <div class="row mb-3">
-                            <div class="col-md-4">
-                              <label class="form-label">Tipo</label>
-                              <input type="text" name="bioBitolaId7" value="Madeira" disabled
-                                class="form-control {% if 'bioBitolaId7' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                            <div class="col-md-8">
-                              <label class="form-label">Preço Madeira Posta
-                                (Ton.)</label>
-                              <input type="text" name="bioMadeiraPosta7[]"
-                                value="{{ dados_corretos['bioMadeiraPosta7'] }}"
-                                class="form-control campo-moeda-brl {% if 'bioMadeiraPosta7' in campos_obrigatorios %}is-invalid{% endif %}">
-                            </div>
-                          </div>
-
-                        </div>
-                      </div>
-                    </div>
+                    {% endfor %}
                     <!-- BOTÕES DE ADICIONAR / REMOVER (ao final do bloco) -->
                     <div class="col-md-12 d-flex justify-content-center mb-4">
                       <button type="button" class="btn btn-danger btn-remover me-2" disabled>

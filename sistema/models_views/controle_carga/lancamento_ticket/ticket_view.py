@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from sistema.models_views.upload_arquivo.upload_arquivo_view import upload_arquivo
 from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.gerenciar.floresta.floresta_model import FlorestaModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
 from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
@@ -61,7 +61,7 @@ def cadastrar_ticket(id):
                 flash(("Verifique os campos destacados em vermelho!", "warning"))
                 return render_template(
                     "/controle_carga/ticket/ticket_cadastrar.html",
-                    fornecedores=FornecedorModel.listar_fornecedores(),
+                    fornecedores=FornecedorCadastroModel.listar_fornecedores(),
                     florestas=FlorestaModel.listar_florestas_ativas(),
                     solicitacao=solicitacao,
                     campos_obrigatorios=validacao_campos_obrigatorios,
@@ -74,7 +74,7 @@ def cadastrar_ticket(id):
                 flash(("O número informado para a nota fiscal é mais longo do que o permitido.", "warning"))
                 return render_template(
                     "/controle_carga/ticket/ticket_cadastrar.html",
-                    fornecedores=FornecedorModel.listar_fornecedores(),
+                    fornecedores=FornecedorCadastroModel.listar_fornecedores(),
                     florestas=FlorestaModel.listar_florestas_ativas(),
                     solicitacao=solicitacao,
                     campos_obrigatorios=validacao_campos_obrigatorios,
@@ -96,7 +96,7 @@ def cadastrar_ticket(id):
             produto = solicitacao.produto.nome
             bitolaSolicitacao = solicitacao.bitola_id
 
-            resultado_fornecedor = FornecedorModel.obter_precos_custo_fornecedor(
+            resultado_fornecedor = FornecedorCadastroModel.obter_precos_custo_fornecedor(
                 fornecedorIdentificacao, produto, bitolaSolicitacao, solicitacao.cliente_id, solicitacao.transportadora_id
             )
             
@@ -257,7 +257,7 @@ def cadastrar_ticket(id):
         return redirect(url_for("vendas_entregues"))
 
     registroOperacional = RegistroOperacionalModel.obter_registro_solicitacao_por_id(id)
-    fornecedores = FornecedorModel.listar_fornecedores()
+    fornecedores = FornecedorCadastroModel.listar_fornecedores()
     florestas = FlorestaModel.listar_florestas_ativas()
 
     return render_template(
@@ -280,7 +280,7 @@ def editar_ticket(id):
         validacao_campos_obrigatorios = {}
         validacao_campos_erros = {}
         registro = RegistroOperacionalModel.obter_por_id(id)
-        fornecedores = FornecedorModel.listar_fornecedores()
+        fornecedores = FornecedorCadastroModel.listar_fornecedores()
         florestas = FlorestaModel.listar_florestas_ativas()
 
         if not registro:
@@ -378,7 +378,7 @@ def editar_ticket(id):
             produto = registro.solicitacao.produto.nome
             bitolaSolicitacao = registro.solicitacao.bitola_id
 
-            resultado_fornecedor = FornecedorModel.obter_precos_custo_fornecedor(
+            resultado_fornecedor = FornecedorCadastroModel.obter_precos_custo_fornecedor(
                 fornecedorIdentificacao, produto, bitolaSolicitacao, registro.solicitacao.cliente_id, registro.solicitacao.transportadora_id
             )
             

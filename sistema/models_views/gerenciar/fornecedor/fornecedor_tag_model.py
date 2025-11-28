@@ -6,7 +6,7 @@ class FornecedorTag(BaseModel):
     __tablename__ = 'for_fornecedor_tag'
     
     id = db.Column(db.Integer, primary_key=True)
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey('for_fornecedor.id'), nullable=True)    
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey('for_fornecedor_cadastro.id'), nullable=True)    
     tag_id = db.Column(db.Integer, db.ForeignKey('ta_tag.id'), nullable=True)
     tag = db.relationship('TagModel', backref=db.backref('fornecedor_tags', lazy=True))
 

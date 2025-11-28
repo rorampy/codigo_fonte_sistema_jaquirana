@@ -456,10 +456,18 @@ from sistema.models_views.gerenciar.floresta import floresta_view
 
 from sistema.models_views.gerenciar.fornecedor import fornecedor_model
 from sistema.models_views.gerenciar.fornecedor import fornecedor_madeira_posta_model
-from sistema.models_views.gerenciar.fornecedor import fornecedor_view
+# from sistema.models_views.gerenciar.fornecedor import fornecedor_view
 from sistema.models_views.gerenciar.fornecedor.fornecedor_tag_model import FornecedorTag
 from sistema.models_views.faturamento.cargas_a_faturar.extrator import extrator_a_pagar_model
 from sistema.models_views.faturamento.cargas_a_faturar.extrator import extrator_a_pagar_view
+
+from sistema.models_views.gerenciar.fornecedor import fornecedor_cadastro_model
+from sistema.models_views.gerenciar.fornecedor import fornecedor_refatorada_view 
+from sistema.models_views.gerenciar.fornecedor import fornecedor_preco_custo_bitola_model
+from sistema.models_views.gerenciar.fornecedor import fornecedor_preco_custo_extracao_model
+from sistema.models_views.gerenciar.fornecedor import fornecedor_madeira_posta_preco_bitola_model
+from sistema.models_views.gerenciar.fornecedor import fornecedor_conta_bancaria_model
+from sistema.models_views.parametros.produto_bitola import produto_bitola_model
 
 from sistema.models_views.gerenciar.motorista import motorista_model
 from sistema.models_views.gerenciar.motorista import transportadora_motorista_associado_model
@@ -485,6 +493,7 @@ from sistema.models_views.parametros.bitola import bitola_model
 from sistema.models_views.parametros.bitola import bitola_view
 
 from sistema.models_views.parametros.rotas_frete import rota_model
+from sistema.models_views.parametros.rotas_frete import rota_frete_preco_bitola_model
 from sistema.models_views.parametros.rotas_frete import rota_view
 
 from sistema.models_views.parametros.status_emissao_nf_complementar import status_emissao_nf_complementar_model

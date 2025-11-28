@@ -1,6 +1,7 @@
 from ...base_model import BaseModel, db
 from sqlalchemy import and_
 
+# MODEL LEGADA, AGORA TODOS OS FORNECEDORES ESTÃO CADASTRADOS EM for_fornecedor_cadastro MODEL FornececedorCadastroModel
 
 class FornecedorModel(BaseModel):
     """
@@ -107,8 +108,8 @@ class FornecedorModel(BaseModel):
     # relacionamento 1:N -> cada fornecedor pode ter várias entradas de madeira posta
     madeiras_posta = db.relationship("FornecedorMadeiraPostaModel", back_populates="fornecedor", cascade="all, delete-orphan")
     
-    # relacionamento 1:N -> cada fornecedor pode ter várias tags
-    fornecedor_tags = db.relationship("FornecedorTag", backref="fornecedor_rel", lazy=True)
+    # relacionamento 1:N -> cada fornecedor pode ter várias tags - REMOVIDO: agora aponta para for_fornecedor_cadastro
+    # fornecedor_tags = db.relationship("FornecedorTag", backref="fornecedor_rel", lazy=True)
 
     def __init__(
             self, fatura_via_cpf, identificacao, numero_documento, senar,
@@ -314,163 +315,3 @@ class FornecedorModel(BaseModel):
             )
 
         return query.order_by(FornecedorModel.id.desc()).all()
-
-    def obter_precos_custo_fornecedor(fornecedor_identificacao, produto, bitola_solicitacao, cliente_id=None, transportadora_id=None):
-        """
-        Obtém os preços de custo e extração para um fornecedor específico baseado no produto e bitola.
-        Se o fornecedor possuir madeira posta E houver transportadora vinculada, utiliza os preços da tabela de madeira posta.
-        Caso contrário, utiliza os preços normais do fornecedor.
-        
-        Args:
-            fornecedor_identificacao (str): ID do fornecedor
-            produto (str): Tipo do produto ("Eucalipto", "Pinus", "Biomassa")
-            bitola_solicitacao (int): ID da bitola solicitada
-            cliente_id (int, optional): ID do cliente (necessário para madeira posta)
-            transportadora_id (int, optional): ID da transportadora (necessário para verificar madeira posta)
-        
-        Returns:
-            dict: Dicionário contendo:
-                - preco_custo: Preço de custo para a bitola/produto
-                - preco_custo_extrator: Preço de custo de extração (se aplicável)
-                - origem_incompleta: Flag indicando se os dados estão incompletos
-                - fornecedor: Objeto do fornecedor encontrado
-        """
-        
-        if fornecedor_identificacao == "0":
-            return {
-                'preco_custo': None,
-                'preco_custo_extrator': None,
-                'origem_incompleta': True,
-                'fornecedor': None
-            }
-        
-        # Obtém o fornecedor
-        fornecedor = FornecedorModel.obter_fornecedor_por_id(fornecedor_identificacao)
-        
-        if not fornecedor:
-            return {
-                'preco_custo': None,
-                'preco_custo_extrator': None,
-                'origem_incompleta': True,
-                'fornecedor': None
-            }
-        
-        preco_custo = None
-        preco_custo_extrator = None
-        origem_incompleta = False
-
-        # Se o fornecedor possui madeira posta, cliente_id e transportadora_id foram fornecidos
-        # Verifica se há transportadora vinculada para usar preços de madeira posta
-        if fornecedor.madeira_posta and cliente_id:
-            # Importa aqui para evitar dependência circular
-            from sistema.models_views.gerenciar.fornecedor.fornecedor_madeira_posta_model import FornecedorMadeiraPostaModel
-            
-            # Monta a query base
-            query_filters = [
-                FornecedorMadeiraPostaModel.fornecedor_id == fornecedor.id,
-                FornecedorMadeiraPostaModel.cliente_id == cliente_id,
-                FornecedorMadeiraPostaModel.ativo == True,
-                FornecedorMadeiraPostaModel.deletado == False
-            ]
-            
-            # Adiciona filtro de transportadora apenas se for fornecida
-            if transportadora_id:
-                query_filters.append(FornecedorMadeiraPostaModel.transportadora_id == transportadora_id)
-            
-            madeira_posta = FornecedorMadeiraPostaModel.query.filter(*query_filters).first()
-            
-            if madeira_posta:
-                # Mapeia as bitolas e preços de madeira posta para cada produto
-                if produto == "Eucalipto":
-                    bitolas_precos_mp = [
-                        (madeira_posta.euca_bitola_1_id, madeira_posta.euca_bitola_1_preco_100),
-                        (madeira_posta.euca_bitola_2_id, madeira_posta.euca_bitola_2_preco_100),
-                        (madeira_posta.euca_bitola_3_id, madeira_posta.euca_bitola_3_preco_100),
-                        (madeira_posta.euca_bitola_4_id, madeira_posta.euca_bitola_4_preco_100)
-                    ]
-                
-                elif produto == "Pinus":
-                    bitolas_precos_mp = [
-                        (madeira_posta.pinus_bitola_1_id, madeira_posta.pinus_bitola_1_preco_100),
-                        (madeira_posta.pinus_bitola_2_id, madeira_posta.pinus_bitola_2_preco_100),
-                        (madeira_posta.pinus_bitola_3_id, madeira_posta.pinus_bitola_3_preco_100),
-                        (madeira_posta.pinus_bitola_4_id, madeira_posta.pinus_bitola_4_preco_100),
-                        (madeira_posta.pinus_bitola_5_id, madeira_posta.pinus_bitola_5_preco_100)
-                    ]
-                
-                elif produto == "Biomassa":
-                    bitolas_precos_mp = [
-                        (madeira_posta.bio_bitola_5_id, madeira_posta.bio_bitola_5_preco_100),
-                        (madeira_posta.bio_bitola_7_id, madeira_posta.bio_bitola_7_preco_100) # Madeira Biomassa
-                    ]
-                
-                else:
-                    origem_incompleta = True
-                    bitolas_precos_mp = []
-                
-                # Procura pela bitola solicitada na madeira posta
-                for bitola_id, preco_madeira_posta in bitolas_precos_mp:
-                    if bitola_id == bitola_solicitacao:
-                        preco_custo = preco_madeira_posta
-                        # Para madeira posta, não há custo de extração separado
-                        preco_custo_extrator = 0
-                        break
-                else:
-                    # Bitola não encontrada para madeira posta
-                    origem_incompleta = True
-            else:
-                # Registro de madeira posta não encontrado para este cliente + transportadora
-                # Vai usar preços normais abaixo
-                origem_incompleta = False
-        
-        # Se não é madeira posta, não há transportadora vinculada ou não encontrou dados de madeira posta
-        # Usa lógica tradicional (preços normais do fornecedor)
-        if preco_custo is None:
-            # Mapeia as bitolas e preços para cada produto
-            if produto == "Eucalipto":
-                bitolas_precos = [
-                    (fornecedor.euca_bitola_1_id, fornecedor.euca_preco_custo_bitola_1_100, fornecedor.euca_custo_extracao_bitola_1_100),
-                    (fornecedor.euca_bitola_2_id, fornecedor.euca_preco_custo_bitola_2_100, fornecedor.euca_custo_extracao_bitola_2_100),
-                    (fornecedor.euca_bitola_3_id, fornecedor.euca_preco_custo_bitola_3_100, fornecedor.euca_custo_extracao_bitola_3_100),
-                    (fornecedor.euca_bitola_4_id, fornecedor.euca_preco_custo_bitola_4_100, fornecedor.euca_custo_extracao_bitola_4_100)
-                ]
-            
-            elif produto == "Pinus":
-                bitolas_precos = [
-                    (fornecedor.pinus_bitola_1_id, fornecedor.pinus_preco_custo_bitola_1_100, fornecedor.pinus_custo_extracao_bitola_1_100),
-                    (fornecedor.pinus_bitola_2_id, fornecedor.pinus_preco_custo_bitola_2_100, fornecedor.pinus_custo_extracao_bitola_2_100),
-                    (fornecedor.pinus_bitola_3_id, fornecedor.pinus_preco_custo_bitola_3_100, fornecedor.pinus_custo_extracao_bitola_3_100),
-                    (fornecedor.pinus_bitola_4_id, fornecedor.pinus_preco_custo_bitola_4_100, fornecedor.pinus_custo_extracao_bitola_4_100),
-                    (fornecedor.pinus_bitola_5_id, fornecedor.pinus_preco_custo_bitola_5_100, fornecedor.pinus_custo_extracao_bitola_5_100)
-                ]
-            
-            elif produto == "Biomassa":
-                bitolas_precos = [
-                    (fornecedor.bio_bitola_5_id, fornecedor.bio_preco_custo_bitola_5_100, fornecedor.bio_custo_extracao_bitola_5_100),
-                    (fornecedor.bio_bitola_7_id, fornecedor.bio_preco_custo_bitola_7_100, fornecedor.bio_custo_extracao_bitola_7_100) # Madeira Biomassa
-                ]
-                
-            
-            else:
-                origem_incompleta = True
-                bitolas_precos = []
-            
-            # Procura pela bitola solicitada
-            for bitola_id, preco_custo_bitola, custo_extracao_bitola in bitolas_precos:
-                if bitola_id == bitola_solicitacao:
-                    preco_custo = preco_custo_bitola
-                    
-                    # Se o fornecedor tem extrator, define o custo de extração
-                    if fornecedor.extrator_id is not None:
-                        preco_custo_extrator = custo_extracao_bitola
-                    break
-            else:
-                # Bitola não encontrada para o produto
-                origem_incompleta = True
-        
-        return {
-            'preco_custo': preco_custo,
-            'preco_custo_extrator': preco_custo_extrator,
-            'origem_incompleta': origem_incompleta,
-            'fornecedor': fornecedor
-        }

@@ -25,8 +25,8 @@ class CargaModel(BaseModel):
 
     transportadora_id = db.Column(db.Integer, nullable=True)
 
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor.id"), nullable=True)
-    fornecedor = db.relationship("FornecedorModel", backref=db.backref("car_carga_fornecedor", lazy=True))
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True)
+    fornecedor = db.relationship("FornecedorCadastroModel", backref=db.backref("car_carga_fornecedor", lazy=True))
 
     bitola_id = db.Column(db.Integer, db.ForeignKey("z_sys_bitola.id"), nullable=False)
     bitola = db.relationship("BitolaModel", backref=db.backref("car_carga", lazy=True))

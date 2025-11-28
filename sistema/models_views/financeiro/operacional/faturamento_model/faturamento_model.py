@@ -14,7 +14,7 @@ from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_c
 from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_extrator_model import ExtratoCreditoExtratorModel
 
 # Imports para modelos de entidades
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
 from sistema.models_views.gerenciar.comissionado.comissionado_model import ComissionadoModel
@@ -738,7 +738,7 @@ class FaturamentoModel(BaseModel):
             for fornecedor_id in fornecedores_ids:
                 credito_fornecedor = CreditoFornecedorModel.obtem_registro_id(fornecedor_id)
                 if credito_fornecedor and credito_fornecedor.valor_total_credito_100 > 0:
-                    fornecedor = FornecedorModel.query.get(fornecedor_id)
+                    fornecedor = FornecedorCadastroModel.query.get(fornecedor_id)
                     if fornecedor:
                         # Buscar TODOS os extratos de crédito em aberto
                         extratos_credito = ExtratoCreditoFornecedorModel.query.filter_by(

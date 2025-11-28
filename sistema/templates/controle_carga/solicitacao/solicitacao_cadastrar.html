@@ -52,13 +52,29 @@
                     class="form-select {% if 'clienteSolicitacao' in campos_obrigatorios or 'clienteSolicitacao' in campos_erros %}is-invalid{% endif %}">
                     <option value selected>Selecione...</option>
                     {% for c in cliente %}
-                      {{ c.identificacao }}
-                    </option>
+                    <option value="{{ c.id }}">{{ c.identificacao }}</option>
                     {% endfor %}
                   </select>
                   <div class="invalid-feedback">
                     {{ campos_obrigatorios.get('clienteSolicitacao') or
                     campos_erros.get('clienteSolicitacao') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-sm-2 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label required">Produto</label>
+                  <select id="selectProduto" name="produtoSolicitacao"
+                    class="form-select {% if 'produtoSolicitacao' in campos_obrigatorios or 'produtoSolicitacao' in campos_erros %}is-invalid{% endif %}">
+                    <option value selected>Selecione...</option>
+                    {% for p in produtos %}
+                    <option value="{{ p.id }}">{{ p.nome }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="invalid-feedback">
+                    {{ campos_obrigatorios.get('produtoSolicitacao') or
+                    campos_erros.get('produtoSolicitacao') }}
                   </div>
                 </div>
               </div>
@@ -70,30 +86,10 @@
                   <select id="selectBitola" name="bitolaSolicitacao"
                     class="form-select {% if 'bitolaSolicitacao' in campos_obrigatorios or 'bitolaSolicitacao' in campos_erros %}is-invalid{% endif %}">
                     <option value selected>Selecione...</option>
-                    {% for b in bitola %}
-                    <option value="{{ b.id }}" {% if b.bitola=="Torete" %}selected{% endif %}>{{ b.bitola }}</option>
-                    {% endfor %}
                   </select>
                   <div class="invalid-feedback">
                     {{ campos_obrigatorios.get('bitolaSolicitacao') or
                     campos_erros.get('bitolaSolicitacao') }}
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-sm-2 col-md-2">
-                <div class="mb-3">
-                  <label class="form-label required">Produto</label>
-                  <select id="selectBitola" name="produtoSolicitacao"
-                    class="form-select {% if 'produtoSolicitacao' in campos_obrigatorios or 'produtoSolicitacao' in campos_erros %}is-invalid{% endif %}">
-                    <option value selected>Selecione...</option>
-                    {% for p in produtos %}
-                    <option value="{{ p.id }}" {% if p.nome=="Pinus" %}selected{% endif %}>{{ p.nome }}</option>
-                    {% endfor %}
-                  </select>
-                  <div class="invalid-feedback">
-                    {{ campos_obrigatorios.get('produtoSolicitacao') or
-                    campos_erros.get('produtoSolicitacao') }}
                   </div>
                 </div>
               </div>
@@ -245,11 +241,77 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      const produtoSelect = document.getElementById('selectProduto');
+      const bitolaSelect = document.getElementById('selectBitola');
       const veiculoSelect = document.getElementById('selectVeiculo');
       const transportadoraSelect = document.getElementById('selectTransportadora');
       const motoristaSelect = document.getElementById('selectMotorista');
       const capacidadeCargaInput = document.getElementById('inputcapacidadeCarga');
       const capacidadeCargaHidden = document.getElementById('inputVeiculoId');
+
+      // Inicializar TomSelect para produto
+      const tomProduto = new TomSelect(produtoSelect, {
+        create: false,
+        allowEmptyOption: false,
+        sortField: {
+          field: "text",
+          direction: "asc"
+        }
+      });
+
+      // Inicializar TomSelect para bitola
+      let tomBitola = new TomSelect(bitolaSelect, {
+        create: false,
+        allowEmptyOption: false,
+        sortField: {
+          field: "text",
+          direction: "asc"
+        }
+      });
+
+      // Carregar bitolas quando produto for selecionado
+      tomProduto.on('change', function(produtoId) {
+        if (produtoId) {
+          fetch(`/produto/${produtoId}/bitolas`)
+            .then(response => response.json())
+            .then(data => {
+              // Destruir e recriar TomSelect de bitola
+              tomBitola.destroy();
+              
+              // Limpar select de bitola
+              bitolaSelect.innerHTML = '<option value selected>Selecione...</option>';
+              
+              // Adicionar bitolas do produto
+              data.bitolas.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.text = b.nome;
+                bitolaSelect.appendChild(opt);
+              });
+
+              // Recriar TomSelect
+              tomBitola = new TomSelect(bitolaSelect, {
+                create: false,
+                allowEmptyOption: false,
+                sortField: {
+                  field: "text",
+                  direction: "asc"
+                }
+              });
+            })
+            .catch(err => {
+              console.error('Erro ao buscar bitolas do produto:', err);
+              alert("Erro ao buscar bitolas do produto.");
+            });
+        } else {
+          tomBitola.destroy();
+          bitolaSelect.innerHTML = '<option value selected>Selecione...</option>';
+          tomBitola = new TomSelect(bitolaSelect, {
+            create: false,
+            allowEmptyOption: false
+          });
+        }
+      });
 
       veiculoSelect.addEventListener('change', function () {
         const veiculoId = this.value;
@@ -325,7 +387,7 @@
 
       // Inicializa Tom Select nos outros selects
       document.querySelectorAll('select.form-select').forEach(function (select) {
-        if (!['selectMotorista', 'selectTransportadora'].includes(select.id)) {
+        if (!['selectMotorista', 'selectTransportadora', 'selectBitola', 'selectProduto', 'selectVeiculo'].includes(select.id)) {
           new TomSelect(select, {
             create: false,
             allowEmptyOption: false,

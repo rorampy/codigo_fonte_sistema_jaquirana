@@ -7,7 +7,7 @@ from sistema.models_views.parametros.instituicoes_financeiras.instituicao_financ
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.gerenciar.comissionado.comissionado_model import ComissionadoModel
 from sistema._utilitarios import *
 
@@ -43,7 +43,7 @@ def cadastrar_pessoa_financeiro():
     bancos = InstituicoesFinanceirasModel.obter_todos_bancos()
     extratores = ExtratorModel.listar_extratores_ativos()
     transportadoras = TransportadoraModel.listar_transportadoras_ativas()
-    fornecedores = FornecedorModel.listar_fornecedores_ativos()
+    fornecedores = FornecedorCadastroModel.listar_fornecedores_ativos()
     comissionados = ComissionadoModel.listar_comissionados_ativos()
     
     if request.method == "POST":
@@ -168,7 +168,7 @@ def editar_pessoa_financeiro(id):
     bancos = InstituicoesFinanceirasModel.obter_todos_bancos()
     extratores = ExtratorModel.listar_extratores_ativos()
     transportadoras = TransportadoraModel.listar_transportadoras_ativas()
-    fornecedores = FornecedorModel.listar_fornecedores_ativos()
+    fornecedores = FornecedorCadastroModel.listar_fornecedores_ativos()
     comissionados = ComissionadoModel.listar_comissionados_ativos()
     
     dados_corretos = {

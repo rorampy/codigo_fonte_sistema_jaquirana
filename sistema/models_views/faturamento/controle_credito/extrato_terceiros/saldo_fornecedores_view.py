@@ -2,7 +2,7 @@ from datetime import datetime
 from sistema import app, requires_roles, db
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_required, current_user
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.upload_arquivo.upload_arquivo_view import upload_arquivo
 from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_fornecedor_model import ExtratoCreditoFornecedorModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
@@ -30,13 +30,13 @@ def saldo_fornecedores():
         celular = request.args.get("celular")
         celularFormatado = ValidaDocs.somente_numeros(celular) if celular else None
         
-        fornecedores = FornecedorModel.filtrar_fornecedores(
+        fornecedores = FornecedorCadastroModel.filtrar_fornecedores(
             identificacao=request.args.get("identificacao"),
             numero_documento=numeroDocFormatado,
             celular=celularFormatado,
         )
     else:
-        fornecedores = FornecedorModel.listar_fornecedores()
+        fornecedores = FornecedorCadastroModel.listar_fornecedores()
 
     for f in fornecedores:
         credito = CreditoFornecedorModel.obtem_registro_id(f.id)
@@ -57,7 +57,7 @@ def saldo_fornecedores():
 @requires_roles
 def extrato_fornecedor(id):
     extrato = ExtratoCreditoFornecedorModel.listagem_historico_por_fornecedor(id)
-    fornecedor = FornecedorModel.obter_fornecedor_por_id(id)
+    fornecedor = FornecedorCadastroModel.obter_fornecedor_por_id(id)
     if fornecedor is None:
         flash(("Este fornecedor nâo possui dados a serem mostrados!", "warning"))
         return redirect(url_for("saldo_extratores"))
@@ -82,7 +82,7 @@ def lancar_credito_fornecedor(id):
         validacao_campos_erros = {}
         gravar_banco = True
 
-        fornecedor = FornecedorModel.obter_fornecedor_por_id(id)
+        fornecedor = FornecedorCadastroModel.obter_fornecedor_por_id(id)
 
         if not fornecedor:
             flash(("Fornecedor informado não existe!", "success"))

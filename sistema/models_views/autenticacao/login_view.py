@@ -6,7 +6,8 @@ import re
 from datetime import datetime
 from calendar import monthrange
 from sistema.models_views.autenticacao.usuario_model import UsuarioModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
+from sistema.models_views.gerenciar.floresta.floresta_model import FlorestaModel
 from sistema.models_views.gerenciar.floresta.floresta_model import FlorestaModel
 from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
@@ -70,7 +71,7 @@ def principal():
     # ========== COLETA DE DADOS BÁSICOS ==========
     # Obtém dados padrão para o dashboard
     empresas_emissoras = EmpresaEmissoraModel.obter_empresas_emissoras_ativas()
-    fornecedores = FornecedorModel.listar_fornecedores_ativos()
+    fornecedores = FornecedorCadastroModel.listar_fornecedores_ativos()
     florestas = FlorestaModel.listar_florestas_ativas()
     nfContraNota = NfEntradaModel.listar_nfs_entrada_sem_contra_nota()
     motoristas = MotoristaModel.listar_motoristas_ativos()

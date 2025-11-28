@@ -20,8 +20,8 @@ class ExtratoCreditoFornecedorModel(BaseModel):
     descricao = db.Column(db.String(255), nullable=False)
     data_movimentacao = db.Column(db.Date, nullable=False)
 
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor.id"), nullable=False)
-    fornecedor = db.relationship("FornecedorModel", backref=db.backref("credito_fornecedor", lazy=True))
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=False)
+    fornecedor = db.relationship("FornecedorCadastroModel", backref=db.backref("credito_fornecedor", lazy=True))
 
     valor_credito_100 = db.Column(db.Integer, nullable=False)
 

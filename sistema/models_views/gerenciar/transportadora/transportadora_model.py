@@ -140,7 +140,7 @@ class TransportadoraModel(BaseModel):
 
     def obter_preco_frete(cliente_id, transportadora_id, fornecedor_identificacao, produto, bitola_solicitacao):
         """
-        Obtém o preço de frete baseado na rota, produto e bitola.
+        Obtém o preço de frete baseado na rota, produto e bitola usando a tabela normalizada.
         Primeiro tenta encontrar rota específica para a transportadora.
         Se não encontrar, busca a rota "Todos" (transportadora_id = None).
         
@@ -157,6 +157,8 @@ class TransportadoraModel(BaseModel):
                 - frete_incompleto: Flag indicando se os dados de frete estão incompletos
                 - rota_frete: Objeto da rota de frete encontrada
         """
+        from sistema.models_views.parametros.rotas_frete.rota_frete_preco_bitola_model import RotaFretePrecoBitolaModel
+        from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
         
         # Primeiro busca rota específica para a transportadora
         rota_frete = RotaFreteModel.query.filter_by(
@@ -183,44 +185,29 @@ class TransportadoraModel(BaseModel):
                 'rota_frete': None
             }
         
-        preco_frete = 0
-        frete_incompleto = False
+        # Buscar produto_id pelo nome
+        produto_obj = ProdutoModel.query.filter_by(nome=produto, deletado=False).first()
+        if not produto_obj:
+            return {
+                'preco_frete': 0,
+                'frete_incompleto': True,
+                'rota_frete': rota_frete
+            }
         
-        # Mapeia as bitolas e preços para cada produto
-        if produto == "Eucalipto":
-            bitolas_precos = [
-                (rota_frete.euca_bitola_1_id, rota_frete.euca_preco_custo_frete_bitola_1_100),
-                (rota_frete.euca_bitola_2_id, rota_frete.euca_preco_custo_frete_bitola_2_100),
-                (rota_frete.euca_bitola_3_id, rota_frete.euca_preco_custo_frete_bitola_3_100),
-                (rota_frete.euca_bitola_4_id, rota_frete.euca_preco_custo_frete_bitola_4_100)
-            ]
+        # Buscar preço na tabela normalizada
+        preco_frete_obj = RotaFretePrecoBitolaModel.query.filter_by(
+            rota_frete_id=rota_frete.id,
+            produto_id=produto_obj.id,
+            bitola_id=bitola_solicitacao,
+            ativo=True,
+            deletado=False
+        ).first()
         
-        elif produto == "Pinus":
-            bitolas_precos = [
-                (rota_frete.pinus_bitola_1_id, rota_frete.pinus_preco_custo_frete_bitola_1_100),
-                (rota_frete.pinus_bitola_2_id, rota_frete.pinus_preco_custo_frete_bitola_2_100),
-                (rota_frete.pinus_bitola_3_id, rota_frete.pinus_preco_custo_frete_bitola_3_100),
-                (rota_frete.pinus_bitola_4_id, rota_frete.pinus_preco_custo_frete_bitola_4_100),
-                (rota_frete.pinus_bitola_5_id, rota_frete.pinus_preco_custo_frete_bitola_5_100)
-            ]
-        
-        elif produto == "Biomassa":
-            bitolas_precos = [
-                (rota_frete.bio_bitola_5_id, rota_frete.bio_preco_custo_frete_bitola_5_100)
-            ]
-        
+        if preco_frete_obj and preco_frete_obj.preco_frete_100:
+            preco_frete = preco_frete_obj.preco_frete_100
+            frete_incompleto = False
         else:
-            # Produto não reconhecido
-            frete_incompleto = True
-            bitolas_precos = []
-        
-        # Procura pela bitola solicitada
-        for bitola_id, preco_frete_bitola in bitolas_precos:
-            if bitola_id == bitola_solicitacao:
-                preco_frete = preco_frete_bitola
-                break
-        else:
-            # Bitola não encontrada para o produto
+            preco_frete = 0
             frete_incompleto = True
         
         return {

@@ -68,12 +68,7 @@
                       </thead>
                       <tbody>
                         {% for r in grupo.rotas %}
-                        {% set verde = (
-                          r.euca_preco_custo_frete_bitola_1_100 or r.euca_preco_custo_frete_bitola_2_100 or
-                          r.euca_preco_custo_frete_bitola_3_100 or r.euca_preco_custo_frete_bitola_4_100 or
-                          r.pinus_preco_custo_frete_bitola_1_100 or r.pinus_preco_custo_frete_bitola_2_100 or
-                          r.pinus_preco_custo_frete_bitola_3_100 or r.pinus_preco_custo_frete_bitola_4_100) %}
-                      
+                        {% set verde = r.precos_bitola|selectattr('ativo', 'equalto', True)|selectattr('preco_frete_100', 'greaterthan', 0)|list|length > 0 %}
                         <tr>
                           <td class="{%if verde%}text-success{%else%}text-primary{%endif%}" style="text-align: center;">
                             {{ r.floresta.identificacao[:40] if r.floresta else

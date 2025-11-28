@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, date
 from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.gerenciar.veiculo.veiculo_model import VeiculoModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
 from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
@@ -23,10 +23,10 @@ class ExtratorPagarModel(BaseModel):
         "CargaModel", backref=db.backref("fin_extrator_a_pagar_solicitacao", lazy=True)
     )
     fornecedor_id = db.Column(
-        db.Integer, db.ForeignKey("for_fornecedor.id"), nullable=True
+        db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True
     )
     fornecedor = db.relationship(
-        "FornecedorModel",
+        "FornecedorCadastroModel",
         backref=db.backref("fin_extrator_a_pagar_fornecedor", lazy=True),
     )
     bitola_id = db.Column(db.Integer, db.ForeignKey("z_sys_bitola.id"), nullable=False)
@@ -227,7 +227,7 @@ class ExtratorPagarModel(BaseModel):
         
         if nomeFornecedor:
             query = query.filter(
-                FornecedorModel.identificacao.ilike(f"%{nomeFornecedor}%")
+                FornecedorCadastroModel.identificacao.ilike(f"%{nomeFornecedor}%")
             )
             
         if nomeMotorista:
@@ -365,8 +365,8 @@ class ExtratorPagarModel(BaseModel):
                 RegistroOperacionalModel,
                 CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id,
             )
-            .join(FornecedorModel, ExtratorPagarModel.fornecedor)
-            .join(ExtratorModel, FornecedorModel.extrator_id == ExtratorModel.id)
+            .join(FornecedorCadastroModel, ExtratorPagarModel.fornecedor)
+            .join(ExtratorModel, FornecedorCadastroModel.extrator_id == ExtratorModel.id)
             .join(BitolaModel, ExtratorPagarModel.bitola)
             .join(SituacaoPagamentoModel, ExtratorPagarModel.situacao)
             .join(ClienteModel, CargaModel.cliente)
@@ -451,8 +451,8 @@ class ExtratorPagarModel(BaseModel):
                 RegistroOperacionalModel,
                 CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id,
             )
-            .join(FornecedorModel, ExtratorPagarModel.fornecedor)
-            .join(ExtratorModel, FornecedorModel.extrator_id == ExtratorModel.id)
+            .join(FornecedorCadastroModel, ExtratorPagarModel.fornecedor)
+            .join(ExtratorModel, FornecedorCadastroModel.extrator_id == ExtratorModel.id)
             .filter(
                 ExtratorPagarModel.deletado == False, 
                 ExtratorPagarModel.ativo == True
@@ -506,7 +506,7 @@ class ExtratorPagarModel(BaseModel):
             ).filter(TransportadoraModel.identificacao.ilike(f"%{transportadora}%"))
 
         if fornecedor:
-            query = query.filter(FornecedorModel.identificacao.ilike(f"%{fornecedor}%"))
+            query = query.filter(FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%"))
 
         if placa:
             query = query.join(VeiculoModel, CargaModel.veiculo).filter(VeiculoModel.placa_veiculo.ilike(f"%{placa}%"))

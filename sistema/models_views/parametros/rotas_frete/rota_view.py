@@ -2,13 +2,15 @@ from sistema import app, requires_roles, db, current_user
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from sistema.models_views.gerenciar.floresta.floresta_model import FlorestaModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.parametros.rotas_frete.rota_model import RotaFreteModel
+from sistema.models_views.parametros.rotas_frete.rota_frete_preco_bitola_model import RotaFretePrecoBitolaModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.parametros.produto_bitola.produto_bitola_model import ProdutoBitolaModel
 from sistema._utilitarios import *
 
 
@@ -17,9 +19,12 @@ from sistema._utilitarios import *
 @requires_roles
 def cadastrar_rota():
     try:
-        fornecedores = FornecedorModel.listar_fornecedores_ativos()
+        fornecedores = FornecedorCadastroModel.listar_fornecedores_ativos()
         clientes = ClienteModel.listar_clientes_ativos()
         transportadoras = TransportadoraModel.listar_transportadoras_ativas()
+        
+        # Buscar produtos e bitolas dinamicamente
+        produtos_bitolas = ProdutoBitolaModel.obter_produtos_com_bitolas()
 
         validacao_campos_obrigatorios = {}
         validacao_campos_erros = {}
@@ -30,18 +35,30 @@ def cadastrar_rota():
             clienteDestino = request.form["clienteDestino"]
             transportadoraFrete = request.form["transportadoraFrete"]
             
-            eucaPrecoCusto1 = request.form["eucaPrecoCusto1"]
-            eucaPrecoCusto2 = request.form["eucaPrecoCusto2"]
-            eucaPrecoCusto3 = request.form["eucaPrecoCusto3"]
-            eucaPrecoCusto4 = request.form["eucaPrecoCusto4"]
-
-            pinusPrecoCusto1 = request.form["pinusPrecoCusto1"]
-            pinusPrecoCusto2 = request.form["pinusPrecoCusto2"]
-            pinusPrecoCusto3 = request.form["pinusPrecoCusto3"]
-            pinusPrecoCusto4 = request.form["pinusPrecoCusto4"]
-            pinusPrecoCusto5 = request.form["pinusPrecoCusto5"]
-
-            bioPrecoCusto5 = request.form["bioPrecoCusto5"]
+            # Capturar preços de frete dinamicamente
+            precos_frete_dados = {}
+            for produto_id, produto_data in produtos_bitolas.items():
+                produto_name = produto_data['nome']
+                bitolas = produto_data['bitolas']
+                
+                # Usar mesmos prefixos do frontend
+                if produto_name.lower() == 'eucalipto':
+                    prefix = 'euca'
+                elif produto_name.lower() == 'pinus':
+                    prefix = 'pinus'
+                elif produto_name.lower() == 'biomassa':
+                    prefix = 'bio'
+                else:
+                    prefix = produto_name.lower()[:5]
+                    
+                for idx, bitola in enumerate(bitolas, 1):
+                    campo_nome = f"{prefix}PrecoCusto{idx}"
+                    valor = request.form.get(campo_nome, "0")
+                    precos_frete_dados[campo_nome] = {
+                        'produto_id': produto_id,
+                        'bitola_id': bitola['id'],
+                        'valor': valor
+                    }
             
             # Tratar a opção "Todos" - converter para None
             transportadora_id_final = None if transportadoraFrete == "todos" or not transportadoraFrete else int(transportadoraFrete)
@@ -74,71 +91,38 @@ def cadastrar_rota():
             
 
             if gravar_banco:
-                # Conversão dos valores de Eucalipto
-                euca_preco_custo_1_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoCusto1)
-                euca_preco_custo_1_100 = euca_preco_custo_1_float * 100
+                # Converter preços de frete dinamicamente
+                precos_frete_convertidos = {}
+                for campo_nome, dados in precos_frete_dados.items():
+                    valor_float = ValoresMonetarios.converter_string_brl_para_float(dados['valor'])
+                    valor_100 = int(valor_float * 100)
+                    precos_frete_convertidos[campo_nome] = {
+                        'produto_id': dados['produto_id'],
+                        'bitola_id': dados['bitola_id'],
+                        'valor_100': valor_100
+                    }
 
-                euca_preco_custo_2_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoCusto2)
-                euca_preco_custo_2_100 = euca_preco_custo_2_float * 100
-
-                euca_preco_custo_3_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoCusto3)
-                euca_preco_custo_3_100 = euca_preco_custo_3_float * 100
-
-                euca_preco_custo_4_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoCusto4)
-                euca_preco_custo_4_100 = euca_preco_custo_4_float * 100
-
-                # Conversão dos valores de Pinus
-                pinus_preco_custo_1_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoCusto1)
-                pinus_preco_custo_1_100 = pinus_preco_custo_1_float * 100
-
-                pinus_preco_custo_2_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoCusto2)
-                pinus_preco_custo_2_100 = pinus_preco_custo_2_float * 100
-
-                pinus_preco_custo_3_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoCusto3)
-                pinus_preco_custo_3_100 = pinus_preco_custo_3_float * 100
-
-                pinus_preco_custo_4_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoCusto4)
-                pinus_preco_custo_4_100 = pinus_preco_custo_4_float * 100
-
-                pinus_preco_custo_5_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoCusto5)
-                pinus_preco_custo_5_100 = pinus_preco_custo_5_float * 100
-
-                bio_preco_custo_5_100 = int(ValoresMonetarios.converter_string_brl_para_float(bioPrecoCusto5) * 100)
-
-
+                # Criar rota sem campos de bitola hardcoded
                 rota = RotaFreteModel(
-                    floresta_id= None,
-                    fornecedor_id=fornecedorIdentificacao,
-                    cliente_id=clienteDestino,
+                    floresta_id=None,
+                    fornecedor_id=int(fornecedorIdentificacao),
+                    cliente_id=int(clienteDestino),
                     transportadora_id=transportadora_id_final,
-                    # Bitolas e preços de Eucalipto
-                    euca_bitola_1_id=1,
-                    euca_bitola_2_id=2,
-                    euca_bitola_3_id=3,
-                    euca_bitola_4_id=4,
-                    euca_preco_custo_frete_bitola_1_100=euca_preco_custo_1_100,
-                    euca_preco_custo_frete_bitola_2_100=euca_preco_custo_2_100,
-                    euca_preco_custo_frete_bitola_3_100=euca_preco_custo_3_100,
-                    euca_preco_custo_frete_bitola_4_100=euca_preco_custo_4_100,
-
-                    # Bitolas e preços de Pinus
-                    pinus_bitola_1_id=1,
-                    pinus_bitola_2_id=2,
-                    pinus_bitola_3_id=3,
-                    pinus_bitola_4_id=4,
-                    pinus_bitola_5_id=6,
-
-                    pinus_preco_custo_frete_bitola_1_100=pinus_preco_custo_1_100,
-                    pinus_preco_custo_frete_bitola_2_100=pinus_preco_custo_2_100,
-                    pinus_preco_custo_frete_bitola_3_100=pinus_preco_custo_3_100,
-                    pinus_preco_custo_frete_bitola_4_100=pinus_preco_custo_4_100,
-                    pinus_preco_custo_frete_bitola_5_100=pinus_preco_custo_5_100,
-
-                    bio_bitola_5_id=5,
-                    bio_preco_custo_frete_bitola_5_100=bio_preco_custo_5_100,
                     ativo=True
                 )
                 db.session.add(rota)
+                db.session.flush()  # Para obter o ID da rota
+                
+                # Salvar preços de frete dinamicamente na tabela normalizada
+                for campo_nome, dados in precos_frete_convertidos.items():
+                    preco_frete = RotaFretePrecoBitolaModel(
+                        rota_frete_id=rota.id,
+                        produto_id=dados['produto_id'],
+                        bitola_id=dados['bitola_id'],
+                        preco_frete_100=dados['valor_100']
+                    )
+                    db.session.add(preco_frete)
+                
                 db.session.commit()
                 acao = TipoAcaoEnum.CADASTRO
                 PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
@@ -161,6 +145,7 @@ def cadastrar_rota():
         campos_obrigatorios=validacao_campos_obrigatorios,
         campos_erros=validacao_campos_erros,
         dados_corretos=request.form,
+        produtos_bitolas=produtos_bitolas,
     )
 
 
@@ -183,9 +168,21 @@ def editar_rota(id):
             flash(('Rota de frete não encontrada!', 'warning'))
             return redirect(url_for('listar_rotas'))
 
-        fornecedores = FornecedorModel.listar_fornecedores_ativos()
+        fornecedores = FornecedorCadastroModel.listar_fornecedores_ativos()
         clientes = ClienteModel.listar_clientes_ativos()
         transportadoras = TransportadoraModel.listar_transportadoras_ativas()
+        
+        # Buscar produtos e bitolas dinamicamente
+        produtos_bitolas = ProdutoBitolaModel.obter_produtos_com_bitolas()
+        
+        # Carregar preços de frete normalizados
+        precos_frete = RotaFretePrecoBitolaModel.listar_precos_rota(rota.id)
+        
+        # Organizar preços por produto/bitola
+        precos_dict = {}
+        for preco in precos_frete:
+            key = f"produto_{preco.produto_id}_bitola_{preco.bitola_id}"
+            precos_dict[key] = preco.preco_frete_100 or 0
 
         validacao_campos_obrigatorios = {}
         validacao_campos_erros = {}
@@ -200,18 +197,30 @@ def editar_rota(id):
             # Tratar a opção "Todos" - converter para None
             transportadora_id_final = None if transportadora_id == "todos" or not transportadora_id else int(transportadora_id)
             
-            eucaPrecoCusto1 = request.form["eucaPrecoCusto1"]
-            eucaPrecoCusto2 = request.form["eucaPrecoCusto2"]
-            eucaPrecoCusto3 = request.form["eucaPrecoCusto3"]
-            eucaPrecoCusto4 = request.form["eucaPrecoCusto4"]
-
-            pinusPrecoCusto1 = request.form["pinusPrecoCusto1"]
-            pinusPrecoCusto2 = request.form["pinusPrecoCusto2"]
-            pinusPrecoCusto3 = request.form["pinusPrecoCusto3"]
-            pinusPrecoCusto4 = request.form["pinusPrecoCusto4"]
-            pinusPrecoCusto5 = request.form["pinusPrecoCusto5"]
-
-            bioPrecoCusto5 = request.form["bioPrecoCusto5"]
+            # Capturar preços de frete dinamicamente
+            precos_frete_dados = {}
+            for produto_id, produto_data in produtos_bitolas.items():
+                produto_name = produto_data['nome']
+                bitolas = produto_data['bitolas']
+                
+                # Usar mesmos prefixos do frontend
+                if produto_name.lower() == 'eucalipto':
+                    prefix = 'euca'
+                elif produto_name.lower() == 'pinus':
+                    prefix = 'pinus'
+                elif produto_name.lower() == 'biomassa':
+                    prefix = 'bio'
+                else:
+                    prefix = produto_name.lower()[:5]
+                    
+                for idx, bitola in enumerate(bitolas, 1):
+                    campo_nome = f"{prefix}PrecoCusto{idx}"
+                    valor = request.form.get(campo_nome, "0")
+                    precos_frete_dados[campo_nome] = {
+                        'produto_id': produto_id,
+                        'bitola_id': bitola['id'],
+                        'valor': valor
+                    }
 
             # Campos comuns
             campos = {
@@ -240,72 +249,56 @@ def editar_rota(id):
                     flash(("Já existe um registro com estas especificações!", "warning"))
 
             if gravar_banco:
-                # Conversão dos valores de Eucalipto
-                euca_preco_custo_1_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoCusto1)
-                euca_preco_custo_1_100 = euca_preco_custo_1_float * 100
+                # Converter preços de frete dinamicamente
+                precos_frete_convertidos = {}
+                for campo_nome, dados in precos_frete_dados.items():
+                    valor_float = ValoresMonetarios.converter_string_brl_para_float(dados['valor'])
+                    valor_100 = int(valor_float * 100)
+                    precos_frete_convertidos[campo_nome] = {
+                        'produto_id': dados['produto_id'],
+                        'bitola_id': dados['bitola_id'],
+                        'valor_100': valor_100
+                    }
 
-                euca_preco_custo_2_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoCusto2)
-                euca_preco_custo_2_100 = euca_preco_custo_2_float * 100
-
-                euca_preco_custo_3_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoCusto3)
-                euca_preco_custo_3_100 = euca_preco_custo_3_float * 100
-
-                euca_preco_custo_4_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoCusto4)
-                euca_preco_custo_4_100 = euca_preco_custo_4_float * 100
-
-                # Conversão dos valores de Pinus
-                pinus_preco_custo_1_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoCusto1)
-                pinus_preco_custo_1_100 = pinus_preco_custo_1_float * 100
-
-                pinus_preco_custo_2_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoCusto2)
-                pinus_preco_custo_2_100 = pinus_preco_custo_2_float * 100
-
-                pinus_preco_custo_3_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoCusto3)
-                pinus_preco_custo_3_100 = pinus_preco_custo_3_float * 100
-
-                pinus_preco_custo_4_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoCusto4)
-                pinus_preco_custo_4_100 = pinus_preco_custo_4_float * 100
-
-                pinus_preco_custo_5_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoCusto5)
-                pinus_preco_custo_5_100 = pinus_preco_custo_5_float * 100
-
-                bio_preco_custo_5_100 = int(ValoresMonetarios.converter_string_brl_para_float(bioPrecoCusto5) * 100)
-
-                print('aqui', bio_preco_custo_5_100)
-
-                # === COMPARAÇÃO DE OBJETOS ===#
-
+                # Preparar objeto para comparação (valores antigos da tabela normalizada)
                 obj1 = {
                     "fornecedorIdentificacao": str(rota.fornecedor_id or ""),
                     "clienteDestino": str(rota.cliente_id or ""),
                     "transportadoraFrete": "todos" if rota.transportadora_id is None else str(rota.transportadora_id or ""),
-                    "bioPrecoCusto5":rota.bio_preco_custo_frete_bitola_5_100,
-                    "eucaPrecoCusto1":rota.euca_preco_custo_frete_bitola_1_100,
-                    "eucaPrecoCusto2":rota.euca_preco_custo_frete_bitola_2_100,
-                    "eucaPrecoCusto3":rota.euca_preco_custo_frete_bitola_3_100,
-                    "eucaPrecoCusto4":rota.euca_preco_custo_frete_bitola_4_100,
-                    "pinusPrecoCusto1":rota.pinus_preco_custo_frete_bitola_1_100,
-                    "pinusPrecoCusto2":rota.pinus_preco_custo_frete_bitola_2_100,
-                    "pinusPrecoCusto3":rota.pinus_preco_custo_frete_bitola_3_100,
-                    "pinusPrecoCusto4":rota.pinus_preco_custo_frete_bitola_4_100,
-                    "pinusPrecoCusto5":rota.pinus_preco_custo_frete_bitola_5_100,
                 }
+                
+                # Adicionar preços antigos ao obj1
+                for preco in precos_frete:
+                    produto_nome = preco.produto.nome.lower()
+                    if produto_nome == 'eucalipto':
+                        prefix = 'euca'
+                    elif produto_nome == 'pinus':
+                        prefix = 'pinus'
+                    elif produto_nome == 'biomassa':
+                        prefix = 'bio'
+                    else:
+                        prefix = produto_nome[:5]
+                    
+                    # Encontrar índice da bitola
+                    bitola_idx = 1
+                    for idx, b in enumerate(produtos_bitolas[preco.produto_id]['bitolas'], 1):
+                        if b['id'] == preco.bitola_id:
+                            bitola_idx = idx
+                            break
+                    
+                    campo_nome = f"{prefix}PrecoCusto{bitola_idx}"
+                    obj1[campo_nome] = preco.preco_frete_100
 
+                # Preparar objeto novo para comparação
                 obj2 = {
                     "fornecedorIdentificacao": str(fornecedor_id or ""),
                     "clienteDestino": str(cliente_id or ""),
                     "transportadoraFrete": "todos" if transportadora_id_final is None else str(transportadora_id_final or ""),
-                    "bioPrecoCusto5":bio_preco_custo_5_100,
-                    "eucaPrecoCusto1": euca_preco_custo_1_100,
-                    "eucaPrecoCusto2": euca_preco_custo_2_100,
-                    "eucaPrecoCusto3": euca_preco_custo_3_100,
-                    "eucaPrecoCusto4": euca_preco_custo_4_100,
-                    "pinusPrecoCusto1": pinus_preco_custo_1_100,
-                    "pinusPrecoCusto2": pinus_preco_custo_2_100,
-                    "pinusPrecoCusto3": pinus_preco_custo_3_100,
-                    "pinusPrecoCusto4": pinus_preco_custo_4_100,
-                    "pinusPrecoCusto5": pinus_preco_custo_5_100,
                 }
+                
+                # Adicionar novos preços ao obj2
+                for campo_nome, dados in precos_frete_convertidos.items():
+                    obj2[campo_nome] = dados['valor_100']
 
                 diferencas = Gameficacao.compara_objetos(obj1, obj2)
                 if diferencas:
@@ -317,59 +310,62 @@ def editar_rota(id):
                         modulo='rota_frete'
                     )
 
-                rota.floresta_id =  None
-                rota.fornecedor_id = fornecedor_id
-                rota.cliente_id = cliente_id
+                # Atualizar dados básicos da rota
+                rota.floresta_id = None
+                rota.fornecedor_id = int(fornecedor_id)
+                rota.cliente_id = int(cliente_id)
                 rota.transportadora_id = transportadora_id_final
-                # Bitolas e preços de Eucalipto
-                rota.euca_bitola_1_id=1
-                rota.euca_bitola_2_id=2
-                rota.euca_bitola_3_id=3
-                rota.euca_bitola_4_id=4
-                rota.euca_preco_custo_frete_bitola_1_100=euca_preco_custo_1_100
-                rota.euca_preco_custo_frete_bitola_2_100=euca_preco_custo_2_100
-                rota.euca_preco_custo_frete_bitola_3_100=euca_preco_custo_3_100
-                rota.euca_preco_custo_frete_bitola_4_100=euca_preco_custo_4_100
-
-                # Bitolas e preços de Pinus
-                rota.pinus_bitola_1_id=1
-                rota.pinus_bitola_2_id=2
-                rota.pinus_bitola_3_id=3
-                rota.pinus_bitola_4_id=4
-                rota.pinus_bitola_5_id=6
-                rota.pinus_preco_custo_frete_bitola_1_100=pinus_preco_custo_1_100
-                rota.pinus_preco_custo_frete_bitola_2_100=pinus_preco_custo_2_100
-                rota.pinus_preco_custo_frete_bitola_3_100=pinus_preco_custo_3_100
-                rota.pinus_preco_custo_frete_bitola_4_100=pinus_preco_custo_4_100
-                rota.pinus_preco_custo_frete_bitola_5_100=pinus_preco_custo_5_100
-
-                rota.bio_bitola_5_id=5
-                rota.bio_preco_custo_frete_bitola_5_100=bio_preco_custo_5_100
-
                 rota.ativo = True
+                
+                # Desativar preços antigos
+                for preco_antigo in precos_frete:
+                    preco_antigo.ativo = False
+                
+                # Salvar novos preços de frete dinamicamente na tabela normalizada
+                for campo_nome, dados in precos_frete_convertidos.items():
+                    preco_frete = RotaFretePrecoBitolaModel(
+                        rota_frete_id=rota.id,
+                        produto_id=dados['produto_id'],
+                        bitola_id=dados['bitola_id'],
+                        preco_frete_100=dados['valor_100']
+                    )
+                    db.session.add(preco_frete)
 
                 db.session.commit()
                 flash(("Rota de frete atualizada com sucesso!", "success"))
                 return redirect(url_for("listar_rotas"))
 
+        # Preparar dados_corretos para o template
         dados_corretos = {
             "tipoOrigem": "floresta" if rota.floresta_id else "fornecedor",
             "florestaIdentificacao": rota.floresta_id or "",
             "fornecedorIdentificacao": rota.fornecedor_id or "",
             "clienteDestino": rota.cliente_id,
             "transportadoraFrete": "todos" if rota.transportadora_id is None else rota.transportadora_id,
-            "bioPrecoCusto5": rota.bio_preco_custo_frete_bitola_5_100,
-            "eucaPrecoCusto1": rota.euca_preco_custo_frete_bitola_1_100,
-            "eucaPrecoCusto2": rota.euca_preco_custo_frete_bitola_2_100,
-            "eucaPrecoCusto3": rota.euca_preco_custo_frete_bitola_3_100,
-            "eucaPrecoCusto4": rota.euca_preco_custo_frete_bitola_4_100,
-            "pinusPrecoCusto1": rota.pinus_preco_custo_frete_bitola_1_100,
-            "pinusPrecoCusto2": rota.pinus_preco_custo_frete_bitola_2_100,
-            "pinusPrecoCusto3": rota.pinus_preco_custo_frete_bitola_3_100,
-            "pinusPrecoCusto4": rota.pinus_preco_custo_frete_bitola_4_100,
-            "pinusPrecoCusto5": rota.pinus_preco_custo_frete_bitola_5_100,
         }
+        
+        # Adicionar preços de frete dinamicamente ao dados_corretos
+        for produto_id, produto_data in produtos_bitolas.items():
+            produto_name = produto_data['nome']
+            bitolas = produto_data['bitolas']
+            
+            # Usar mesmos prefixos do frontend
+            if produto_name.lower() == 'eucalipto':
+                prefix = 'euca'
+            elif produto_name.lower() == 'pinus':
+                prefix = 'pinus'
+            elif produto_name.lower() == 'biomassa':
+                prefix = 'bio'
+            else:
+                prefix = produto_name.lower()[:5]
+                
+            for idx, bitola in enumerate(bitolas, 1):
+                campo_nome = f"{prefix}PrecoCusto{idx}"
+                chave_dict = f'produto_{produto_id}_bitola_{bitola["id"]}'
+                dados_corretos[campo_nome] = precos_dict.get(chave_dict, 0)
+                
     except Exception as e:
+        print(e)
         flash(('Houve um erro ao tentar editar esta rota! Entre em contato com o suporte.', 'warning'))
         return redirect(url_for('editar_rota', id=id))
 
@@ -381,7 +377,8 @@ def editar_rota(id):
         campos_obrigatorios=validacao_campos_obrigatorios,
         campos_erros=validacao_campos_erros,
         dados_corretos=dados_corretos,
-        rota=rota
+        rota=rota,
+        produtos_bitolas=produtos_bitolas
     )
 
 @app.route("/parametros/rotas/desativar/<int:id>", methods=["GET", "POST"])

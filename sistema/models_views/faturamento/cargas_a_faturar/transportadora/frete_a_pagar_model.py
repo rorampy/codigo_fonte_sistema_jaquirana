@@ -6,7 +6,7 @@ from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagam
 from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
 from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.gerenciar.veiculo.veiculo_model import VeiculoModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
@@ -29,8 +29,8 @@ class FretePagarModel(BaseModel):
     transportadora_id = db.Column(db.Integer, db.ForeignKey("transp_transportadora.id"), nullable=True)
     transportadora = db.relationship("TransportadoraModel", backref=db.backref("fin_frete_a_pagar_transportadora", lazy=True),)
 
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor.id"), nullable=True)
-    fornecedor = db.relationship("FornecedorModel", backref=db.backref("fin_frete_a_pagar_fornecedor", lazy=True))
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True)
+    fornecedor = db.relationship("FornecedorCadastroModel", backref=db.backref("fin_frete_a_pagar_fornecedor", lazy=True))
 
     bitola_id = db.Column(db.Integer, db.ForeignKey("z_sys_bitola.id"), nullable=False)
     bitola = db.relationship("BitolaModel", backref=db.backref("fin_frete_a_pagar_bitola", lazy=True))
@@ -161,7 +161,7 @@ class FretePagarModel(BaseModel):
                 RegistroOperacionalModel,
                 CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id,
             )
-            .join(FornecedorModel, FretePagarModel.fornecedor)
+            .join(FornecedorCadastroModel, FretePagarModel.fornecedor)
             .join(BitolaModel, FretePagarModel.bitola)
             .join(SituacaoPagamentoModel, FretePagarModel.situacao)
             .join(ClienteModel, CargaModel.cliente)
@@ -231,7 +231,7 @@ class FretePagarModel(BaseModel):
             db.session.query(FretePagarModel, RegistroOperacionalModel)
             .join(CargaModel, FretePagarModel.solicitacao)
             .join(RegistroOperacionalModel, CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id)
-            .join(FornecedorModel, FretePagarModel.fornecedor)
+            .join(FornecedorCadastroModel, FretePagarModel.fornecedor)
             .join(BitolaModel, FretePagarModel.bitola)
             .join(SituacaoPagamentoModel, FretePagarModel.situacao)
             .join(ClienteModel, CargaModel.cliente)
@@ -292,7 +292,7 @@ class FretePagarModel(BaseModel):
         if transportadora:
             query = query.filter(TransportadoraModel.identificacao.ilike(f"%{transportadora}%"))
         if fornecedor:
-            query = query.filter(FornecedorModel.identificacao.ilike(f"%{fornecedor}%"))
+            query = query.filter(FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%"))
         if bitola:
             query = query.filter(BitolaModel.bitola.ilike(f"%{bitola}%"))
         if placa:

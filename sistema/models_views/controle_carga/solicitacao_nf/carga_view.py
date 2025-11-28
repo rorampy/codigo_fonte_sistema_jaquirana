@@ -72,6 +72,22 @@ def buscar_motoristas_por_transportadora(transportadora_id):
         "motoristas": [{"id": m.id, "nome": m.nome_completo} for m in motorista],
     })
 
+@app.route("/produto/<int:produto_id>/bitolas")
+@login_required
+@requires_roles
+def buscar_bitolas_por_produto(produto_id):
+    """Retorna as bitolas associadas a um produto específico"""
+    from sistema.models_views.parametros.produto_bitola.produto_bitola_model import ProdutoBitolaModel
+    
+    bitolas = ProdutoBitolaModel.listar_bitolas_por_produto(produto_id)
+    
+    if not bitolas:
+        return jsonify({"bitolas": []})
+    
+    return jsonify({
+        "bitolas": [{"id": b.id, "nome": b.bitola} for b in bitolas]
+    })
+
 
 @app.route("/controle-cargas/solicitacao/detalhes/<int:id>", methods=["GET", "POST"])
 @login_required
