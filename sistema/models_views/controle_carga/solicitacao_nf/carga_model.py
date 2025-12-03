@@ -125,7 +125,7 @@ class CargaModel(BaseModel):
         motorista_id,
         transportadora_id,
         veiculo_id,
-        certificacao_id,
+        certificacao_id=None,
         floresta_id=None,
         fornecedor_id=None,
         data_hora_msg_whats=None,

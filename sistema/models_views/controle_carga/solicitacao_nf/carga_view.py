@@ -154,7 +154,6 @@ def cadastrar_solicitacao():
             "transportadoraSolicitacao": ["Transportadora", transportadoraSolicitacao],
             "motoristaSolicitacao": ["Motorista", motoristaSolicitacao],
             "placaVeiculo": ["Placa", placaVeiculo],
-            "certificacao_solicitacao": ["Certificação", certificacao_solicitacao],
         }
 
         validacao_campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)
@@ -173,7 +172,7 @@ def cadastrar_solicitacao():
                     motorista_id=motoristaSolicitacao,
                     transportadora_id=transportadoraSolicitacao,
                     veiculo_id=placaVeiculo,
-                    certificacao_id=certificacao_solicitacao,
+                    certificacao_id=certificacao_solicitacao if certificacao_solicitacao else None,
                     floresta_id=None,
                     fornecedor_id=None,
                     usuario_id=current_user.id,
@@ -252,7 +251,6 @@ def editar_solicitacao(id):
             "transportadoraSolicitacao": ["Transportadora", transportadoraSolicitacao],
             "motoristaSolicitacao": ["Motorista", motoristaSolicitacao],
             "placaVeiculo": ["Placa", placaVeiculo],
-            "certificacao_solicitacao": ["Certificação", certificacao_solicitacao],
         }
 
         campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)
@@ -306,7 +304,7 @@ def editar_solicitacao(id):
             solicitacao.transportadora_id = transportadoraSolicitacao
             solicitacao.grupo_whats_id = nomeGrupo if nomeGrupo else None
             solicitacao.usuario_id = current_user.id
-            solicitacao.certificacao_id = certificacao_solicitacao
+            solicitacao.certificacao_id = certificacao_solicitacao if certificacao_solicitacao else None
 
             db.session.commit()
             flash(("Solicitação editada com sucesso!", "success"))
