@@ -171,13 +171,13 @@ def extrator_a_pagar(id):
             flash(("Registro já consta como faturado!", "warning"))
             return redirect(url_for("listagem_extratores_a_pagar"))
 
-        saldo_credito = CreditoExtratorModel.obtem_registro_extrator_id(registro.fornecedor.extrator_id)
+        saldo_credito = CreditoExtratorModel.obtem_registro_extrator_id(registro.obter_extrator_id())
         credito_disponivel = (
             saldo_credito.valor_total_credito_100 if saldo_credito else 0
         )
 
         creditos_individuais = ExtratoCreditoExtratorModel.obter_creditos_disponiveis_extrator(
-            registro.fornecedor.extrator_id
+            registro.obter_extrator_id()
         )
 
         registro_oper = RegistroOperacionalModel.obter_registro_solicitacao_por_id(
@@ -231,7 +231,7 @@ def extrator_a_pagar(id):
                 
                 if 'extrator' in creditos_selecionados:
                     for extrator_id_str, credito_ids in creditos_selecionados['extrator'].items():
-                        if int(extrator_id_str) == registro.fornecedor.extrator_id:
+                        if int(extrator_id_str) == registro.obter_extrator_id():
                             for credito_id in credito_ids:
                                 credito = ExtratoCreditoExtratorModel.query.get(credito_id)
                                 if credito:
@@ -248,7 +248,7 @@ def extrator_a_pagar(id):
                     
                     if 'extrator' in creditos_selecionados:
                         for extrator_id_str, credito_ids in creditos_selecionados['extrator'].items():
-                            if int(extrator_id_str) == registro.fornecedor.extrator_id:
+                            if int(extrator_id_str) == registro.obter_extrator_id():
                                 
                                 for credito_id in credito_ids:
                                     if credito_restante_para_usar <= 0:
@@ -273,7 +273,7 @@ def extrator_a_pagar(id):
                                                 tipo_movimentacao=1,  # Entrada
                                                 descricao=f"Crédito restante após uso parcial individual - Original: {credito_individual.descricao}",
                                                 data_movimentacao=datetime.now(),
-                                                extrator_id=registro.fornecedor.extrator_id,
+                                                extrator_id=registro.obter_extrator_id(),
                                                 valor_credito_100=valor_restante,
                                                 usuario_id=current_user.id,
                                                 ativo=True
@@ -290,7 +290,7 @@ def extrator_a_pagar(id):
                                             tipo_movimentacao=tipo_mov,
                                             descricao=descricao_mov,
                                             data_movimentacao=datetime.now(),
-                                            extrator_id=registro.fornecedor.extrator_id,
+                                            extrator_id=registro.obter_extrator_id(),
                                             valor_credito_100=abs(valor_credito_a_usar),  # Sempre positivo no extrato
                                             usuario_id=current_user.id,
                                             ativo=True,
@@ -304,7 +304,7 @@ def extrator_a_pagar(id):
                                         
                                         detalhes_creditos_utilizados.append({
                                             'credito_id': credito_id,
-                                            'extrator_id': registro.fornecedor.extrator_id,
+                                            'extrator_id': registro.obter_extrator_id(),
                                             'valor': valor_credito_a_usar,
                                             'valor_original': credito_individual.valor_credito_100,
                                             'descricao': credito_individual.descricao,
@@ -366,9 +366,9 @@ def extrator_a_pagar(id):
 
                 detalhes_extratores = [{
                     "extrator_a_pagar_id": registro.id,
-                    "extrator_id": registro.fornecedor.extrator_id,
+                    "extrator_id": registro.obter_extrator_id(),
                     "solicitacao_id": registro.solicitacao_id if registro.solicitacao else "",
-                    "extrator_identificacao": registro.fornecedor.extrator.identificacao if registro and registro.fornecedor and registro.fornecedor.extrator else str(registro.fornecedor.extrator_id),
+                    "extrator_identificacao": registro.obter_extrator().identificacao if registro.obter_extrator() else str(registro.obter_extrator_id() or ""),
                     "cliente": registro.solicitacao.cliente.identificacao if registro.solicitacao and registro.solicitacao.cliente else "",
                     "valor_bruto": valor_bruto_registro,
                     "valor_credito": valor_credito_registro,
@@ -424,6 +424,10 @@ def extrator_a_pagar(id):
                     flash(("Faturamento informado com sucesso!", "success"))
                     return redirect(url_for("listagem_extratores_a_pagar"))
 
+        # Obter o extrator para passar ao template
+        extrator = registro.obter_extrator()
+        extrator_id = registro.obter_extrator_id()
+
         return render_template(
             "/financeiro/informar_pagamento/informar_pagamento_extrator.html",
             campos_obrigatorios=campos_obrigatorios,
@@ -431,6 +435,8 @@ def extrator_a_pagar(id):
             dados_corretos=request.form,
             registro=registro,
             registro_operacional=registro_oper,
+            extrator=extrator,
+            extrator_id=extrator_id,
             saldo_credito=credito_disponivel,
             creditos_individuais=creditos_individuais,
             conciliar_transacao_id=conciliar_transacao_id,
@@ -522,7 +528,7 @@ def extrator_a_pagar_massa():
                 continue
             
             # Obter o extrator id
-            extrator_id = registro.fornecedor.extrator_id
+            extrator_id = registro.obter_extrator_id()
             valor_total_geral += registro.valor_total_a_pagar_100
 
             # Se o extrator ainda não estiver no dicionário
@@ -547,11 +553,9 @@ def extrator_a_pagar_massa():
             
             # Associar extrator
             if not extratores_dict[extrator_id]['extrator']:
-                if (registro.registro_operacional and 
-                    registro.registro_operacional.solicitacao and 
-                    registro.registro_operacional.solicitacao.fornecedor and
-                    registro.registro_operacional.solicitacao.fornecedor.extrator):
-                    extratores_dict[extrator_id]['extrator'] = registro.registro_operacional.solicitacao.fornecedor.extrator
+                extrator_obj = registro.obter_extrator()
+                if extrator_obj:
+                    extratores_dict[extrator_id]['extrator'] = extrator_obj
 
         # Cálculo do total de crédito disponível
         total_credito_disponivel = sum(e['credito_disponivel'] for e in extratores_dict.values())
@@ -925,7 +929,7 @@ def cancelar_pagamento_extrator(id):
                 tipo_movimentacao=4, 
                 descricao="Estorno de crédito por cancelamento de faturamento",
                 data_movimentacao=datetime.now(),
-                extrator_id=registro.fornecedor.extrator_id,
+                extrator_id=registro.obter_extrator_id(),
                 usuario_id=current_user.id,
                 valor_credito_100=valor_credito,
             )
@@ -933,7 +937,7 @@ def cancelar_pagamento_extrator(id):
             db.session.flush()
 
             
-            saldo_credito = CreditoExtratorModel.obtem_registro_extrator_id(registro.fornecedor.extrator_id)
+            saldo_credito = CreditoExtratorModel.obtem_registro_extrator_id(registro.obter_extrator_id())
             if saldo_credito:
                 saldo_credito.valor_total_credito_100 += valor_credito
 

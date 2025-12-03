@@ -105,7 +105,7 @@
             <div class="col-md-2">
               <label class="form-label">Extrator</label>
               <input type="text" class="form-control"
-                value="{{ registro.solicitacao.fornecedor.extrator.identificacao if registro.solicitacao and registro.solicitacao.fornecedor and registro.solicitacao.fornecedor.extrator else '' }}"
+                value="{{ extrator.identificacao if extrator else '' }}"
                 disabled readonly>
             </div>
             <div class="col-md-2">
@@ -186,9 +186,7 @@
                       <div>
                         <h6 class="card-title mb-0 fw-bold" style="color: #1B5E20;">
                           Selecionar Créditos -
-                          {{ registro.solicitacao.fornecedor.extrator.identificacao if registro.solicitacao and
-                          registro.solicitacao.fornecedor and registro.solicitacao.fornecedor.extrator else 'Extrator'
-                          }}
+                          {{ extrator.identificacao if extrator else 'Extrator' }}
                         </h6>
                         <small class="text-muted">{{ creditos_individuais|length }} crédito(s)
                           disponível(is)</small>
@@ -202,8 +200,8 @@
                           <tr>
                             <th width="50" class="text-center">
                               <input type="checkbox" class="form-check-input"
-                                id="select-all-creditos-extrator-{{ registro.solicitacao.fornecedor.extrator.id if registro.solicitacao and registro.solicitacao.fornecedor and registro.solicitacao.fornecedor.extrator else 'unknown' }}"
-                                onchange="toggleAllCreditos('extrator', {{ registro.solicitacao.fornecedor.extrator.id if registro.solicitacao and registro.solicitacao.fornecedor and registro.solicitacao.fornecedor.extrator else 0 }})">
+                                id="select-all-creditos-extrator-{{ extrator_id if extrator_id else 'unknown' }}"
+                                onchange="toggleAllCreditos('extrator', {{ extrator_id if extrator_id else 0 }})">
                             </th>
                             <th class="fw-bold text-center text-muted">Data</th>
                             <th class="fw-bold text-center text-muted">Descrição</th>
@@ -215,7 +213,7 @@
                           <tr class="hover-row" style="border-bottom: 1px solid #f1f3f4;">
                             <td class="text-center">
                               <input type="checkbox" class="form-check-input credito-checkbox"
-                                name="creditos_extrator_{{ registro.solicitacao.fornecedor.extrator.id if registro.solicitacao and registro.solicitacao.fornecedor and registro.solicitacao.fornecedor.extrator else 0 }}[]"
+                                name="creditos_extrator_{{ extrator_id if extrator_id else 0 }}[]"
                                 value="{{ credito.id }}" data-valor="{{ credito.valor_credito_100 }}"
                                 data-tipo="extrator"
                                 data-entidade-id="{{ registro.solicitacao.fornecedor.extrator.id if registro.solicitacao and registro.solicitacao.fornecedor and registro.solicitacao.fornecedor.extrator else 0 }}"

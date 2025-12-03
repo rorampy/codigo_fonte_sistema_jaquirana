@@ -7,6 +7,7 @@ from sistema.models_views.controle_carga.solicitacao_nf.carga_model import Carga
 from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.gerenciar.veiculo.veiculo_model import VeiculoModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_extracao_model import FornecedorPrecoCustoExtracaoModel
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
 from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
@@ -135,6 +136,42 @@ class ExtratorPagarModel(BaseModel):
         self.categorizacao_fiscal_id = categorizacao_fiscal_id
         self.ativo = ativo
         self.movimentacao_financeira_id = movimentacao_financeira_id
+
+    def obter_extrator_id(self):
+        """
+        Obtém o ID do extrator associado a este registro através da tabela de preços de extração.
+        
+        Returns:
+            int: ID do extrator ou None se não encontrado
+        """
+        from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_extracao_model import FornecedorPrecoCustoExtracaoModel
+        
+        preco_extracao = FornecedorPrecoCustoExtracaoModel.query.filter(
+            FornecedorPrecoCustoExtracaoModel.fornecedor_id == self.fornecedor_id,
+            FornecedorPrecoCustoExtracaoModel.bitola_id == self.bitola_id,
+            FornecedorPrecoCustoExtracaoModel.ativo == True,
+            FornecedorPrecoCustoExtracaoModel.deletado == False
+        ).first()
+        
+        return preco_extracao.extrator_id if preco_extracao else None
+
+    def obter_extrator(self):
+        """
+        Obtém o objeto ExtratorModel associado a este registro através da tabela de preços de extração.
+        
+        Returns:
+            ExtratorModel: Objeto do extrator ou None se não encontrado
+        """
+        from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_extracao_model import FornecedorPrecoCustoExtracaoModel
+        
+        preco_extracao = FornecedorPrecoCustoExtracaoModel.query.filter(
+            FornecedorPrecoCustoExtracaoModel.fornecedor_id == self.fornecedor_id,
+            FornecedorPrecoCustoExtracaoModel.bitola_id == self.bitola_id,
+            FornecedorPrecoCustoExtracaoModel.ativo == True,
+            FornecedorPrecoCustoExtracaoModel.deletado == False
+        ).first()
+        
+        return preco_extracao.extrator if preco_extracao else None
 
     def obter_extrator_a_pagar_solicitacao(id):
         """
@@ -366,7 +403,14 @@ class ExtratorPagarModel(BaseModel):
                 CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id,
             )
             .join(FornecedorCadastroModel, ExtratorPagarModel.fornecedor)
-            .join(ExtratorModel, FornecedorCadastroModel.extrator_id == ExtratorModel.id)
+            .join(
+                FornecedorPrecoCustoExtracaoModel,
+                and_(
+                    FornecedorPrecoCustoExtracaoModel.fornecedor_id == FornecedorCadastroModel.id,
+                    FornecedorPrecoCustoExtracaoModel.bitola_id == ExtratorPagarModel.bitola_id
+                )
+            )
+            .join(ExtratorModel, FornecedorPrecoCustoExtracaoModel.extrator_id == ExtratorModel.id)
             .join(BitolaModel, ExtratorPagarModel.bitola)
             .join(SituacaoPagamentoModel, ExtratorPagarModel.situacao)
             .join(ClienteModel, CargaModel.cliente)
@@ -452,7 +496,14 @@ class ExtratorPagarModel(BaseModel):
                 CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id,
             )
             .join(FornecedorCadastroModel, ExtratorPagarModel.fornecedor)
-            .join(ExtratorModel, FornecedorCadastroModel.extrator_id == ExtratorModel.id)
+            .join(
+                FornecedorPrecoCustoExtracaoModel,
+                and_(
+                    FornecedorPrecoCustoExtracaoModel.fornecedor_id == FornecedorCadastroModel.id,
+                    FornecedorPrecoCustoExtracaoModel.bitola_id == ExtratorPagarModel.bitola_id
+                )
+            )
+            .join(ExtratorModel, FornecedorPrecoCustoExtracaoModel.extrator_id == ExtratorModel.id)
             .filter(
                 ExtratorPagarModel.deletado == False, 
                 ExtratorPagarModel.ativo == True
