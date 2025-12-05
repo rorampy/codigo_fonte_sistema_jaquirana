@@ -9,3 +9,4 @@ from .extracao_nfs_e import ExtrairDadosNFSe
 from .gameficacao import Gameficacao
 from .utilitario_semanal import UtilitariosSemana
 from .processador_arquivo_ofx import OFXProcessor
+from .extracao_texto_ticket import ExtracaoTicket

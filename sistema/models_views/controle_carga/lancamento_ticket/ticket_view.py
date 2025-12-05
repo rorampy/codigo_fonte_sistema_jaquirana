@@ -18,6 +18,8 @@ from sistema.models_views.gerenciar.transportadora.transportadora_model import T
 from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
 from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
 from sistema._utilitarios import *
+import os
+import tempfile
 
 
 @app.route("/controle-cargas/cadastrar/ticket/<int:id>", methods=["GET", "POST"])
@@ -271,6 +273,80 @@ def cadastrar_ticket(id):
         registroOperacional=registroOperacional,
     )
 
+@app.route("/api/processar-ticket", methods=["POST"])
+def processar_ticket_api():
+    """
+    API para processar imagem do ticket e extrair dados automaticamente.
+    Valida qualidade da imagem antes de processar.
+    """
+    try:
+        if 'arquivo' not in request.files:
+            return jsonify({
+                'sucesso': False,
+                'erro': 'ARQUIVO_NAO_ENVIADO',
+                'mensagem': 'Nenhum arquivo foi enviado'
+            }), 400
+        
+        arquivo = request.files['arquivo']
+        
+        if not arquivo or arquivo.filename == '':
+            return jsonify({
+                'sucesso': False,
+                'erro': 'ARQUIVO_INVALIDO',
+                'mensagem': 'Arquivo inválido'
+            }), 400
+        
+        if arquivo.mimetype not in ["image/jpeg", "image/png", "image/jpg"]:
+            return jsonify({
+                'sucesso': False,
+                'erro': 'FORMATO_INVALIDO',
+                'mensagem': 'O arquivo deve estar em formato JPG, JPEG ou PNG'
+            }), 400
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(arquivo.filename)[1]) as temp_file:
+            arquivo.save(temp_file.name)
+            temp_path = temp_file.name
+        
+        try:
+            extrator = ExtracaoTicket(temp_path)
+            dados = extrator.processar()
+            
+            if not dados.get('sucesso'):
+                return jsonify({
+                    'sucesso': False,
+                    'erro': dados.get('erro'),
+                    'mensagem': dados.get('mensagem'),
+                    'dados': {
+                        'numero_nf': dados.get('numero_nf') or '',
+                        'peso_liquido': dados.get('peso_liquido') if dados.get('peso_liquido') else None,
+                        'data_entrega': dados.get('data_entrega').strftime('%Y-%m-%d') if dados.get('data_entrega') else '',
+                        'placa': dados.get('placa') or ''
+                    }
+                }), 422
+            
+            resultado = {
+                'sucesso': True,
+                'dados': {
+                    'numero_nf': dados.get('numero_nf') or '',
+                    'peso_liquido': dados.get('peso_liquido') if dados.get('peso_liquido') else None,
+                    'data_entrega': dados.get('data_entrega').strftime('%Y-%m-%d') if dados.get('data_entrega') else '',
+                    'placa': dados.get('placa') or ''
+                },
+                'campos_faltantes': dados.get('campos_faltantes')
+            }
+            
+            return jsonify(resultado), 200
+            
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+    
+    except Exception as e:
+        return jsonify({
+            'sucesso': False,
+            'erro': 'ERRO_PROCESSAMENTO',
+            'mensagem': f'Erro ao processar ticket: {str(e)}'
+        }), 500
 
 @app.route("/tickets/lancamentos/editar/<int:id>", methods=["GET", "POST"])
 @login_required
