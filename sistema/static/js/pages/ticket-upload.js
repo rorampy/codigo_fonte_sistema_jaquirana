@@ -227,6 +227,33 @@ class TicketUploadManager {
         body: formData
       });
 
+      // Tratar erros HTTP antes de fazer parse do JSON
+      if (!response.ok) {
+        let mensagemErro = 'Erro ao processar ticket.';
+        
+        try {
+          const data = await response.json();
+          mensagemErro = data.mensagem || mensagemErro;
+        } catch {
+          // Se não conseguir fazer parse do JSON (erro 502, etc)
+          if (response.status === 502) {
+            mensagemErro = 'Servidor temporariamente indisponível. Tente novamente em alguns instantes.';
+            console.error('Erro 502: Bad Gateway - Possível problema com o servidor OCR.');
+          } else if (response.status === 507) {
+            mensagemErro = 'Servidor sem memória. Tente com uma imagem menor.';
+            console.error('Erro 507: Insufficient Storage - Possível problema com o servidor OCR.');
+          } else if (response.status === 413) {
+            mensagemErro = 'Arquivo muito grande (máximo 10MB).';
+            console.error('Erro 413: Payload Too Large - Arquivo excede o tamanho máximo permitido.');
+          } else {
+            mensagemErro = `Erro no servidor (${response.status}). Tente novamente.`;
+          }
+        }
+        
+        this.mostrarErro(mensagemErro);
+        return;
+      }
+
       const data = await response.json();
 
       if (data.sucesso) {
@@ -237,7 +264,7 @@ class TicketUploadManager {
       }
     } catch (error) {
       console.error('Erro:', error);
-      this.mostrarErro('Erro ao processar ticket. Verifique sua conexão e tente novamente.');
+      this.mostrarErro(error.message || 'Erro ao processar ticket. Verifique sua conexão e tente novamente.');
     } finally {
       this.esconderCarregamento();
     }

@@ -7,6 +7,7 @@ Inclui validação de qualidade de imagem antes do processamento.
 import cv2
 import numpy as np
 import re
+import os
 from paddleocr import PaddleOCR
 from datetime import datetime
 
@@ -22,11 +23,39 @@ class ExtracaoTicket:
             caminho_imagem (str): Caminho completo para o arquivo de imagem do ticket
             
         Note:
-            Cria uma nova instância do PaddleOCR para cada ticket processado,
-            evitando problemas de estado corrompido entre processamentos
+            Configuração otimizada do PaddleOCR para reduzir consumo de memória em produção.
+            Redimensiona imagens grandes automaticamente antes do processamento.
         """
-        self.caminho_imagem = caminho_imagem
-        self.ocr_engine = PaddleOCR(lang='pt', use_angle_cls=True)
+        self.caminho_imagem = self._redimensionar_se_grande(caminho_imagem)
+        # Configuração LEVE do PaddleOCR para não consumir toda a memória do servidor
+        self.ocr_engine = PaddleOCR(
+            lang='pt',
+            use_angle_cls=False,     # Desabilita rotação automática
+            rec_batch_num=1          # Processa 1 linha por vez
+        )
+    
+    def _redimensionar_se_grande(self, caminho):
+        """Redimensiona imagens muito grandes para economizar memória durante OCR"""
+        try:
+            img = cv2.imread(caminho)
+            if img is None:
+                return caminho
+            
+            altura, largura = img.shape[:2]
+            max_dim = 1920
+            
+            # Se a imagem for muito grande, redimensiona mantendo proporção
+            if largura > max_dim or altura > max_dim:
+                escala = max_dim / max(largura, altura)
+                nova_largura = int(largura * escala)
+                nova_altura = int(altura * escala)
+                
+                img = cv2.resize(img, (nova_largura, nova_altura), interpolation=cv2.INTER_AREA)
+                cv2.imwrite(caminho, img, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        except Exception:
+            pass
+        
+        return caminho
 
     def preprocessar_imagem(path):
         """

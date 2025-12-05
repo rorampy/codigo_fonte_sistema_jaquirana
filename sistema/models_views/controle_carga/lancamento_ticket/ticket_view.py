@@ -273,12 +273,14 @@ def cadastrar_ticket(id):
         registroOperacional=registroOperacional,
     )
 
+
 @app.route("/api/processar-ticket", methods=["POST"])
 def processar_ticket_api():
     """
     API para processar imagem do ticket e extrair dados automaticamente.
     Valida qualidade da imagem antes de processar.
     """
+    temp_path = None
     try:
         if 'arquivo' not in request.files:
             return jsonify({
@@ -296,6 +298,18 @@ def processar_ticket_api():
                 'mensagem': 'Arquivo inválido'
             }), 400
         
+        # Validar tamanho do arquivo (máximo 10MB)
+        arquivo.seek(0, os.SEEK_END)
+        tamanho_arquivo = arquivo.tell()
+        arquivo.seek(0)
+        
+        if tamanho_arquivo > 10 * 1024 * 1024:  # 10MB
+            return jsonify({
+                'sucesso': False,
+                'erro': 'ARQUIVO_MUITO_GRANDE',
+                'mensagem': 'O arquivo deve ter no máximo 10MB'
+            }), 413
+        
         if arquivo.mimetype not in ["image/jpeg", "image/png", "image/jpg"]:
             return jsonify({
                 'sucesso': False,
@@ -310,6 +324,9 @@ def processar_ticket_api():
         try:
             extrator = ExtracaoTicket(temp_path)
             dados = extrator.processar()
+            
+            # Liberar memória explicitamente
+            del extrator
             
             if not dados.get('sucesso'):
                 return jsonify({
@@ -338,15 +355,35 @@ def processar_ticket_api():
             return jsonify(resultado), 200
             
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except Exception:
+                    pass
     
+    except MemoryError:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
+        return jsonify({
+            'sucesso': False,
+            'erro': 'ERRO_MEMORIA',
+            'mensagem': 'Servidor sem memória disponível. Tente com uma imagem menor.'
+        }), 507
     except Exception as e:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
         return jsonify({
             'sucesso': False,
             'erro': 'ERRO_PROCESSAMENTO',
             'mensagem': f'Erro ao processar ticket: {str(e)}'
         }), 500
+
 
 @app.route("/tickets/lancamentos/editar/<int:id>", methods=["GET", "POST"])
 @login_required
