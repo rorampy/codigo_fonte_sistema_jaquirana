@@ -13,11 +13,6 @@
 
     <!-- Seção superior com controles -->
     <div class="navbar-nav flex-row d-lg-none">
-      <div class="nav-item d-none d-lg-flex me-3">
-        <div class="btn-list">
-          <!-- Você pode adicionar botões personalizados aqui se desejar -->
-        </div>
-      </div>
       <div class="d-none d-lg-flex">
         <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Ativar modo escuro" data-bs-toggle="tooltip"
           data-bs-placement="bottom">
@@ -129,55 +124,7 @@
           </a>
         </li>
 
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#navbar-base" data-bs-toggle="dropdown" data-bs-auto-close="outside"
-            role="button" aria-expanded="false">
-            <span class="nav-link-icon d-md-none d-lg-inline-block">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-truck-return">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                <path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                <path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v6h-5l2 2m0 -4l-2 2" />
-                <path d="M9 17l6 0" />
-                <path d="M13 6h5l3 5v6h-2" />
-              </svg>
-            </span>
-            <span class="nav-link-title">
-              Controle de Cargas
-            </span>
-          </a>
-          <div class="dropdown-menu">
-            <div class="dropdown-menu-columns">
-              <div class="dropdown-menu-column">
-                <a class="dropdown-item" href="{{url_for('listagem_solicitacoes')}}">
-                  Pedido de Venda
-                </a>
-                <div class="dropend">
-                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside" role="button" aria-expanded="false">
-                    Vendas
-                  </a>
-                  <div class="dropdown-menu">
-                    <a class="dropdown-item" href="{{url_for('vendas_em_transito')}}">
-                      Vendas em Trânsito
-                    </a>
-                    <a class="dropdown-item" href="{{url_for('vendas_entregues')}}">
-                      Vendas Entregues
-                    </a>
-                  </div>
-                </div>
-                <a class="dropdown-item" href="{{url_for('listagem_nf_complementar')}}">
-                  NF Complementar
-                </a>
-                <a class="dropdown-item" href="{{url_for('listagem_nf_entrada')}}">
-                  NF Entrada
-                </a>
-              </div>
-            </div>
-          </div>
-        </li>
+
 
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#navbar-base" data-bs-toggle="dropdown" data-bs-auto-close="outside"
@@ -201,7 +148,7 @@
               </svg>
             </span>
             <span class="nav-link-title">
-              Gerenciar
+              Cadastro
             </span>
           </a>
           <div class="dropdown-menu">
@@ -232,8 +179,28 @@
                   Comissionados
                 </a>
                 <a class="dropdown-item" href="{{ url_for('listar_pessoas_financeiro')}}">
-                  Pessoas Financeiro
+                  Usuários
                 </a>
+                <a class="dropdown-item" href="{{ url_for('listar_bitolas')}}">
+                  Bitola
+                </a>
+                <a class="dropdown-item" href="{{url_for('listar_rotas')}}">
+                  Rotas de frete
+                </a>
+                <a class="dropdown-item" href="{{url_for('listar_grupos')}}">
+                  Grupos Whatsapp
+                </a>
+                <div class="dropend">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside" role="button" aria-expanded="false">
+                    Roles e Rotas
+                  </a>
+                  <div class="dropdown-menu">
+                    <a href="{{ url_for('roles_listar') }}" class="dropdown-item">
+                      Roles/Funções
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -261,9 +228,12 @@
                 <div class="dropend">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
                     data-bs-auto-close="outside" role="button" aria-expanded="false">
-                    Cargas a Faturar
+                    Entrada
                   </a>
                   <div class="dropdown-menu">
+                    <a class="dropdown-item" href="{{url_for('listagem_nf_entrada')}}">
+                      NF Entrada
+                    </a>
                     <a class="dropdown-item" href="{{url_for('listagem_fornecedores_a_pagar')}}">
                       Fornecedores a Faturar
                     </a>
@@ -281,34 +251,37 @@
                 <div class="dropend">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
                     data-bs-auto-close="outside" role="button" aria-expanded="false">
-                    Cargas a Receber
+                    Saída
                   </a>
                   <div class="dropdown-menu">
+                    <a class="dropdown-item" href="{{url_for('listagem_solicitacoes')}}">
+                      Pedido de Venda
+                    </a>
+                    <div class="dropend">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside" role="button" aria-expanded="false">
+                        Vendas
+                      </a>
+                      <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{url_for('vendas_em_transito')}}">
+                          Vendas em Trânsito
+                        </a>
+                        <a class="dropdown-item" href="{{url_for('vendas_entregues')}}">
+                          Vendas Entregues
+                        </a>
+                      </div>
+                    </div>
+                    <a class="dropdown-item" href="{{url_for('listagem_nf_complementar')}}">
+                      NF Complementar
+                    </a>
                     <a class="dropdown-item" href="{{url_for('listagem_a_receber')}}">
-                      Vendas
+                      Vendas (a Receber)
                     </a>
                     <a class="dropdown-item" href="{{url_for('faturamento_nf_complementar')}}">
-                      NF Complementar
+                      NF Complementar (a Receber)
                     </a>
                     <a class="dropdown-item" href="{{url_for('faturamento_nf_servico')}}">
                       Serviços
-                    </a>
-                  </div>
-                </div>
-                <div class="dropend">
-                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside" role="button" aria-expanded="false">
-                    Controle de Adiantamentos
-                  </a>
-                  <div class="dropdown-menu">
-                    <a class="dropdown-item" href="{{url_for('saldo_fornecedores')}}">
-                      Fornecedores
-                    </a>
-                    <a class="dropdown-item" href="{{url_for('saldo_freteiros')}}">
-                      Fretes
-                    </a>
-                    <a class="dropdown-item" href="{{url_for('saldo_extratores')}}">
-                      Extratores
                     </a>
                   </div>
                 </div>
@@ -338,35 +311,53 @@
             <div class="dropdown-menu-columns">
               <div class="dropdown-menu-column">
                 <a class="dropdown-item" href="{{url_for('conciliacao_contas_bancarias')}}">
-                  Contas Bancárias
+                  Conciliação Bancária
                 </a>
                 <a class="dropdown-item" href="{{url_for('listagem_receitas_avulsas')}}">
-                  Receitas
+                  Contas a Receber
                 </a>
                 <a class="dropdown-item" href="{{url_for('listagem_despesas_avulsas')}}">
-                  Despesas
+                  Contas a Pagar
                 </a>
                 <div class="dropend">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
                     data-bs-auto-close="outside" role="button" aria-expanded="false">
-                    Operacional
+                    Adiantamentos
+                  </a>
+                  <div class="dropdown-menu">
+                    <a class="dropdown-item" href="{{url_for('saldo_fornecedores')}}">
+                      Fornecedores
+                    </a>
+                    <a class="dropdown-item" href="{{url_for('saldo_freteiros')}}">
+                      Fretes
+                    </a>
+                    <a class="dropdown-item" href="{{url_for('saldo_extratores')}}">
+                      Extratores
+                    </a>
+                    <a class="dropdown-item" href="{{url_for('listagem_faturamentos_controle_credito')}}">
+                      Adiantamentos de Clientes
+                    </a>
+                  </div>
+                </div>
+                <div class="dropend">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside" role="button" aria-expanded="false">
+                    Contas a Pagar
                   </a>
                   <div class="dropdown-menu">
                     <a class="dropdown-item" href="{{url_for('listagem_faturamentos_cargas_a_pagar')}}">
-                      Cargas a Pagar
+                      Controle de Contas a Pagar
                     </a>
+                  </div>
+                </div>
+                <div class="dropend">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside" role="button" aria-expanded="false">
+                    Contas a Receber
+                  </a>
+                  <div class="dropdown-menu">
                     <a class="dropdown-item" href="{{url_for('listagem_faturamentos_cargas_a_receber')}}">
-                      Cargas a Receber
-                    </a>
-                    <!-- Não vai para faturamento os lancamentos avulsos -->
-                    <!-- <a class="dropdown-item" href="{{url_for('listagem_faturamentos_receitas_avulsas')}}">
-                      Receitas
-                    </a>
-                    <a class="dropdown-item" href="{{url_for('listagem_faturamentos_despesas_avulsas')}}">
-                      Despesas
-                    </a> -->
-                    <a class="dropdown-item" href="{{url_for('listagem_faturamentos_controle_credito')}}">
-                      Adiantamentos de Créditos
+                      Controle de Contas a Receber
                     </a>
                   </div>
                 </div>
@@ -505,47 +496,7 @@
           </div>
         </li>
 
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#navbar-base" data-bs-toggle="dropdown" data-bs-auto-close="outside"
-            role="button" aria-expanded="false">
-            <span class="nav-link-icon d-md-none d-lg-inline-block">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-file-settings">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                <path d="M12 10.5v1.5" />
-                <path d="M12 16v1.5" />
-                <path d="M15.031 12.25l-1.299 .75" />
-                <path d="M10.268 15l-1.3 .75" />
-                <path d="M15 15.803l-1.285 -.773" />
-                <path d="M10.285 12.97l-1.285 -.773" />
-                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
-              </svg>
-            </span>
-            <span class="nav-link-title">
-              Parâmetros
-            </span>
-          </a>
-          <div class="dropdown-menu">
-            <div class="dropdown-menu-columns">
-              <div class="dropdown-menu-column">
-                <a class="dropdown-item" href="{{ url_for('listar_bitolas')}}">
-                  Bitola
-                </a>
-                <a class="dropdown-item" href="{{url_for('listar_rotas')}}">
-                  Rotas de frete
-                </a>
-                <a class="dropdown-item" href="{{url_for('listar_grupos')}}">
-                  Grupos Whatsapp
-                </a>
-              </div>
-            </div>
-          </div>
-        </li>
-
-        <li class="nav-item dropdown 
+<li class="nav-item dropdown 
                 {% if request.endpoint == 'variaveis_sistema_editar' or 
                       request.endpoint == 'usuarios_listar' or
                       request.endpoint == 'usuario_cadastrar' or
@@ -588,17 +539,6 @@
           <div class="dropdown-menu">
             <div class="dropdown-menu-columns">
               <div class="dropdown-menu-column">
-                <div class="dropend">
-                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside" role="button" aria-expanded="false">
-                    Roles e Rotas
-                  </a>
-                  <div class="dropdown-menu">
-                    <a href="{{ url_for('roles_listar') }}" class="dropdown-item">
-                      Roles/Funções
-                    </a>
-                  </div>
-                </div>
                 <div class="dropend">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
                     data-bs-auto-close="outside" role="button" aria-expanded="false">
