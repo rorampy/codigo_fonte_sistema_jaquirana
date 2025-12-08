@@ -68,7 +68,7 @@ pandas==2.2.3
 pdfkit==1.0.0
 pdfminer.six==20250506
 pdfplumber==0.11.7
-pillow==11.3.0
+pillow==12.0.0
 plotly==6.3.0
 prettytable==3.17.0
 protobuf==6.33.1
@@ -82,6 +82,7 @@ pydantic_core==2.41.5
 PyMuPDF==1.25.5
 pyparsing==3.2.3
 pypdfium2==4.30.0
+pytesseract==0.3.13
 python-bidi==0.6.7
 python-dateutil==2.9.0.post0
 pytz==2024.1

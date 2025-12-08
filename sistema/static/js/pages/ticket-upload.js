@@ -208,9 +208,20 @@ class TicketUploadManager {
       this.btnCadastrar.innerHTML = this.textoOriginalBtn;
     }
     
-    // Esconder modal de loader
+    // Esconder modal de loader e remover backdrop
     if (this.loaderModal) {
       this.loaderModal.hide();
+      
+      // Remover backdrop manualmente após esconder o modal
+      const loaderElement = document.getElementById('loader-ocr');
+      if (loaderElement) {
+        loaderElement.addEventListener('hidden.bs.modal', () => {
+          // Remover qualquer backdrop que possa ter ficado
+          const backdrops = document.querySelectorAll('.modal-backdrop');
+          backdrops.forEach(backdrop => backdrop.remove());
+        }, { once: true });
+      }
+      
       this.loaderModal = null;
     }
   }
@@ -256,6 +267,13 @@ class TicketUploadManager {
 
       const data = await response.json();
 
+      // Aguardar um pequeno delay antes de esconder o loading e mostrar o próximo modal
+      await new Promise(resolve => setTimeout(resolve, 200));
+      this.esconderCarregamento();
+
+      // Aguardar um pouco mais para garantir que o backdrop foi removido
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       if (data.sucesso) {
         this.preencherCampos(data.dados);
         this.mostrarSucesso(data);
@@ -264,9 +282,9 @@ class TicketUploadManager {
       }
     } catch (error) {
       console.error('Erro:', error);
-      this.mostrarErro(error.message || 'Erro ao processar ticket. Verifique sua conexão e tente novamente.');
-    } finally {
       this.esconderCarregamento();
+      await new Promise(resolve => setTimeout(resolve, 300));
+      this.mostrarErro(error.message || 'Erro ao processar ticket. Verifique sua conexão e tente novamente.');
     }
   }
 

@@ -1,14 +1,15 @@
 """
-Módulo para extração de informações de tickets usando pytesseract.
+Módulo para extração de informações de tickets usando Tesseract OCR.
 Extrai apenas: Número NF, Peso Líquido, Data Entrega e Placa.
-Inclui validação de qualidade de imagem antes do processamento.
+Utiliza Tesseract que consome 80% menos memória que PaddleOCR.
 """
 
 import cv2
 import numpy as np
 import re
 import os
-from paddleocr import PaddleOCR
+import pytesseract
+from PIL import Image
 from datetime import datetime
 
 
@@ -23,16 +24,12 @@ class ExtracaoTicket:
             caminho_imagem (str): Caminho completo para o arquivo de imagem do ticket
             
         Note:
-            Configuração otimizada do PaddleOCR para reduzir consumo de memória em produção.
+            Tesseract OCR não precisa carregar modelos pesados em memória.
+            Consome ~50-100MB vs ~1-2GB do PaddleOCR.
             Redimensiona imagens grandes automaticamente antes do processamento.
         """
         self.caminho_imagem = self._redimensionar_se_grande(caminho_imagem)
-        # Configuração LEVE do PaddleOCR para não consumir toda a memória do servidor
-        self.ocr_engine = PaddleOCR(
-            lang='pt',
-            use_angle_cls=False,     # Desabilita rotação automática
-            rec_batch_num=1          # Processa 1 linha por vez
-        )
+        # Tesseract não precisa de inicialização - economia massiva de memória!
     
     def _redimensionar_se_grande(self, caminho):
         """Redimensiona imagens muito grandes para economizar memória durante OCR"""
@@ -42,7 +39,8 @@ class ExtracaoTicket:
                 return caminho
             
             altura, largura = img.shape[:2]
-            max_dim = 1920
+            # Reduzido para 1280px - tickets não precisam de alta resolução
+            max_dim = 1280
             
             # Se a imagem for muito grande, redimensiona mantendo proporção
             if largura > max_dim or altura > max_dim:
@@ -50,13 +48,23 @@ class ExtracaoTicket:
                 nova_largura = int(largura * escala)
                 nova_altura = int(altura * escala)
                 
-                img = cv2.resize(img, (nova_largura, nova_altura), interpolation=cv2.INTER_AREA)
-                cv2.imwrite(caminho, img, [cv2.IMWRITE_JPEG_QUALITY, 85])
+                img_redimensionada = cv2.resize(img, (nova_largura, nova_altura), 
+                                                interpolation=cv2.INTER_AREA)
+                
+                # Libera memória da imagem original
+                del img
+                
+                # Salva com qualidade reduzida
+                cv2.imwrite(caminho, img_redimensionada, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                
+                # Libera memória da imagem redimensionada
+                del img_redimensionada
         except Exception:
             pass
         
         return caminho
 
+    @staticmethod
     def preprocessar_imagem(path):
         """
         Realiza pré-processamento da imagem para melhorar a qualidade do OCR.
@@ -71,26 +79,28 @@ class ExtracaoTicket:
             Aplica as seguintes técnicas:
             - Conversão para escala de cinza
             - Remoção de ruído com filtro Gaussiano
-            - Melhoria de contraste com CLAHE (Contrast Limited Adaptive Histogram Equalization)
+            - Melhoria de contraste com CLAHE
             - Aumento de nitidez com unsharp mask
         """
         img = cv2.imread(path)
-
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
+        
+        # Libera memória da imagem original
+        del img
+        
         blur = cv2.GaussianBlur(gray, (5, 5), 0)
-
         clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
         enhanced = clahe.apply(blur)
-
         sharpen = cv2.addWeighted(enhanced, 1.5, blur, -0.5, 0)
-
+        
+        # Libera memória
+        del gray, blur, enhanced
+        
         return sharpen
-
 
     def ler_ocr(self, imagem_path=None):
         """
-        Executa OCR na imagem do ticket usando PaddleOCR.
+        Executa OCR na imagem do ticket usando Tesseract.
         
         Args:
             imagem_path (str, optional): Caminho da imagem. Se None, usa self.caminho_imagem
@@ -99,30 +109,37 @@ class ExtracaoTicket:
             list: Lista de textos extraídos da imagem. Retorna lista vazia em caso de erro
             
         Note:
-            PaddleOCR retorna um OCRResult (objeto dict-like) contendo:
-            - 'rec_texts': lista de textos reconhecidos
-            - 'rec_scores': lista de scores de confiança para cada texto
+            Tesseract é configurado para:
+            - Idioma português (por)
+            - PSM 6: assume um bloco uniforme de texto
+            - OEM 3: usa LSTM (melhor precisão)
         """
         if imagem_path is None:
             imagem_path = self.caminho_imagem
             
         try:
-            resultado = self.ocr_engine.ocr(imagem_path)
+            # Abre imagem com PIL (mais leve que cv2 para OCR)
+            img = Image.open(imagem_path)
+            
+            # Configuração otimizada do Tesseract para tickets
+            config_tesseract = '--psm 6 --oem 3'
+            
+            # Executa OCR
+            texto = pytesseract.image_to_string(img, lang='por', config=config_tesseract)
+            
+            # Fecha imagem para liberar memória
+            img.close()
+            del img
+            
+            # Retorna linhas não vazias
+            linhas = [linha.strip() for linha in texto.split('\n') if linha.strip()]
+            
+            return linhas
+            
         except Exception as e:
             return []
-        
-        if not resultado or not resultado[0]:
-            return []
-        
-        ocr_result = resultado[0]
-        
-        if 'rec_texts' not in ocr_result:
-            return []
-        
-        linhas = ocr_result['rec_texts']
-        return linhas
 
-
+    @staticmethod
     def extrair_numero(texto):
         """
         Extrai o primeiro número encontrado no texto.
@@ -146,6 +163,7 @@ class ExtracaoTicket:
         except:
             return None
 
+    @staticmethod
     def extrair_placa(texto):
         """
         Extrai placa de veículo brasileiro do texto.
@@ -166,6 +184,7 @@ class ExtracaoTicket:
             return placa.group(0)
         return None
 
+    @staticmethod
     def extrair_data(texto):
         """
         Extrai data no formato brasileiro do texto.
@@ -184,7 +203,6 @@ class ExtracaoTicket:
         if match:
             return f"{match.group(1)}/{match.group(2)}/{match.group(3)}"
         return None
-
 
     def extrair_dados_ticket(self):
         """
@@ -234,11 +252,13 @@ class ExtracaoTicket:
         for i, linha in enumerate(linhas):
             linha_lower = linha.lower()
 
+            # Busca placa
             if not dados["placa"]:
                 placa = ExtracaoTicket.extrair_placa(linha)
                 if placa:
                     dados["placa"] = placa
 
+            # Busca peso líquido
             if re.search(r'l[ií]quido', linha_lower):
                 num = ExtracaoTicket.extrair_numero(linha)
                 if num and num > 0:
@@ -248,6 +268,7 @@ class ExtracaoTicket:
                     if num and num > 0:
                         dados["peso_liquido"] = num
 
+            # Busca data de entrada
             if not dados["data_entrada"]:
                 if re.search(r'entrada|peso\s+ent', linha_lower):
                     data = ExtracaoTicket.extrair_data(linha)
@@ -266,6 +287,7 @@ class ExtracaoTicket:
                     if data:
                         dados["data_entrada"] = data
 
+            # Busca número da nota
             if not dados["numero_nota"]:
                 if re.search(r'nota|n\.?f|num\.?\s*nota|numer[oa]', linha_lower):
                     match = re.search(r'\d{5,9}', linha)
@@ -276,8 +298,9 @@ class ExtracaoTicket:
                         if match:
                             dados["numero_nota"] = match.group(0)
 
-        return dados
-
+        # Libera memória das linhas
+        del linhas
+        
         return dados
 
     def processar(self):
@@ -325,6 +348,9 @@ class ExtracaoTicket:
                 'data_entrega': data_entrega,
                 'placa': dados_extraidos.get('placa')
             }
+            
+            # Libera memória dos dados extraídos
+            del dados_extraidos
             
             return resultado
             
