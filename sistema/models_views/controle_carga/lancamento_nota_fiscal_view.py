@@ -253,6 +253,12 @@ def cadastrar_emissao(id):
                     try:
                         print(f"[DEBUG] Extraindo dados da NF - objeto_nf_xml: {objeto_nf_xml is not None}")
                         
+                        if not objeto_nf_xml:
+                            print(f"[AVISO] Tentativa de lançar NF sem arquivo XML.")
+                            limpar_todos_arquivos_anexados(objeto_nf_xml, objeto_nf_pdf)
+                            flash(("Para finalizar o lançamento, é preciso enviar o arquivo XML da nota fiscal. O PDF é opcional e pode ser usado para visualização.","warning"))
+                            return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
+
                         dados_nf = RegistroOperacionalModel.extrair_dados_nota_fiscal(
                             objeto_nf_xml=objeto_nf_xml
                         )
@@ -300,6 +306,12 @@ def cadastrar_emissao(id):
                     
                     if possui_nfe_excesso == "sim" and ((arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename) or (arquivo_nfe_excesso_pdf and arquivo_nfe_excesso_pdf.filename)):
                         print(f"[DEBUG] Processando NFe de excesso...")
+
+                        if not (arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename):
+                            print(f"[AVISO] Tentativa de lançar NFe de excesso sem arquivo XML")
+                            limpar_todos_arquivos_anexados(objeto_nf_xml, objeto_nf_pdf)
+                            flash(("Para lançar o excesso, é necessário enviar o arquivo XML da nota de excesso. O PDF é opcional.", "warning"))
+                            return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                         
                         if arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename:
                             print(f"[DEBUG] Processando XML de excesso: {arquivo_nfe_excesso_xml.filename}")
@@ -1189,6 +1201,11 @@ def editar_emissao(id):
                     arquivo_nfe_excesso_pdf = arquivo_nfe_excesso
                     arquivo_nfe_excesso_xml = request.files.get("arquivoNfExcessoXml")
                     
+                    # Verificar se foi fornecido pelo menos o XML para extração de dados
+                    if not (arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename):
+                        flash(("Para adicionar nota de excesso, é necessário enviar o arquivo XML. O PDF é opcional.", "warning"))
+                        return redirect(url_for("editar_emissao", id=registro.id))
+
                     objeto_nf_excesso_xml = None
                     objeto_nf_excesso_pdf = None
                     peso_excesso_final = 0
