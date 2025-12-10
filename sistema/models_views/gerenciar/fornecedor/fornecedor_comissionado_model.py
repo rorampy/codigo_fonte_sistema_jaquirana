@@ -11,8 +11,8 @@ class FornecedorComissionadoModel(BaseModel):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     
     # Relacionamentos
-    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor.id", ondelete="CASCADE"), nullable=False)
-    fornecedor = db.relationship("FornecedorModel", backref=db.backref("comissionados_vinculados", lazy=True))
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id", ondelete="CASCADE"), nullable=False)
+    fornecedor = db.relationship("FornecedorCadastroModel", backref=db.backref("comissionados_vinculados", lazy=True))
     
     comissionado_id = db.Column(db.Integer, db.ForeignKey("com_comissionado.id"), nullable=False)
     comissionado = db.relationship("ComissionadoModel", backref=db.backref("vinculos_fornecedor", lazy=True))
