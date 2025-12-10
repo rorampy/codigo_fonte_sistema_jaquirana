@@ -29,7 +29,6 @@ class ExtracaoTicket:
             Redimensiona imagens grandes automaticamente antes do processamento.
         """
         self.caminho_imagem = self._redimensionar_se_grande(caminho_imagem)
-        # Tesseract não precisa de inicialização - economia massiva de memória!
     
     def _redimensionar_se_grande(self, caminho):
         """Redimensiona imagens muito grandes para economizar memória durante OCR"""

@@ -292,31 +292,38 @@ def excluir_venda(id, retorno=None):
                 return redirect(url_for('vendas_entregues'))
             else:
                 return redirect(url_for('vendas_em_transito'))
-    
-        comissionado_pagar.deletado = True
-        comissionado_pagar.ativo = False
-        
-        extrator_pagar.deletado = True
-        extrator_pagar.ativo = False
-        
-        fornecedor_pagar.deletado = True
-        fornecedor_pagar.ativo = False
-        
-        frete_pagar.deletado = True
-        frete_pagar.ativo = False
 
+        if comissionado_pagar:
+            comissionado_pagar.deletado = True
+            comissionado_pagar.ativo = False
+        
+        if extrator_pagar:
+            extrator_pagar.deletado = True
+            extrator_pagar.ativo = False
+        
+        if fornecedor_pagar:
+            fornecedor_pagar.deletado = True
+            fornecedor_pagar.ativo = False
+        
+        if frete_pagar:
+            frete_pagar.deletado = True
+            frete_pagar.ativo = False
+            
         registro.solicitacao.deletado = 1
         registro.solicitacao.ativo = 0
 
         registro.deletado = 1
         registro.ativo = 0
 
-        registro.arquivo_nota.deletado = 1
-        registro.arquivo_nota.ativo = 0
+        if registro.arquivo_nota:
+            registro.arquivo_nota.deletado = 1
+            registro.arquivo_nota.ativo = 0
+            
         registro.status_emissao_nf_complementar_id = 3
 
         contraNota.deletado = True
         contraNota.ativo = False
+    db.session.commit()
     flash(('Venda excluida com sucesso!', 'success'))
     
     if retorno == 'entregue':
