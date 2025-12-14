@@ -1,4 +1,4 @@
-from ..base_model import BaseModel, db
+from sistema.models_views.base_model import BaseModel, db
 from sqlalchemy import and_, desc
 
 
@@ -10,15 +10,17 @@ class ChangelogModel(BaseModel):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     data_lancamento = db.Column(db.String(14), nullable=False)
     versao = db.Column(db.String(25), nullable=False)
+    branch = db.Column(db.String(50), nullable=True)
     conteudo = db.Column(db.Text, nullable=False)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
     
     
     def __init__(
-        self, data_lancamento, versao, conteudo, ativo
+        self, data_lancamento, versao, conteudo, ativo, branch=None
     ):
         self.data_lancamento = data_lancamento
         self.versao = versao
+        self.branch = branch
         self.conteudo = conteudo
         self.ativo = ativo
         

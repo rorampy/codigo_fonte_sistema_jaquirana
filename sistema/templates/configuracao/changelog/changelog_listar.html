@@ -1,66 +1,358 @@
 {% extends 'estrutura/base.html' %}
+
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
+
+<style>
+  /* --- CONFIGURAÇÕES GERAIS --- */
+  :root {
+    --transition-curve: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* --- ANIMAÇÃO DO HERO (FOGUETE) --- */
+  @keyframes rocket-float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-15px);
+    }
+  }
+
+  @keyframes rocket-glow {
+
+    0%,
+    100% {
+      filter: drop-shadow(0 0 15px rgba(var(--tblr-primary-rgb), 0.2));
+    }
+
+    50% {
+      filter: drop-shadow(0 0 25px rgba(var(--tblr-primary-rgb), 0.6));
+    }
+  }
+
+  .hero-rocket-section {
+    text-align: center;
+    margin-bottom: 5rem;
+    padding-top: 2rem;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: heroEntrance 1s var(--transition-curve) forwards;
+  }
+
+  @keyframes heroEntrance {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .rocket-icon-wrapper {
+    display: inline-block;
+    color: var(--tblr-primary);
+    animation: rocket-float 4s ease-in-out infinite, rocket-glow 4s ease-in-out infinite;
+  }
+
+  /* --- TIMELINE DE ALTO NÍVEL --- */
+  .changelog-timeline {
+    position: relative;
+    padding-left: 0;
+    padding-bottom: 2rem;
+  }
+
+  /* Linha Vertical Contínua e Suave */
+  .changelog-timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 24px;
+    width: 2px;
+    background: linear-gradient(to bottom,
+        rgba(var(--tblr-primary-rgb), 0) 0%,
+        rgba(var(--tblr-primary-rgb), 0.3) 10%,
+        rgba(var(--tblr-primary-rgb), 0.3) 90%,
+        rgba(var(--tblr-primary-rgb), 0) 100%);
+    display: none;
+  }
+
+  /* --- ESTILO DOS CARDS (ITEM) --- */
+  .changelog-item {
+    position: relative;
+    /* Estado inicial: Invisível e deslocado */
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+    filter: blur(2px);
+    transition:
+      opacity 0.6s ease,
+      transform 0.6s var(--transition-curve),
+      filter 0.6s ease;
+    margin-bottom: 3rem;
+    /* Espaçamento generoso */
+  }
+
+  /* Estado: VISÍVEL (Entrou na tela) */
+  .changelog-item.in-view {
+    opacity: 0.4;
+    /* Visível, mas não em foco total */
+    transform: translateY(0) scale(0.98);
+    filter: blur(0px);
+  }
+
+  /* Estado: EM FOCO (Centro da tela - High End Effect) */
+  .changelog-item.in-focus {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    z-index: 10;
+  }
+
+  /* --- TIMELINE DOT (BOLINHA) --- */
+  .timeline-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--tblr-body-bg);
+    /* Fundo da página para "recortar" a linha */
+    border: 2px solid rgba(var(--tblr-primary-rgb), 0.3);
+    position: absolute;
+    left: 18px;
+    top: 0;
+    z-index: 2;
+    transition: all 0.5s ease;
+    box-shadow: 0 0 0 0 rgba(var(--tblr-primary-rgb), 0);
+  }
+
+  /* Efeito quando o item está em foco */
+  .changelog-item.in-focus .timeline-dot {
+    background-color: var(--tblr-primary);
+    border-color: var(--tblr-primary);
+    box-shadow: 0 0 0 6px rgba(var(--tblr-primary-rgb), 0.15);
+    transform: scale(1.2);
+  }
+
+
+  .changelog-item.in-focus .version-badge {
+    background: rgba(var(--tblr-primary-rgb), 0.1);
+    color: var(--tblr-primary);
+    border-color: rgba(var(--tblr-primary-rgb), 0.2);
+  }
+
+
+  @media (min-width: 768px) {
+    .changelog-timeline::before {
+      display: block;
+    }
+
+    .changelog-item {
+      padding-left: 70px;
+    }
+
+    .timeline-dot {
+      top: 6px;
+    }
+  }
+
+  /* Footer sutil */
+  .changelog-footer-end {
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+
+  .changelog-footer-end.visible {
+    opacity: 1;
+  }
+
+ 
+
+
+</style>
+
 <div class="page-wrapper">
-    {% if current_user.role_id == 1 %}
-    <!-- Page header -->
-      <div class="page-header d-print-none">
-        <div class="container-xl">
-            
-            <!-- Page title actions -->
-            <div class="row justify-content-center">
-              <div class="col-lg-10 col-xl-9">
-                <div class="d-flex">
-                  <a href="{{ url_for('changelog_cadastrar') }}" class="btn btn-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" 
-                      viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" 
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                      <path d="M12 5l0 14" />
-                      <path d="M5 12l14 0" />
-                    </svg>
-                    Novo Registro
-                  </a>
-                </div>
-              </div>
-            </div>
-          
-        </div>
-      </div> 
-    {% endif %} 
 
-    <!-- Page body -->
-    <div class="page-body">
-      <div class="container-xl">
-        <div class="row justify-content-center">
-          <div class="col-lg-10 col-xl-9">
-
-            {% include 'estrutura/mensagens_flash.html' %}
-
-            <div class="card card-lg">
-              <div class="card-body markdown">
-                <h1>Changelog</h1>
-
-                {% for changelog in changelog_sistema %}
-                  <div class="mb-4">
-                    <h2 class="mb-2">
-                      <span>Versão {{ changelog.versao }}</span> –
-                      <small>{{ changelog.data_lancamento }}</small>
-                    </h2>
-                    {{ changelog.conteudo | safe }}
-                  </div>
-                {% endfor %}
-              </div>
-            </div>
+  <div class="page-header d-print-none pb-2">
+    <div class="container-xl">
+      <div class="row align-items-center justify-content-center">
+        <div class="col-lg-8">
+          <div class="d-flex justify-content-end" style="animation: heroEntrance 0.8s ease-out;">
+            {% if current_user.role_id == 1 %}
+            <a href="{{ url_for('changelog_cadastrar') }}" class="btn btn-outline">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Nova Versão
+            </a>
+            {% endif %}
           </div>
         </div>
-
       </div>
     </div>
+  </div>
 
-    {% include 'estrutura/footer.html' %}
-    
+  <div class="page-body">
+    <div class="container-xl">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+          {% include 'estrutura/mensagens_flash.html' %}
+
+          <div class="hero-rocket-section">
+            <div class="mb-3">
+              <div class="rocket-icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" stroke-width="1.2"
+                  stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path
+                    d="M4 13a8 8 0 0 1 7 7a6 6 0 0 0 3 -5a9 9 0 0 0 6 -8a3 3 0 0 0 -3 -3a9 9 0 0 0 -8 6a6 6 0 0 0 -5 3" />
+                  <path d="M7 14a6 6 0 0 0 -3 6a6 6 0 0 0 6 -3" />
+                  <circle cx="15" cy="9" r="1" fill="currentColor" />
+                </svg>
+              </div>
+            </div>
+            <h2 class="fw-bold text-body mb-2 display-6">O que há de novo?</h2>
+            <p class="text-secondary mx-auto" style="max-width: 500px; font-size: 1.1rem; line-height: 1.6;">
+              Acompanhe a evolução da nossa plataforma.
+              <br>
+              Cada atualização traz melhorias pensadas para você.
+            </p>
+          </div>
+
+          <div class="changelog-timeline">
+            {% for changelog in changelog_sistema %}
+            <div class="changelog-item" data-index="{{ loop.index }}">
+
+              <div class="d-none d-md-block timeline-dot"></div>
+
+              <div
+                class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mb-3">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <!-- Badge de Versão do Sistema-->
+                  <span class="badge badge-outline text-blue ">v{{ changelog.versao }}</span>
+                  {% if changelog.branch %}
+                  <!-- Badge de Branch do Sistema-->
+                  <span class="badge badge-outline text-azure d-flex mx-auto">
+                    <span class="d-flex justify-content-center align-items-center">{{ changelog.branch }}</span>
+                  </span>
+                  {% endif %}
+
+
+
+                </div>
+                <span class="text-muted small fw-medium ms-auto {% if current_user.role_id == 1 %} me-2 {% endif %}"
+                  style="letter-spacing: 0.5px;">{{
+                  changelog.data_lancamento }}</span>
+                {% if current_user.role_id == 1 %}
+                <!-- Botão para Editar -->
+                <span class="badge badge-outline text-blue" >
+                  <a href="{{ url_for('changelog_editar', id=changelog.id) }}" style="margin-left: auto;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                      <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" />
+                      <path d="M16 5l3 3" />
+                    </svg>
+                  </a>
+                </span>
+
+                {% endif %}
+              </div>
+
+
+
+              <div class="markdown text-secondary" style="font-size: 1.05rem; line-height: 1.7;">
+                {{ changelog.conteudo | safe }}
+              </div>
+
+            </div>
+            {% else %}
+            <div class="empty py-5">
+              <p class="empty-title">Sem registros</p>
+              <p class="empty-subtitle text-muted">Ainda não há atualizações publicadas.</p>
+            </div>
+            {% endfor %}
+          </div>
+
+          {% if changelog_sistema %}
+          <div class="changelog-footer-end text-center mt-5 pb-5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+              stroke="#0054a6" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7" />
+              <path d="M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0 -1 3a2 2 0 0 1 -4 0a3.5 3.5 0 0 0 -1 -3" />
+              <path d="M9.7 17l4.6 0" />
+            </svg>
+            <div class="text-muted small mt-2">Você chegou ao início de tudo</div>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+
 </div>
 
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+
+    // 1. Observer para ENTRADA (Reveal)
+    // Quando o item aparece levemente na tela (10%), ele perde o "hidden" e entra.
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          // Opcional: Parar de observar depois de entrar
+          // revealObserver.unobserve(entry.target); 
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px" // Entra um pouco antes do final da tela
+    });
+
+    // 2. Observer para FOCO (Focus)
+    // Esse é o segredo do "High End". Cria uma área no meio da tela.
+    // Se o elemento estiver nessa área, ele ganha destaque total.
+    const focusObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-focus');
+        } else {
+          entry.target.classList.remove('in-focus');
+        }
+      });
+    }, {
+      threshold: 0.5, // Precisa estar 50% visível
+      rootMargin: "-25% 0px -25% 0px" // Cria uma faixa central "ativa" na tela
+    });
+
+    const items = document.querySelectorAll('.changelog-item');
+    const footer = document.querySelector('.changelog-footer-end');
+
+    items.forEach(item => {
+      revealObserver.observe(item);
+      focusObserver.observe(item);
+    });
+
+    if (footer) {
+      revealObserver.observe(footer);
+      // Footer simples lógica de visibilidade
+      const footerObserver = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) e.target.classList.add('visible');
+        })
+      });
+      footerObserver.observe(footer);
+    }
+  });
+</script>
 
 {% endblock conteudo %}

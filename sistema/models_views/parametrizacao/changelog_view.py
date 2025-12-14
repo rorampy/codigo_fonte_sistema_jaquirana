@@ -2,8 +2,8 @@ from sistema import app, db, requires_roles
 from logs_sistema import flask_logger
 from flask import render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
-from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
-from sistema._utilitarios import ValidaForms
+from ...models_views.parametrizacao.changelog_model import ChangelogModel
+from ..._utilitarios import ValidaForms
 
 
 # Processador de contexto, fornece a consulta em todo o escopo do projeto
@@ -43,12 +43,14 @@ def changelog_cadastrar():
     if request.method == 'POST':
         data_lancamento = request.form['dataPublicacao']
         versao = request.form['versao']
+        branch = request.form.get('branch', '').strip() or None
         conteudo = request.form['conteudo']
         
         campos = {
                 'data_lancamento': ['Data de Publicação', data_lancamento],
                 'versao': ['Versão', versao],
-                'conteudo': ['Conteúdo', conteudo]
+                'conteudo': ['Conteúdo', conteudo],
+                'branch': ['Branch', branch]
             }
         
         validacao_campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)
@@ -62,7 +64,7 @@ def changelog_cadastrar():
             
             novo_changelog = ChangelogModel(
                 data_lancamento=data_lancamento, versao=versao,
-                conteudo=conteudo, ativo=ativo
+                conteudo=conteudo, ativo=ativo, branch=branch
             )
             db.session.add(novo_changelog)
             db.session.commit()
@@ -74,5 +76,54 @@ def changelog_cadastrar():
         
     return render_template(
         'configuracao/changelog/changelog_cadastrar.html',
-        dados_corretos = request.form
+        dados_corretos = request.form,
+        campos_obrigatorios = validacao_campos_obrigatorios
+    )
+
+
+@app.route('/changelog/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
+@requires_roles
+def changelog_editar(id):
+    changelog = ChangelogModel.query.get_or_404(id)
+    
+    validacao_campos_obrigatorios = {}
+    gravar_banco = True
+    
+    if request.method == 'POST':
+        data_lancamento = request.form['dataPublicacao']
+        versao = request.form['versao']
+        branch = request.form.get('branch', '').strip() or None
+        conteudo = request.form['conteudo']
+        
+        campos = {
+            'data_lancamento': ['Data de Publicação', data_lancamento],
+            'versao': ['Versão', versao],
+            'conteudo': ['Conteúdo', conteudo],
+            'branch': ['Branch', branch]
+        }
+        
+        validacao_campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)
+        
+        if 'validado' not in validacao_campos_obrigatorios:
+            gravar_banco = False
+            flash(('Todos os campos são obrigatórios!', 'warning'))
+        
+        if gravar_banco:
+            changelog.data_lancamento = data_lancamento
+            changelog.versao = versao
+            changelog.branch = branch
+            changelog.conteudo = conteudo
+            
+            db.session.commit()
+            
+            flash(('Changelog atualizado com sucesso!', 'success'))
+            flask_logger.info(f'Changelog ID={id} editado pelo usuário com ID={current_user.id}.')
+            
+            return redirect(url_for('changelog_listar'))
+    
+    return render_template(
+        'configuracao/changelog/changelog_editar.html',
+        changelog=changelog,
+        campos_obrigatorios=validacao_campos_obrigatorios
     )

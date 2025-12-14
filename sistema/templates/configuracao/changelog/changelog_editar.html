@@ -1,4 +1,5 @@
 {% extends 'estrutura/base.html' %}
+
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 
@@ -8,10 +9,10 @@
             <div class="row g-2 align-items-center">
                 <div class="col">
                     <div class="page-pretitle">
-                        HISTÓRICO DE VERSÕES
+                       Edição de Changelog
                     </div>
                     <h2 class="page-title">
-                        Nova Versão do Sistema
+                        Changelog: v{{ changelog.versao }}
                     </h2>
                 </div>
             </div>
@@ -25,7 +26,7 @@
 
             <div class="row row-deck row-cards">
                 <div class="col-12">
-                    <form class="card shadow-sm" action="{{ url_for('changelog_cadastrar') }}" method="POST">
+                    <form class="card shadow-sm" action="{{ url_for('changelog_editar', id=changelog.id) }}" method="POST">
                         <div class="card-header">
                             <h3 class="card-title">Dados do Lançamento</h3>
                         </div>
@@ -36,19 +37,17 @@
                                     <label class="form-label required" for="input-versao">Versão</label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                class="icon icon-tabler icon-tabler-git-branch" width="24" height="24"
-                                                viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                                 stroke-linecap="round" stroke-linejoin="round">
                                                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
-                                                <path d="M12 12l0 6" />
-                                                <path d="M12 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                                                <path d="M12 6l0 3" />
+                                                <path d="M7.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                                                <path
+                                                    d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3z" />
                                             </svg>
                                         </span>
                                         <input type="text" id="input-versao" name="versao"
-                                            value="{{ dados_corretos['versao'] }}"
+                                            value="{{ request.form.get('versao', changelog.versao) }}"
                                             class="form-control {% if 'versao' in campos_obrigatorios %}is-invalid{% endif %}"
                                             placeholder="Ex: v1.0.5">
                                         <div class="invalid-feedback">O preenchimento da versão é obrigatório.</div>
@@ -83,7 +82,7 @@
                                             </svg>
                                         </span>
                                         <input type="text" id="input-branch" name="branch"
-                                            value="{{ dados_corretos['branch'] }}"
+                                            value="{{ request.form.get('branch', changelog.branch if changelog.branch else '') }}"
                                             class="form-control {% if 'branch' in campos_obrigatorios %}is-invalid{% endif %}"
                                             placeholder="Ex: ER-00020">
                                     </div>
@@ -108,9 +107,9 @@
                                             </svg>
                                         </span>
                                         <input type="text" id="input-data" name="dataPublicacao"
-                                            value="{{ dados_corretos['dataPublicacao'] }}" data-mask="00/00/0000"
+                                            value="{{ request.form.get('dataPublicacao', changelog.data_lancamento) }}" data-mask="00/00/0000"
                                             placeholder="DD/MM/AAAA" data-mask-visible="true" autocomplete="off"
-                                            class="form-control {% if 'dataPublicacao' in campos_obrigatorios %}is-invalid{% endif %}">
+                                            class="form-control {% if 'data_lancamento' in campos_obrigatorios %}is-invalid{% endif %}">
                                         <div class="invalid-feedback">Informe uma data válida.</div>
                                     </div>
                                 </div>
@@ -149,7 +148,7 @@
                                     <path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
                                     <path d="M14 4l0 4l-6 0l0 -4" />
                                 </svg>
-                                Cadastrar Versão
+                                Salvar Alterações
                             </button>
                         </div>
                     </form>
@@ -182,32 +181,32 @@
         const editor = new Quill('#editor-container', customOptions);
         const hiddenInput = document.querySelector('#conteudo-input');
 
-        // Sincroniza o conteúdo
+        // Carrega o conteúdo existente do changelog
+        const conteudoExistente = `{{ request.form.get('conteudo', changelog.conteudo)|safe }}`;
+        if (conteudoExistente && conteudoExistente.trim() !== '') {
+            editor.clipboard.dangerouslyPasteHTML(conteudoExistente);
+            hiddenInput.value = editor.root.innerHTML;
+        }
+
+        // Sincroniza o conteúdo ao digitar
         editor.on('text-change', function () {
             hiddenInput.value = editor.root.innerHTML;
         });
-
-        // Carrega dados iniciais (se houver erro de validação e retorno)
-        const descricaoInicial = '{{ dados_corretos["conteudo"]|safe }}';
-        if (descricaoInicial) {
-            editor.clipboard.dangerouslyPasteHTML(descricaoInicial);
-            hiddenInput.value = editor.root.innerHTML; // Garante sync inicial
-        }
     });
 </script>
 
 <style>
     /* Aumenta a área de digitação do Quill */
     #editor-container .ql-editor {
-        min-height: 300px; /* Ajuste conforme necessário */
+        min-height: 200px;
         font-size: 14px;
     }
-    
+
     /* Remove bordas duplicadas */
     #editor-container .ql-container {
         border: none;
     }
-    
+
     #editor-container .ql-toolbar {
         border: none;
         border-bottom: 1px solid #dce1e7;
