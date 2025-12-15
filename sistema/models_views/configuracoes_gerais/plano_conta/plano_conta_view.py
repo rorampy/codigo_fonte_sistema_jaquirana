@@ -7,6 +7,8 @@ from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model imp
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import (
     PontuacaoUsuarioModel,
 )
+
+from sistema.models_views.autenticacao.usuario_model import UsuarioModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema._utilitarios import *
 
@@ -23,6 +25,11 @@ def listar_plano_contas():
         categorias_principais = PlanoContaModel.buscar_principais()
         print(categorias_principais)
 
+        # Verificar se o controle de estrutura está ativo (verifica qualquer categoria)
+        controle_estrutura_ativo = PlanoContaModel.query.filter_by(
+            controle_estrutura=True,
+            ativo=True).first() is not None
+
         # Montar estrutura hierárquica
         estrutura = []
         for categoria in categorias_principais:
@@ -31,13 +38,17 @@ def listar_plano_contas():
             estrutura.append(categoria_dict)
 
         return render_template(
-            "configuracoes_gerais/plano_conta/plano_conta.html", estrutura=estrutura
+            "configuracoes_gerais/plano_conta/plano_conta.html", 
+            estrutura=estrutura, 
+            controle_estrutura_ativo=controle_estrutura_ativo
         )
 
     except Exception as e:
         flash((f"Erro ao carregar plano de contas: {str(e)}", "error"))
         return render_template(
-            "configuracoes_gerais/plano_conta/plano_conta.html", estrutura=[]
+            "configuracoes_gerais/plano_conta/plano_conta.html", 
+            estrutura=[],
+            controle_estrutura_ativo=False
         )
 
 
@@ -79,7 +90,6 @@ def criar_subcategoria():
         # Reativar se existir inativo ou criar novo
         categoria_inativa = PlanoContaModel.query.filter_by(
             codigo=novo_codigo, 
-            ativo=False
         ).first()
         
         if categoria_inativa:
@@ -112,18 +122,9 @@ def criar_subcategoria():
         try:
             db.session.commit()
         except Exception as e:
+            
             db.session.rollback()
             return jsonify({"erro": f"Erro ao salvar: {str(e)}"}), 500
-
-        # Registrar pontuação do usuário
-        try:
-            PontuacaoUsuarioModel.registrar_acao(
-                usuario_id=current_user.id,
-                tipo_acao=TipoAcaoEnum.CADASTRO,
-                detalhes=f"Subcategoria {action_message}: {nome} ({novo_codigo})",
-            )
-        except:
-            pass  # Não falhar se pontuação der erro
 
         return jsonify(
             {
@@ -513,3 +514,70 @@ def eh_categoria_folha(categoria_id):
     """
     filhos = PlanoContaModel.buscar_filhos(categoria_id)
     return len(filhos) == 0
+
+
+@app.route("/configuracoes/gerais/plano-contas/usuario-permitir-alterar", methods=["PUT"])
+@login_required
+@requires_roles
+def permitir_alterar_estrutura():
+    try:
+        usuarioid = current_user.id
+        usuario = UsuarioModel.obter_usuario_por_id(usuarioid)
+        
+        if not usuario or usuario.role_id != 1:
+            return jsonify({"erro": "Permissão negada"}), 403
+        
+        categorias = PlanoContaModel.listar_todos_planos()
+        
+        if not categorias:
+            return jsonify({"erro": "Nenhuma categoria encontrada"}), 404
+        
+        # Atualizar todas as categorias
+        for categoria in categorias:
+            categoria.controle_estrutura = True
+        
+        db.session.commit()
+
+        return jsonify(
+            {
+                "sucesso": True,
+                "mensagem": f"Estrutura liberada! {len(categorias)} categorias atualizadas com sucesso!",
+            }
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erro": f"Erro ao atualizar: {str(e)}"}), 500
+
+@app.route("/configuracoes/gerais/plano-contas/usuario-negar-alteracao", methods=["PUT"])
+@login_required
+@requires_roles
+def negar_alterar_estrutura():
+    try:
+        usuarioid = current_user.id
+        usuario = UsuarioModel.obter_usuario_por_id(usuarioid)
+        
+        if not usuario or usuario.role_id != 1:
+            return jsonify({"erro": "Permissão negada"}), 403
+        
+        categorias = PlanoContaModel.listar_todos_planos()
+        
+        if not categorias:
+            return jsonify({"erro": "Nenhuma categoria encontrada"}), 404
+        
+        # Atualizar todas as categorias
+        for categoria in categorias:
+            categoria.controle_estrutura = False
+        
+        db.session.commit()
+
+        return jsonify(
+            {
+                "sucesso": True,
+                "mensagem": f"Estrutura bloqueada! {len(categorias)} categorias atualizadas com sucesso!",
+            }
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erro": f"Erro ao atualizar: {str(e)}"}), 500

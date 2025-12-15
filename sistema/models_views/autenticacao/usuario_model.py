@@ -176,3 +176,10 @@ class UsuarioModel(BaseModel, UserMixin):
         import string
         caracteres = string.ascii_letters + string.digits
         return ''.join(random.choice(caracteres) for _ in range(tamanho))
+    
+    def obter_usuario_por_id(id):
+        usuario = UsuarioModel.query.filter(
+            UsuarioModel.id == id
+        ).first()
+        
+        return usuario

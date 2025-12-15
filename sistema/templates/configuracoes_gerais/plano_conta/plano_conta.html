@@ -24,6 +24,7 @@
     <span class="tree-label">{{ categoria.nome }}</span>
 
     {% if categoria.nivel > 1 %}
+    {% if controle_estrutura_ativo or current_user.role_id == 1%}
     <div class="tree-actions ms-auto" style="display: none;">
       <button class="btn btn-icon btn-outline-warning me-1"
         onclick="openEditModal({{ categoria.id }}, '{{ categoria.nome }}')" data-bs-toggle="tooltip"
@@ -45,6 +46,7 @@
       </button>
     </div>
     {% endif %}
+    {% endif %}
   </div>
 
   <div class="tree-children" style="display: block;">
@@ -54,13 +56,23 @@
     {% endfor %}
     {% endif %}
 
+
     <div class="tree-add-item">
-      <button class="tree-add-btn" onclick="openAddModal('{{ categoria.codigo }}')">
+      <button class="tree-add-btn" {% if controle_estrutura_ativo or current_user.role_id==1 %}
+        onclick="openAddModal('{{ categoria.codigo }}')" {%endif %}>
+        {% if controle_estrutura_ativo or current_user.role_id == 1 %}
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke-width="2"
           stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
+        {% else %}
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+        </svg>
+        {% endif %}
       </button>
     </div>
   </div>
@@ -98,6 +110,51 @@
       <div class="col-12">
         <div class="card">
           <div class="card-body">
+            {% if current_user.role_id == 1 %}
+            <div class="row">
+              <div class="col-12">
+                <div class="mb-3">
+                  <label for="form-label">Permitir que os usuários alterem a estrutura</label>
+                  <label class="form-check mt-2 form-switch form-switch-3">
+                    <input class="form-check-input" name="usuario_alteracao" value="1" type="checkbox" {% if estrutura
+                      and estrutura[0] and estrutura[0].controle_estrutura %}checked{% endif %}>
+                  </label>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Info card sobre o plano de contas-->
+            {% if current_user.role_id != 1 %}
+            {% if controle_estrutura_ativo != 1 %}
+            <div class="row">
+              <div class="card-body">
+                <div class="col-8">
+                  <div class="alert alert-info" role="alert">
+                    <div class="d-flex">
+                      <div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24"
+                          viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                          <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                          <path d="M12 9h.01"></path>
+                          <path d="M11 12h1v4h1"></path>
+                        </svg>
+                      </div>
+                      <div>
+                        Para realizar alterações, implementações ou exclusões na estrutura do plano de contas, entre em
+                        contato com o suporte.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+
             <div class="treeview-container">
 
               {% if estrutura %}
@@ -484,6 +541,7 @@
                 </button>
             </div>
         </div>
+        
         <div class="tree-children" style="display: block;">
             <div class="tree-add-item">
                 <button class="tree-add-btn" onclick="openAddModal('${categoria.codigo}')">
@@ -617,6 +675,52 @@
 
     // Adicionar eventos de hover para categorias existentes
     document.querySelectorAll('.tree-item').forEach(addHoverEvents);
+
+    // Controle do switch de alteração da estrutura
+    const switchControle = document.querySelector('input[name="usuario_alteracao"]');
+    if (switchControle) {
+      switchControle.addEventListener('change', function () {
+        const isChecked = this.checked;
+        const valor = isChecked ? 1 : 0;
+
+        // Desabilitar o switch durante a requisição
+        this.disabled = true;
+
+        // Determinar qual endpoint chamar
+        const endpoint = isChecked
+          ? '/configuracoes/gerais/plano-contas/usuario-permitir-alterar'
+          : '/configuracoes/gerais/plano-contas/usuario-negar-alteracao';
+
+        // Fazer a requisição
+        fetch(endpoint, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ valor: valor })
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.sucesso) {
+              showFlashMessage('success', data.mensagem);
+            } else {
+              // Reverter o switch se houve erro
+              this.checked = !isChecked;
+              showFlashMessage('error', data.erro || 'Erro ao alterar configuração');
+            }
+          })
+          .catch(error => {
+            console.error('Erro:', error);
+            // Reverter o switch se houve erro
+            this.checked = !isChecked;
+            showFlashMessage('error', 'Erro de conexão. Tente novamente.');
+          })
+          .finally(() => {
+            // Reabilitar o switch
+            this.disabled = false;
+          });
+      });
+    }
   });
 </script>
 

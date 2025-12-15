@@ -16,19 +16,31 @@ class PlanoContaModel(BaseModel):
     tipo = db.Column(db.Integer, nullable=False)  # 1=Receita, 2=Despesa, 3=Movimentação
     nivel = db.Column(db.Integer, nullable=False, default=1)  # 1=Principal, 2=Sub, 3=SubSub
     parent_id = db.Column(db.Integer, db.ForeignKey('plan_plano_conta.id'), nullable=True)
+    controle_estrutura = db.Column(db.Boolean, default=False, nullable=False)
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
     # Relacionamentos
     parent = relationship("PlanoContaModel", remote_side=[id], backref="children")
     
-    def __init__(self, codigo=None, nome=None, tipo=None, parent_id=None, nivel=1, ativo=True):
+    def __init__(self, controle_estrutura=None, codigo=None, nome=None, tipo=None, parent_id=None, nivel=1, ativo=True):
+        self.controle_estrutura = controle_estrutura
         self.codigo = codigo
         self.nome = nome
         self.tipo = tipo
         self.parent_id = parent_id
         self.nivel = nivel
         self.ativo = ativo
+
+    # Metodo complementar para permitir a liberação da estrutura para role_id != 1
+    @staticmethod
+    def listar_todos_planos():
+        """
+        Lista todos os planos de conta ativos.
+        """
+        
+        return PlanoContaModel.query.filter_by(ativo=True, deletado=False).order_by(PlanoContaModel.id).all()
     
+        
     @classmethod
     def buscar_por_codigo(cls, codigo):
         """
@@ -96,8 +108,8 @@ class PlanoContaModel(BaseModel):
             # Para subcategorias (1.01, 1.02, etc.)
             subcategorias = cls.query.filter(
                 cls.codigo.like(f"{parent_code}.%"),
-                ~cls.codigo.like(f"{parent_code}.%.%")
-                # Removido filtro cls.ativo == True para considerar TODOS os registros
+                ~cls.codigo.like(f"{parent_code}.%.%"),
+                cls.ativo == True
             ).all()
             
             if not subcategorias:
@@ -122,8 +134,8 @@ class PlanoContaModel(BaseModel):
         else:
             # Para sub-subcategorias e níveis mais profundos
             sub_subcategorias = cls.query.filter(
-                cls.codigo.like(f"{parent_code}.%")
-                # Removido filtro cls.ativo == True para considerar TODOS os registros
+                cls.codigo.like(f"{parent_code}.%"),
+                cls.ativo == True
             ).all()
             
             if not sub_subcategorias:
@@ -361,3 +373,5 @@ def criar_categoria_com_tratamento_duplicacao(codigo, nome, tipo, parent_id=None
     except Exception as e:
         db.session.rollback()
         raise
+
+    
