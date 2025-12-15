@@ -116,8 +116,7 @@
                 <div class="mb-3">
                   <label for="form-label">Permitir que os usuários alterem a estrutura</label>
                   <label class="form-check mt-2 form-switch form-switch-3">
-                    <input class="form-check-input" name="usuario_alteracao" value="1" type="checkbox" {% if estrutura
-                      and estrutura[0] and estrutura[0].controle_estrutura %}checked{% endif %}>
+                    <input class="form-check-input" name="usuario_alteracao" value="1" type="checkbox" {% if controle_estrutura_ativo %} checked {% endif %}  >
                   </label>
                 </div>
               </div>
