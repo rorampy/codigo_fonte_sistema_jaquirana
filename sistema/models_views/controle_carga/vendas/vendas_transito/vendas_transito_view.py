@@ -270,11 +270,13 @@ def excluir_venda(id, retorno=None):
     registro = RegistroOperacionalModel.obter_por_id(id)
     contraNota = NfEntradaModel.obter_contra_nota_por_registro(id)
     
-    if not registro or not contraNota:
+    if not registro:
         flash(('Venda não encontrada!', 'warning'))
+        if retorno == 'entregue':
+            return redirect(url_for('vendas_entregues'))
+        else:
+            return redirect(url_for('vendas_em_transito'))
         
-    # Verifica em todo o faturamento se há registros vinculados a essa venda e os deleta
-    
     comissionado_pagar = ComissionadoPagarModel.obter_comissionado_a_pagar_solicitacao(registro.solicitacao.id)
     extrator_pagar = ExtratorPagarModel.obter_extrator_a_pagar_solicitacao(registro.solicitacao.id)
     fornecedor_pagar = FornecedorPagarModel.obter_fornecedor_a_pagar_solicitacao(registro.solicitacao.id)
@@ -321,8 +323,9 @@ def excluir_venda(id, retorno=None):
             
         registro.status_emissao_nf_complementar_id = 3
 
-        contraNota.deletado = True
-        contraNota.ativo = False
+        if contraNota:
+            contraNota.deletado = True
+            contraNota.ativo = False
     db.session.commit()
     flash(('Venda excluida com sucesso!', 'success'))
     
