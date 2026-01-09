@@ -2,7 +2,9 @@ from datetime import datetime
 from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem, formatar_float_para_brl, formatar_data_para_brl, formatar_float_para_brl_sem_cifrao
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_required, current_user
-from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.registro_operacional.pedido_venda_model import PedidoVendaModel
+from sistema.models_views.controle_carga.registro_operacional.pedido_venda_dados_nf_model import PedidoVendaDadosNfModel
+from sistema.models_views.controle_carga.registro_operacional.pedido_venda_dados_ticket_model import PedidoVendaDadosTicketModel
 from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
@@ -16,11 +18,11 @@ from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model imp
 from sistema.models_views.configuracoes_gerais.categorizacao_fiscal.categorizacao_fiscal_model import CategorizacaoFiscalModel
 from sistema.models_views.financeiro.movimentacao_financeira.movimentacao_financeira_model import MovimentacaoFinanceiraModel
 from sistema.models_views.financeiro.movimentacao_financeira.saldo_movimentacao_financeira_model import SaldoMovimentacaoFinanceiraModel
-from sistema.models_views.financeiro.situacao_pagamento_model import SituacaoPagamentoModel
+from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
 from sistema.models_views.importacao_ofx.importacao_ofx_model import ImportacaoOfx
 from sistema.models_views.importacao_ofx.importacao_ofx_view import limpar_dados_conciliacao
 from sistema.models_views.importacao_ofx.importacao_ofx_view import verificar_e_limpar_conciliacao_incorreta
-from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
+from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
 from sistema._utilitarios import *
 from sistema._utilitarios.utilitario_semanal import UtilitariosSemana
 
@@ -85,7 +87,8 @@ def listagem_a_receber():
         bitola = request.args.get("bitolaCarga")
         status_pagamento = request.args.get("statusPagamentoCarga")
 
-        registros = RegistroOperacionalModel.filtrar_registros_carga_cliente(
+        # Usar o novo modelo PedidoVendaModel com filtros
+        registros = PedidoVendaModel.filtrar_registros_carga_cliente(
             data_inicio=data_inicio,
             data_fim=data_fim,
             placa=placa,
@@ -99,8 +102,9 @@ def listagem_a_receber():
             status_pagamento=status_pagamento
         )
     else:
-        registros = RegistroOperacionalModel.obter_registros_carga_agrupados()
-
+        # Usar o novo modelo PedidoVendaModel para listar cargas a receber
+        registros = PedidoVendaModel.obter_registros_carga_agrupados()
+    print(f"[DEBUG] Registros carregados na listagem_a_receber: {len(registros)}")
     return render_template(
         "/financeiro/cargas_a_receber/cargas_a_receber.html",
         registros=registros,
@@ -128,7 +132,7 @@ def informar_recebimento_carga(id):
         dados_conciliacao = session.get('dados_conciliacao', {})
         conciliar_transacao_id = dados_conciliacao.get('transacao_id')
 
-        registro = RegistroOperacionalModel.obter_por_id(id)
+        registro = PedidoVendaModel.obter_por_id(id)
         contas_bancarias = ContaBancariaModel.obter_contas_bancarias_ativas()
         if not registro:
             flash(("Registro não encontrado!", "warning"))
@@ -143,7 +147,11 @@ def informar_recebimento_carga(id):
             transacao_ofx = ImportacaoOfx.query.get(conciliar_transacao_id)
             print(f"[DEBUG] transacao_ofx encontrada: {transacao_ofx}")
 
-        valor_total_recebimento = registro.valor_total_nota_100 or 0
+        # Obter dados da NF e do ticket
+        dados_nf = registro.dados_nf
+        dados_ticket = registro.dados_ticket
+        
+        valor_total_recebimento = dados_nf.valor_total_nota_100 if dados_nf else 0
             
         saldo_conta_atual = 0
         conta_padrao_id = request.form.get("contaBancaria") or (contas_bancarias[0].id if contas_bancarias else None)
@@ -155,10 +163,10 @@ def informar_recebimento_carga(id):
         registro_dict = {
             'id': registro.id,
             'cliente': registro.solicitacao.cliente if registro.solicitacao else None,
-            'numero_nota_fiscal': registro.numero_nota_fiscal,
+            'numero_nota_fiscal': dados_nf.numero_nota_fiscal if dados_nf else None,
             'produto': registro.solicitacao.produto if registro.solicitacao and hasattr(registro.solicitacao, 'produto') else None,
-            'quantidade': registro.peso_liquido_ticket if registro.peso_liquido_ticket else 0,
-            'valor_unitario_100': registro.preco_un_nf if registro.preco_un_nf else 0,
+            'quantidade': dados_ticket.peso_liquido_ticket if dados_ticket else 0,
+            'valor_unitario_100': dados_nf.preco_un_nf if dados_nf else 0,
             'valor_total_recebimento_100': valor_total_recebimento,
         }
         
@@ -174,17 +182,18 @@ def informar_recebimento_carga(id):
             if gravar_banco:
                 novo_recebimento = RecebimentoModel(
                     cliente_id=registro.solicitacao.cliente_id,
-                    registro_operacional_id=registro.id,
+                    pedido_venda_id=registro.id,
                     usuario_id=current_user.id,
-                    numero_nota_fiscal=registro.numero_nota_fiscal,
+                    numero_nota_fiscal=dados_nf.numero_nota_fiscal if dados_nf else None,
                     valor_total_recebimento_100=valor_recebido,
                     data_recebimento=DataHora.obter_data_atual_padrao_en()
                 )
                 db.session.add(novo_recebimento)
                 db.session.flush()
 
-                registro.situacao_financeira_id = 5  # 
-                registro.valor_total_nota_100 = valor_recebido
+                registro.situacao_financeira_id = 5  # Faturado
+                if dados_nf:
+                    dados_nf.valor_total_nota_100 = valor_recebido
 
                 # Calcular valor líquido após crédito
                 valor_bruto = valor_recebido
@@ -222,38 +231,38 @@ def informar_recebimento_carga(id):
                 valor_bruto_registro = valor_bruto
                 valor_credito_registro = valor_credito
                 valor_faturado = valor_liquido
-                preco_custo_registro = registro.preco_un_nf or 0
+                preco_custo_registro = dados_nf.preco_un_nf if dados_nf else 0
 
                 numero_nf = ""
-                if registro:
-                    if registro.estorno_nf and registro.numero_nota_fiscal_estorno:
-                        numero_nf = f"{registro.numero_nota_fiscal_estorno} *"
-                    elif registro.numero_nota_fiscal:
-                        numero_nf = registro.numero_nota_fiscal
+                if dados_nf:
+                    if dados_nf.estorno_nf and dados_nf.numero_nota_fiscal_estorno:
+                        numero_nf = f"{dados_nf.numero_nota_fiscal_estorno} *"
+                    elif dados_nf.numero_nota_fiscal:
+                        numero_nf = dados_nf.numero_nota_fiscal
                 
 
-                # Detalhes para extrator (vai no array de extratores)
+                # Detalhes para cargas a receber
                 detalhes_extratores = [{
                     "carga_a_receber_id": registro.id,
-                    "solicitacao_id": registro.solicitacao_nf_id if registro.solicitacao else "",
-                    "fornecedor_identificacao": registro.solicitacao.fornecedor.identificacao if registro and registro.solicitacao and registro.solicitacao.fornecedor else str(registro.fornecedor_id),
+                    "solicitacao_id": registro.solicitacao_pedido_venda_id if registro.solicitacao else "",
+                    "fornecedor_identificacao": dados_ticket.fornecedor.identificacao if dados_ticket and dados_ticket.fornecedor else "",
                     "cliente_id": registro.solicitacao.cliente.id if registro.solicitacao and registro.solicitacao.cliente else "",
                     "cliente": registro.solicitacao.cliente.identificacao if registro.solicitacao and registro.solicitacao.cliente else "",
                     "valor_bruto": valor_bruto_registro,
                     "valor_credito": valor_credito_registro,
                     "valor_faturado": valor_faturado,
                     "nota_fiscal": numero_nf,
-                    "peso_ticket": f"{registro.peso_liquido_ticket}" if registro and registro.peso_liquido_ticket else "",
+                    "peso_ticket": f"{dados_ticket.peso_liquido_ticket}" if dados_ticket and dados_ticket.peso_liquido_ticket else "",
                     "preco_custo": preco_custo_registro,
                     "produto": registro.solicitacao.produto.nome if registro.solicitacao and registro.solicitacao.produto else "",
                     "bitola": registro.solicitacao.bitola.bitola if registro.solicitacao and registro.solicitacao.bitola else "",
-                    "data_entrega": registro.data_entrega_ticket.strftime('%d/%m/%Y') if registro.data_entrega_ticket else "",
+                    "data_entrega": dados_ticket.data_entrega_ticket.strftime('%d/%m/%Y') if dados_ticket and dados_ticket.data_entrega_ticket else "",
                     "utiliza_credito": 0,
-                    "registro_operacional_id": registro.id if registro else "",
+                    "pedido_venda_id": registro.id if registro else "",
                     "placa_veiculo": registro.solicitacao.veiculo.placa_veiculo if registro.solicitacao and registro.solicitacao.veiculo else "",
                     "motorista": registro.solicitacao.motorista.nome_completo if registro.solicitacao and registro.solicitacao.motorista else "",
                     "transportadora_id": registro.solicitacao.transportadora_id if registro.solicitacao else "",
-                    "transportadora_identificacao": registro.solicitacao.transportadora_exibicao.identificacao if registro.solicitacao else "",
+                    "transportadora_identificacao": registro.solicitacao.transportadora.identificacao if registro.solicitacao and registro.solicitacao.transportadora else "",
                 }]
 
                 # Salvar detalhes (array vazio para fornecedores, detalhes_extratores)
@@ -403,7 +412,7 @@ def informar_recebimento_massa():
                 flash(("IDs inválidos selecionados!", "warning"))
                 return redirect(url_for("listagem_a_receber"))
 
-        registros = [RegistroOperacionalModel.obter_por_id(registro_id) for registro_id in ids_list]
+        registros = [PedidoVendaModel.obter_por_id(registro_id) for registro_id in ids_list]
         registros = [r for r in registros if r and r.situacao_financeira_id != 5]  # Filtrar já recebidos
 
         if not registros:
@@ -429,9 +438,11 @@ def informar_recebimento_massa():
                 try:
                     valor_total_recebimento = int(valor_hidden)
                 except (TypeError, ValueError):
-                    valor_total_recebimento = registro.valor_total_nota_100 or 0
+                    dados_nf_reg = registro.dados_nf
+                    valor_total_recebimento = dados_nf_reg.valor_total_nota_100 if dados_nf_reg else 0
             else:
-                valor_total_recebimento = registro.valor_total_nota_100 or 0
+                dados_nf_reg = registro.dados_nf
+                valor_total_recebimento = dados_nf_reg.valor_total_nota_100 if dados_nf_reg else 0
 
             valores_recebidos_dict[registro.id] = valor_total_recebimento
 
@@ -446,14 +457,16 @@ def informar_recebimento_massa():
                     'valor_total': 0
                 }
 
+            dados_nf_reg = registro.dados_nf
+            dados_ticket_reg = registro.dados_ticket
             registro_dict = {
                 'id': registro.id,
-                'registro_operacional': registro,
-                'numero_nota_fiscal': registro.numero_nota_fiscal,
+                'pedido_venda': registro,
+                'numero_nota_fiscal': dados_nf_reg.numero_nota_fiscal if dados_nf_reg else None,
                 'solicitacao': registro.solicitacao if registro.solicitacao else None,
                 'produto': registro.solicitacao.produto if registro.solicitacao and hasattr(registro.solicitacao, 'produto') else None,
-                'quantidade': registro.peso_liquido_ticket if registro.peso_liquido_ticket else 0,
-                'valor_unitario_100': registro.preco_un_nf if registro.preco_un_nf else 0,
+                'quantidade': dados_ticket_reg.peso_liquido_ticket if dados_ticket_reg and dados_ticket_reg.peso_liquido_ticket else 0,
+                'valor_unitario_100': dados_nf_reg.preco_un_nf if dados_nf_reg and dados_nf_reg.preco_un_nf else 0,
                 'valor_total_recebimento_100': valor_total_recebimento,
             }
 
@@ -529,13 +542,15 @@ def informar_recebimento_massa():
 
                     # Processar cargas a receber
                     for registro in registros:
-                        valor_recebido = valores_recebidos_dict.get(registro.id, registro.valor_total_nota_100 or 0)
+                        dados_nf_reg = registro.dados_nf
+                        dados_ticket_reg = registro.dados_ticket
+                        valor_recebido = valores_recebidos_dict.get(registro.id, dados_nf_reg.valor_total_nota_100 if dados_nf_reg else 0)
 
                         novo_recebimento = RecebimentoModel(
                             cliente_id=registro.solicitacao.cliente_id,
-                            registro_operacional_id=registro.id,
+                            pedido_venda_id=registro.id,
                             usuario_id=current_user.id,
-                            numero_nota_fiscal=registro.numero_nota_fiscal,
+                            numero_nota_fiscal=dados_nf_reg.numero_nota_fiscal if dados_nf_reg else None,
                             valor_total_recebimento_100=valor_recebido,
                             data_recebimento=DataHora.obter_data_atual_padrao_en()
                         )
@@ -543,40 +558,41 @@ def informar_recebimento_massa():
                         db.session.flush()
 
                         registro.situacao_financeira_id = 5
-                        registro.valor_total_nota_100 = valor_recebido
+                        if dados_nf_reg:
+                            dados_nf_reg.valor_total_nota_100 = valor_recebido
 
                         registros_processados += 1
                         valor_total_processado += valor_recebido
 
-                        preco_custo_registro = registro.preco_un_nf or 0
+                        preco_custo_registro = dados_nf_reg.preco_un_nf if dados_nf_reg else 0
                         numero_nf = ""
-                        if registro:
-                            if getattr(registro, 'estorno_nf', False) and getattr(registro, 'numero_nota_fiscal_estorno', None):
-                                numero_nf = f"{registro.numero_nota_fiscal_estorno} *"
-                            elif registro.numero_nota_fiscal:
-                                numero_nf = registro.numero_nota_fiscal
+                        if dados_nf_reg:
+                            if getattr(dados_nf_reg, 'estorno_nf', False) and getattr(dados_nf_reg, 'numero_nota_fiscal_estorno', None):
+                                numero_nf = f"{dados_nf_reg.numero_nota_fiscal_estorno} *"
+                            elif dados_nf_reg.numero_nota_fiscal:
+                                numero_nf = dados_nf_reg.numero_nota_fiscal
 
                         detalhes_faturamento.append({
                             "carga_a_receber_id": registro.id,
-                            "solicitacao_id": getattr(registro, 'solicitacao_nf_id', None) if getattr(registro, 'solicitacao', None) else "",
-                            "fornecedor_identificacao": registro.solicitacao.fornecedor.identificacao if registro and registro.solicitacao and hasattr(registro.solicitacao, 'fornecedor') and registro.solicitacao.fornecedor else str(getattr(registro, 'fornecedor_id', '')),
+                            "solicitacao_id": registro.solicitacao_pedido_venda_id if registro.solicitacao else "",
+                            "fornecedor_identificacao": dados_ticket_reg.fornecedor.identificacao if dados_ticket_reg and dados_ticket_reg.fornecedor else "",
                             "cliente_id": registro.solicitacao.cliente.id if registro.solicitacao and hasattr(registro.solicitacao, 'cliente') and registro.solicitacao.cliente else "",
                             "cliente": registro.solicitacao.cliente.identificacao if registro.solicitacao and hasattr(registro.solicitacao, 'cliente') and registro.solicitacao.cliente else "",
                             "valor_bruto": valor_recebido,
                             "valor_credito": 0,
                             "valor_faturado": valor_recebido,
                             "nota_fiscal": numero_nf,
-                            "peso_ticket": f"{registro.peso_liquido_ticket}" if registro and getattr(registro, 'peso_liquido_ticket', None) else "",
+                            "peso_ticket": f"{dados_ticket_reg.peso_liquido_ticket}" if dados_ticket_reg and getattr(dados_ticket_reg, 'peso_liquido_ticket', None) else "",
                             "preco_custo": preco_custo_registro,
                             "produto": registro.solicitacao.produto.nome if registro.solicitacao and hasattr(registro.solicitacao, 'produto') and registro.solicitacao.produto else "",
                             "bitola": registro.solicitacao.bitola.bitola if registro.solicitacao and hasattr(registro.solicitacao, 'bitola') and registro.solicitacao.bitola else "",
-                            "data_entrega": registro.data_entrega_ticket.strftime('%d/%m/%Y') if getattr(registro, 'data_entrega_ticket', None) else "",
+                            "data_entrega": dados_ticket_reg.data_entrega_ticket.strftime('%d/%m/%Y') if dados_ticket_reg and getattr(dados_ticket_reg, 'data_entrega_ticket', None) else "",
                             "utiliza_credito": 0,
-                            "registro_operacional_id": registro.id if registro else "",
+                            "pedido_venda_id": registro.id if registro else "",
                             "placa_veiculo": registro.solicitacao.veiculo.placa_veiculo if registro.solicitacao and hasattr(registro.solicitacao, 'veiculo') and registro.solicitacao.veiculo else "",
                             "motorista": registro.solicitacao.motorista.nome_completo if registro.solicitacao and hasattr(registro.solicitacao, 'motorista') and registro.solicitacao.motorista else "",
                             "transportadora_id": registro.solicitacao.transportadora_id if registro.solicitacao else "",
-                            "transportadora_identificacao": registro.solicitacao.transportadora_exibicao.identificacao if registro.solicitacao else "",
+                            "transportadora_identificacao": registro.solicitacao.transportadora.identificacao if registro.solicitacao and registro.solicitacao.transportadora else "",
                         })
 
                     # Processar NFs complementares agrupadas
@@ -749,7 +765,7 @@ def informar_recebimento_massa():
 @requires_roles
 def cancelar_informe_recebimento(id):
     try:
-        registro = RegistroOperacionalModel.obter_por_id(id)
+        registro = PedidoVendaModel.obter_por_id(id)
         
         if not registro:
             mensagem = "Registro não encontrado!"
@@ -758,7 +774,7 @@ def cancelar_informe_recebimento(id):
         else:
             registro.situacao_financeira_id = 2  # 2 = Pendente
 
-            recebimento = RecebimentoModel.obter_recebimento_pore_registro_id(registro.id)
+            recebimento = RecebimentoModel.obter_recebimento_por_pedido_venda_id(registro.id)
             if recebimento:
                 # Obter conta bancária do recebimento
                 conta_bancaria_id = recebimento.conta_bancaria_id
@@ -778,17 +794,18 @@ def cancelar_informe_recebimento(id):
                     movimentacao.movimentacao_financeira_id = None
                 
                 # Atualizar saldo (subtrair o valor que havia sido recebido)
-                saldo_total = SaldoMovimentacaoFinanceiraModel.obter_registro_conta_bancaria(conta_bancaria_id)
-                if saldo_total:
-                    saldo_total.valor_total_saldo_100 -= valor_recebido_100
-                    saldo_total.data_movimentacao = datetime.now()
-                else:
-                    novo_saldo = SaldoMovimentacaoFinanceiraModel(
-                        data_movimentacao=datetime.now(),
-                        valor_total_saldo_100=-valor_recebido_100,
-                        conta_bancaria_id=conta_bancaria_id
-                    )
-                    db.session.add(novo_saldo)
+                if conta_bancaria_id:
+                    saldo_total = SaldoMovimentacaoFinanceiraModel.obter_registro_conta_bancaria(conta_bancaria_id)
+                    if saldo_total:
+                        saldo_total.valor_total_saldo_100 -= valor_recebido_100
+                        saldo_total.data_movimentacao = datetime.now()
+                    else:
+                        novo_saldo = SaldoMovimentacaoFinanceiraModel(
+                            data_movimentacao=datetime.now(),
+                            valor_total_saldo_100=-valor_recebido_100,
+                            conta_bancaria_id=conta_bancaria_id
+                        )
+                        db.session.add(novo_saldo)
             
             db.session.commit()
             

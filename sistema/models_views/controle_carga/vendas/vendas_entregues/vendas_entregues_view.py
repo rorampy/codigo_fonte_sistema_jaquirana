@@ -2,7 +2,10 @@ from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from sistema.models_views.controle_carga.nf_complementar.nf_entrada_model import NfEntradaModel
-from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.registro_operacional.pedido_venda_model import PedidoVendaModel
+from sistema.models_views.controle_carga.registro_operacional.pedido_venda_dados_nf_model import PedidoVendaDadosNfModel
+from sistema.models_views.controle_carga.registro_operacional.pedido_venda_dados_ticket_model import PedidoVendaDadosTicketModel
+from sistema.models_views.controle_carga.solicitacao_nf.solicitacao_pedido_venda_model import SolicitacaoPedidoVendaModel
 from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
 from sistema.models_views.parametros.bitola.bitola_model import BitolaModel
 from sistema._utilitarios import *
@@ -15,7 +18,7 @@ def vendas_entregues():
     pagina = request.args.get('pagina', 1, type=int)
     por_pagina = 200
     
-    resultado = RegistroOperacionalModel.listar_vendas(pagina=pagina, por_pagina=por_pagina, categoria_venda='entregue')
+    resultado = PedidoVendaModel.listar_vendas(pagina=pagina, por_pagina=por_pagina, categoria_venda='entregue')
     produtos = ProdutoModel.listar_produtos()
     bitolas = BitolaModel.listar_bitolas_ativas()
     
@@ -43,7 +46,7 @@ def vendas_entregues_filtrar():
     pagina = request.args.get('pagina', 1, type=int)
     por_pagina = 200
 
-    resultado = RegistroOperacionalModel.listar_vendas_filtrar(
+    resultado = PedidoVendaModel.listar_vendas_filtrar(
         cliente_venda=cliente_venda,
         nf_venda=nf_venda,
         produto_venda=produto_venda,
@@ -93,7 +96,7 @@ def vendas_entregues_busca_rapida_ajax():
     pagina = request.args.get('pagina', 1, type=int)
     por_pagina = 200
 
-    resultado = RegistroOperacionalModel.listar_vendas_filtrar(
+    resultado = PedidoVendaModel.listar_vendas_filtrar(
         cliente_venda=cliente_venda,
         nf_venda=nf_venda,
         produto_venda='',
@@ -128,3 +131,17 @@ def vendas_entregues_busca_rapida_ajax():
         bitolas=bitolas,
         dados_corretos=dados_corretos
     )
+    
+@app.route('/controle-cargas/detalhes/vendas/<int:id>', methods=['GET', 'POST'])
+@login_required
+@requires_roles
+def detalhe_pedido_venda(id):
+    pedido_venda = PedidoVendaModel.obter_pedido_venda_por_id(id)
+    if not pedido_venda:
+        flash(("Pedido de venda não encontrado!", "warning"))
+        return redirect(url_for("vendas_entregues"))
+    
+    return render_template('/controle_carga/registro_operacional/detalhes_registro_operacional.html', 
+                           dados_corretos=request.form,
+                           pedido_venda=pedido_venda,
+                           registro=pedido_venda)

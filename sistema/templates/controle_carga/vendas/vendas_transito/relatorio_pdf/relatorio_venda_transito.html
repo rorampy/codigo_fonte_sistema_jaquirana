@@ -93,14 +93,15 @@
     </thead>
     <tbody>
       {% for registro in vendas_em_transito %}
+      {% set dados_nf = registro.pedido_venda_dados_nf[0] if registro.pedido_venda_dados_nf else None %}
       <tr>
         <td>{{ registro.solicitacao.cliente.identificacao | truncate(40, '...') or '-' }}</td>
         <td>{{ registro.solicitacao.produto.nome }} | {{ registro.solicitacao.bitola.bitola }}</td>
         <td>
-          {% if registro.estorno_nf %}
-          {{ registro.numero_nota_fiscal_estorno }} *
-          {% elif registro.numero_nota_fiscal %}
-          {{ registro.numero_nota_fiscal }}
+          {% if dados_nf and dados_nf.estorno_nf %}
+          {{ dados_nf.numero_nota_fiscal_estorno }} *
+          {% elif dados_nf and dados_nf.numero_nota_fiscal %}
+          {{ dados_nf.numero_nota_fiscal }}
           {% else %}
           -
           {% endif %}
@@ -115,7 +116,7 @@
           {% elif nome_split|length >= 0 %} {{ nome_split[0] }}
           {% endif %}
         </td>
-        <td>{{ registro.solicitacao.transportadora_exibicao.identificacao | truncate(40, '...') or '-' }}</td>
+        <td>{{ registro.solicitacao.transportadora.identificacao | truncate(40, '...') or '-' }}</td>
       </tr>
       {% endfor %}
     </tbody>

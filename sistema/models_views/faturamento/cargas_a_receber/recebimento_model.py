@@ -11,8 +11,11 @@ class RecebimentoModel(BaseModel):
     cliente_id = db.Column(db.Integer, db.ForeignKey("cli_cliente.id"), nullable=False)
     cliente = db.relationship("ClienteModel", backref=db.backref("cliente_recebimento", lazy=True))
 
-    registro_operacional_id = db.Column(db.Integer, db.ForeignKey("re_registro_operacional.id"), nullable=False)
+    registro_operacional_id = db.Column(db.Integer, db.ForeignKey("re_registro_operacional.id"), nullable=True)
     registro = db.relationship("RegistroOperacionalModel", backref=db.backref("registro_recebimento", lazy=True))
+
+    pedido_venda_id = db.Column(db.Integer, db.ForeignKey("ped_pedido_venda.id"), nullable=True)
+    pedido_venda = db.relationship("PedidoVendaModel", backref=db.backref("pedido_venda_recebimento", lazy=True))
 
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     usuario = db.relationship('UsuarioModel', backref=db.backref('usuario_cadastro_recebimento', lazy=True))
@@ -47,10 +50,11 @@ class RecebimentoModel(BaseModel):
     def __init__(
         self,
         cliente_id,
-        registro_operacional_id,
         usuario_id,
         numero_nota_fiscal,
         valor_total_recebimento_100,
+        registro_operacional_id=None,
+        pedido_venda_id=None,
         data_recebimento=None,
         conta_bancaria_id=None,
         plano_conta_id=None,
@@ -61,6 +65,7 @@ class RecebimentoModel(BaseModel):
     ):
         self.cliente_id = cliente_id
         self.registro_operacional_id = registro_operacional_id
+        self.pedido_venda_id = pedido_venda_id
         self.usuario_id = usuario_id
         self.data_recebimento = data_recebimento
         self.numero_nota_fiscal = numero_nota_fiscal
@@ -81,16 +86,27 @@ class RecebimentoModel(BaseModel):
 
 
         return registro
+
+    @staticmethod
+    def obter_recebimento_por_pedido_venda_id(id):
+        """Obtém recebimento pelo ID do pedido de venda"""
+        registro = RecebimentoModel.query.filter(
+            RecebimentoModel.deletado == 0,
+            RecebimentoModel.ativo == 1,
+            RecebimentoModel.pedido_venda_id == id
+        ).first()
+        return registro
     
     @staticmethod
-    def filtrar_recebimentos_agrupado(cliente_identificacao=None, data_inicio=None, data_fim=None, situacao_financeira_id=None):
+    def filtrar_recebimentos_agrupado(cliente_identificacao=None, cliente_id=None, data_inicio=None, data_fim=None, situacao_financeira_id=None):
         """
         Filtra e retorna recebimentos agrupados por cliente e produto, similar ao obter_recebimentos_agrupados.
         Args:
             cliente_identificacao (str, optional): Parte do nome do cliente para filtro (busca em ClienteModel.identificacao)
+            cliente_id (int, optional): ID do cliente para filtro direto
             data_inicio (date, optional): Data inicial da entrega do ticket
             data_fim (date, optional): Data final da entrega do ticket
-            situacao_financeira_id (int, optional): Situação financeira do registro operacional
+            situacao_financeira_id (int, optional): Situação financeira do pedido de venda
         Returns:
             list: Lista de dicionários com recebimentos filtrados e agrupados
 
@@ -109,10 +125,11 @@ class RecebimentoModel(BaseModel):
             # ...
         ]
         """
-        from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+        from sistema.models_views.controle_carga.registro_operacional.pedido_venda_model import PedidoVendaModel
+        from sistema.models_views.controle_carga.registro_operacional.pedido_venda_dados_ticket_model import PedidoVendaDadosTicketModel
+        from sistema.models_views.controle_carga.solicitacao_nf.solicitacao_pedido_venda_model import SolicitacaoPedidoVendaModel
         from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
-        from sistema.models_views.controle_carga.produto_model import ProdutoModel
-        from sistema.models_views.controle_carga.carga_model import CargaModel
+        from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
         from datetime import date, timedelta
         from sqlalchemy import and_
 
@@ -123,36 +140,40 @@ class RecebimentoModel(BaseModel):
         query = (
             db.session.query(RecebimentoModel, ClienteModel, ProdutoModel)
             .join(RecebimentoModel.cliente)
-            .join(RecebimentoModel.registro)
-            .join(CargaModel, RegistroOperacionalModel.solicitacao_nf_id == CargaModel.id)
-            .join(ProdutoModel, CargaModel.produto_id == ProdutoModel.id)
+            .join(PedidoVendaModel, RecebimentoModel.pedido_venda_id == PedidoVendaModel.id)
+            .join(SolicitacaoPedidoVendaModel, PedidoVendaModel.solicitacao_pedido_venda_id == SolicitacaoPedidoVendaModel.id)
+            .join(ProdutoModel, SolicitacaoPedidoVendaModel.produto_id == ProdutoModel.id)
+            .outerjoin(PedidoVendaDadosTicketModel, PedidoVendaDadosTicketModel.pedido_venda_id == PedidoVendaModel.id)
             .filter(
                 RecebimentoModel.ativo.is_(True),
-                RegistroOperacionalModel.deletado.is_(False),
-                RegistroOperacionalModel.ativo.is_(True)
+                RecebimentoModel.deletado == 0,
+                PedidoVendaModel.deletado.is_(False),
+                PedidoVendaModel.ativo.is_(True)
             )
         )
         
         if data_inicio and data_fim:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket.between(data_inicio, data_fim),
+                PedidoVendaDadosTicketModel.data_entrega_ticket.isnot(None),
+                PedidoVendaDadosTicketModel.data_entrega_ticket.between(data_inicio, data_fim),
             )
         elif data_inicio:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
+                PedidoVendaDadosTicketModel.data_entrega_ticket.isnot(None),
+                PedidoVendaDadosTicketModel.data_entrega_ticket >= data_inicio,
             )
         elif data_fim:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket <= data_fim,
+                PedidoVendaDadosTicketModel.data_entrega_ticket.isnot(None),
+                PedidoVendaDadosTicketModel.data_entrega_ticket <= data_fim,
             )
 
         if cliente_identificacao:
             query = query.filter(ClienteModel.identificacao.ilike(f"%{cliente_identificacao}%"))
+        if cliente_id:
+            query = query.filter(ClienteModel.id == cliente_id)
         if situacao_financeira_id:
-            query = query.filter(RegistroOperacionalModel.situacao_financeira_id == situacao_financeira_id)
+            query = query.filter(PedidoVendaModel.situacao_financeira_id == situacao_financeira_id)
 
         resultados = []
         for recebimento, cliente, produto in query.all():

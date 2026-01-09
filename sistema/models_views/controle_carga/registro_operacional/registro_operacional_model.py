@@ -24,6 +24,7 @@ from sistema.models_views.faturamento.cargas_a_receber.vendas.recebimento_model 
 from sistema.models_views.financeiro.movimentacao_financeira.movimentacao_financeira_model import MovimentacaoFinanceiraModel
 from sistema._utilitarios import *
 from sistema.models_views.upload_arquivo.upload_arquivo_model import UploadArquivoModel
+
 class RegistroOperacionalModel(BaseModel):
     """
     Model unificada para registro de emissão de nota fiscal e ticket

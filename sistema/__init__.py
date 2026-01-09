@@ -597,3 +597,11 @@ from sistema.models_views.pontuacao_usuario import pontuacao_usuario_model
 # Certificações
 from sistema.models_views.gerenciar.certificacoes import certificacoes_model
 from sistema.models_views.gerenciar.certificacoes import certificacoes_view
+
+# Solicitacao Pedido Venda
+from sistema.models_views.controle_carga.solicitacao_nf import solicitacao_pedido_venda_model
+from sistema.models_views.controle_carga.solicitacao_nf import solicitacao_pedido_venda_view
+from sistema.models_views.controle_carga.registro_operacional import pedido_venda_dados_nf_model
+from sistema.models_views.controle_carga.registro_operacional import pedido_venda_dados_ticket_model
+from sistema.models_views.controle_carga.registro_operacional import pedido_venda_model
+from sistema.models_views.controle_carga.registro_operacional import pedido_venda_view

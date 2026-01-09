@@ -1,11 +1,10 @@
 from datetime import date, timedelta
 from ...base_model import BaseModel, db
 from sistema import request
-from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
-from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
-from sistema.models_views.gerenciar.floresta.floresta_model import FlorestaModel
-from sqlalchemy import and_, desc, or_
+from sistema.models_views.controle_carga.registro_operacional.pedido_venda_model import PedidoVendaModel
+from sistema.models_views.controle_carga.registro_operacional.pedido_venda_dados_ticket_model import PedidoVendaDadosTicketModel
+from sistema.models_views.controle_carga.solicitacao_nf.solicitacao_pedido_venda_model import SolicitacaoPedidoVendaModel
+from sqlalchemy import desc
 
 
 class NfEntradaModel(BaseModel):
@@ -18,6 +17,10 @@ class NfEntradaModel(BaseModel):
 
     registro_id = db.Column(db.Integer, db.ForeignKey("re_registro_operacional.id"), nullable=True)
     registro = db.relationship("RegistroOperacionalModel", backref=db.backref("rp_registro", lazy=True))
+
+    # Nova referência para as novas models
+    pedido_venda_id = db.Column(db.Integer, db.ForeignKey("ped_pedido_venda.id"), nullable=True)
+    pedido_venda = db.relationship("PedidoVendaModel", backref=db.backref("nf_entrada", lazy=True))
 
     peso_contra_nota = db.Column(db.Float, nullable=True)
 
@@ -37,7 +40,8 @@ class NfEntradaModel(BaseModel):
 
     def __init__(
         self,
-        registro_id,
+        registro_id=None,
+        pedido_venda_id=None,
         peso_contra_nota=None,
         arquivo_nf_entrada_id=None,
         arquivo_contra_nota_id=None,
@@ -45,6 +49,7 @@ class NfEntradaModel(BaseModel):
         arquivo_mdf_id=None,
     ):
         self.registro_id = registro_id
+        self.pedido_venda_id = pedido_venda_id
         self.peso_contra_nota = peso_contra_nota
         self.arquivo_nf_entrada_id = arquivo_nf_entrada_id
         self.arquivo_contra_nota_id = arquivo_contra_nota_id
@@ -55,6 +60,7 @@ class NfEntradaModel(BaseModel):
     def obter_nf_entrada_agrupadas():
         """
         Retorna todas as NFs de entrada ativas agrupadas por origem, produto e bitola. (últimos 30 dias)
+        Utiliza as novas models: PedidoVendaModel e PedidoVendaDadosTicketModel
         
         Returns:
             list: Lista de dicionários com NFs de entrada agrupadas
@@ -63,57 +69,78 @@ class NfEntradaModel(BaseModel):
         data_inicio = date.today() - timedelta(days=30)
         data_fim = date.today()
 
+        # Query principal para buscar NF de entrada com pedido de venda
         query = (
-            db.session.query(NfEntradaModel, RegistroOperacionalModel, FornecedorCadastroModel, FlorestaModel)
-            .join(
-                RegistroOperacionalModel,
-                NfEntradaModel.registro_id == RegistroOperacionalModel.id,
+            db.session.query(
+                NfEntradaModel, 
+                PedidoVendaModel, 
+                SolicitacaoPedidoVendaModel
             )
             .join(
-                CargaModel, RegistroOperacionalModel.solicitacao_nf_id == CargaModel.id
+                PedidoVendaModel,
+                NfEntradaModel.pedido_venda_id == PedidoVendaModel.id,
             )
-            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor_id == FornecedorCadastroModel.id)
-            .outerjoin(FlorestaModel, CargaModel.floresta_id == FlorestaModel.id)
-            .filter(NfEntradaModel.deletado == False, NfEntradaModel.ativo == True)
+            .join(
+                SolicitacaoPedidoVendaModel,
+                PedidoVendaModel.solicitacao_pedido_venda_id == SolicitacaoPedidoVendaModel.id,
+            )
+            .filter(
+                NfEntradaModel.deletado == False, 
+                NfEntradaModel.ativo == True,
+                NfEntradaModel.pedido_venda_id.isnot(None)
+            )
             .order_by(desc(NfEntradaModel.id))
         )
 
-        if data_inicio and data_fim:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket.between(data_inicio, data_fim),
-            )
-        elif data_inicio:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
-            )
-        elif data_fim:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket <= data_fim,
-            )
-
         registros = []
-        for nfentrada, registro, fornecedor, floresta in query.all():
-            origem = "Indefinido"
-            if fornecedor and fornecedor.identificacao:
-                # Se o fornecedor tem controle_entrada = True, agrupa como "Outros fornecedores"
-                if fornecedor.controle_entrada == False:
-                    origem = "Outros fornecedores"
-                else:
-                    origem = fornecedor.identificacao
-            elif floresta and floresta.identificacao:
-                origem = floresta.identificacao
+        
+        for nfentrada, pedido_venda, solicitacao in query.all():
+            # Buscar todos os dados de ticket para este pedido de venda
+            dados_tickets = PedidoVendaDadosTicketModel.query.filter(
+                PedidoVendaDadosTicketModel.pedido_venda_id == pedido_venda.id,
+                PedidoVendaDadosTicketModel.ativo == True,
+                PedidoVendaDadosTicketModel.deletado == False
+            ).all()
+            
+            if not dados_tickets:
+                continue
                 
-            produto = getattr(registro.solicitacao.produto, "nome", "Indefinido")
-            bitola = getattr(registro.solicitacao.bitola, "bitola", "")
+            # Filtrar por data se especificado
+            primeiro_ticket = dados_tickets[0]
+            if primeiro_ticket.data_entrega_ticket:
+                if data_inicio and primeiro_ticket.data_entrega_ticket < data_inicio:
+                    continue
+                if data_fim and primeiro_ticket.data_entrega_ticket > data_fim:
+                    continue
+            else:
+                continue
+            
+            # Calcular peso total de todos os fornecedores
+            peso_total_ticket = sum(t.peso_liquido_ticket or 0 for t in dados_tickets)
+            
+            # Determinar origem (primeiro fornecedor)
+            origem = "Indefinido"
+            primeiro_fornecedor = None
+            if dados_tickets and dados_tickets[0].fornecedor_id:
+                primeiro_fornecedor = dados_tickets[0].fornecedor
+                if primeiro_fornecedor and primeiro_fornecedor.identificacao:
+                    if primeiro_fornecedor.controle_entrada == False:
+                        origem = "Outros fornecedores"
+                    else:
+                        origem = primeiro_fornecedor.identificacao
+                
+            produto = getattr(solicitacao.produto, "nome", "Indefinido") if solicitacao else "Indefinido"
+            bitola = getattr(solicitacao.bitola, "bitola", "") if solicitacao else ""
 
             registros.append({
                 "origem": origem,
                 "produto": produto,
                 "bitola": bitola,
-                "registro": registro,
+                "pedido_venda": pedido_venda,
+                "dados_ticket": primeiro_ticket,  # Para data/numero NF
+                "dados_tickets": dados_tickets,   # Todos os tickets
+                "peso_total_ticket": peso_total_ticket,  # Peso somado
+                "solicitacao": solicitacao,
                 "nfentrada": nfentrada
             })
             
@@ -128,89 +155,123 @@ class NfEntradaModel(BaseModel):
     ):
         """
         Filtra e retorna NFs de entrada ativas agrupadas por origem, produto e bitola.
+        Utiliza as novas models: PedidoVendaModel e PedidoVendaDadosTicketModel
         
         Args:
             data_inicio (date, optional): Data inicial do filtro
             data_fim (date, optional): Data final do filtro
             numero_nf (str, optional): Número da nota fiscal
-            origem (str, optional): Nome da origem (fornecedor ou floresta)
+            origem (str, optional): Nome da origem (fornecedor)
         
         Returns:
             list: Lista de dicionários com NFs de entrada filtradas e agrupadas
         """
+        from sistema.models_views.controle_carga.registro_operacional.pedido_venda_dados_nf_model import PedidoVendaDadosNfModel
+        
         if not data_inicio and not data_fim:
             data_inicio = date.today() - timedelta(days=30)
             data_fim = date.today()
 
+        # Query principal para buscar NF de entrada com pedido de venda
         query = (
-            db.session.query(NfEntradaModel, RegistroOperacionalModel, FornecedorCadastroModel, FlorestaModel)
-            .join(
-                RegistroOperacionalModel,
-                NfEntradaModel.registro_id == RegistroOperacionalModel.id,
+            db.session.query(
+                NfEntradaModel, 
+                PedidoVendaModel, 
+                SolicitacaoPedidoVendaModel
             )
             .join(
-                CargaModel, RegistroOperacionalModel.solicitacao_nf_id == CargaModel.id
+                PedidoVendaModel,
+                NfEntradaModel.pedido_venda_id == PedidoVendaModel.id,
             )
-            .outerjoin(FornecedorCadastroModel, CargaModel.fornecedor_id == FornecedorCadastroModel.id)
-            .outerjoin(FlorestaModel, CargaModel.floresta_id == FlorestaModel.id)
-            .filter(NfEntradaModel.deletado == False, NfEntradaModel.ativo == True)
+            .join(
+                SolicitacaoPedidoVendaModel,
+                PedidoVendaModel.solicitacao_pedido_venda_id == SolicitacaoPedidoVendaModel.id,
+            )
+            .filter(
+                NfEntradaModel.deletado == False, 
+                NfEntradaModel.ativo == True,
+                NfEntradaModel.pedido_venda_id.isnot(None)
+            )
+            .order_by(desc(NfEntradaModel.id))
         )
 
-        if data_inicio and data_fim:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket.between(data_inicio, data_fim),
-            )
-        elif data_inicio:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
-            )
-        elif data_fim:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket <= data_fim,
-            )
-
-        if numero_nf:
-            query = query.filter(
-                or_(
-                    RegistroOperacionalModel.numero_nota_fiscal.ilike(f"%{numero_nf}%"),
-                    RegistroOperacionalModel.numero_nota_fiscal_excessao.ilike(f"%{numero_nf}%"),
-                    RegistroOperacionalModel.numero_nota_fiscal_estorno.ilike(f"%{numero_nf}%"),
-                )
-            )
-
-        if origem:
-            query = query.filter(
-                or_(
-                    FornecedorCadastroModel.identificacao.ilike(f"%{origem}%"),
-                    FlorestaModel.identificacao.ilike(f"%{origem}%"),
-                )
-            )
-
-        query = query.order_by(desc(NfEntradaModel.id))
-
         registros = []
-        for nfentrada, registro, fornecedor, floresta in query.all():
-            origem = "Indefinido"
-            if fornecedor and fornecedor.identificacao:
-                # Se o fornecedor tem controle_entrada = True, agrupa como "Outros fornecedores"
-                if fornecedor.controle_entrada:
-                    origem = "Outros fornecedores"
-                else:
-                    origem = fornecedor.identificacao
-            elif floresta and floresta.identificacao:
-                origem = floresta.identificacao
+        
+        for nfentrada, pedido_venda, solicitacao in query.all():
+            # Buscar todos os dados de ticket para este pedido de venda
+            dados_tickets = PedidoVendaDadosTicketModel.query.filter(
+                PedidoVendaDadosTicketModel.pedido_venda_id == pedido_venda.id,
+                PedidoVendaDadosTicketModel.ativo == True,
+                PedidoVendaDadosTicketModel.deletado == False
+            ).all()
+            
+            if not dados_tickets:
+                continue
                 
-            produto = getattr(registro.solicitacao.produto, "nome", "Indefinido")
-            bitola = getattr(registro.solicitacao.bitola, "bitola", "")
+            primeiro_ticket = dados_tickets[0]
+            
+            # Filtrar por data se especificado
+            if primeiro_ticket.data_entrega_ticket:
+                if data_inicio and primeiro_ticket.data_entrega_ticket < data_inicio:
+                    continue
+                if data_fim and primeiro_ticket.data_entrega_ticket > data_fim:
+                    continue
+            else:
+                continue
+            
+            # Filtrar por número de NF se especificado
+            if numero_nf:
+                nf_encontrada = False
+                for ticket in dados_tickets:
+                    if ticket.numero_nota_fiscal_ticket and numero_nf.lower() in ticket.numero_nota_fiscal_ticket.lower():
+                        nf_encontrada = True
+                        break
+                if not nf_encontrada:
+                    # Verificar também nos dados da NF
+                    dados_nf = PedidoVendaDadosNfModel.query.filter_by(
+                        pedido_venda_id=pedido_venda.id
+                    ).first()
+                    if not dados_nf or not dados_nf.numero_nota_fiscal or numero_nf.lower() not in dados_nf.numero_nota_fiscal.lower():
+                        continue
+            
+            # Calcular peso total de todos os fornecedores
+            peso_total_ticket = sum(t.peso_liquido_ticket or 0 for t in dados_tickets)
+            
+            # Determinar origem (primeiro fornecedor)
+            origem_nome = "Indefinido"
+            primeiro_fornecedor = None
+            if dados_tickets and dados_tickets[0].fornecedor_id:
+                primeiro_fornecedor = dados_tickets[0].fornecedor
+                if primeiro_fornecedor and primeiro_fornecedor.identificacao:
+                    if primeiro_fornecedor.controle_entrada == False:
+                        origem_nome = "Outros fornecedores"
+                    else:
+                        origem_nome = primeiro_fornecedor.identificacao
+            
+            # Filtrar por origem se especificado
+            if origem:
+                origem_encontrada = False
+                # Verificar fornecedores
+                for ticket in dados_tickets:
+                    if ticket.fornecedor and ticket.fornecedor.identificacao:
+                        if origem.lower() in ticket.fornecedor.identificacao.lower():
+                            origem_encontrada = True
+                            break
+                if not origem_encontrada:
+                    continue
+                
+            produto = getattr(solicitacao.produto, "nome", "Indefinido") if solicitacao else "Indefinido"
+            bitola = getattr(solicitacao.bitola, "bitola", "") if solicitacao else ""
 
             registros.append({
-                "origem": origem,
+                "origem": origem_nome,
                 "produto": produto,
                 "bitola": bitola,
-                "registro": registro,
+                "pedido_venda": pedido_venda,
+                "dados_ticket": primeiro_ticket,  # Para data/numero NF
+                "dados_tickets": dados_tickets,   # Todos os tickets
+                "peso_total_ticket": peso_total_ticket,  # Peso somado
+                "solicitacao": solicitacao,
                 "nfentrada": nfentrada
             })
             
@@ -255,7 +316,7 @@ class NfEntradaModel(BaseModel):
 
     def obter_contra_nota_por_registro(id):
         """
-        Obtém a contra nota através do ID do registro operacional.
+        Obtém a contra nota através do ID do registro operacional (legado).
         
         Args:
             id (int): ID do registro operacional
@@ -268,3 +329,21 @@ class NfEntradaModel(BaseModel):
         ).first()
 
         return contraNota
+    
+    
+    @staticmethod
+    def obter_nf_entrada_por_pedido_venda(pedido_venda_id):
+        """
+        Obtém a NF de entrada através do ID do pedido de venda.
+        
+        Args:
+            pedido_venda_id (int): ID do pedido de venda
+        
+        Returns:
+            NfEntradaModel: Objeto da NF de entrada associada ao pedido de venda ou None se não encontrar
+        """
+        return NfEntradaModel.query.filter(
+            NfEntradaModel.pedido_venda_id == pedido_venda_id,
+            NfEntradaModel.deletado == False,
+            NfEntradaModel.ativo == True
+        ).first()

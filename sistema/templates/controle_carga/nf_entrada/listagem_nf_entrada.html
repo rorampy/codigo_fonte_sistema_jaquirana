@@ -55,7 +55,7 @@
                     data-bs-target="#collapse-origem-{{ loop.index }}"
                     aria-expanded="true">
                     {% set peso_ticket_total = registros_origem |
-                    map(attribute='registro.peso_liquido_ticket') | select | sum
+                    map(attribute='peso_total_ticket') | select | sum
                     |round(2) %}
                     {% set peso_contra_total = registros_origem |
                     map(attribute='nfentrada.peso_contra_nota') | select | sum
@@ -187,49 +187,36 @@
                                 class="{%if item.nfentrada.arquivo_contra_nota_id%} text-success {%endif%}">
                                 <td
                                   class="text-center fw-bold {%if item.nfentrada.arquivo_contra_nota_id%} text-success {%else%} text-primary {%endif%} ">
-                                  {% if item.registro.data_entrega_ticket %}
-                                  {{ item.registro.data_entrega_ticket |
+                                  {% if item.dados_ticket and item.dados_ticket.data_entrega_ticket %}
+                                  {{ item.dados_ticket.data_entrega_ticket |
                                   formatar_data_para_brl }}
                                   {% else %}-{% endif %}
                                 </td>
                                 <td class="text-center">
-                                  {%if
-                                  item.nfentrada.registro.solicitacao.fornecedor_id%}
-                                  {{item.nfentrada.registro.solicitacao.fornecedor.identificacao
-                                  |
-                                  truncate(15, true, '...') or '-'}}
-                                  {%elif
-                                  item.nfentrada.registro.solicitacao.floresta_id%}
-                                  {{item.nfentrada.registro.solicitacao.floresta.identificacao
-                                  |
+                                  {%if item.dados_ticket and item.dados_ticket.fornecedor%}
+                                  {{item.dados_ticket.fornecedor.identificacao |
                                   truncate(15, true, '...') or '-'}}
                                   {%else%}
                                   -
                                   {%endif%}
                                 </td>
                                 <td class="text-center">
-                                  {{item.nfentrada.registro.solicitacao.produto.nome
+                                  {{item.solicitacao.produto.nome
                                   | truncate(15, true, '...') or '-'}} |
-                                  {{item.nfentrada.registro.solicitacao.bitola.bitola
+                                  {{item.solicitacao.bitola.bitola
                                   | truncate(15, true, '...') or '-'}}
                                 </td>
                                 <td class="text-center">
-                                  {% if item.registro.numero_nota_fiscal %}
+                                  {% if item.dados_ticket and item.dados_ticket.numero_nota_fiscal_ticket %}
                                   <span
                                     class="badge {%if item.nfentrada.arquivo_contra_nota_id%} bg-success-lt {%else%} bg-orange-lt {%endif%} p-2">
-                                     {% if item.registro.estorno_nf%}
-                                    {{ item.registro.numero_nota_fiscal_estorno }} *
-                                    {% elif item.registro.numero_nota_fiscal %}
-                                    {{ item.registro.numero_nota_fiscal }}
-                                    {%else%}
-                                    -
-                                    {% endif %}
+                                    {{ item.dados_ticket.numero_nota_fiscal_ticket }}
                                   </span>
                                   {% else %}-{% endif %}
                                 </td>
                                 <td class="text-center">
-                                  {% if item.registro.peso_liquido_ticket %}
-                                  {{ item.registro.peso_liquido_ticket }} Ton.
+                                  {% if item.peso_total_ticket %}
+                                  {{ item.peso_total_ticket }} Ton.
 
                                   {% else %}
                                   peso

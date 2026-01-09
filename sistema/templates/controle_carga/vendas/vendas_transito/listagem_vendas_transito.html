@@ -145,41 +145,46 @@
                 </tr>
               </thead>
               <tbody id="tabela-resultados">
-                {% for registro in vendas_em_transito %}
+                {% for pedido_venda in vendas_em_transito %}
+                {% set dados_nf = pedido_venda.pedido_venda_dados_nf[0] if pedido_venda.pedido_venda_dados_nf else None %}
                 <tr>
                   <td class="text-secondary text-center">
-                    {{ registro.solicitacao.cliente.identificacao | truncate(40, '...') or '-' }}
+                    {{ pedido_venda.solicitacao.cliente.identificacao | truncate(40, '...') or '-' }}
                   </td>
                   <td class="text-secondary text-center">
-                    {{ registro.solicitacao.produto.nome }} | {{ registro.solicitacao.bitola.bitola }}
+                    {{ pedido_venda.solicitacao.produto.nome }} | {{ pedido_venda.solicitacao.bitola.bitola }}
                   </td>
                   <td class="text-secondary text-center">
-                    {% if registro.estorno_nf%}
-                    {{ registro.numero_nota_fiscal_estorno }} *
-                    {% elif registro.numero_nota_fiscal %}
-                    {{ registro.numero_nota_fiscal }}
-                    {%else%}
-                    -
+                    {% if dados_nf %}
+                      {% if dados_nf.estorno_nf %}
+                        {{ dados_nf.numero_nota_fiscal_estorno }} *
+                      {% elif dados_nf.numero_nota_fiscal %}
+                        {{ dados_nf.numero_nota_fiscal }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    {% else %}
+                      -
                     {% endif %}
                   </td>
                   <td class="text-secondary text-center">
-                    {%if registro.solicitacao.veiculo.placa_veiculo %}
-                    {{ registro.solicitacao.veiculo.placa_veiculo }}
+                    {%if pedido_venda.solicitacao.veiculo.placa_veiculo %}
+                    {{ pedido_venda.solicitacao.veiculo.placa_veiculo }}
                     {%else%}-{%endif%} |
                     {% set nome_split =
-                    registro.solicitacao.motorista.nome_completo.split() %}
+                    pedido_venda.solicitacao.motorista.nome_completo.split() %}
                     {% if nome_split|length > 1 %}
                     {{ nome_split[0] }} {{ nome_split[1][0] }}.
                     {% elif nome_split|length >= 0 %} {{ nome_split[0] }}
                     {% endif %}
                   </td>
                   <td class="text-secondary text-center">
-                    {{ registro.solicitacao.transportadora_exibicao.identificacao | truncate(40,
+                    {{ pedido_venda.solicitacao.transportadora.identificacao | truncate(40,
                     '...') or '-' }}
                   </td>
                   <td class="text-center">
                     <div class="btn-list flex-nowrap justify-content-center">
-                      <a href="{{url_for('detalhe_registro_operacional', id=registro.id)}}"
+                      <a href="{{url_for('detalhe_pedido_venda', id=pedido_venda.id)}}"
                         class="btn btn-icon btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top"
                         title="Ver detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -190,8 +195,8 @@
                           <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
                         </svg>
                       </a>
-                      <a href="{{url_for('split_carga', id=registro.id)}}"
-                        class="btn btn-icon btn-outline-warning {% if registro.solicitacao.nf_emitida != 1 or registro.realizado_split == True %}disabled{% endif %}"
+                      <a href="{{url_for('split_carga', id=pedido_venda.id)}}"
+                        class="btn btn-icon btn-outline-warning {% if pedido_venda.solicitacao.nf_emitida != 1 or (dados_nf and dados_nf.realizado_split == True) %}disabled{% endif %}"
                         data-bs-toggle="tooltip" data-bs-placement="top" title="Realizar Split">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -203,8 +208,8 @@
                           <path d="M18 20l3 -3l-3 -3" />
                         </svg>
                       </a>
-                      <a href="{{url_for('cadastrar_ticket', id=registro.solicitacao.id)}}"
-                        class="btn btn-icon btn-outline-info {% if registro.solicitacao.ticket_emitido == 1 %}disabled{% endif %}"
+                      <a href="{{url_for('cadastrar_ticket', id=pedido_venda.solicitacao.id)}}"
+                        class="btn btn-icon btn-outline-info {% if pedido_venda.solicitacao.ticket_emitido == 1 %}disabled{% endif %}"
                         data-bs-toggle="tooltip" data-bs-placement="top" title="Lançar Ticket">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-ticket" width="24"
                           height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
@@ -218,10 +223,10 @@
                           </path>
                         </svg>
                       </a>
-                      {% if registro.deletado == 0%}
+                      {% if pedido_venda.deletado == 0%}
                       <a href="#"
                         class="btn btn-icon btn-outline-danger excluir {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%}"
-                        data-bs-toggle="modal" data-bs-target="#modal-excluir-{{registro.id}}"
+                        data-bs-toggle="modal" data-bs-target="#modal-excluir-{{pedido_venda.id}}"
                         title="Cancelar Solicitação">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24"
                           height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
@@ -232,7 +237,7 @@
                         </svg>
                       </a>
 
-                      <div class="modal modal-blur fade" id="modal-excluir-{{registro.id}}" tabindex="-1" role="dialog"
+                      <div class="modal modal-blur fade" id="modal-excluir-{{pedido_venda.id}}" tabindex="-1" role="dialog"
                         aria-hidden="true">
                         <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
                           <div class="modal-content">
@@ -271,7 +276,7 @@
                                     </a>
                                   </div>
                                   <div class="col">
-                                    <a href="{{url_for('excluir_venda', id=registro.id, retorno='transito')}}"
+                                    <a href="{{url_for('excluir_venda', id=pedido_venda.id, retorno='transito')}}"
                                       class="btn btn-danger w-100">
                                       <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check"
                                         width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
@@ -302,14 +307,14 @@
             {% if paginacao %}
             <div class="d-flex align-items-center">
               <p class="m-0 text-secondary">
-                Mostrando <span>{{ ((paginacao.pagina - 1) * paginacao.por_pagina) + 1 }}</span>
-                a <span>{{ [paginacao.pagina * paginacao.por_pagina, paginacao.total] | min }}</span>
-                de <span>{{ paginacao.total }}</span> registros
+                Mostrando <span>{{ ((paginacao['pagina'] - 1) * paginacao['por_pagina']) + 1 }}</span>
+                a <span>{{ [paginacao['pagina'] * paginacao['por_pagina'], paginacao['total']] | min }}</span>
+                de <span>{{ paginacao['total'] }}</span> registros
               </p>
 
               <ul class="pagination m-0 ms-auto">
                 <!-- Primeira página -->
-                {% if paginacao.pagina > 1 %}
+                {% if paginacao['pagina'] > 1 %}
                 <li class="page-item">
                   {% if dados_corretos %}
                   <a class="page-link" href="{{ url_for('vendas_em_transito_filtrar', pagina=1, **dados_corretos) }}">
@@ -341,13 +346,13 @@
                 {% endif %}
 
                 <!-- Página anterior -->
-                {% if paginacao.tem_anterior %}
+                {% if paginacao['tem_anterior'] %}
                 <li class="page-item">
                   {% if dados_corretos %}
                   <a class="page-link"
-                    href="{{ url_for('vendas_em_transito_filtrar', pagina=paginacao.pagina - 1, **dados_corretos) }}">
+                    href="{{ url_for('vendas_em_transito_filtrar', pagina=paginacao['pagina'] - 1, **dados_corretos) }}">
                     {% else %}
-                    <a class="page-link" href="{{ url_for('vendas_em_transito', pagina=paginacao.pagina - 1) }}">
+                    <a class="page-link" href="{{ url_for('vendas_em_transito', pagina=paginacao['pagina'] - 1) }}">
                       {% endif %}
                       <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
                         stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
@@ -372,9 +377,9 @@
                 {% endif %}
 
                 <!-- Páginas numeradas -->
-                {% for num_pagina in range([1, paginacao.pagina - 2] | max, [paginacao.total_paginas, paginacao.pagina +
+                {% for num_pagina in range([1, paginacao['pagina'] - 2] | max, [paginacao['total_paginas'], paginacao['pagina'] +
                 3] | min + 1) %}
-                {% if num_pagina == paginacao.pagina %}
+                {% if num_pagina == paginacao['pagina'] %}
                 <li class="page-item active">
                   <span class="page-link">{{ num_pagina }}</span>
                 </li>
@@ -393,13 +398,13 @@
                 {% endfor %}
 
                 <!-- Próxima página -->
-                {% if paginacao.tem_proximo %}
+                {% if paginacao['tem_proximo'] %}
                 <li class="page-item">
                   {% if dados_corretos %}
                   <a class="page-link"
-                    href="{{ url_for('vendas_em_transito_filtrar', pagina=paginacao.pagina + 1, **dados_corretos) }}">
+                    href="{{ url_for('vendas_em_transito_filtrar', pagina=paginacao['pagina'] + 1, **dados_corretos) }}">
                     {% else %}
-                    <a class="page-link" href="{{ url_for('vendas_em_transito', pagina=paginacao.pagina + 1) }}">
+                    <a class="page-link" href="{{ url_for('vendas_em_transito', pagina=paginacao['pagina'] + 1) }}">
                       {% endif %}
                       próxima
                       <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
@@ -424,12 +429,12 @@
                 {% endif %}
 
                 <!-- Última página -->
-                {% if paginacao.pagina < paginacao.total_paginas %} <li class="page-item">
+                {% if paginacao['pagina'] < paginacao['total_paginas'] %} <li class="page-item">
                   {% if dados_corretos %}
                   <a class="page-link"
-                    href="{{ url_for('vendas_em_transito_filtrar', pagina=paginacao.total_paginas, **dados_corretos) }}">
+                    href="{{ url_for('vendas_em_transito_filtrar', pagina=paginacao['total_paginas'], **dados_corretos) }}">
                     {% else %}
-                    <a class="page-link" href="{{ url_for('vendas_em_transito', pagina=paginacao.total_paginas) }}">
+                    <a class="page-link" href="{{ url_for('vendas_em_transito', pagina=paginacao['total_paginas']) }}">
                       {% endif %}
                       última
                       <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"

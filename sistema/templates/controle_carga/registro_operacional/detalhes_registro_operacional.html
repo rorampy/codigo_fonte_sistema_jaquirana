@@ -42,7 +42,11 @@
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
 
-      {% if registro.solicitacao_nf_id and registro.arquivo_ticket_id %}
+      {% set dados_nf = pedido_venda.pedido_venda_dados_nf[0] if pedido_venda.pedido_venda_dados_nf else None %}
+      {% set tickets_ativos = pedido_venda.pedido_venda_dados_ticket|selectattr('ativo', 'equalto', true)|rejectattr('deletado', 'equalto', true)|list %}
+      {% set dados_ticket = tickets_ativos[0] if tickets_ativos else None %}
+
+      {% if pedido_venda.solicitacao and dados_nf and dados_ticket %}
       <!-- Divergências -->
       <div class="row mb-4">
         <div class="col-12">
@@ -61,21 +65,25 @@
             </div>
             <div class="card-body">
               <div class="row g-3">
-                {% set placa_solicitacao =
-                registro.solicitacao.veiculo.placa_veiculo if
-                registro.solicitacao and registro.solicitacao.veiculo else '' %}
-                {% set ticketEmitido = registro.solicitacao.ticket_emitido %}
-                {% set fornecedorId = registro.solicitacao.fornecedor_id %}
-                {% set florestaId = registro.solicitacao.floresta_id %}
-                {% set placa_ticket = registro.placa_ticket or '' %}
-                {% set motorista_solicitacao =
-                registro.solicitacao.motorista.nome_completo if
-                registro.solicitacao and registro.solicitacao.motorista else ''
-                %}
-                {% set motorista_ticket = registro.motorista_ticket or '' %}
+                {% set placa_solicitacao = pedido_venda.solicitacao.veiculo.placa_veiculo if
+                pedido_venda.solicitacao.veiculo else '' %}
+                {% set ticketEmitido = pedido_venda.solicitacao.ticket_emitido %}
+                {% set placa_ticket = dados_ticket.placa_ticket or '' %}
+                {% set motorista_solicitacao = pedido_venda.solicitacao.motorista.nome_completo if
+                pedido_venda.solicitacao.motorista else '' %}
+                {% set motorista_ticket = dados_ticket.motorista_ticket or '' %}
 
-                {% if ticketEmitido and fornecedorId == none and florestaId ==
-                none %}
+                {% set fornecedores_unicos = [] %}
+                {% for ticket in pedido_venda.pedido_venda_dados_ticket if ticket.ativo and not ticket.deletado %}
+                {% if ticket.fornecedor and ticket.fornecedor not in fornecedores_unicos %}
+                {% set _ = fornecedores_unicos.append(ticket.fornecedor) %}
+                {% endif %}
+                {% endfor %}
+                {% set tem_fornecedor_identificado = fornecedores_unicos|length > 0 %}
+
+                {% set tem_fornecedor_identificado = fornecedores_unicos|length > 0 %}
+
+                {% if ticketEmitido and not tem_fornecedor_identificado %}
                 <div class="col-12">
                   <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center p-3 pulse-card">
                     <svg xmlns="http://www.w3.org/2000/svg" class="me-3" width="20" height="20" viewBox="0 0 24 24"
@@ -90,7 +98,6 @@
                     lançamento com origem da carga não identificada!
                   </div>
                 </div>
-
                 {% endif %}
 
                 {% if placa_solicitacao != placa_ticket %}
@@ -160,7 +167,7 @@
       </div>
       {%endif%}
 
-      {%if registro.solicitacao_nf_id%}
+      {%if pedido_venda.solicitacao%}
       <div class="row mb-4">
         <div class="col-12">
           <div class="card rounded-3 overflow-hidden">
@@ -183,65 +190,77 @@
                 <div class="col-lg-3 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="cliente"
-                      value="{{ registro.solicitacao.cliente.identificacao }}" disabled>
+                      value="{{ pedido_venda.solicitacao.cliente.identificacao }}" disabled>
                     <label for="cliente">Cliente</label>
                   </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="motorista"
-                      value="{{ registro.solicitacao.motorista.nome_completo }}" disabled>
+                      value="{{ pedido_venda.solicitacao.motorista.nome_completo }}" disabled>
                     <label for="motorista">Motorista</label>
                   </div>
                 </div>
                 <div class="col-lg-1 col-md-2">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="placa"
-                      value="{{ registro.solicitacao.veiculo.placa_veiculo }}" disabled>
+                      value="{{ pedido_venda.solicitacao.veiculo.placa_veiculo }}" disabled>
                     <label for="placa">Placa</label>
                   </div>
                 </div>
                 <div class="col-lg-3 col-md-4">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="transportadora"
-                      value="{{registro.solicitacao.transportadora_exibicao.identificacao}}" disabled>
+                      value="{{pedido_venda.solicitacao.transportadora.identificacao}}" disabled>
                     <label for="transportadora">Transportadora</label>
                   </div>
                 </div>
                 <div class="col-lg-1 col-md-2">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="bitola"
-                      value="{{ registro.solicitacao.produto.nome }}" disabled>
+                      value="{{ pedido_venda.solicitacao.produto.nome }}" disabled>
                     <label for="produto">Produto</label>
                   </div>
                 </div>
                 <div class="col-lg-1 col-md-2">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="bitola"
-                      value="{{ registro.solicitacao.bitola.bitola }}" disabled>
+                      value="{{ pedido_venda.solicitacao.bitola.bitola }}" disabled>
                     <label for="bitola">Bitola</label>
                   </div>
                 </div>
-                {%if registro.solicitacao.floresta_id != none%}
-                <div class="col-lg-3 col-md-4">
-                  <div class="form-floating">
-                    <input type="text" class="form-control bg-light" id="floresta"
-                      value="{{ registro.solicitacao.floresta.identificacao }}" disabled>
-                    <label for="floresta">Floresta</label>
+
+                <!-- Fornecedores -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Fornecedor(es)</label>
+                  <div class="row g-2">
+                    {% if tickets_ativos %}
+                    {% set fornecedores_exibidos = [] %}
+                    {% for ticket in tickets_ativos %}
+                    {% if ticket.fornecedor and ticket.fornecedor not in fornecedores_exibidos %}
+                    {% set _ = fornecedores_exibidos.append(ticket.fornecedor) %}
+                    <div class="col-lg-3 col-md-4">
+                      <div class="form-floating">
+                        <input type="text" class="form-control bg-light" value="{{ ticket.fornecedor.identificacao }}"
+                          disabled>
+                        <label>Fornecedor {{ loop.index }}</label>
+                      </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                    {% else %}
+                    <div class="col-lg-3 col-md-4">
+                      <div class="form-floating">
+                        <input type="text" class="form-control bg-light" value="Não identificado" disabled>
+                        <label>Fornecedor</label>
+                      </div>
+                    </div>
+                    {% endif %}
                   </div>
                 </div>
-                {%elif registro.solicitacao.fornecedor_id != none%}
-                <div class="col-lg-3 col-md-4">
-                  <div class="form-floating">
-                    <input type="text" class="form-control bg-light" id="fornecedor"
-                      value="{{ registro.solicitacao.fornecedor.identificacao }}" disabled>
-                    <label for="fornecedor">Fornecedor</label>
-                  </div>
-                </div>
-                {%endif%}
               </div>
               <div class="mt-4">
-                <a href="{{url_for('editar_solicitacao', id=registro.solicitacao.id)}}"
+                <a href="{{url_for('editar_solicitacao', id=pedido_venda.solicitacao.id)}}"
                   class="btn btn-outline-secondary">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -259,7 +278,7 @@
       </div>
       {%endif%}
 
-      {%if registro.solicitacao.nf_emitida%}
+      {%if pedido_venda.solicitacao.nf_emitida and dados_nf%}
       <!-- Dados da Nota Fiscal -->
       <div class="row mb-4">
         <div class="col-12">
@@ -275,38 +294,38 @@
                   <line x1="16" y1="17" x2="8" y2="17"></line>
                   <polyline points="10 9 9 9 8 9"></polyline>
                 </svg>
-                Dados da {%if registro.carga_frf%}FRF{%else%}Nota Fiscal{%endif%}
+                Dados da {%if dados_nf.carga_frf%}FRF{%else%}Nota Fiscal{%endif%}
               </h3>
             </div>
             <div class="card-body">
               <div class="row g-3">
-                {%if registro.carga_frf%}
+                {%if dados_nf.carga_frf%}
                 <!-- Campos específicos para FRF -->
                 <div class="col-lg-4 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="destinatario"
-                      value="{{ registro.destinatario_nome or '' }}" disabled>
+                      value="{{ dados_nf.destinatario_nome or '' }}" disabled>
                     <label for="destinatario">Destinatário</label>
                   </div>
                 </div>
                 <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="cnpj_cpf"
-                      value="{{ registro.destinatario_cnpj_cpf or '' }}" disabled>
+                      value="{{ dados_nf.destinatario_cnpj_cpf or '' }}" disabled>
                     <label for="cnpj_cpf">CNPJ/CPF Destinatário</label>
                   </div>
                 </div>
                 <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="numero_nf"
-                      value="{{ registro.numero_nota_fiscal or '' }}" disabled>
+                      value="{{ dados_nf.numero_nota_fiscal or '' }}" disabled>
                     <label for="numero_nf">Número FRF</label>
                   </div>
                 </div>
                 <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="data_emissao"
-                      value="{{ registro.destinatario_data_emissao.strftime('%d/%m/%Y') if registro.destinatario_data_emissao else '' }}"
+                      value="{{ dados_nf.destinatario_data_emissao.strftime('%d/%m/%Y') if dados_nf.destinatario_data_emissao else '' }}"
                       disabled>
                     <label for="data_emissao">Data Lançamento</label>
                   </div>
@@ -314,34 +333,34 @@
                 <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="peso_ton_nf"
-                      value="{{ registro.peso_ton_nf or '' }}" disabled>
+                      value="{{ dados_nf.peso_ton_nf or '' }}" disabled>
                     <label for="peso_ton_nf">Peso (ton)</label>
                   </div>
                 </div>
                 <div class="col-lg-2 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light campo-moeda-brl" id="valor_total"
-                      value="{{ registro.valor_total_nota_100 or '' }}" disabled>
+                      value="{{ dados_nf.valor_total_nota_100 or '' }}" disabled>
                     <label for="valor_total">Valor Total</label>
                   </div>
                 </div>
                 <div class="col-lg-4 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="transportador"
-                      value="{{ registro.transportador_nome or '' }}" disabled>
+                      value="{{ dados_nf.transportador_nome or '' }}" disabled>
                     <label for="transportador">Transportadora</label>
                   </div>
                 </div>
                 <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="cnpj_cpf_transportador"
-                      value="{{ registro.transportador_cnpj_cpf or '' }}" disabled>
+                      value="{{ dados_nf.transportador_cnpj_cpf or '' }}" disabled>
                     <label for="cnpj_cpf_transportador">CNPJ/CPF Transportadora</label>
                   </div>
                 </div>
                 <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
-                    <input type="text" class="form-control bg-light" id="placa_nf" value="{{ registro.placa_nf or '' }}"
+                    <input type="text" class="form-control bg-light" id="placa_nf" value="{{ dados_nf.placa_nf or '' }}"
                       disabled>
                     <label for="placa_nf">Placa</label>
                   </div>
@@ -349,7 +368,7 @@
                 <div class="col-lg-2 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="motorista_nf"
-                      value="{{ registro.motorista_nf or '' }}" disabled>
+                      value="{{ dados_nf.motorista_nf or '' }}" disabled>
                     <label for="motorista_nf">Motorista</label>
                   </div>
                 </div>
@@ -358,20 +377,20 @@
                 <div class="col-lg-4 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="emissor"
-                      value="{{ registro.razao_social_emissor or '' }}" disabled>
+                      value="{{ dados_nf.razao_social_emissor or '' }}" disabled>
                     <label for="emissor">Emissor</label>
                   </div>
                 </div>
                 <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="numero_nf"
-                      value="{{ registro.numero_nota_fiscal or '' }}" disabled>
+                      value="{{ dados_nf.numero_nota_fiscal or '' }}" disabled>
                     <label for="numero_nf">Número NF</label>
                   </div>
                 </div>
                 <div class="col-lg-1 col-md-3">
                   <div class="form-floating">
-                    <input type="text" class="form-control bg-light" id="serie" value="{{ registro.serie_nota or '' }}"
+                    <input type="text" class="form-control bg-light" id="serie" value="{{ dados_nf.serie_nota or '' }}"
                       disabled>
                     <label for="serie">Série</label>
                   </div>
@@ -379,28 +398,28 @@
                 <div class="col-lg-5 col-md-12">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="chave_acesso"
-                      value="{{ registro.chave_acesso or '' }}" disabled>
+                      value="{{ dados_nf.chave_acesso or '' }}" disabled>
                     <label for="chave_acesso">Chave de Acesso</label>
                   </div>
                 </div>
                 <div class="col-lg-4 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="destinatario"
-                      value="{{ registro.destinatario_nome or '' }}" disabled>
+                      value="{{ dados_nf.destinatario_nome or '' }}" disabled>
                     <label for="destinatario">Destinatário</label>
                   </div>
                 </div>
                 <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="cnpj_cpf"
-                      value="{{ registro.destinatario_cnpj_cpf or '' }}" disabled>
+                      value="{{ dados_nf.destinatario_cnpj_cpf or '' }}" disabled>
                     <label for="cnpj_cpf">CNPJ/CPF</label>
                   </div>
                 </div>
                 <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="data_emissao"
-                      value="{{ registro.destinatario_data_emissao.strftime('%d/%m/%Y') if registro.destinatario_data_emissao else '' }}"
+                      value="{{ dados_nf.destinatario_data_emissao.strftime('%d/%m/%Y') if dados_nf.destinatario_data_emissao else '' }}"
                       disabled>
                     <label for="data_emissao">Data Emissão</label>
                   </div>
@@ -408,29 +427,29 @@
                 <div class="col-lg-2 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light campo-moeda-brl" id="valor_total"
-                      value="{{ registro.valor_total_nota_100 or '' }}" disabled>
+                      value="{{ dados_nf.valor_total_nota_100 or '' }}" disabled>
                     <label for="valor_total">Valor Total</label>
                   </div>
                 </div>
                 <div class="col-lg-2 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="peso_ton_nf"
-                      value="{{ registro.peso_ton_nf or '' }}" disabled>
+                      value="{{ dados_nf.peso_ton_nf or '' }}" disabled>
                     <label for="peso_ton_nf">Peso (ton)</label>
                   </div>
                 </div>
                 <div class="col-lg-2 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="insc_estadual"
-                      value="{{ registro.destinatario_insc_estadual or '' }}" disabled>
+                      value="{{ dados_nf.destinatario_insc_estadual or '' }}" disabled>
                     <label for="insc_estadual">Inscrição Estadual</label>
                   </div>
                 </div>
-                {%if registro.preco_un_nf%}
+                {%if dados_nf.preco_un_nf%}
                 <div class="col-lg-2 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light campo-moeda-brl" id="insc_estadual"
-                      value="{{ registro.preco_un_nf or '' }}" disabled>
+                      value="{{ dados_nf.preco_un_nf or '' }}" disabled>
                     <label for="insc_estadual">Preço Un.</label>
                   </div>
                 </div>
@@ -438,9 +457,9 @@
                 {%endif%}
               </div>
               <div class="mt-4">
-                {% if registro.arquivo_nota_id %}
+                {% if dados_nf.arquivo_nota_id %}
                 <a href="#" class="btn btn-outline-success btn-visualizar-arquivo"
-                  data-url="{%if registro.estorno_nf%}{{ url_for('diretorio_uploads_arquivo_estorno', filename=registro.arquivo_nota_estorno.caminho.split('/')[-1]) }}{%else%}{{ url_for('diretorio_uploads_nota_fiscal', filename=registro.arquivo_nota.caminho.split('/')[-1]) }}{%endif%}"
+                  data-url="{%if dados_nf.estorno_nf%}{{ url_for('diretorio_uploads_arquivo_estorno', filename=dados_nf.arquivo_nota_estorno.caminho.split('/')[-1]) }}{%else%}{{ url_for('diretorio_uploads_nota_fiscal', filename=dados_nf.arquivo_nota.caminho.split('/')[-1]) }}{%endif%}"
                   data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
@@ -448,10 +467,10 @@
                     <path
                       d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" />
                   </svg>
-                  Visualizar {%if registro.carga_frf%}FRF{%else%}NF{%endif%}
+                  Visualizar {%if dados_nf.carga_frf%}FRF{%else%}NF{%endif%}
                 </a>
                 {% endif %}
-                <a href="{{url_for('editar_emissao', id=registro.id)}}" class="btn btn-outline-success">
+                <a href="{{url_for('editar_emissao', id=pedido_venda.id)}}" class="btn btn-outline-success">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
@@ -459,7 +478,7 @@
                     <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
                     <path d="M13.5 6.5l4 4" />
                   </svg>
-                  Editar {%if registro.carga_frf%}FRF{%else%}NF{%endif%}
+                  Editar {%if dados_nf.carga_frf%}FRF{%else%}NF{%endif%}
                 </a>
               </div>
             </div>
@@ -468,7 +487,7 @@
       </div>
       {%endif%}
 
-      {%if registro.peso_ton_nf_excesso%}
+      {%if dados_nf and dados_nf.peso_ton_nf_excesso%}
       <!-- Dados da NFe de Excesso -->
       <div class="row mb-4">
         <div class="col-12">
@@ -491,7 +510,7 @@
                 <div class="col-lg-3 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="possui_excesso"
-                      value="{{ registro.numero_nota_fiscal_excessao if registro.possui_excesso_carga and registro.numero_nota_fiscal_excessao else '-' }}"
+                      value="{{ dados_nf.numero_nota_fiscal_excessao if dados_nf.possui_excesso_carga and dados_nf.numero_nota_fiscal_excessao else '-' }}"
                       disabled>
                     <label for="possui_excesso">Número Nota Fiscal Excesso</label>
                   </div>
@@ -499,30 +518,30 @@
                 <div class="col-lg-3 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="peso_nf_normal"
-                      value="{{ registro.peso_ton_nf or '0' }}" disabled>
+                      value="{{ dados_nf.peso_ton_nf or '0' }}" disabled>
                     <label for="peso_nf_normal">Peso NF Normal</label>
                   </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="peso_nf_excesso"
-                      value="{{ registro.peso_ton_nf_excesso or '0' }}" disabled>
+                      value="{{ dados_nf.peso_ton_nf_excesso or '0' }}" disabled>
                     <label for="peso_nf_excesso">Peso NFe Excesso</label>
                   </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light fw-bold" id="peso_total_com_excesso"
-                      value="{{ registro.peso_nf_ton_com_excecao or '0' }}" disabled>
+                      value="{{ dados_nf.peso_nf_ton_com_excecao or '0' }}" disabled>
                     <label for="peso_total_com_excesso">Peso Total (Normal +
                       Excesso)</label>
                   </div>
                 </div>
               </div>
-              {% if registro.arquivo_nota_excesso_id %}
+              {% if dados_nf.arquivo_nota_excesso_id %}
               <div class="mt-4">
                 <a href="#" class="btn btn-outline-warning btn-visualizar-arquivo"
-                  data-url="{{ url_for('diretorio_uploads_nf_excessao', filename=registro.arquivo_nota_excesso.caminho.split('/')[-1]) }}"
+                  data-url="{{ url_for('diretorio_uploads_nf_excessao', filename=dados_nf.arquivo_nota_excesso.caminho.split('/')[-1]) }}"
                   data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
@@ -532,7 +551,7 @@
                   </svg>
                   Visualizar NFe Excesso
                 </a>
-                <a href="{{url_for('editar_emissao', id=registro.id)}}" class="btn btn-outline-warning">
+                <a href="{{url_for('editar_emissao', id=pedido_venda.id)}}" class="btn btn-outline-warning">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
@@ -550,8 +569,14 @@
       </div>
       {%endif%}
 
-      {%if registro.arquivo_ticket_id%}
+      {%if dados_ticket%}
       <!-- Dados do Ticket -->
+      {% set fornecedores_ticket = [] %}
+      {% for ticket in tickets_ativos %}
+      {% if ticket.fornecedor and ticket.fornecedor not in fornecedores_ticket %}
+      {% set _ = fornecedores_ticket.append(ticket.fornecedor) %}
+      {% endif %}
+      {% endfor %}
       <div class="row mb-4">
         <div class="col-12">
           <div class="card rounded-3 overflow-hidden">
@@ -563,44 +588,57 @@
                   <polyline points="9 11 12 14 22 4"></polyline>
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                 </svg>
-                Dados do Ticket
+                Dados do Ticket{% if fornecedores_ticket|length > 1 %} (carga mista){% endif %}
               </h3>
             </div>
             <div class="card-body">
-              <div class="row g-3">
-                <div class="col-md-3">
+              <!-- Lista de todos os tickets -->
+              {% for ticket in tickets_ativos %}
+              <div class="row g-3 {% if not loop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                <div class="col-12">
+                  <label class="form-label fw-bold text-muted">Ticket {{ loop.index }}</label>
+                </div>
+                <div class="col-lg-3 col-md-6">
                   <div class="form-floating">
-                    <input type="text" class="form-control bg-light" id="numero_nf_ticket"
-                      value="{{ registro.numero_nota_fiscal_ticket or '' }}" disabled>
-                    <label for="numero_nf_ticket">Número NF Ticket</label>
+                    <input type="text" class="form-control bg-light"
+                      value="{{ ticket.fornecedor.identificacao if ticket.fornecedor else 'Não identificado' }}"
+                      disabled>
+                    <label>Fornecedor</label>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
-                    <input type="text" class="form-control bg-light" id="peso_liquido"
-                      value="{{ registro.peso_liquido_ticket or '' }}" disabled>
-                    <label for="peso_liquido">Peso Líquido</label>
+                    <input type="text" class="form-control bg-light"
+                      value="{{ ticket.numero_nota_fiscal_ticket or '' }}" disabled>
+                    <label>Número NF Ticket</label>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
-                    <input type="text" class="form-control bg-light" id="placa_ticket"
-                      value="{{ registro.placa_ticket or '' }}" disabled>
-                    <label for="placa_ticket">Placa</label>
+                    <input type="text" class="form-control bg-light" value="{{ ticket.peso_liquido_ticket or '' }}"
+                      disabled>
+                    <label>Peso (Ton.)</label>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-lg-2 col-md-3">
                   <div class="form-floating">
-                    <input type="text" class="form-control bg-light" id="motorista_ticket"
-                      value="{{ registro.motorista_ticket or '' }}" disabled>
-                    <label for="motorista_ticket">Motorista</label>
+                    <input type="text" class="form-control bg-light" value="{{ ticket.placa_ticket or '' }}" disabled>
+                    <label>Placa</label>
+                  </div>
+                </div>
+                <div class="col-lg-3 col-md-3">
+                  <div class="form-floating">
+                    <input type="text" class="form-control bg-light" value="{{ ticket.motorista_ticket or '' }}"
+                      disabled>
+                    <label>Motorista</label>
                   </div>
                 </div>
               </div>
-              {% if registro.arquivo_ticket_id %}
+              {% endfor %}
+              {% if dados_ticket.arquivo_ticket_id %}
               <div class="mt-4">
                 <a href="#" class="btn btn-outline-info btn-visualizar-arquivo"
-                  data-url="{{ url_for('diretorio_uploads_tickets', filename=registro.arquivo_ticket.caminho.split('/')[-1]) }}"
+                  data-url="{{ url_for('diretorio_uploads_tickets', filename=dados_ticket.arquivo_ticket.caminho.split('/')[-1]) }}"
                   data-bs-toggle="modal" data-bs-target="#modal-visualizar-arquivo">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
@@ -610,7 +648,7 @@
                   </svg>
                   Visualizar Ticket
                 </a>
-                <a href="{{url_for('editar_ticket', id=registro.id)}}" class="btn btn-outline-info">
+                <a href="{{url_for('editar_ticket', id=pedido_venda.id)}}" class="btn btn-outline-info">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="icon icon-tabler icons-tabler-outline icon-tabler-pencil">
@@ -626,24 +664,24 @@
           </div>
         </div>
       </div>
-      {%endif%}
+    </div>
+    {%endif%}
 
-      <!-- Botão de Voltar -->
-      <div class="text-end mt-4 mb-5">
-        <a href="javascript:history.back()"
-          class="btn btn-primary px-4 py-2 d-inline-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2"
-            stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-            <path d="M5 12l14 0"></path>
-            <path d="M5 12l6 6"></path>
-            <path d="M5 12l6 -6"></path>
-          </svg>
-          Voltar
-        </a>
-      </div>
+    <!-- Botão de Voltar -->
+    <div class="text-end mt-4 mb-5">
+      <a href="javascript:history.back()" class="btn btn-primary px-4 py-2 d-inline-flex align-items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+          <path d="M5 12l14 0"></path>
+          <path d="M5 12l6 6"></path>
+          <path d="M5 12l6 -6"></path>
+        </svg>
+        Voltar
+      </a>
     </div>
   </div>
-  {% include 'estrutura/footer.html' %}
+</div>
+{% include 'estrutura/footer.html' %}
 </div>
 {% endblock conteudo %}

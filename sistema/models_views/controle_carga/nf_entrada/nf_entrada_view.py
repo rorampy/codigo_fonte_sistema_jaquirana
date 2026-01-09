@@ -75,7 +75,7 @@ def lancar_nf_entrada(id):
                         contra = upload_arquivo(
                             arquivoContraNota,
                             "UPLOAD_ARQUIVO_CONTRA_NOTA",
-                            f"contra_nota-{nfEntrada.registro_id}_{dataHoje}",
+                            f"contra_nota-{nfEntrada.pedido_venda_id}_{dataHoje}",
                         )
                         dados_nota = ExtrairTextoNotaFiscal.nf_extrair_dados_nota(
                             contra.caminho
@@ -128,7 +128,7 @@ def lancar_nf_entrada(id):
                         entrada = upload_arquivo(
                             arquivoNfEntrada,
                             "UPLOAD_ARQUIVO_NF_ENTRADA",
-                            f"nf_entrada-{nfEntrada.registro_id}_{dataHoje}",
+                            f"nf_entrada-{nfEntrada.pedido_venda_id}_{dataHoje}",
                         )
                     else:
                         flash(
@@ -225,7 +225,7 @@ def lancar_cte(id):
                         arquivo = upload_arquivo(
                             arquivoCTE,
                             "UPLOAD_ARQUIVO_CTE",
-                            f"arquivo_CTE-{nfEntrada.registro_id}_{dataHoje}",
+                            f"arquivo_CTE-{nfEntrada.pedido_venda_id}_{dataHoje}",
                         )
                         nfEntrada.arquivo_cte_id = arquivo.id
                         acao = TipoAcaoEnum.CADASTRO
@@ -296,7 +296,7 @@ def lancar_mdf(id):
                         arquivo = upload_arquivo(
                             arquivoMDF,
                             "UPLOAD_ARQUIVO_MDF",
-                            f"arquivo_MDF-{nfEntrada.registro_id}_{dataHoje}",
+                            f"arquivo_MDF-{nfEntrada.pedido_venda_id}_{dataHoje}",
                         )
                         nfEntrada.arquivo_mdf_id = arquivo.id
                         acao = TipoAcaoEnum.CADASTRO

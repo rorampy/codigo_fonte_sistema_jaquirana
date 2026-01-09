@@ -54,7 +54,7 @@
                 <div class="col-sm-12 col-md-2">
                   <div class="mb-3">
                     <label class="form-label">Número NF</label>
-                    <input type="text" class="form-control" value="{{ registroOperacional.numero_nota_fiscal }}"
+                    <input type="text" class="form-control" value="{{ dados_nf.numero_nota_fiscal if dados_nf else '' }}"
                       disabled>
                   </div>
                 </div>
@@ -66,24 +66,24 @@
                   <div class="mb-3">
                     <label class="form-label">Transportadora</label>
                     <input type="text" class="form-control"
-                      value="{{ solicitacao.transportadora_exibicao.identificacao }}" disabled>
+                      value="{{ solicitacao.transportadora.identificacao }}" disabled>
                   </div>
                 </div>
                 <div class="col-sm-12 col-md-2">
                   <div class="mb-3">
                     <label class="form-label">{%if
-                      solicitacao.transportadora_exibicao.numero_documento |
+                      solicitacao.transportadora.numero_documento |
                       length == 11%}CPF{%else%}CNPJ{%endif%}</label>
                     <input type="text" class="form-control cpfCnpj"
-                      value="{{ solicitacao.transportadora_exibicao.numero_documento }}" disabled>
+                      value="{{ solicitacao.transportadora.numero_documento }}" disabled>
                   </div>
                 </div>
                 <div class="col-sm-12 col-md-2">
                   <div class="mb-3">
                     <label class="form-label">Telefone</label>
                     <input type="text"
-                      class="form-control {% if solicitacao.transportadora_exibicao.telefone | length == 11%} celular {%else%}telefone{%endif%}"
-                      value="{{ solicitacao.transportadora_exibicao.telefone }}" disabled>
+                      class="form-control {% if solicitacao.transportadora.telefone | length == 11%} celular {%else%}telefone{%endif%}"
+                      value="{{ solicitacao.transportadora.telefone }}" disabled>
                   </div>
                 </div>
                 <div class="col-sm-12 col-md-2">
@@ -108,44 +108,140 @@
       {% endif %}
 
       <div class="col-12">
-        <form class="card" action="{{ url_for('cadastrar_ticket', id=solicitacao.id) }}" method="POST"
+        <form class="card" id="formTicket" action="{{ url_for('cadastrar_ticket', id=solicitacao.id) }}" method="POST"
           enctype="multipart/form-data">
+          <!-- Campo hidden para enviar dados dos fornecedores -->
+          <input type="hidden" name="fornecedoresData" id="fornecedoresData">
           <div class="card-body">
-            <div class="row">
-              <div class="col-sm-3 col-md-3 grupoFornecedor">
-                <div class="mb-3">
-                  <label class="form-label required">Fornecedor/Floresta</label>
-                  <select type="text" name="fornecedorIdentificacao" id="fornecedorIdentificacao"
-                    value="{{ dados_corretos['fornecedorIdentificacao'] }}" class="form-select {% if 'fornecedorIdentificacao' in campos_obrigatorios or 'fornecedorIdentificacao' in campos_erros %}
-                                                is-invalid
-                                            {% endif %}">
-                    <option value selected>Selecione...</option>
-                    <option value="0">NÃO IDENTIFICADA</option>
-                    {% for f in fornecedores %}
-                    <option value="{{f.id}}">{{f.identificacao}}</option>
-                    {% endfor %}
-                  </select>
-                  <div class="invalid-feedback">
-                    {% if 'fornecedorIdentificacao' in
-                    campos_obrigatorios %}
-                    {{
-                    campos_obrigatorios['fornecedorIdentificacao']
-                    }}
-                    {% elif 'fornecedorIdentificacao' in
-                    campos_erros
-                    %}
-                    {{ campos_erros['fornecedorIdentificacao']
-                    }}
-                    {% endif %}
+            <!-- Seção de Distribuição de Peso por Fornecedor -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="card border border-info">
+                  <div class="card-header bg-info-lt">
+                    <h3 class="card-title">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon me-2">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+                        <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" />
+                        <path d="M9 12h6" />
+                        <path d="M9 16h6" />
+                      </svg>
+                      Distribuição de Peso por Fornecedor/Floresta
+                    </h3>
+                  </div>
+                  <div class="card-body">
+                    <!-- Indicador de Peso -->
+                    <div class="row mb-3">
+                      <div class="col-md-12">
+                        <div class="alert alert-info mb-0 {% if 'pesoDistribuicao' in campos_erros %}border-danger{% endif %}">
+                          <div class="row align-items-center">
+                            <div class="col-md-3">
+                              <strong>Peso Total:</strong> <span id="pesoTotalDisplay">0.00</span> Ton.
+                            </div>
+                            <div class="col-md-3">
+                              <strong>Distribuído:</strong> <span id="pesoDistribuidoDisplay">0.00</span> Ton.
+                            </div>
+                            <div class="col-md-3">
+                              <strong>Restante:</strong> <span id="pesoRestanteDisplay" class="text-primary">0.00</span>
+                              Ton.
+                            </div>
+                            <div class="col-md-3">
+                              <div class="progress">
+                                <div id="progressBarDistribuicao" class="progress-bar bg-primary" role="progressbar"
+                                  style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                              </div>
+                            </div>
+                          </div>
+                          {% if 'pesoDistribuicao' in campos_erros %}
+                          <div class="text-danger mt-2">
+                            <small><strong>{{ campos_erros['pesoDistribuicao'] }}</strong></small>
+                          </div>
+                          {% endif %}
+                          {% if 'fornecedores' in campos_erros %}
+                          <div class="text-danger mt-2">
+                            <small><strong>{{ campos_erros['fornecedores'] }}</strong></small>
+                          </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Container dos Fornecedores -->
+                    <div id="fornecedoresContainer">
+                      <!-- Fornecedores serão adicionados aqui dinamicamente -->
+                    </div>
+
+                    <!-- Botão Adicionar Fornecedor -->
+                    <div class="row mt-3">
+                      <div class="col-12">
+                        <button type="button" id="btnAdicionarFornecedor" class="btn btn-primary">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 5l0 14" />
+                            <path d="M5 12l14 0" />
+                          </svg>
+                          Adicionar Fornecedor/Floresta
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Template de Fornecedor (escondido) -->
+                    <div id="fornecedorTemplate" style="display: none;">
+                      <div class="fornecedor-item border border-secondary rounded p-3 mb-3">
+                        <div class="row align-items-end">
+                          <div class="col-sm-12 col-md-5">
+                            <div class="mb-3 mb-md-0">
+                              <label class="form-label required">Fornecedor/Floresta</label>
+                              <select class="form-select fornecedor-select" name="fornecedores[]">
+                                <option value="">Selecione...</option>
+                                <option value="0">NÃO IDENTIFICADA</option>
+                                {% for f in fornecedores %}
+                                <option value="{{f.id}}">{{f.identificacao}}</option>
+                                {% endfor %}
+                              </select>
+                            </div>
+                          </div>
+                          <div class="col-sm-12 col-md-4">
+                            <div class="mb-3 mb-md-0">
+                              <label class="form-label required">Peso Distribuído (Ton.)</label>
+                              <input type="text" class="form-control campo-float peso-fornecedor"
+                                name="pesosFornecedores[]" placeholder="0.00">
+                            </div>
+                          </div>
+                          <div class="col-sm-12 col-md-3">
+                            <div class="mb-3 mb-md-0">
+                              <button type="button" class="btn btn-danger w-100 btn-remover-fornecedor">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round" class="icon">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M4 7l16 0" />
+                                  <path d="M10 11l0 6" />
+                                  <path d="M14 11l0 6" />
+                                  <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                  <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                                </svg>
+                                Remover
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+            <!-- Dados Gerais do Ticket -->
             <div class="row">
               <div class="col-sm-2 col-md-2">
                 <div class="mb-3">
                   <label class="form-label required">Número NF Ticket</label>
-                  <input type="text" name="numeroNf" value="{{ dados_corretos['numeroNf'] }}"
+                  <input type="text" name="numeroNf" id="numeroNf" value="{{ dados_corretos['numeroNf'] }}"
                     class="form-control {% if 'numeroNf' in campos_obrigatorios %}is-invalid{% endif %}">
                   <div class="invalid-feedback">
                     {% if 'numeroNf' in
@@ -160,8 +256,8 @@
               </div>
               <div class="col-sm-2 col-md-3">
                 <div class="mb-3">
-                  <label class="form-label required">Peso líquido (Ton.)</label>
-                  <input type="text" name="pesoLiquido" value="{{ dados_corretos['pesoLiquido'] }}"
+                  <label class="form-label required">Peso Total do Ticket (Ton.)</label>
+                  <input type="text" name="pesoLiquido" id="pesoLiquido" value="{{ dados_corretos['pesoLiquido'] }}"
                     class="form-control campo-float {% if 'pesoLiquido' in campos_obrigatorios %}is-invalid{% endif %}">
                   <div class="invalid-feedback">
                     {% if 'pesoLiquido' in
@@ -173,7 +269,7 @@
                     {% endif %}
                   </div>
                   <p class="mb-0 text-warning" style="font-size: 0.8125rem;">
-                    <strong>Importante:</strong> Verifique o peso antes de cadastrar o ticket.
+                    <strong>Importante:</strong> Este peso será distribuído entre os fornecedores.
                   </p>
                 </div>
               </div>
@@ -586,21 +682,72 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/pages/ticket-upload.js') }}"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const fornecedorSelect = document.querySelector('#fornecedorIdentificacao');
-    if (fornecedorSelect) {
-      new TomSelect(fornecedorSelect, {
-        create: false,
-        allowEmptyOption: false,
-        sortField: {
-          field: "text",
-          direction: "asc"
-        }
-      });
-    }
-  });
-</script>
+<script src="{{ url_for('static', filename='js/pages/ticket-fornecedores.js') }}"></script>
+
+<!-- Modal de Aviso/Erro -->
+<div class="modal modal-blur fade" id="modal-aviso" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-status bg-warning"></div>
+      <div class="modal-body text-center py-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="icon mb-2 text-warning icon-lg">
+          <path d="M12 9v4" />
+          <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+          <path d="M12 16h.01" />
+        </svg>
+        <h3 id="modal-aviso-titulo">Atenção</h3>
+        <div class="text-secondary" id="modal-aviso-mensagem"></div>
+      </div>
+      <div class="modal-footer">
+        <div class="w-100">
+          <button type="button" class="btn btn-warning w-100" data-bs-dismiss="modal">
+            Entendi
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal modal-blur fade" id="modal-confirmacao" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-status bg-primary"></div>
+      <div class="modal-body text-center py-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="icon mb-2 text-primary icon-lg">
+          <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+          <path d="M12 8v4" />
+          <path d="M12 16h.01" />
+        </svg>
+        <h3 id="modal-confirmacao-titulo">Confirmação</h3>
+        <div class="text-secondary" id="modal-confirmacao-mensagem"></div>
+      </div>
+      <div class="modal-footer">
+        <div class="w-100">
+          <div class="row">
+            <div class="col">
+              <button type="button" class="btn w-100" data-bs-dismiss="modal" id="btn-confirmacao-cancelar">
+                Cancelar
+              </button>
+            </div>
+            <div class="col">
+              <button type="button" class="btn btn-primary w-100" id="btn-confirmacao-confirmar">
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% include 'estrutura/footer.html' %}
 

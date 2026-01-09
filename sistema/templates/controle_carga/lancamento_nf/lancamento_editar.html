@@ -28,25 +28,25 @@
               <div class="row">
                 <div class="col-md-3 mb-3">
                   <label class="form-label">Cliente</label>
-                  <input type="text" class="form-control" value="{{ emissao.solicitacao.cliente.identificacao }}"
+                  <input type="text" class="form-control" value="{{ pedido_venda.solicitacao.cliente.identificacao }}"
                     disabled>
                 </div>
                 <div class="col-md-2 mb-3">
                   <label class="form-label">Produto</label>
-                  <input type="text" class="form-control" value="{{ emissao.solicitacao.produto.nome }}" disabled>
+                  <input type="text" class="form-control" value="{{ pedido_venda.solicitacao.produto.nome }}" disabled>
                 </div>
                 <div class="col-md-2 mb-3">
                   <label class="form-label">Bitola</label>
-                  <input type="text" class="form-control" value="{{ emissao.solicitacao.bitola.bitola }}" disabled>
+                  <input type="text" class="form-control" value="{{ pedido_venda.solicitacao.bitola.bitola }}" disabled>
                 </div>
                 <div class="col-md-3 mb-3">
                   <label class="form-label">Motorista</label>
-                  <input type="text" class="form-control" value="{{ emissao.solicitacao.motorista.nome_completo }}"
+                  <input type="text" class="form-control" value="{{ pedido_venda.solicitacao.motorista.nome_completo }}"
                     disabled>
                 </div>
                 <div class="col-md-2 mb-3">
                   <label class="form-label">Veículo</label>
-                  <input type="text" class="form-control" value="{{ emissao.solicitacao.veiculo.placa_veiculo }}"
+                  <input type="text" class="form-control" value="{{ pedido_venda.solicitacao.veiculo.placa_veiculo }}"
                     disabled>
                 </div>
                 {% if emissao.peso_ton_nf_excesso %}
@@ -163,7 +163,7 @@
                   <label class="form-label required">Valor Total (R$)</label>
                   <input type="text" name="valorTotalFrf"
                     class="form-control campo-moeda-brl {% if 'valorTotalFrf' in campos_obrigatorios %}is-invalid{% endif %}"
-                    value="{{ (emissao.valor_total_nota_100 / 100)|round(2) if emissao.carga_frf and emissao.valor_total_nota_100 }}">
+                    value="{{ (emissao.valor_total_nota_100)|round(2) if emissao.carga_frf and emissao.valor_total_nota_100 }}">
                   <div class="invalid-feedback">{{ campos_obrigatorios.get('valorTotalFrf') or
                     campos_erros.get('valorTotalFrf') }}</div>
                 </div>
@@ -301,7 +301,7 @@
           </div>
 
           <div class="card-footer text-center text-md-end">
-            <a href="{{ url_for('detalhe_registro_operacional', id=emissao.id) }}" class="btn btn-primary">
+            <a href="{{ url_for('detalhe_pedido_venda', id=emissao.id) }}" class="btn btn-primary">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24"
                 height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
                 stroke-linecap="round" stroke-linejoin="round">

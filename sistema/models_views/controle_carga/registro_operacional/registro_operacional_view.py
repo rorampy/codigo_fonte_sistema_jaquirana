@@ -42,14 +42,6 @@ def listagem_registros_operacionais():
         bitolas=bitolas
     )
 
-@app.route('/controle-cargas/registro-operacional/detalhes/<int:id>', methods=['GET', 'POST'])
-@login_required
-@requires_roles
-def detalhe_registro_operacional(id):
-    registro = RegistroOperacionalModel.obter_por_id(id)
-    return render_template('/controle_carga/registro_operacional/detalhes_registro_operacional.html', dados_corretos=request.form,
-                           registro=registro)
-
 @app.route('/controle-cargas/registro-operacional/excluir/<int:id>', methods=['GET', 'POST'])
 @login_required
 @requires_roles
