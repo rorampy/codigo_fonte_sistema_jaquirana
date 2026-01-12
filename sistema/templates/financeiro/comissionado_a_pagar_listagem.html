@@ -22,6 +22,18 @@
               </svg>
               Faturamento em massa
             </button>
+            <a href="#"
+              class="btn btn-outline-danger {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%}"
+              data-bs-toggle="modal" data-bs-target="#modal-atualizar-comissionado">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-refresh" aria-hidden="true">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+              </svg>
+              Atualizar valores
+            </a>
             <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-report">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -183,11 +195,16 @@
                                   item.registro_operacional.peso_liquido_ticket
                                   }} Ton.{% else %}<span class="badge bg-secondary-lt p-2">Sem
                                     peso</span>{% endif %}</td>
-                                <td class="text-center">{% if
-                                  item.registro.preco_custo_bitola_100 %}{{
-                                  item.registro.preco_custo_bitola_100 |
-                                  formatar_float_para_brl }}{% else
-                                  %}-{% endif %}</td>
+                                <td class="text-center">
+                                  {% if item.vinculo_comissao and item.vinculo_comissao.tipo_comissao == 1 %}
+                                    {# Comissão percentual: valor armazenado é percentual * 100, ex: 5% = 500 #}
+                                    {{ (item.vinculo_comissao.valor_comissao_ton_100 / 100) | round(2) }}%
+                                  {% elif item.registro.preco_custo_bitola_100 %}
+                                    {{ item.registro.preco_custo_bitola_100 | formatar_float_para_brl }}
+                                  {% else %}
+                                    -
+                                  {% endif %}
+                                </td>
                                 <td class="text-center">
                                   {% if item.registro.situacao_pagamento_id == 5 %}
                                   <span class="badge badge-outline text-success" 
@@ -306,6 +323,88 @@
             </svg>
             Continuar com Registros Válidos
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMAÇÃO PARA ATUALIZAÇÃO DE PREÇOS COM FILTROS -->
+  <div class="modal modal-blur fade" id="modal-atualizar-comissionado" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <form id="form-atualizacao-precos-comissionado" method="POST" action="{{ url_for('atualizar_precos_comissionado') }}">
+          <div class="modal-header">
+            <h5 class="modal-title">Atualizar Valores dos Comissionados</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="data_inicio" class="form-control" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="data_fim" class="form-control" required>
+              </div>
+              <div class="col-md-12 mb-3">
+                <label class="form-label">Comissionado</label>
+                <select class="form-select" id="select-comissionado-modal" name="comissionado_id" required>
+                  <option value="todos">Todos os comissionados</option>
+                  {% for comissionado in comissionados %}
+                  <option value="{{ comissionado.id }}">{{ comissionado.identificacao }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-x">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M18 6l-12 12" />
+                <path d="M6 6l12 12" />
+              </svg>
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-refresh">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+              </svg>
+              Atualizar Valores
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE LOADING PARA ATUALIZAÇÃO DE PREÇOS -->
+  <div class="modal modal-blur fade" id="modal-loading-atualizacao-comissionado" tabindex="-1" role="dialog" aria-hidden="true"
+    data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-body text-center py-5">
+          <div class="mb-3">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+          </div>
+          <h4 class="mb-2">Atualizando valores</h4>
+          <p class="text-muted mb-0">
+            Aguarde enquanto os preços dos comissionados estão sendo
+            atualizados...
+          </p>
+          <div class="progress mt-3" style="height: 6px;">
+            <div class="progress-bar progress-bar-indeterminate bg-primary"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -480,6 +579,56 @@
         new TomSelect(select, {
         });
       });
+
+      // === Validação do formulário de atualização de preços ===
+      const formAtualizacaoComissionado = document.getElementById('form-atualizacao-precos-comissionado');
+      if (formAtualizacaoComissionado) {
+        formAtualizacaoComissionado.addEventListener('submit', function (e) {
+          const dataInicio = document.querySelector('#modal-atualizar-comissionado input[name="data_inicio"]').value;
+          const dataFim = document.querySelector('#modal-atualizar-comissionado input[name="data_fim"]').value;
+          const comissionadoId = document.querySelector('#modal-atualizar-comissionado select[name="comissionado_id"]').value;
+
+          if (!dataInicio || !dataFim || !comissionadoId) {
+            e.preventDefault();
+            alert('Por favor, preencha todos os campos obrigatórios!');
+            return;
+          }
+
+          if (new Date(dataInicio) > new Date(dataFim)) {
+            e.preventDefault();
+            alert('A data de início não pode ser maior que a data fim!');
+            return;
+          }
+
+          // Fechar modal e mostrar loading
+          const modalConfirmacao = bootstrap.Modal.getInstance(document.getElementById('modal-atualizar-comissionado'));
+          if (modalConfirmacao) {
+            modalConfirmacao.hide();
+          }
+
+          // Mostrar modal de loading
+          setTimeout(() => {
+            const modalLoading = new bootstrap.Modal(document.getElementById('modal-loading-atualizacao-comissionado'));
+            modalLoading.show();
+          }, 300);
+        });
+      }
+
+      // Definir data padrão (últimos 30 dias) para atualização
+      const modalAtualizarComissionado = document.getElementById('modal-atualizar-comissionado');
+      if (modalAtualizarComissionado) {
+        modalAtualizarComissionado.addEventListener('show.bs.modal', function () {
+          const hoje = new Date();
+          const dataFim = hoje.toISOString().split('T')[0];
+          const dataInicio = new Date(hoje.setDate(hoje.getDate() - 30)).toISOString().split('T')[0];
+          
+          const inputDataInicio = modalAtualizarComissionado.querySelector('input[name="data_inicio"]');
+          const inputDataFim = modalAtualizarComissionado.querySelector('input[name="data_fim"]');
+          
+          if (inputDataInicio && !inputDataInicio.value) inputDataInicio.value = dataInicio;
+          if (inputDataFim && !inputDataFim.value) inputDataFim.value = new Date().toISOString().split('T')[0];
+        });
+      }
 
       // === Soma de totais por grupo ===
       function formatarParaBRL(valor) {

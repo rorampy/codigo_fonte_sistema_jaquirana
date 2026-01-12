@@ -650,3 +650,64 @@ def cancelar_pagamento_comissionado(id):
         flash(("Erro ao cancelar informe de faturamento! Contate o suporte.", "warning"))
 
     return redirect(url_for("listagem_comissionados_a_pagar"))
+
+
+@app.route("/sincronizar/precos/comissionados", methods=["GET", "POST"])
+@login_required
+@requires_roles
+def atualizar_precos_comissionado():
+    """
+    Rota para atualizar preços de comissionados a pagar.
+    Utiliza tarefa assíncrona para processar a atualização.
+    """
+    try:
+        from servidor_huey.tarefas import sincronizar_precos_comissionados
+        from datetime import datetime
+        
+        if request.method == 'POST':
+            data_inicio = request.form.get('data_inicio')
+            data_fim = request.form.get('data_fim')
+            comissionado_id = request.form.get('comissionado_id')
+            
+            if not data_inicio or not data_fim:
+                flash(("Por favor, informe o período para atualização dos valores!", "warning"))
+                return redirect(url_for("listagem_comissionados_a_pagar"))
+            
+            try:
+                # Validar formato das datas
+                data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+                data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
+                
+                if data_inicio_obj > data_fim_obj:
+                    flash(("A data de início não pode ser maior que a data fim!", "warning"))
+                    return redirect(url_for("listagem_comissionados_a_pagar"))
+                
+            except ValueError:
+                flash(("Formato de data inválido!", "warning"))
+                return redirect(url_for("listagem_comissionados_a_pagar"))
+        else:
+            return redirect(url_for("listagem_comissionados_a_pagar"))
+        
+        # Converter comissionado_id para None se for "todos"
+        comissionado_filtro = None if comissionado_id == "todos" else comissionado_id
+        
+        task = sincronizar_precos_comissionados(data_inicio, data_fim, comissionado_filtro)
+        
+        try:
+            resultado = task(blocking=True, timeout=120)  
+            if resultado['sucesso']:
+                if resultado['sincronizados'] > 0:
+                    flash((f"{resultado['sincronizados']} valores sincronizados com sucesso!", "success"))
+                else:
+                    flash((f"Todos os comissionados do período informado já estão sincronizados", "warning"))
+            else:
+                flash(("Não foi possível atualizar os registros no período informado", "warning"))
+                
+        except Exception as e:
+            flash((f"Processo de atualização iniciado para o período. Pode levar alguns minutos para concluir.", "warning"))
+            
+        return redirect(url_for("listagem_comissionados_a_pagar"))
+        
+    except Exception as e:
+        flash(("Não foi possível iniciar a sincronização", "warning"))
+        return redirect(url_for("listagem_comissionados_a_pagar"))

@@ -338,13 +338,14 @@ class ComissionadoPagarModel(BaseModel):
             list: Lista de dicionários com comissionados agrupados por origem, produto e bitola
         """
         from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
+        from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
 
         data_inicio = date.today() - timedelta(days=30)
         data_fim = date.today()
 
         query = (
             db.session.query(
-                ComissionadoPagarModel, RegistroOperacionalModel, ComissionadoModel
+                ComissionadoPagarModel, RegistroOperacionalModel, ComissionadoModel, FornecedorComissionadoModel
             )
             .join(CargaModel, ComissionadoPagarModel.solicitacao)
             .join(
@@ -353,6 +354,15 @@ class ComissionadoPagarModel(BaseModel):
             )
             .join(FornecedorCadastroModel, ComissionadoPagarModel.fornecedor)
             .join(ComissionadoModel, ComissionadoPagarModel.comissionado)
+            .outerjoin(
+                FornecedorComissionadoModel,
+                and_(
+                    FornecedorComissionadoModel.fornecedor_id == ComissionadoPagarModel.fornecedor_id,
+                    FornecedorComissionadoModel.comissionado_id == ComissionadoPagarModel.comissionado_id,
+                    FornecedorComissionadoModel.deletado == False,
+                    FornecedorComissionadoModel.ativo == True
+                )
+            )
             .join(BitolaModel, ComissionadoPagarModel.bitola)
             .join(SituacaoPagamentoModel, ComissionadoPagarModel.situacao)
             .join(ClienteModel, CargaModel.cliente)
@@ -386,7 +396,7 @@ class ComissionadoPagarModel(BaseModel):
             )
 
         registros = []
-        for registro, registro_operacional, comissionado in query.all():
+        for registro, registro_operacional, comissionado, vinculo_comissao in query.all():
             produto_nome = getattr(registro.solicitacao.produto, "nome", "Indefinido")
             bitola_nome = getattr(registro.solicitacao.bitola, "bitola", "")
             origem = registro.fornecedor.identificacao
@@ -398,6 +408,7 @@ class ComissionadoPagarModel(BaseModel):
                 "comissionado": comissionado,
                 "bitola": bitola_nome,
                 "registro_operacional": registro_operacional,
+                "vinculo_comissao": vinculo_comissao,
             })
 
         return registros
@@ -424,6 +435,7 @@ class ComissionadoPagarModel(BaseModel):
         from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import (
             RegistroOperacionalModel,
         )
+        from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
         
         if not data_inicio or not data_fim:
             data_inicio = date.today() - timedelta(days=30)
@@ -431,7 +443,7 @@ class ComissionadoPagarModel(BaseModel):
 
         query = (
             db.session.query(
-                ComissionadoPagarModel, RegistroOperacionalModel, ComissionadoModel
+                ComissionadoPagarModel, RegistroOperacionalModel, ComissionadoModel, FornecedorComissionadoModel
             )
             .join(CargaModel, ComissionadoPagarModel.solicitacao)
             .join(
@@ -440,6 +452,15 @@ class ComissionadoPagarModel(BaseModel):
             )
             .join(FornecedorCadastroModel, ComissionadoPagarModel.fornecedor)
             .join(ComissionadoModel, ComissionadoPagarModel.comissionado)
+            .outerjoin(
+                FornecedorComissionadoModel,
+                and_(
+                    FornecedorComissionadoModel.fornecedor_id == ComissionadoPagarModel.fornecedor_id,
+                    FornecedorComissionadoModel.comissionado_id == ComissionadoPagarModel.comissionado_id,
+                    FornecedorComissionadoModel.deletado == False,
+                    FornecedorComissionadoModel.ativo == True
+                )
+            )
             .filter(
                 ComissionadoPagarModel.deletado == False, 
                 ComissionadoPagarModel.ativo == True
@@ -518,7 +539,7 @@ class ComissionadoPagarModel(BaseModel):
         )
 
         registros = []
-        for registro, registro_operacional, comissionado in query.all():
+        for registro, registro_operacional, comissionado, vinculo_comissao in query.all():
             produto_nome = getattr(registro.solicitacao.produto, "nome", "Indefinido")
             bitola_nome = getattr(registro.solicitacao.bitola, "bitola", "")
             origem = registro.fornecedor.identificacao
@@ -530,6 +551,36 @@ class ComissionadoPagarModel(BaseModel):
                 "comissionado": comissionado,
                 "bitola": bitola_nome,
                 "registro_operacional": registro_operacional,
+                "vinculo_comissao": vinculo_comissao,
             })
 
         return registros
+
+    @staticmethod
+    def listar_comissionados_a_pagar_por_periodo_entrega(data_inicio=None, data_fim=None):
+        """
+        Lista comissionados a pagar filtrados por período de data de entrega do ticket
+        
+        Args:
+            data_inicio (date): Data de início do filtro
+            data_fim (date): Data de fim do filtro
+        
+        Returns:
+            List: Lista de comissionados a pagar no período
+        """
+        query = ComissionadoPagarModel.query
+        # Aplicar filtros de data se fornecidos
+        if data_inicio or data_fim:        
+            if data_inicio:
+                query = query.filter(ComissionadoPagarModel.data_entrega_ticket >= data_inicio)
+            
+            if data_fim:
+                data_fim_inclusiva = data_fim + timedelta(days=1)
+                query = query.filter(ComissionadoPagarModel.data_entrega_ticket < data_fim_inclusiva)
+        
+        # Filtrar apenas registros com data de entrega
+        query = query.filter(ComissionadoPagarModel.data_entrega_ticket.isnot(None))
+        
+        # Ordenar por data de entrega mais recente primeiro
+        query = query.order_by(ComissionadoPagarModel.data_entrega_ticket.desc())
+        return query.all()

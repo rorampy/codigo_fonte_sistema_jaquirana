@@ -337,3 +337,334 @@ def sincronizar_precos_transportadoras(data_inicio=None, data_fim=None, transpor
                 'sucesso': False,
                 'periodo': f"{data_inicio} a {data_fim}" if data_inicio and data_fim else "Sem filtro"
             }
+
+
+@huey.task(retries=2, retry_delay=60)
+def sincronizar_precos_extratores(data_inicio=None, data_fim=None, extrator_id=None):
+    """
+    Tarefa assíncrona para sincronizar preços de extratores com otimizações de performance.
+    
+    Este processo foi otimizado para reduzir queries ao banco de dados:
+    - Carrega registros operacionais em lote (1 query ao invés de N)
+    - Utiliza eager loading para carregar solicitações junto com extratores
+    - Cria mapeamentos em memória para acesso rápido aos dados
+    
+    Args:
+        data_inicio (str): Data de início no formato 'YYYY-MM-DD'
+        data_fim (str): Data de fim no formato 'YYYY-MM-DD'
+        extrator_id (str): ID do extrator específico ou None para todos
+    
+    Returns:
+        dict: Resultado da sincronização com estatísticas
+    """
+    from sistema import db, app
+    from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
+    from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
+    from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_extracao_model import FornecedorPrecoCustoExtracaoModel
+    from datetime import datetime
+    from sqlalchemy.orm import joinedload
+
+    with app.app_context():
+        try:
+            filtro_data_inicio = None
+            filtro_data_fim = None
+            
+            if data_inicio:
+                try:
+                    filtro_data_inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+                except ValueError:
+                    raise ValueError(f"Formato de data_inicio inválido: {data_inicio}")
+            
+            if data_fim:
+                try:
+                    filtro_data_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
+                except ValueError:
+                    raise ValueError(f"Formato de data_fim inválido: {data_fim}")
+            
+            extratoresPagar = ExtratorPagarModel.listar_extratores_a_pagar_por_periodo_entrega(
+                data_inicio=filtro_data_inicio,
+                data_fim=filtro_data_fim
+            )
+            
+            # Filtrar por extrator específico se informado
+            if extrator_id:
+                try:
+                    extrator_id_int = int(extrator_id)
+                    extratoresPagar = [e for e in extratoresPagar if e.obter_extrator_id() == extrator_id_int]
+                except (ValueError, TypeError):
+                    raise ValueError(f"ID do extrator inválido: {extrator_id}")
+            
+            solicitacao_ids = [e.solicitacao_id for e in extratoresPagar if e.solicitacao_id]
+            registros_map = {}
+            
+            if solicitacao_ids:
+                registros_operacionais = (
+                    db.session.query(RegistroOperacionalModel)
+                    .filter(RegistroOperacionalModel.solicitacao_nf_id.in_(solicitacao_ids))
+                    .all()
+                )
+                
+                registros_map = {reg.solicitacao_nf_id: reg for reg in registros_operacionais}
+            
+            extratores_query = (
+                db.session.query(ExtratorPagarModel)
+                .options(joinedload(ExtratorPagarModel.solicitacao))  
+                .filter(ExtratorPagarModel.id.in_([e.id for e in extratoresPagar]),
+                        ExtratorPagarModel.situacao_pagamento_id != 5, # Faturado
+                        ExtratorPagarModel.situacao_pagamento_id != 8) # Conciliado
+                .all()
+            )
+            
+            sincronizados = 0
+            erros = []
+            total_processados = len(extratores_query)
+                        
+            for i, extrator in enumerate(extratores_query, 1):
+                try:
+                    registroOperacional = registros_map.get(extrator.solicitacao_id)
+                    
+                    if extrator.situacao_pagamento_id != 1:
+                        solicitacao = extrator.solicitacao
+                        
+                        if not solicitacao:
+                            continue
+                        
+                        # Obter preço de extração
+                        preco_extracao = FornecedorPrecoCustoExtracaoModel.obter_custo_extracao_por_bitola(
+                            fornecedor_id=extrator.fornecedor_id,
+                            produto_id=solicitacao.produto_id,
+                            bitola_id=extrator.bitola_id
+                        )
+                        
+                        if preco_extracao and preco_extracao.custo_extracao_100 is not None:
+                            preco = preco_extracao.custo_extracao_100
+                            
+                            if registroOperacional and registroOperacional.peso_liquido_ticket != 0.0:
+                                valorTotal = float(preco) * registroOperacional.peso_liquido_ticket
+                                
+                                if valorTotal != 0.0:
+                                    extrator.preco_custo_bitola_100 = preco
+                                    extrator.valor_total_a_pagar_100 = valorTotal
+                                    extrator.incompleto = False
+                                    sincronizados += 1
+                                    
+                        else:
+                            produto_nome = solicitacao.produto.nome.strip() if solicitacao.produto else "N/A"
+                            bitola_id = extrator.bitola_id
+                            erro_msg = f'Preço de extração não encontrado para extrator {extrator.id}, produto: {produto_nome}, bitola: {bitola_id}'
+                            erros.append(erro_msg)
+                
+                except Exception as e:
+                    erro_msg = f'Erro ao processar extrator {extrator.id}: {str(e)}'
+                    erros.append(erro_msg)
+                    continue
+                        
+            if sincronizados > 0:
+                db.session.commit()  
+            else:
+                db.session.rollback()  
+                
+            resultado = {
+                'sincronizados': sincronizados,
+                'total_processados': total_processados,
+                'total_erros': len(erros),
+                'erros': erros[:10],  
+                'sucesso': True,
+                'periodo': f"{data_inicio} a {data_fim}" if data_inicio and data_fim else "Sem filtro",
+                'extrator_filtrado': extrator_id is not None
+            }
+            
+            return resultado
+            
+        except Exception as e:
+            db.session.rollback()
+            erro_msg = f"Erro geral na sincronização de extratores: {str(e)}"
+            return {
+                'sincronizados': 0,
+                'total_processados': 0,
+                'total_erros': 1,
+                'erros': [erro_msg],
+                'sucesso': False,
+                'periodo': f"{data_inicio} a {data_fim}" if data_inicio and data_fim else "Sem filtro",
+                'extrator_filtrado': extrator_id is not None
+            }
+
+
+@huey.task(retries=2, retry_delay=60)
+def sincronizar_precos_comissionados(data_inicio=None, data_fim=None, comissionado_id=None):
+    """
+    Tarefa assíncrona para sincronizar preços de comissionados com otimizações de performance.
+    
+    Este processo foi otimizado para reduzir queries ao banco de dados:
+    - Carrega registros operacionais em lote (1 query ao invés de N)
+    - Utiliza eager loading para carregar solicitações junto com comissionados
+    - Cria mapeamentos em memória para acesso rápido aos dados
+    
+    Args:
+        data_inicio (str): Data de início no formato 'YYYY-MM-DD'
+        data_fim (str): Data de fim no formato 'YYYY-MM-DD'
+        comissionado_id (str): ID do comissionado específico ou None para todos
+    
+    Returns:
+        dict: Resultado da sincronização com estatísticas
+    """
+    from sistema import db, app
+    from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
+    from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
+    from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
+    from datetime import datetime
+    from sqlalchemy.orm import joinedload
+
+    with app.app_context():
+        try:
+            filtro_data_inicio = None
+            filtro_data_fim = None
+            
+            if data_inicio:
+                try:
+                    filtro_data_inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+                except ValueError:
+                    raise ValueError(f"Formato de data_inicio inválido: {data_inicio}")
+            
+            if data_fim:
+                try:
+                    filtro_data_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
+                except ValueError:
+                    raise ValueError(f"Formato de data_fim inválido: {data_fim}")
+            
+            comissionadosPagar = ComissionadoPagarModel.listar_comissionados_a_pagar_por_periodo_entrega(
+                data_inicio=filtro_data_inicio,
+                data_fim=filtro_data_fim
+            )
+            
+            # Filtrar por comissionado específico se informado
+            if comissionado_id:
+                try:
+                    comissionado_id_int = int(comissionado_id)
+                    comissionadosPagar = [c for c in comissionadosPagar if c.comissionado_id == comissionado_id_int]
+                except (ValueError, TypeError):
+                    raise ValueError(f"ID do comissionado inválido: {comissionado_id}")
+            
+            solicitacao_ids = [c.solicitacao_id for c in comissionadosPagar if c.solicitacao_id]
+            registros_map = {}
+            
+            if solicitacao_ids:
+                registros_operacionais = (
+                    db.session.query(RegistroOperacionalModel)
+                    .filter(RegistroOperacionalModel.solicitacao_nf_id.in_(solicitacao_ids))
+                    .all()
+                )
+                
+                registros_map = {reg.solicitacao_nf_id: reg for reg in registros_operacionais}
+            
+            comissionados_query = (
+                db.session.query(ComissionadoPagarModel)
+                .options(joinedload(ComissionadoPagarModel.solicitacao))  
+                .filter(ComissionadoPagarModel.id.in_([c.id for c in comissionadosPagar]),
+                        ComissionadoPagarModel.situacao_pagamento_id != 5, # Faturado
+                        ComissionadoPagarModel.situacao_pagamento_id != 8) # Conciliado
+                .all()
+            )
+            
+            sincronizados = 0
+            erros = []
+            total_processados = len(comissionados_query)
+                        
+            for i, comissionado in enumerate(comissionados_query, 1):
+                try:
+                    registroOperacional = registros_map.get(comissionado.solicitacao_id)
+                    
+                    if comissionado.situacao_pagamento_id != 1:
+                        solicitacao = comissionado.solicitacao
+                        
+                        if not solicitacao:
+                            continue
+                        
+                        # Obter preço de comissão
+                        vinculo_comissao = FornecedorComissionadoModel.obter_por_fornecedor_comissionado(
+                            fornecedor_id=comissionado.fornecedor_id,
+                            comissionado_id=comissionado.comissionado_id
+                        )
+                        
+                        if vinculo_comissao and vinculo_comissao.valor_comissao_ton_100 is not None:
+                            if registroOperacional and registroOperacional.peso_liquido_ticket != 0.0:
+                                peso_liquido = registroOperacional.peso_liquido_ticket
+                                
+                                if vinculo_comissao.tipo_comissao == 1:
+                                    # Comissão percentual: precisa do preço de custo do fornecedor
+                                    # Divide por 10000 pois: /100 desfaz o *100 do armazenamento, /100 converte % para decimal
+                                    from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
+                                    
+                                    resultado_precos = FornecedorCadastroModel.obter_precos_custo_fornecedor(
+                                        fornecedor_identificacao=comissionado.fornecedor_id,
+                                        produto=solicitacao.produto.nome.strip(),
+                                        bitola_solicitacao=solicitacao.bitola_id,
+                                        cliente_id=solicitacao.cliente_id,
+                                        transportadora_id=solicitacao.transportadora_id
+                                    )
+                                    
+                                    if resultado_precos and resultado_precos['preco_custo'] is not None:
+                                        preco_custo_fornecedor = resultado_precos['preco_custo']
+                                        percentual = vinculo_comissao.valor_comissao_ton_100 / 10000
+                                        valor_comissao_por_ton = preco_custo_fornecedor * percentual
+                                        valorTotal = peso_liquido * valor_comissao_por_ton
+                                        
+                                        if valorTotal != 0.0:
+                                            comissionado.preco_custo_bitola_100 = int(valor_comissao_por_ton)
+                                            comissionado.valor_total_a_pagar_100 = int(valorTotal)
+                                            comissionado.incompleto = False
+                                            sincronizados += 1
+                                    else:
+                                        erro_msg = f'Preço de custo do fornecedor não encontrado para calcular comissão percentual - comissionado {comissionado.id}'
+                                        erros.append(erro_msg)
+                                else:
+                                    # Comissão valor fixo: já está em centavos, usa diretamente
+                                    preco = vinculo_comissao.valor_comissao_ton_100
+                                    valorTotal = float(preco) * peso_liquido
+                                    
+                                    if valorTotal != 0.0:
+                                        comissionado.preco_custo_bitola_100 = preco
+                                        comissionado.valor_total_a_pagar_100 = int(valorTotal)
+                                        comissionado.incompleto = False
+                                        sincronizados += 1
+                                    
+                        else:
+                            comissionado_nome = comissionado.comissionado.identificacao if comissionado.comissionado else "N/A"
+                            fornecedor_nome = comissionado.fornecedor.identificacao if comissionado.fornecedor else "N/A"
+                            erro_msg = f'Preço de comissão não encontrado para comissionado {comissionado.id}, comissionado: {comissionado_nome}, fornecedor: {fornecedor_nome}'
+                            erros.append(erro_msg)
+                
+                except Exception as e:
+                    erro_msg = f'Erro ao processar comissionado {comissionado.id}: {str(e)}'
+                    erros.append(erro_msg)
+                    continue
+                        
+            if sincronizados > 0:
+                db.session.commit()  
+            else:
+                db.session.rollback()  
+                
+            resultado = {
+                'sincronizados': sincronizados,
+                'total_processados': total_processados,
+                'total_erros': len(erros),
+                'erros': erros[:10],  
+                'sucesso': True,
+                'periodo': f"{data_inicio} a {data_fim}" if data_inicio and data_fim else "Sem filtro",
+                'comissionado_filtrado': comissionado_id is not None
+            }
+            
+            return resultado
+            
+        except Exception as e:
+            db.session.rollback()
+            erro_msg = f"Erro geral na sincronização de comissionados: {str(e)}"
+            return {
+                'sincronizados': 0,
+                'total_processados': 0,
+                'total_erros': 1,
+                'erros': [erro_msg],
+                'sucesso': False,
+                'periodo': f"{data_inicio} a {data_fim}" if data_inicio and data_fim else "Sem filtro",
+                'comissionado_filtrado': comissionado_id is not None
+            }

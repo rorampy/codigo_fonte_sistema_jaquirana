@@ -592,3 +592,31 @@ class ExtratorPagarModel(BaseModel):
             })
 
         return registros
+    @staticmethod
+    def listar_extratores_a_pagar_por_periodo_entrega(data_inicio=None, data_fim=None):
+        """
+        Lista extratores a pagar filtrados por período de data de entrega do ticket
+        
+        Args:
+            data_inicio (date): Data de início do filtro
+            data_fim (date): Data de fim do filtro
+        
+        Returns:
+            List: Lista de extratores a pagar no período
+        """
+        query = ExtratorPagarModel.query
+        # Aplicar filtros de data se fornecidos
+        if data_inicio or data_fim:        
+            if data_inicio:
+                query = query.filter(ExtratorPagarModel.data_entrega_ticket >= data_inicio)
+            
+            if data_fim:
+                data_fim_inclusiva = data_fim + timedelta(days=1)
+                query = query.filter(ExtratorPagarModel.data_entrega_ticket < data_fim_inclusiva)
+        
+        # Filtrar apenas registros com data de entrega
+        query = query.filter(ExtratorPagarModel.data_entrega_ticket.isnot(None))
+        
+        # Ordenar por data de entrega mais recente primeiro
+        query = query.order_by(ExtratorPagarModel.data_entrega_ticket.desc())
+        return query.all()
