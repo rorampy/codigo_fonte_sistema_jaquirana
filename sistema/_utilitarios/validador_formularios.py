@@ -279,4 +279,32 @@ class ValidaForms:
         # Formata a data no novo formato
         resultado['validado'] = f'{dia:02d}/{mes:02d}/{ano:04d}'
         return resultado
+    
+    
+    def converter_numero_brasileiro_para_float(valor):
+        '''
+        Converte um número no formato brasileiro (ex: "1.234,56" ou "56,2600") 
+        para float (ex: 1234.56 ou 56.26).
+        
+        Parâmetros:
+            valor: String ou número no formato brasileiro (pontos como separador 
+                   de milhar e vírgula como separador decimal)
+        
+        Retorna:
+            float: Valor convertido ou 0.0 em caso de erro
+        '''
+        if valor is None:
+            return 0.0
+        
+        valor_str = str(valor).strip()
+        
+        if not valor_str:
+            return 0.0
+        
+        try:
+            # Remove pontos de milhar e substitui vírgula por ponto decimal
+            valor_str = valor_str.replace('.', '').replace(',', '.')
+            return float(valor_str)
+        except (ValueError, AttributeError):
+            return 0.0
             

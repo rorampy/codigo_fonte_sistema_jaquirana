@@ -184,6 +184,7 @@ def emitir_nfs_complementares_em_massa():
                     db.session.rollback()
                     flash(('Erro ao criar NF Complementar. Tente novamente.', 'error'))
         except Exception as e:
+            
             db.session.rollback()
             print(f"Erro na emissão de NF Complementar: {str(e)}")
             flash(('Erro inesperado ao processar NF Complementar. Tente novamente.', 'error'))

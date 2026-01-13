@@ -35,56 +35,71 @@ class ExtrairTextoNotaFiscal:
         - Número da Nota
         - Série
         - Chave de Acesso
+        
+        Suporta múltiplos formatos de NF:
+        - Com seção "IDENTIFICAÇÃO DO EMITENTE"
+        - Com texto "RECEBEMOS DE ... OS PRODUTOS"
+        - Entre "NF-e" e "DANFE"
         """
-        # Captura Número (formato: Nº. 000.006.044)
+        # Captura Número (formato: Nº. 000.006.044 ou Nº 7866)
         m_numero = re.search(r"Nº\.?\s*(\d{3}\.\d{3}\.\d{3}|\d+)", texto)
         numero_nota = m_numero.group(1).replace(".", "") if m_numero else None
 
-        # Captura Série
-        m_serie = re.search(r"Série\s+(\d+)", texto)
+        # Captura Série - aceita "Série 1" ou "SÉRIE 1"
+        m_serie = re.search(r"S[ÉE]RIE\s+(\d+)", texto, re.IGNORECASE)
         serie = m_serie.group(1) if m_serie else None
 
         # Captura Chave de Acesso (removendo espaços)
         m_chave = re.search(r"CHAVE DE ACESSO\s*\n\s*((?:\d+\s*)+)", texto, re.IGNORECASE)
         chave = "".join(m_chave.group(1).split()) if m_chave else None
 
-        # Extração da razão social do emissor
-        # Procura por "IDENTIFICAÇÃO DO EMITENTE" e pega as próximas linhas em maiúscula
+        # Extração da razão social do emissor - tenta múltiplos métodos
         emissor = None
         
-        # Primeiro tenta o método mais robusto
-        linhas = texto.splitlines()
-        indice_emitente = None
-        for i, linha in enumerate(linhas):
-            if "IDENTIFICAÇÃO DO EMITENTE" in linha:
-                indice_emitente = i
-                break
+        # MÉTODO 1: Procura por "RECEBEMOS DE ... OS PRODUTOS"
+        # Este é o método mais confiável para o novo formato de NF
+        m_recebemos = re.search(
+            r"RECEBEMOS DE\s+([A-ZÀÁÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ\s&.-]+)\s+OS PRODUTOS",
+            texto,
+            re.IGNORECASE
+        )
+        if m_recebemos:
+            emissor = m_recebemos.group(1).strip()
         
-        if indice_emitente is not None:
-            linhas_candidatas = []
-            for j in range(indice_emitente + 1, len(linhas)):
-                linha_candidata = linhas[j].strip()
-                # Se a linha não estiver vazia e estiver em caixa alta, considera parte do nome
-                if linha_candidata and linha_candidata == linha_candidata.upper():
-                    # Para evitar capturar seções seguintes, verifica se não é um cabeçalho conhecido
-                    if not any(cabecalho in linha_candidata for cabecalho in 
-                              ["DESTINATÁRIO", "REMETENTE", "CÁLCULO", "TRANSPORTADOR"]):
-                        # Verifica se não é endereço (contém números de endereço ou CEP)
-                        if not re.search(r'\d{4,}', linha_candidata) and not re.search(r'AV\s|RUA\s|AL\s', linha_candidata):
-                            linhas_candidatas.append(linha_candidata)
-                        elif linhas_candidatas:  # Se já tem nome e chegou no endereço, para
-                            break
-                    else:
-                        break
-                # Se já capturou alguma linha e encontrou uma linha que não seja todo em caixa alta,
-                # considera que o nome terminou.
-                elif linhas_candidatas:
+        # MÉTODO 2: Procura por "IDENTIFICAÇÃO DO EMITENTE" (formato tradicional)
+        if not emissor:
+            linhas = texto.splitlines()
+            indice_emitente = None
+            for i, linha in enumerate(linhas):
+                if "IDENTIFICAÇÃO DO EMITENTE" in linha:
+                    indice_emitente = i
                     break
             
-            if linhas_candidatas:
-                emissor = " ".join(linhas_candidatas)
+            if indice_emitente is not None:
+                linhas_candidatas = []
+                for j in range(indice_emitente + 1, len(linhas)):
+                    linha_candidata = linhas[j].strip()
+                    # Se a linha não estiver vazia e estiver em caixa alta, considera parte do nome
+                    if linha_candidata and linha_candidata == linha_candidata.upper():
+                        # Para evitar capturar seções seguintes, verifica se não é um cabeçalho conhecido
+                        if not any(cabecalho in linha_candidata for cabecalho in 
+                                  ["DESTINATÁRIO", "REMETENTE", "CÁLCULO", "TRANSPORTADOR"]):
+                            # Verifica se não é endereço (contém números de endereço ou CEP)
+                            if not re.search(r'\d{4,}', linha_candidata) and not re.search(r'AV\s|RUA\s|AL\s', linha_candidata):
+                                linhas_candidatas.append(linha_candidata)
+                            elif linhas_candidatas:  # Se já tem nome e chegou no endereço, para
+                                break
+                        else:
+                            break
+                    # Se já capturou alguma linha e encontrou uma linha que não seja todo em caixa alta,
+                    # considera que o nome terminou.
+                    elif linhas_candidatas:
+                        break
+                
+                if linhas_candidatas:
+                    emissor = " ".join(linhas_candidatas)
         
-        # Se não conseguiu pelo método robusto, usa o método original como fallback
+        # MÉTODO 3: Fallback - usa regex simples para "IDENTIFICAÇÃO DO EMITENTE"
         if not emissor:
             m_emissor = re.search(
                 r"IDENTIFICAÇÃO DO EMITENTE\s*\n\s*([A-ZÀÁÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ\s&.-]+)",
@@ -92,6 +107,26 @@ class ExtrairTextoNotaFiscal:
             )
             if m_emissor:
                 emissor = m_emissor.group(1).strip()
+        
+        # MÉTODO 4: Procura entre "NF-e" e "DANFE" (formato alternativo)
+        if not emissor:
+            linhas = texto.splitlines()
+            encontrou_nfe = False
+            for linha in linhas:
+                if "NF-e" in linha:
+                    encontrou_nfe = True
+                    continue
+                if encontrou_nfe and "DANFE" in linha:
+                    break
+                if encontrou_nfe and linha.strip():
+                    # Pula linhas de número e série
+                    if not re.match(r'^(Nº|SÉRIE|S[ÉE]RIE|\d)', linha.strip(), re.IGNORECASE):
+                        # Verifica se parece um nome de empresa (letras maiúsculas)
+                        if linha.strip() == linha.strip().upper() and len(linha.strip()) > 5:
+                            # Verifica se não é endereço
+                            if not re.search(r'CEP:|AV |RUA |AL |Fone:', linha, re.IGNORECASE):
+                                emissor = linha.strip()
+                                break
 
         return {
             "razao_social_emissor": emissor,
@@ -117,28 +152,47 @@ class ExtrairTextoNotaFiscal:
         """
         resultado = {}
         
-        # Nome/Razão Social (após "DESTINATÁRIO / REMETENTE")
+        # Primeiro, tenta extrair o bloco específico do destinatário para evitar pegar dados do emissor
+        # Isso é importante pois o PDF pode ter CNPJ/IE do emissor antes da seção do destinatário
+        bloco_destinatario = None
+        
+        # Tenta encontrar o bloco do destinatário usando diferentes variações de formato
+        pos_dest = -1
+        for marcador in ["DESTINATÁRIO/REMETENTE", "DESTINATÁRIO / REMETENTE", "DESTINATÁRIO"]:
+            pos_dest = texto.find(marcador)
+            if pos_dest > 0:
+                break
+        
+        pos_calc = texto.find("CÁLCULO DO IMPOSTO")
+        
+        if pos_dest > 0 and pos_calc > pos_dest:
+            bloco_destinatario = texto[pos_dest:pos_calc]
+        else:
+            # Fallback para o texto completo se não encontrar o bloco
+            bloco_destinatario = texto
+        
+        # Nome/Razão Social (após "DESTINATÁRIO / REMETENTE" ou variações)
         m_nome = re.search(
-            r"DESTINATÁRIO\s*/\s*REMETENTE\s*\n\s*NOME\s*/\s*RAZÃO SOCIAL\s*\n\s*([^\n]+)",
-            texto,
+            r"NOME\s*/?\s*RAZÃO SOCIAL\s*\n\s*([^\n]+)",
+            bloco_destinatario,
             re.IGNORECASE
         )
         if m_nome:
             resultado["nome_razao_social"] = m_nome.group(1).strip()
 
-        # CNPJ/CPF
+        # CNPJ/CPF - Procura no bloco do destinatário para não pegar do emissor
         m_cnpj = re.search(
-            r"CNPJ\s*/\s*CPF\s*\n\s*([\d./-]+)",
-            texto,
+            r"CNPJ\s*/?\s*CPF\s*\n\s*([\d./-]+)",
+            bloco_destinatario,
             re.IGNORECASE
         )
         if m_cnpj:
             resultado["cnpj_cpf"] = m_cnpj.group(1).strip()
 
-        # Inscrição Estadual
+        # Inscrição Estadual - Procura no bloco do destinatário
         m_ie = re.search(
             r"INSCRIÇÃO ESTADUAL\s*\n\s*(\d+)",
-            texto,
+            bloco_destinatario,
             re.IGNORECASE
         )
         if m_ie:
@@ -147,25 +201,25 @@ class ExtrairTextoNotaFiscal:
         # Endereço
         m_endereco = re.search(
             r"ENDEREÇO\s*\n\s*([^\n]+)",
-            texto,
+            bloco_destinatario,
             re.IGNORECASE
         )
         if m_endereco:
             resultado["endereco"] = m_endereco.group(1).strip()
 
-        # Bairro
+        # Bairro - aceita ambos os formatos "BAIRRO" e "BAIRRO / DISTRITO"
         m_bairro = re.search(
-            r"BAIRRO\s*/\s*DISTRITO\s*\n\s*([^\n]+)",
-            texto,
+            r"BAIRRO\s*(?:/\s*DISTRITO)?\s*\n\s*([^\n]+)",
+            bloco_destinatario,
             re.IGNORECASE
         )
         if m_bairro:
             resultado["bairro"] = m_bairro.group(1).strip()
 
-        # CEP
+        # CEP - aceita formatos com e sem pontuação (89.380-000 ou 89380000)
         m_cep = re.search(
-            r"CEP\s*\n\s*([\d-]+)",
-            texto,
+            r"CEP\s*\n\s*([\d.-]+)",
+            bloco_destinatario,
             re.IGNORECASE
         )
         if m_cep:
@@ -174,7 +228,7 @@ class ExtrairTextoNotaFiscal:
         # Município
         m_municipio = re.search(
             r"MUNICÍPIO\s*\n\s*([^\n]+)",
-            texto,
+            bloco_destinatario,
             re.IGNORECASE
         )
         if m_municipio:
@@ -182,26 +236,26 @@ class ExtrairTextoNotaFiscal:
 
         # UF
         m_uf = re.search(
-            r"UF\s*\n\s*([A-Z]{2})",
-            texto,
+            r"\bUF\s*\n\s*([A-Z]{2})\b",
+            bloco_destinatario,
             re.IGNORECASE
         )
         if m_uf:
-            resultado["uf"] = m_uf.group(1).strip()
+            resultado["uf"] = m_uf.group(1).strip().upper()
 
-        # Data de emissão
+        # Data de emissão - aceita "DATA DA EMISSÃO" e "DATA EMISSÃO"
         m_data_emissao = re.search(
-            r"DATA DA EMISSÃO\s*\n\s*(\d{2}/\d{2}/\d{4})",
-            texto,
+            r"DATA\s*(?:DA)?\s*EMISSÃO\s*\n\s*(\d{2}/\d{2}/\d{4})",
+            bloco_destinatario,
             re.IGNORECASE
         )
         if m_data_emissao:
             resultado["data_emissao"] = m_data_emissao.group(1).strip()
 
-        # Data de saída/entrada
+        # Data de saída/entrada - aceita "DATA DA SAÍDA/ENTRADA", "DATA SAÍDA" e variações
         m_data_saida = re.search(
-            r"DATA DA SAÍDA/ENTRADA\s*\n\s*(\d{2}/\d{2}/\d{4})",
-            texto,
+            r"DATA\s*(?:DA)?\s*SAÍDA(?:\s*/\s*ENTRADA)?\s*\n\s*(\d{2}/\d{2}/\d{4})",
+            bloco_destinatario,
             re.IGNORECASE
         )
         if m_data_saida:
@@ -212,29 +266,61 @@ class ExtrairTextoNotaFiscal:
     def nf_extrair_calculo_imposto(texto):
         """
         Extrai os dados da tabela "Cálculo do imposto".
+        Suporta diferentes formatos de NF (padrões variados de labels).
         """
         resultado = {}
         
-        # Mapeamento dos campos
-        campos = {
-            r"BASE DE CÁLC\.\s+DO ICMS\s*\n\s*([\d.,]+)": "base_calculo_icms",
-            r"VALOR DO ICMS\s*\n\s*([\d.,]+)": "valor_icms",
-            r"BASE DE CÁLC\.\s+ICMS S\.T\.\s*\n\s*([\d.,]+)": "base_calculo_icms_subst",
-            r"VALOR DO ICMS SUBST\.\s*\n\s*([\d.,]+)": "valor_icms_subst",
-            r"V\.\s+FCP UF DEST\.\s*\n\s*([\d.,]+)": "valor_fcp_st",
-            r"V\.\s+TOTAL PRODUTOS\s*\n\s*([\d.,]+)": "valor_total_produtos",
-            r"VALOR DO FRETE\s*\n\s*([\d.,]+)": "valor_frete",
-            r"VALOR DO SEGURO\s*\n\s*([\d.,]+)": "valor_seguro",
-            r"DESCONTO\s*\n\s*([\d.,]+)": "desconto",
-            r"OUTRAS DESPESAS\s*\n\s*([\d.,]+)": "outras_despesas",
-            r"VALOR TOTAL IPI\s*\n\s*([\d.,]+)": "valor_ipi",
-            r"V\.\s+TOTAL DA NOTA\s*\n\s*([\d.,]+)": "valor_total_nota",
+        # Mapeamento dos campos com múltiplos padrões para cada campo
+        # Cada campo pode ter várias variações de label
+        campos_multiplos = {
+            "base_calculo_icms": [
+                r"BASE DE CÁLC(?:ULO)?(?:\.)?\s*(?:DO)?\s*ICMS\s*\n\s*([\d.,]+)",
+                r"BASE DE CÁLCULO DO ICMS\s*\n\s*([\d.,]+)",
+            ],
+            "valor_icms": [
+                r"VALOR DO ICMS\s*\n\s*([\d.,]+)",
+            ],
+            "base_calculo_icms_subst": [
+                r"BASE DE CÁLC(?:ULO)?(?:\.)?\s*(?:DO)?\s*ICMS\s*S(?:UBST)?(?:\.)?\s*T(?:\.)?\s*\n\s*([\d.,]+)",
+                r"BASE DE CÁLC\.\s+ICMS\s+S\.T\.\s*\n\s*([\d.,]+)",
+            ],
+            "valor_icms_subst": [
+                r"VALOR DO ICMS SUBST(?:\.)?\s*\n\s*([\d.,]+)",
+            ],
+            "valor_fcp_st": [
+                r"V\.?\s*FCP\s*UF\s*DEST\.?\s*\n\s*([\d.,]+)",
+            ],
+            "valor_total_produtos": [
+                r"V(?:ALOR)?(?:\.)?\s*TOTAL\s*(?:DOS)?\s*PRODUTOS\s*\n\s*([\d.,]+)",
+                r"VALOR TOTAL DOS PRODUTOS\s*\n\s*([\d.,]+)",
+            ],
+            "valor_frete": [
+                r"VALOR DO FRETE\s*\n\s*([\d.,]+)",
+            ],
+            "valor_seguro": [
+                r"VALOR DO SEGURO\s*\n\s*([\d.,]+)",
+            ],
+            "desconto": [
+                r"DESCONTO\s*\n\s*([\d.,]+)",
+            ],
+            "outras_despesas": [
+                r"OUTRAS\s*DESPESAS(?:\s*ACESSÓRIAS)?\s*\n\s*([\d.,]+)",
+            ],
+            "valor_ipi": [
+                r"VALOR\s*(?:TOTAL)?\s*(?:DO)?\s*IPI\s*\n\s*([\d.,]+)",
+            ],
+            "valor_total_nota": [
+                r"V(?:ALOR)?(?:\.)?\s*TOTAL\s*DA\s*NOTA\s*\n\s*([\d.,]+)",
+                r"VALOR TOTAL DA NOTA\s*\n\s*([\d.,]+)",
+            ],
         }
         
-        for pattern, chave in campos.items():
-            m = re.search(pattern, texto, re.IGNORECASE)
-            if m:
-                resultado[chave] = m.group(1).strip()
+        for chave, patterns in campos_multiplos.items():
+            for pattern in patterns:
+                m = re.search(pattern, texto, re.IGNORECASE)
+                if m:
+                    resultado[chave] = m.group(1).strip()
+                    break  # Se encontrou, não precisa tentar os outros padrões
         
         return resultado
 
@@ -322,40 +408,84 @@ class ExtrairTextoNotaFiscal:
     def nf_extrair_itens(texto):
         """
         Extrai os itens da nota fiscal baseado na estrutura real observada.
+        Suporta múltiplos formatos de NF:
+        - Formato em linha única (tradicional)
+        - Formato multilinha (cada campo em linha separada)
         """
-        # Localiza o bloco de produtos
+        # Localiza o bloco de produtos - tenta diferentes variações do marcador
         bloco = ExtrairTextoNotaFiscal.nf_analisar_secao(
             texto, "DADOS DOS PRODUTOS / SERVIÇOS", "DADOS ADICIONAIS"
         )
+        
+        if not bloco:
+            # Tenta variação sem espaços nas barras
+            bloco = ExtrairTextoNotaFiscal.nf_analisar_secao(
+                texto, "DADOS DOS PRODUTOS/SERVIÇOS", "CÁLCULO DO ISSQN"
+            )
+        
+        if not bloco:
+            # Tenta outra variação
+            bloco = ExtrairTextoNotaFiscal.nf_analisar_secao(
+                texto, "DADOS DOS PRODUTOS/SERVIÇOS", "DADOS ADICIONAIS"
+            )
         
         if not bloco:
             bloco = texto
         
         itens = []
         
-        # Padrão baseado na estrutura real da nota: 
-        # 01 TORETE DE PINUS 44032200 0/00 6102 Ton 38,0000 228,7400 8.692,12 0,00 8.692,12 1.043,05 12,00
-        pattern = re.compile(
-            r"(\d{2})\s+"  # código do item (01, 02, etc)
-            r"([A-ZÀÁÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ][^\d]+?)\s+"  # descrição (TORETE DE PINUS)
-            r"(\d{8})\s+"  # NCM (44032200)
-            r"([\d/]+)\s+"  # O/CST (0/00)
-            r"(\d{4})\s+"  # CFOP (6102)
-            r"([A-Za-z]+)\s+"  # Unidade (Ton)
-            r"([\d.,]+)\s+"  # Quantidade (38,0000)
-            r"([\d.,]+)\s+"  # Valor unitário (228,7400)
-            r"([\d.,]+)",  # Valor total (8.692,12)
-            re.IGNORECASE
+        # PADRÃO 1: Formato multilinha (cada campo em linha separada)
+        # Estrutura:
+        # 01
+        # TORA - DIAMETRO 18-25 COMRIMENTO 2,15 METROS
+        # 44032100
+        # 000
+        # 6102
+        # Ton 56,2600
+        # 312,00000
+        # 17.553,12
+        pattern_multiline = re.compile(
+            r"^(\d{1,3})\s*$\s*"  # Código do item em linha separada (01, 02, etc)
+            r"([A-ZÀÁÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ][^\n]+?)\s*"  # Descrição do produto
+            r"(\d{8})\s*"  # NCM (8 dígitos)
+            r"(\d{3})\s*"  # CST (3 dígitos)
+            r"(\d{4})\s*"  # CFOP (4 dígitos)
+            r"([A-Za-z]+)\s+([\d.,]+)\s*"  # Unidade + Quantidade
+            r"([\d.,]+)\s*"  # Valor unitário
+            r"([\d.,]+)",  # Valor total
+            re.MULTILINE | re.IGNORECASE
         )
         
-        matches = pattern.findall(bloco)
+        matches = pattern_multiline.findall(bloco)
+        
+        # PADRÃO 2: Formato em linha única (tradicional)
+        # Estrutura: 01 TORETE DE PINUS 44032200 0/00 6102 Ton 38,0000 228,7400 8.692,12
+        if not matches:
+            pattern_inline = re.compile(
+                r"(\d{2})\s+"  # código do item (01, 02, etc)
+                r"([A-ZÀÁÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ][^\d]+?)\s+"  # descrição (TORETE DE PINUS)
+                r"(\d{8})\s+"  # NCM (44032200)
+                r"([\d/]+)\s+"  # O/CST (0/00)
+                r"(\d{4})\s+"  # CFOP (6102)
+                r"([A-Za-z]+)\s+"  # Unidade (Ton)
+                r"([\d.,]+)\s+"  # Quantidade (38,0000)
+                r"([\d.,]+)\s+"  # Valor unitário (228,7400)
+                r"([\d.,]+)",  # Valor total (8.692,12)
+                re.IGNORECASE
+            )
+            matches = pattern_inline.findall(bloco)
         
         for match in matches:
+            # Normaliza o CST - se vier só números (000), formata como 0/00
+            cst_valor = match[3]
+            if len(cst_valor) == 3 and cst_valor.isdigit():
+                cst_valor = f"{cst_valor[0]}/{cst_valor[1:]}"
+            
             item = {
                 "codigo": match[0],
                 "descricao": match[1].strip(),
                 "ncm": match[2],
-                "cst_csosn": match[3],
+                "cst_csosn": cst_valor,
                 "cfop": match[4],
                 "unidade": match[5],
                 "quantidade": match[6],
@@ -369,18 +499,37 @@ class ExtrairTextoNotaFiscal:
     def nf_extrair_dados_adicionais(texto):
         """
         Extrai os dados adicionais da nota fiscal.
+        Inclui: placa, motorista e informações complementares.
         """
         dados = {}
         
-        # Baseado na estrutura real da nota, extrai informações adicionais simples
+        # Baseado na estrutura real da nota, extrai informações adicionais
         bloco = ExtrairTextoNotaFiscal.nf_analisar_secao(texto, "DADOS ADICIONAIS")
         
         if bloco:
-            # Procura por informações complementares
+            # Procura por informações complementares - múltiplos formatos
             if "Inf. Contribuinte:" in bloco:
                 m_info = re.search(r"Inf\.\s*Contribuinte:\s*([^\n]+)", bloco)
                 if m_info:
                     dados["informacoes_complementares"] = m_info.group(1).strip()
+            elif "OBSERVAÇÕES" in bloco:
+                # Extrai texto após OBSERVAÇÕES até RESERVADO AO FISCO ou fim do bloco
+                m_obs = re.search(r"OBSERVAÇÕES\s*\n\s*(.*?)(?:RESERVADO AO FISCO|$)", bloco, re.DOTALL | re.IGNORECASE)
+                if m_obs:
+                    obs_texto = m_obs.group(1).strip()
+                    # Limpa e normaliza o texto
+                    obs_texto = re.sub(r'\s+', ' ', obs_texto)
+                    dados["informacoes_complementares"] = obs_texto
+        
+        # Tenta extrair placa do bloco de transportador
+        bloco_transp = ExtrairTextoNotaFiscal.nf_analisar_secao(
+            texto, "TRANSPORTADOR", "DADOS DOS PRODUTOS"
+        )
+        if bloco_transp:
+            # Placa do veículo
+            m_placa = re.search(r"PLACA\s*(?:DO)?\s*(?:VEÍCULO)?\s*\n\s*([A-Z]{3}[\-]?\d[A-Z0-9]\d{2})", bloco_transp, re.IGNORECASE)
+            if m_placa:
+                dados["placa"] = m_placa.group(1).strip().upper()
         
         # Garante que campos essenciais existam
         for campo in ["placa", "motorista", "informacoes_complementares"]:
