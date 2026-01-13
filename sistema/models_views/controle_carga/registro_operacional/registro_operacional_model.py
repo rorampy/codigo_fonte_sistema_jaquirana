@@ -2546,4 +2546,54 @@ class RegistroOperacionalModel(BaseModel):
             'tem_proximo': pagina < total_paginas
         }
         
+    
+    def extrair_dados_nf_pdf(dados_nota):
+        """
+        Extrai e valida os dados de uma nota fiscal extraída do PDF.
+        """
+        
+        razao_social_emissor = dados_nota["emissor"]["razao_social_emissor"]
+        numero_nota = dados_nota["emissor"]["numero_nota"]
+        serie = dados_nota["emissor"]["serie"]
+        chave_acesso = dados_nota["emissor"]["chave_acesso"]
+        destinatario = dados_nota["destinatario"]["nome_razao_social"]
+        destinatario_cpf_cnpj = dados_nota["destinatario"]["cnpj_cpf"]
+        destinatario_insc_estadual = dados_nota["destinatario"]["insc_estadual"]
+        destinatario_data_emissao = dados_nota["destinatario"]["data_emissao"]
+        valor_total_nota = dados_nota["calculo_imposto"]["valor_total_nota"]
+        transportador = dados_nota["transportador"]["nome"]
+        transportador_cpf_cnpj = dados_nota["transportador"]["cnpj_cpf"]
+        transportador_insc_estadual = dados_nota["transportador"]["insc_estadual"]
+        placa = dados_nota["dados_adicionais"]["placa"]
+        motorista = dados_nota["dados_adicionais"]["motorista"]
+        itens_nf = dados_nota['itens']
+        peso_nf = 0
+        preco_un = 0
+        for i in itens_nf:
+            quantidade = ValoresMonetarios.converter_string_brl_para_float(i['quantidade'])
+            preco_unitario = ValoresMonetarios.converter_string_brl_para_float(i['preco_unitario'])
+            peso_nf += round(quantidade, 2)
+            preco_un += int(round(preco_unitario * 100))
+       
+        return {
+            "razao_social_emissor": razao_social_emissor,
+            "numero_nota_fiscal": numero_nota,
+            "serie_nota": serie,
+            "chave_acesso": chave_acesso,
+            "destinatario_nome": destinatario,
+            "destinatario_cnpj_cpf": destinatario_cpf_cnpj,
+            "destinatario_insc_estadual": destinatario_insc_estadual,
+            "destinatario_data_emissao": destinatario_data_emissao,
+            "valor_total_nota_100": valor_total_nota,
+            "preco_un_nf": preco_un,
+            "transportador_nome": transportador,
+            "transportador_cnpj_cpf": transportador_cpf_cnpj,
+            "transportador_insc_estadual": transportador_insc_estadual,
+            "placa_nf": placa,
+            "motorista_nf": motorista,
+            "peso_ton_nf": peso_nf,
+        }
+
+    
+        
         
