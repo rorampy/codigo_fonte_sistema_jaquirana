@@ -163,15 +163,16 @@ def cadastrar_emissao(id):
                     print(f"[DEBUG] Buscando registro operacional para solicitação: {solicitacao.id}")
                     obterRegistro = RegistroOperacionalModel.obter_registro_solicitacao_por_id(solicitacao.id)
                     
-                    # Certificação - Atualiza o estoque da certificação associada à carga
-                    resultado_atualizacao = CertificacoesModel.atualizar_estoque(pesoFrf_float, solicitacao.certificacao_id)
-                    if "erro" in resultado_atualizacao or "invalido" in resultado_atualizacao:
-                        if "invalido" in resultado_atualizacao:
-                            flash((resultado_atualizacao["invalido"], "warning"))
-                        elif "erro" in resultado_atualizacao:
-                            flash((resultado_atualizacao["erro"], "warning"))
-                        db.session.rollback()
-                        return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
+                    if solicitacao.certificacao_id:
+                        # Certificação - Atualiza o estoque da certificação associada à carga
+                        resultado_atualizacao = CertificacoesModel.atualizar_estoque(pesoFrf_float, solicitacao.certificacao_id)
+                        if "erro" in resultado_atualizacao or "invalido" in resultado_atualizacao:
+                            if "invalido" in resultado_atualizacao:
+                                flash((resultado_atualizacao["invalido"], "warning"))
+                            elif "erro" in resultado_atualizacao:
+                                flash((resultado_atualizacao["erro"], "warning"))
+                            db.session.rollback()
+                            return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                     
                     if obterRegistro:
                         obterRegistro.solicitacao_nf_id = solicitacao.id
