@@ -261,6 +261,13 @@ class ExtrairTextoNotaFiscal:
         if m_data_saida:
             resultado["data_saida_entrada"] = m_data_saida.group(1).strip()
 
+        # Garante que as chaves essenciais sempre existam
+        chaves_essenciais = ["nome_razao_social", "cnpj_cpf", "insc_estadual", "endereco", 
+                             "bairro", "cep", "municipio", "uf", "data_emissao", "data_saida_entrada"]
+        for chave in chaves_essenciais:
+            if chave not in resultado:
+                resultado[chave] = ""
+
         return resultado
 
     def nf_extrair_calculo_imposto(texto):

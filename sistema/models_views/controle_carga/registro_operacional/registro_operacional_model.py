@@ -2552,18 +2552,18 @@ class RegistroOperacionalModel(BaseModel):
         Extrai e valida os dados de uma nota fiscal extraída do PDF.
         """
         
-        razao_social_emissor = dados_nota["emissor"]["razao_social_emissor"]
-        numero_nota = dados_nota["emissor"]["numero_nota"]
-        serie = dados_nota["emissor"]["serie"]
-        chave_acesso = dados_nota["emissor"]["chave_acesso"]
-        destinatario = dados_nota["destinatario"]["nome_razao_social"]
-        destinatario_cpf_cnpj = dados_nota["destinatario"]["cnpj_cpf"]
-        destinatario_insc_estadual = dados_nota["destinatario"]["insc_estadual"]
-        destinatario_data_emissao = dados_nota["destinatario"]["data_emissao"]
-        valor_total_nota = dados_nota["calculo_imposto"]["valor_total_nota"]
-        transportador = dados_nota["transportador"]["nome"]
-        transportador_cpf_cnpj = dados_nota["transportador"]["cnpj_cpf"]
-        transportador_insc_estadual = dados_nota["transportador"]["insc_estadual"]
+        razao_social_emissor = dados_nota["emissor"].get("razao_social_emissor", "")
+        numero_nota = dados_nota["emissor"].get("numero_nota", "")
+        serie = dados_nota["emissor"].get("serie", "")
+        chave_acesso = dados_nota["emissor"].get("chave_acesso", "")
+        destinatario = dados_nota["destinatario"].get("nome_razao_social", "")
+        destinatario_cpf_cnpj = dados_nota["destinatario"].get("cnpj_cpf", "")
+        destinatario_insc_estadual = dados_nota["destinatario"].get("insc_estadual", "")
+        destinatario_data_emissao = dados_nota["destinatario"].get("data_emissao", "")
+        valor_total_nota = dados_nota["calculo_imposto"].get("valor_total_nota", "")
+        transportador = dados_nota["transportador"].get("nome", "")
+        transportador_cpf_cnpj = dados_nota["transportador"].get("cnpj_cpf", "")
+        transportador_insc_estadual = dados_nota["transportador"].get("insc_estadual", "")
         placa = dados_nota["dados_adicionais"]["placa"]
         motorista = dados_nota["dados_adicionais"]["motorista"]
         itens_nf = dados_nota['itens']

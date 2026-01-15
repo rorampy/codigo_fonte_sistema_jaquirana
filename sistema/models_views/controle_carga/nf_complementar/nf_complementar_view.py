@@ -150,19 +150,19 @@ def emitir_nfs_complementares_em_massa():
                 else:
                     valor_total_nota_100 = None
                     
-                nf_complementar.numero_nota_fiscal=dados_nf["numero_nota_fiscal"]
-                nf_complementar.serie_nota=dados_nf["serie_nota"]
+                nf_complementar.numero_nota_fiscal=dados_nf.get("numero_nota_fiscal", "")
+                nf_complementar.serie_nota=dados_nf.get("serie_nota", "")
                 nf_complementar.peso_ton_nf = peso_nf
-                nf_complementar.chave_acesso=dados_nf["chave_acesso"]
-                nf_complementar.destinatario_nome=dados_nf["destinatario_nome"]
-                nf_complementar.destinatario_cnpj_cpf=dados_nf["destinatario_cnpj_cpf"]
-                nf_complementar.destinatario_insc_estadual=dados_nf["destinatario_insc_estadual"]
+                nf_complementar.chave_acesso=dados_nf.get("chave_acesso", "")
+                nf_complementar.destinatario_nome=dados_nf.get("destinatario_nome", "")
+                nf_complementar.destinatario_cnpj_cpf=dados_nf.get("destinatario_cnpj_cpf", "")
+                nf_complementar.destinatario_insc_estadual=dados_nf.get("destinatario_insc_estadual", "")
                 nf_complementar.destinatario_data_emissao=destinatario_data_emissao
                 nf_complementar.valor_total_nota_100=valor_total_nota_100
                 nf_complementar.preco_un_nf = preco_un
-                nf_complementar.transportador_nome=dados_nf["transportador_nome"]
-                nf_complementar.transportador_cnpj_cpf=dados_nf["transportador_cnpj_cpf"]
-                nf_complementar.transportador_insc_estadual=dados_nf["transportador_insc_estadual"]
+                nf_complementar.transportador_nome=dados_nf.get("transportador_nome", "")
+                nf_complementar.transportador_cnpj_cpf=dados_nf.get("transportador_cnpj_cpf", "")
+                nf_complementar.transportador_insc_estadual=dados_nf.get("transportador_insc_estadual", "")
                 nf_complementar.placa_nf=dados_nf["placa_nf"]
                 nf_complementar.motorista_nf=dados_nf["motorista_nf"]
                 nf_complementar.arquivo_nota_id=objeto_nf.id
