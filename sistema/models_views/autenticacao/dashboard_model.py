@@ -53,7 +53,7 @@ class DashboardModel:
     ]
     
     # Data de início para cálculos cumulativos
-    DATA_INICIO_CUMULATIVO = datetime(2025, 5, 1)
+    DATA_INICIO_CUMULATIVO = datetime(2025, 1, 1)
     
     @staticmethod
     def mapear_produto_chave(nome, bitola):
@@ -289,7 +289,7 @@ class DashboardModel:
     @classmethod
     def obter_contra_notas_acumuladas(cls, empresa_id):
         """
-        Obtém contra-notas acumuladas cumulativas do ano atual.
+        Obtém contra-notas acumuladas cumulativas desde DATA_INICIO_CUMULATIVO.
         
         Args:
             empresa_id (int): ID da empresa emissora
@@ -297,7 +297,6 @@ class DashboardModel:
         Returns:
             list: Valores de contra-notas acumuladas por grupo de produto
         """
-        hoje = datetime.today()
         contra_por_grupo_mes = {g: 0.0 for g in cls.GRUPOS_PRODUTOS}
 
         query_contra_acumulada = (
@@ -316,8 +315,7 @@ class DashboardModel:
             .join(ProdutoModel, CargaModel.produto_id == ProdutoModel.id)
             .join(BitolaModel, CargaModel.bitola_id == BitolaModel.id)
             .filter(
-                extract("year", NfEntradaModel.data_cadastro) == hoje.year,
-                extract("month", NfEntradaModel.data_cadastro) <= hoje.month,
+                NfEntradaModel.data_cadastro >= cls.DATA_INICIO_CUMULATIVO,
                 NfEntradaModel.ativo == True,
                 NfEntradaModel.deletado == False,
                 NfEntradaModel.registro.has(deletado=False, ativo=True),

@@ -1,0 +1,110 @@
+/* ====== EXTRATO DE CRÉDITO - TERCEIROS ====== */
+
+/* Animações e transições suaves para cards */
+.card {
+  transition: all 0.3s ease;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.12) !important;
+}
+
+.card-body {
+  position: relative;
+}
+
+/* Gradiente sutil no header dos cards */
+.card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%) !important;
+  border-bottom: 2px solid #e9ecef !important;
+  padding: 1.25rem 1.5rem !important;
+}
+
+.card-header .card-title {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Avatar com animação */
+.avatar {
+  transition: all 0.3s ease;
+}
+
+.card:hover .avatar {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* Progress bar animado (dentro dos cards) */
+.progress {
+  height: 8px;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #e9ecef;
+}
+
+.progress-bar {
+  transition: width 1s ease;
+  border-radius: 10px;
+}
+
+/* Page title com animação */
+.page-title {
+  animation: slideInDown 0.5s ease;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Cards com animação de entrada */
+.card {
+  animation: fadeInUp 0.6s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Página header estilizado */
+.page-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  padding: 2rem 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.page-pretitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* Responsividade para cards */
+@media (max-width: 768px) {
+  .card {
+    margin-bottom: 1rem;
+  }
+}

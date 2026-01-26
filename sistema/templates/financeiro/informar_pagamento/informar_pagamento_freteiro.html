@@ -24,8 +24,34 @@
       {% include 'estrutura/mensagens_flash.html' %}
 
       <div class="row row-cards mb-4">
+        <!-- 1. Total Bruto - O que precisa pagar -->
         <div class="col-md-6 col-lg-4">
-          <div class="card border shadow-lg rounded-3">
+          <div class="card border shadow-lg rounded-3 stat-card-hover card-orange">
+            <div class="card-body d-flex align-items-center">
+              <span class="avatar bg-orange text-white me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-file-invoice">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                  <path d="M9 7l1 0" />
+                  <path d="M9 13l6 0" />
+                  <path d="M13 17l2 0" />
+                </svg>
+              </span>
+              <div>
+                <div class="text-uppercase text-muted fw-semibold small">Total Bruto</div>
+                <div class="fs-3 fw-bold text-orange mt-1" id="total-faturar">{{registro.valor_total_a_pagar_100 |
+                  formatar_float_para_brl}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Crédito Disponível - Quanto pode abater -->
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-lg rounded-3 stat-card-hover card-blue">
             <div class="card-body d-flex align-items-center">
               <span class="avatar bg-blue text-white me-3">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-currency-dollar" width="24"
@@ -37,7 +63,7 @@
                 </svg>
               </span>
               <div>
-                <div class="text-uppercase text-muted fw-semibold">Crédito Disponível</div>
+                <div class="text-uppercase text-muted fw-semibold small">Crédito Disponível</div>
                 <div class="fs-3 fw-bold text-blue mt-1" id="credito-disponivel">{{saldo_credito |
                   formatar_float_para_brl}}</div>
               </div>
@@ -45,47 +71,23 @@
           </div>
         </div>
 
+        <!-- 3. Valor Líquido - Resultado após crédito -->
         <div class="col-md-6 col-lg-4">
-          <div class="card border shadow-lg rounded-3">
+          <div class="card border shadow-lg rounded-3 stat-card-hover card-green">
             <div class="card-body d-flex align-items-center">
-              <span class="avatar bg-orange text-white me-3">
+              <span class="avatar bg-green text-white me-3">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="icon icon-tabler icons-tabler-outline icon-tabler-moneybag-move">
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-receipt">
                   <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                  <path
-                    d="M9.5 3h5a1.5 1.5 0 0 1 1.5 1.5a3.5 3.5 0 0 1 -3.5 3.5h-1a3.5 3.5 0 0 1 -3.5 -3.5a1.5 1.5 0 0 1 1.5 -1.5" />
-                  <path d="M12.5 21h-4.5a4 4 0 0 1 -4 -4v-1a8 8 0 0 1 14.946 -3.971" />
-                  <path d="M16 19h6" />
-                  <path d="M19 16l3 3l-3 3" />
+                  <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2" />
+                  <path d="M14 8h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5m2 0v1.5m0 -9v1.5" />
                 </svg>
               </span>
               <div>
-                <div class="text-uppercase text-muted fw-semibold">Total a Faturar</div>
-                <div class="fs-3 fw-bold text-orange mt-1" id="total-faturar">{{registro.valor_total_a_pagar_100 |
-                  formatar_float_para_brl}}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-          <div class="card border shadow-lg rounded-3">
-            <div class="card-body d-flex align-items-center">
-              <span class="avatar bg-red text-white me-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="icon icon-tabler icons-tabler-outline icon-tabler-alert-square-rounded">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                  <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" />
-                  <path d="M12 8v4" />
-                  <path d="M12 16h.01" />
-                </svg>
-              </span>
-              <div>
-                <div class="text-uppercase text-muted fw-semibold">Saldo Restante</div>
-                <div class="fs-3 fw-bold text-red mt-1" id="saldo-restante">{{(saldo_credito -
-                  registro.valor_total_a_pagar_100) | formatar_float_para_brl}}</div>
+                <div class="text-uppercase text-muted fw-semibold small">Valor Líquido</div>
+                {% set valor_liquido = registro.valor_total_a_pagar_100 - saldo_credito if saldo_credito > 0 else registro.valor_total_a_pagar_100 %}
+                <div class="fs-3 fw-bold text-green mt-1" id="valor-liquido">{{ valor_liquido | formatar_float_para_brl if valor_liquido > 0 else 'R$ 0,00' }}</div>
               </div>
             </div>
           </div>
@@ -219,7 +221,7 @@
                           <td class="text-center">{{ credito.descricao }}</td>
                           <td class="text-center">
                             {% if credito.valor_credito_100 < 0 %}
-                              <span class="badge bg-danger-lt">{{ credito.valor_credito_100 | formatar_float_para_brl}} (Débito)</span>
+                              <span class="badge bg-danger-lt">{{ (credito.valor_credito_100 | abs) | formatar_float_para_brl}} (Débito)</span>
                             {% else %}
                               <span class="badge bg-green-lt">{{ credito.valor_credito_100 | formatar_float_para_brl}} (Crédito)</span>
                             {% endif %}
@@ -321,132 +323,90 @@
             <!-- Seção do resumo de créditos (aparece quando seleciona "Sim") -->
             <div id="resumo-creditos" class="mb-4" style="display: none;">
 
-              <!-- Header moderno -->
-              <div class="card border-0 shadow-sm" style="border-radius: 5px; overflow: hidden;">
-                <div class="card-header border-0 text-white position-relative"
-                  style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 24px;">
-                  <div class="d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center">
-                      <div class="rounded-circle me-3 d-flex align-items-center justify-content-center"
-                        style="width: 48px; height: 48px; background: rgba(255,255,255,0.2);">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h4 class="mb-1 fw-bold">Resumo Final</h4>
-                      </div>
+              <!-- Card do Resumo -->
+              <div class="card border-0 shadow-sm card-smooth" style="border-radius: 12px; overflow: hidden;">
+                <!-- Header clean -->
+                <div class="card-header text-white py-3"
+                  style="background: linear-gradient(135deg, #1B5E20 0%, #388E3C 100%); border: none;">
+                  <div class="d-flex align-items-center">
+                    <div class="rounded-circle me-3 d-flex align-items-center justify-content-center"
+                      style="width: 40px; height: 40px; background: rgba(255,255,255,0.2);">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2 " />
+                        <rect x="9" y="3" width="6" height="4" rx="2" />
+                        <path d="m9 14 2 2 4-4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h5 class="mb-0 fw-bold">Resumo do Faturamento</h5>
                     </div>
                   </div>
                 </div>
 
-                <div class="card-body p-0">
-                  <!-- Seção Principal: Cards lado a lado -->
-                  <div class="row g-0">
+                <div class="card-body p-4">
+                  {% set valor_liquido_resumo = registro.valor_total_a_pagar_100 - saldo_credito if saldo_credito > 0 else registro.valor_total_a_pagar_100 %}
+                  
+                  <!-- Info da Transportadora -->
+                  <div class="d-flex align-items-center justify-content-between p-3 mb-4 rounded-3" style="background: #f8f9fa;">
+                    <div class="d-flex align-items-center">
+                      <div class="avatar bg-primary-lt me-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M5 17h-2v-6l2 -5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0h-6m-6 -6h15m-6 0v-5" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div class="text-muted small">Transportadora</div>
+                        <div class="fw-bold fs-5" style="color: #1B5E20;">
+                          {{ registro.solicitacao.transportadora_exibicao.identificacao if registro.solicitacao and registro.solicitacao.transportadora_exibicao else 'Não identificada' }}
+                        </div>
+                      </div>
+                    </div>
+                    <div id="resumo-status-transportadora" class="text-end">
+                      {% set diferenca = saldo_credito - registro.valor_total_a_pagar_100 %}
+                      {% if diferenca >= 0 %}
+                      <span class="badge bg-success-lt text-success fs-6 px-3 py-2">COBERTO</span>
+                      {% else %}
+                      <span class="badge bg-warning-lt text-warning fs-6 px-3 py-2">FALTA {{ (diferenca * -1) | formatar_float_para_brl }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
 
-                    <!-- Transportadoras -->
-                    <div class="col-12">
-                      <div class="p-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
-
-                        <!-- Cards das transportadoras -->
-                        <div class="space-y-3">
-                          <div class="card border-0 shadow-sm mb-3" style="border-radius: 5px; background: white;">
-                            <div class="card-body p-3">
-                              <div class="row align-items-center">
-                                <div class="col-12">
-                                  <h6 class="mb-1 fw-bold" style="color: #1B5E20; font-size: 0.95rem;">
-                                    {{ registro.solicitacao.transportadora_exibicao.identificacao if
-                                    registro.solicitacao and registro.solicitacao.transportadora_exibicao
-                                    else
-                                    'Transportadora não identificada' | truncate(25, True, '...') }}
-                                  </h6>
-                                  <div class="row text-center mt-2">
-                                    <div class="col-4">
-                                      <div class="small text-muted">Crédito</div>
-                                      <div class="fw-bold small" style="color: #1B5E20;" id="resumo-credito-transportadora">
-                                        {{ saldo_credito | formatar_float_para_brl }}</div>
-                                    </div>
-                                    <div class="col-4">
-                                      <div class="small text-muted">A Faturar</div>
-                                      <div class="fw-bold small text-dark" id="resumo-valor-transportadora">{{
-                                        registro.valor_total_a_pagar_100 |
-                                        formatar_float_para_brl }}</div>
-                                    </div>
-                                    <div class="col-4" id="resumo-status-transportadora">
-                                      {% set diferenca = saldo_credito - registro.valor_total_a_pagar_100 %}
-                                      {% if diferenca >= 0 %}
-                                      <div class="small fw-bold text-success">COBERTO</div>
-                                      {% else %}
-                                      <div class="small fw-bold text-warning">FALTA</div>
-                                      <div class="small text-warning">{{ (diferenca * -1) | formatar_float_para_brl }}
-                                      </div>
-                                      {% endif %}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                  <!-- Cards do Resultado Final - Números Maiores -->
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <div class="card h-100 stat-card-hover card-orange" style="border-radius: 10px;">
+                        <div class="card-body p-4 text-center">
+                          <div class="text-muted small text-uppercase mb-2">Total a Faturar</div>
+                          <h3 class="fw-bold mb-0 text-orange" id="resumo-total-faturar">{{ registro.valor_total_a_pagar_100 | formatar_float_para_brl }}</h3>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="card h-100 stat-card-hover card-blue" style="border-radius: 10px;">
+                        <div class="card-body p-4 text-center">
+                          <div class="text-muted small text-uppercase mb-2">Créditos Utilizados</div>
+                          <h3 class="fw-bold mb-0 text-blue" id="resumo-creditos-totais">{{ saldo_credito | formatar_float_para_brl }}</h3>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="card h-100 stat-card-hover card-green" id="resumo-saldo-final-card" style="border-radius: 10px;">
+                        <div class="card-body p-4 text-center">
+                          <div class="text-muted small text-uppercase mb-2" id="resumo-saldo-final-label">Valor Líquido</div>
+                          <h3 class="fw-bold mb-0 text-green" id="resumo-saldo-final">{{ valor_liquido_resumo | formatar_float_para_brl if valor_liquido_resumo > 0 else 'R$ 0,00' }}</h3>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <!-- Resumo Final Moderno -->
-                  <div class="border-top bg-light">
-                    <div class="p-4">
-
-                      <!-- Título do resumo -->
-                      <div class="text-center mb-4">
-                        <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center"
-                          style="width: 48px; height: 48px; background: #f8f9fa; border: 2px solid #dee2e6;">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="icon icon-tabler icons-tabler-outline icon-tabler-script">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path
-                              d="M17 20h-11a3 3 0 0 1 0 -6h11a3 3 0 0 0 0 6h1a3 3 0 0 0 3 -3v-11a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v8" />
-                          </svg>
-                        </div>
-                        <h5 class="mb-0 text-dark">RESULTADO FINAL</h5>
-                      </div>
-
-                      <!-- Cards do resumo matemático -->
-                      <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                          <div class="card border shadow-sm"
-                            style="border-radius: 12px;">
-                            <div class="card-body p-3 text-center">
-                              <div class="small text-muted text-uppercase mb-1">Total a Faturar</div>
-                              <h4 class="fw-bold mb-0" id="resumo-total-faturar">{{ registro.valor_total_a_pagar_100 |
-                                formatar_float_para_brl }}</h4>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="card border shadow-sm"
-                            style="border-radius: 12px;">
-                            <div class="card-body p-3 text-center">
-                              <div class="small text-muted text-uppercase mb-1">Créditos Totais</div>
-                              <h4 class="fw-bold mb-0" id="resumo-creditos-totais">{{ saldo_credito |
-                                formatar_float_para_brl }}</h4>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="card border shadow-sm text-center" id="resumo-saldo-final-card"
-                            style="border-radius: 12px;">
-                            <div class="card-body p-3">
-                              <div class="small text-muted text-uppercase mb-1" id="resumo-saldo-final-label">Saldo
-                                Final a Faturar</div>
-                              <h4 class="fw-bold mb-0 text-danger" id="resumo-saldo-final">-{{ registro.valor_total_a_pagar_100 |
-                                formatar_float_para_brl }}</h4>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  <!-- Fórmula visual -->
+                  <div class="text-center mt-4 py-2 rounded-3" style="background: #f8f9fa;">
+                    <span class="text-orange fw-bold fs-5" id="resumo-valor-transportadora">{{ registro.valor_total_a_pagar_100 | formatar_float_para_brl }}</span>
+                    <span class="mx-3 text-muted">−</span>
+                    <span class="text-blue fw-bold fs-5" id="resumo-credito-transportadora">{{ saldo_credito | formatar_float_para_brl }}</span>
+                    <span class="mx-3 text-muted">=</span>
+                    <span class="text-green fw-bold fs-5" id="resumo-valor-liquido-formula">{{ valor_liquido_resumo | formatar_float_para_brl if valor_liquido_resumo > 0 else 'R$ 0,00' }}</span>
                   </div>
                 </div>
               </div>
@@ -482,38 +442,8 @@
     </div>
   </div>
 
-  <style>
-    .hover-row:hover {
-      background-color: #f8f9fa !important;
-      transition: background-color 0.2s ease;
-    }
-
-    /* Estilos da tabela de créditos - igual ao pagamento em massa */
-    #secao-selecao-creditos .table {
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-
-    #secao-selecao-creditos .table td,
-    #secao-selecao-creditos .table th {
-      border: none;
-      padding: 12px 16px;
-      vertical-align: middle;
-    }
-
-    #secao-selecao-creditos .form-check-input {
-      transform: scale(1.1);
-    }
-
-    #secao-selecao-creditos .badge {
-      font-size: 0.85rem;
-      padding: 0.4em 0.8em;
-    }
-    
-    .table td {
-      vertical-align: middle;
-    }
-  </style>
+  <!-- CSS reutilizável para páginas de pagamento -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/informar-pagamento.css') }}">
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -603,7 +533,7 @@
           creditoCheckboxes.forEach(checkbox => {
             const valor = parseFloat(checkbox.getAttribute('data-valor')) / 100;
             console.log('Valor do checkbox:', valor); // Debug
-            totalSelecionado += valor / 100;
+            totalSelecionado += valor;
           });
         } else {
           // Se não há checkboxes individuais, usar o saldo disponível total
@@ -646,56 +576,139 @@
         const resumoSaldoFinalLabel = document.getElementById('resumo-saldo-final-label');
         const resumoStatusTransportadora = document.getElementById('resumo-status-transportadora');
         const resumoTotalPagar = document.getElementById('resumo-total-faturar');
+        const resumoValorTransportadora = document.getElementById('resumo-valor-transportadora');
+        const resumoValorLiquidoFormula = document.getElementById('resumo-valor-liquido-formula');
+        const cardCreditosUtilizados = document.querySelector('.card-blue');
+        const cardValorLiquido = document.querySelector('.card-green');
         
         const valorTotal = parseFloat(valorTotalHidden.value) || 0;
+        const isDebito = creditosSelecionados < 0;
+        const valorDebito = Math.abs(creditosSelecionados);
         
-        console.log('Atualizando resumo - Créditos:', creditosSelecionados, 'Valor Total:', valorTotal); // Debug
+        console.log('Atualizando resumo - Créditos:', creditosSelecionados, 'Valor Total:', valorTotal, 'É Débito:', isDebito);
         
-        // Atualizar valor total a pagar no resumo
+        // Atualizar valor total a pagar no resumo (card e fórmula)
         if (resumoTotalPagar) {
           resumoTotalPagar.textContent = formatarMoeda(valorTotal);
         }
         
-        // Atualizar créditos no resumo
-        if (resumoCreditoTransportadora) {
-          resumoCreditoTransportadora.textContent = formatarMoeda(creditosSelecionados);
-        }
-        if (resumoCreditosTotais) {
-          resumoCreditosTotais.textContent = formatarMoeda(creditosSelecionados);
-        }
-        
-        // Calcular saldo final (permite créditos negativos)
-        const saldoFinal = valorTotal - creditosSelecionados;
-        
-        if (resumoSaldoFinal) {
-          resumoSaldoFinal.textContent = formatarMoeda(saldoFinal);
-        }
-        
-        // Atualizar o valor "A Faturar" com o saldo final
-        const resumoValorTransportadora = document.getElementById('resumo-valor-transportadora');
+        // Atualizar valor total na fórmula visual
         if (resumoValorTransportadora) {
-          resumoValorTransportadora.textContent = formatarMoeda(saldoFinal);
+          resumoValorTransportadora.textContent = formatarMoeda(valorTotal);
         }
         
-        // Atualizar status (considera créditos negativos como débitos que aumentam o valor)
-        if (resumoStatusTransportadora) {
-          if (creditosSelecionados < 0) {
-            // Crédito negativo (débito) - aumenta o valor a faturar
-            const valorAdicional = Math.abs(creditosSelecionados);
+        if (isDebito) {
+          // === DÉBITO (crédito negativo) - AUMENTA o valor a pagar ===
+          const valorFinal = valorTotal + valorDebito;
+          
+          // Card de créditos -> mudar para vermelho e mostrar "DÉBITO"
+          if (cardCreditosUtilizados) {
+            cardCreditosUtilizados.classList.remove('card-blue');
+            cardCreditosUtilizados.classList.add('card-red');
+          }
+          if (resumoCreditosTotais) {
+            resumoCreditosTotais.textContent = formatarMoeda(valorDebito);
+            resumoCreditosTotais.className = 'fw-bold mb-0 text-red fs-2';
+            // Atualizar label
+            const labelCreditos = resumoCreditosTotais.previousElementSibling;
+            if (labelCreditos) {
+              labelCreditos.innerHTML = 'DÉBITO <small class="text-danger">(+)</small>';
+            }
+          }
+          
+          // Fórmula - mostrar como SOMA
+          if (resumoCreditoTransportadora) {
+            resumoCreditoTransportadora.textContent = formatarMoeda(valorDebito);
+            resumoCreditoTransportadora.className = 'text-red fw-bold fs-5';
+          }
+          
+          // Trocar o sinal de − para + na fórmula
+          const sinaisFormula = document.querySelectorAll('#resumo-creditos .text-center.mt-4 .text-muted');
+          if (sinaisFormula.length >= 1) {
+            sinaisFormula[0].textContent = '+';
+            sinaisFormula[0].className = 'mx-3 text-red fw-bold';
+          }
+          
+          // Card valor líquido -> mudar para vermelho (valor aumentou!)
+          if (cardValorLiquido) {
+            cardValorLiquido.classList.remove('card-green');
+            cardValorLiquido.classList.add('card-red');
+          }
+          if (resumoSaldoFinal) {
+            resumoSaldoFinal.textContent = formatarMoeda(valorFinal);
+            resumoSaldoFinal.className = 'fw-bold mb-0 text-red fs-2';
+          }
+          if (resumoValorLiquidoFormula) {
+            resumoValorLiquidoFormula.textContent = formatarMoeda(valorFinal);
+            resumoValorLiquidoFormula.className = 'text-red fw-bold fs-5';
+          }
+          
+          // Status - mostrar alerta de débito
+          if (resumoStatusTransportadora) {
             resumoStatusTransportadora.innerHTML = `
-              <div class="small fw-bold text-warning">DÉBITO</div>
-              <div class="small text-warning">+${formatarMoeda(valorAdicional)}</div>
+              <span class="badge bg-danger-lt text-danger fs-6 px-3 py-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
+                DÉBITO +${formatarMoeda(valorDebito)}
+              </span>
             `;
-          } else if (creditosSelecionados >= valorTotal) {
-            // Crédito positivo suficiente
-            resumoStatusTransportadora.innerHTML = '<div class="small fw-bold text-success">COBERTO</div>';
-          } else {
-            // Crédito positivo insuficiente
-            const falta = valorTotal - creditosSelecionados;
-            resumoStatusTransportadora.innerHTML = `
-              <div class="small fw-bold text-warning">FALTA</div>
-              <div class="small text-warning">${formatarMoeda(falta)}</div>
-            `;
+          }
+          
+        } else {
+          // === CRÉDITO (normal ou zero) - DIMINUI o valor a pagar ===
+          const saldoFinal = Math.max(0, valorTotal - creditosSelecionados);
+          
+          // Restaurar cor azul no card de créditos
+          if (cardCreditosUtilizados) {
+            cardCreditosUtilizados.classList.remove('card-red');
+            cardCreditosUtilizados.classList.add('card-blue');
+          }
+          if (resumoCreditosTotais) {
+            resumoCreditosTotais.textContent = formatarMoeda(creditosSelecionados);
+            resumoCreditosTotais.className = 'fw-bold mb-0 text-blue fs-2';
+            // Restaurar label
+            const labelCreditos = resumoCreditosTotais.previousElementSibling;
+            if (labelCreditos) {
+              labelCreditos.textContent = 'Créditos Utilizados';
+            }
+          }
+          
+          // Fórmula - mostrar como SUBTRAÇÃO
+          if (resumoCreditoTransportadora) {
+            resumoCreditoTransportadora.textContent = formatarMoeda(creditosSelecionados);
+            resumoCreditoTransportadora.className = 'text-blue fw-bold fs-5';
+          }
+          
+          // Restaurar sinal de − na fórmula
+          const sinaisFormula = document.querySelectorAll('#resumo-creditos .text-center.mt-4 .text-muted, #resumo-creditos .text-center.mt-4 .text-red');
+          if (sinaisFormula.length >= 1) {
+            sinaisFormula[0].textContent = '−';
+            sinaisFormula[0].className = 'mx-3 text-muted';
+          }
+          
+          // Restaurar cor verde no card valor líquido
+          if (cardValorLiquido) {
+            cardValorLiquido.classList.remove('card-red');
+            cardValorLiquido.classList.add('card-green');
+          }
+          if (resumoSaldoFinal) {
+            resumoSaldoFinal.textContent = formatarMoeda(saldoFinal);
+            resumoSaldoFinal.className = 'fw-bold mb-0 text-green fs-2';
+          }
+          if (resumoValorLiquidoFormula) {
+            resumoValorLiquidoFormula.textContent = formatarMoeda(saldoFinal);
+            resumoValorLiquidoFormula.className = 'text-green fw-bold fs-5';
+          }
+          
+          // Atualizar status
+          if (resumoStatusTransportadora) {
+            if (creditosSelecionados >= valorTotal) {
+              resumoStatusTransportadora.innerHTML = '<span class="badge bg-success-lt text-success fs-6 px-3 py-2">COBERTO</span>';
+            } else {
+              const falta = valorTotal - creditosSelecionados;
+              resumoStatusTransportadora.innerHTML = `
+                <span class="badge bg-warning-lt text-warning fs-6 px-3 py-2">FALTA ${formatarMoeda(falta)}</span>
+              `;
+            }
           }
         }
       }

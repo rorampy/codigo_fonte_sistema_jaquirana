@@ -306,13 +306,24 @@
             stacked: true,
             height: 400,
             toolbar: { show: false },
-            animations: { enabled: false }
+            animations: { 
+              enabled: true,
+              easing: 'easeinout',
+              speed: 800,
+              animateGradually: {
+                enabled: true,
+                delay: 150
+              }
+            },
+            fontFamily: 'Inter, sans-serif',
+            background: 'transparent'
           },
           plotOptions: {
             bar: {
               horizontal: false,
-              borderRadius: 0,
-              columnWidth: "60%"
+              borderRadius: 6,
+              columnWidth: "70%",
+              borderRadiusApplication: 'end'
             }
           },
           dataLabels: { enabled: false },
@@ -326,13 +337,41 @@
       ],
       xaxis: {
       categories: {{ labels | tojson }},
-      title: { text: "Dias do Mês" }
+      title: { 
+        text: "Dias do Mês",
+        style: {
+          fontSize: '13px',
+          fontWeight: 600,
+          color: '#1b3a2e'
+        }
+      },
+      labels: {
+        style: {
+          fontSize: '12px',
+          fontWeight: 500
+        }
+      },
+      axisBorder: {
+        show: true,
+        color: '#e2e8f0'
+      }
       },
       yaxis: {
-      title: { text: "Toneladas" },
+      title: { 
+        text: "Toneladas",
+        style: {
+          fontSize: '13px',
+          fontWeight: 600,
+          color: '#1b3a2e'
+        }
+      },
       labels: {
         formatter: function (value) {
           return value.toFixed(2);
+        },
+        style: {
+          fontSize: '12px',
+          fontWeight: 500
         }
       }
     },
@@ -340,6 +379,11 @@
       tooltip: {
       shared: true,
       intersect: false,
+      theme: 'light',
+      style: {
+        fontSize: '13px',
+        fontFamily: 'Inter, sans-serif'
+      },
       y: {
         formatter: function (val) {
           return val.toFixed(2) + " toneladas";
@@ -349,11 +393,36 @@
       legend: {
       position: "top",
       horizontalAlign: "center",
-      markers: { radius: 12 }
+      markers: { 
+        radius: 12,
+        offsetX: -3
+      },
+      fontSize: '13px',
+      fontWeight: 500,
+      itemMargin: {
+        horizontal: 12,
+        vertical: 8
+      }
     },
       grid: {
-      borderColor: "#f1f1f1",
-      strokeDashArray: 4
+      borderColor: "#e2e8f0",
+      strokeDashArray: 3,
+      xaxis: {
+        lines: {
+          show: false
+        }
+      },
+      yaxis: {
+        lines: {
+          show: true
+        }
+      },
+      padding: {
+        top: 0,
+        right: 10,
+        bottom: 0,
+        left: 10
+      }
     }
     }
     ).render();
@@ -367,24 +436,58 @@
       new ApexCharts(
         document.getElementById("chart-barra-acumulado-produtos"),
         {
-          chart: { type: "bar", height: 400 },
+          chart: { 
+            type: "bar", 
+            height: 400,
+            toolbar: { show: false },
+            animations: {
+              enabled: true,
+              easing: 'easeinout',
+              speed: 800,
+              animateGradually: {
+                enabled: true,
+                delay: 150
+              }
+            },
+            fontFamily: 'Inter, sans-serif'
+          },
           plotOptions: {
             bar: {
               distributed: true,
-              borderRadius: 4,
-              columnWidth: "50%",
+              borderRadius: 8,
+              columnWidth: "60%",
               dataLabels: { position: "top" }
             }
           },
           xaxis: {
             categories: {{ produtos_labels | tojson }},
-      labels: { style: { fontSize: "12px" } }
+      labels: { 
+        style: { 
+          fontSize: "12px",
+          fontWeight: 500
+        } 
+      },
+      axisBorder: {
+        show: true,
+        color: '#e2e8f0'
+      }
       },
       yaxis: {
-      title: { text: "Toneladas" },
+      title: { 
+        text: "Toneladas",
+        style: {
+          fontSize: '13px',
+          fontWeight: 600,
+          color: '#1b3a2e'
+        }
+      },
       labels: {
         formatter: function (value) {
           return value.toFixed(2);
+        },
+        style: {
+          fontSize: '12px',
+          fontWeight: 500
         }
       }
     },
@@ -395,13 +498,27 @@
       dataLabels: {
       enabled: true,
       formatter: function (val) { return val.toFixed(2) + " t"; },
+      offsetY: -25,
       style: {
         fontSize: "12px",
-        fontWeight: "bold",
-        colors: ["#333333"]
+        fontWeight: 700,
+        colors: ["#1b3a2e"]
+      },
+      background: {
+        enabled: true,
+        foreColor: '#fff',
+        borderRadius: 4,
+        padding: 6,
+        opacity: 0.9,
+        borderWidth: 0
       }
     },
       tooltip: {
+      theme: 'light',
+      style: {
+        fontSize: '13px',
+        fontFamily: 'Inter, sans-serif'
+      },
       y: {
         formatter: function (val) {
           return val.toFixed(2) + " toneladas";
@@ -410,8 +527,19 @@
     },
       legend: { show: false },
       grid: {
-      borderColor: "#f1f1f1",
-      strokeDashArray: 4
+      borderColor: "#e2e8f0",
+      strokeDashArray: 3,
+      xaxis: {
+        lines: {
+          show: false
+        }
+      },
+      padding: {
+        top: 0,
+        right: 10,
+        bottom: 0,
+        left: 10
+      }
     }
     }
     ).render();
@@ -443,34 +571,60 @@
               png: { filename: "ranking_usuarios_mes" }
             }
           },
-          animations: { enabled: false },
+          animations: { 
+            enabled: true,
+            easing: 'easeinout',
+            speed: 800
+          },
           dropShadow: {
             enabled: true,
             top: 3,
             left: 2,
-            blur: 4,
-            opacity: 0.1
+            blur: 5,
+            opacity: 0.15
+          },
+          fontFamily: 'Inter, sans-serif'
+        },
+        stroke: { 
+          curve: "smooth", 
+          width: 3
+        },
+        markers: { 
+          size: 5,
+          strokeWidth: 2,
+          strokeColors: '#fff',
+          hover: { 
+            size: 7,
+            sizeOffset: 2
           }
         },
-        stroke: { curve: "smooth", width: 2 },
-        markers: { size: 4, hover: { sizeOffset: 2 } },
         dataLabels: {
           enabled: true,
-          offsetY: -8,
+          offsetY: -10,
           formatter: function (val, opts) {
             const point = opts.w.config.series[opts.seriesIndex]
               .data[opts.dataPointIndex];
             return point.label || "";
           },
-          style: { fontSize: "11px", fontWeight: "bold", colors: ["#333"] },
+          style: { 
+            fontSize: "11px", 
+            fontWeight: 700,
+            colors: ["#1b3a2e"]
+          },
           background: {
             enabled: true,
             foreColor: "#fff",
-            padding: 4,
-            borderRadius: 4,
-            borderWidth: 1,
-            borderColor: "#999",
-            opacity: 0.9
+            padding: 6,
+            borderRadius: 6,
+            borderWidth: 0,
+            opacity: 0.95,
+            dropShadow: {
+              enabled: true,
+              top: 1,
+              left: 1,
+              blur: 2,
+              opacity: 0.2
+            }
           }
         },
         series: {{ dados_usuarios_front | tojson
@@ -479,36 +633,82 @@
       categories: {{ labels | tojson }},
       title: {
       text: "Dias do Mês",
-      style: { fontSize: "13px", fontWeight: 500, color: "#2c3e50" }
+      style: { 
+        fontSize: "13px", 
+        fontWeight: 600, 
+        color: "#1b3a2e" 
+      }
     },
-      labels: { style: { fontSize: "12px", fontFamily: "Inter, sans-serif" } },
+      labels: { 
+        style: { 
+          fontSize: "12px", 
+          fontFamily: "Inter, sans-serif",
+          fontWeight: 500
+        } 
+      },
       axisTicks: { show: false },
-      axisBorder: { show: true, color: "#78909c" }
+      axisBorder: { 
+        show: true, 
+        color: "#e2e8f0" 
+      }
         },
       yaxis: {
       title: {
         text: "Pontos Acumulados",
-        style: { fontSize: "13px", fontWeight: 500, color: "#2c3e50" }
+        style: { 
+          fontSize: "13px", 
+          fontWeight: 600, 
+          color: "#1b3a2e" 
+        }
       },
-      labels: { formatter: (v) => v.toFixed(1), style: { fontSize: "12px" } }
+      labels: { 
+        formatter: (v) => v.toFixed(1), 
+        style: { 
+          fontSize: "12px",
+          fontWeight: 500
+        } 
+      }
     },
       tooltip: {
       shared: true,
       intersect: false,
       theme: "light",
-      y: { formatter: (v) => v.toFixed(1) + " pontos" }
+      style: {
+        fontSize: '13px',
+        fontFamily: 'Inter, sans-serif'
+      },
+      y: { 
+        formatter: (v) => v.toFixed(1) + " pontos" 
+      }
     },
       legend: {
       show: true,
       position: "bottom",
       horizontalAlign: "center",
-      fontSize: "12px",
-      itemMargin: { horizontal: 10, vertical: 5 }
+      fontSize: "13px",
+      fontWeight: 500,
+      itemMargin: { 
+        horizontal: 12, 
+        vertical: 8
+      },
+      markers: {
+        radius: 12
+      }
     },
       grid: {
-      borderColor: "#e0e0e0",
-      strokeDashArray: 4,
-      padding: { top: 0, right: 0, bottom: 0, left: 10 }
+      borderColor: "#e2e8f0",
+      strokeDashArray: 3,
+      xaxis: {
+        lines: {
+          show: false
+        }
+      },
+      padding: { 
+        top: 0, 
+        right: 10, 
+        bottom: 0, 
+        left: 10 
+      }
     },
       responsive: [
       {
@@ -541,7 +741,7 @@
       {
         name: "Vendido",
         value: {{ valores_acumulados_mes[loop.index0] }},
-      strokeHeight: 5,
+      strokeHeight: 6,
       strokeColor: "#ff9500"
             }
     ]
@@ -553,9 +753,23 @@
       document.querySelector("#chart-barra-vertical-grouped-produtos"),
       {
         series: [{ name: "Contra nota", data: seriesData }],
-        chart: { type: "bar", height: 350 },
+        chart: { 
+          type: "bar", 
+          height: 350,
+          toolbar: { show: false },
+          animations: {
+            enabled: true,
+            easing: 'easeinout',
+            speed: 800
+          },
+          fontFamily: 'Inter, sans-serif'
+        },
         plotOptions: {
-          bar: { columnWidth: "60%", endingShape: "rounded" }
+          bar: { 
+            columnWidth: "65%", 
+            borderRadius: 8,
+            borderRadiusApplication: 'end'
+          }
         },
         colors: ["#81d4fa"],
         dataLabels: { enabled: false },
@@ -566,21 +780,80 @@
             marker: { size: 0 },
             label: {
               text: (pt.y - pt.goals[0].value).toFixed(2) + " t",
-              offsetY: -6,
+              offsetY: -10,
               style: {
                 fontSize: "12px",
-                fontWeight: "bold",
-                color: "#333333",
+                fontWeight: 700,
+                color: "#1b3a2e",
                 background: "transparent"
               }
             }
           }))
         },
+        xaxis: {
+          labels: {
+            style: {
+              fontSize: '12px',
+              fontWeight: 500
+            }
+          },
+          axisBorder: {
+            show: true,
+            color: '#e2e8f0'
+          }
+        },
+        yaxis: {
+          title: {
+            text: "Toneladas",
+            style: {
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#1b3a2e'
+            }
+          },
+          labels: {
+            style: {
+              fontSize: '12px',
+              fontWeight: 500
+            }
+          }
+        },
+        tooltip: {
+          theme: 'light',
+          style: {
+            fontSize: '13px',
+            fontFamily: 'Inter, sans-serif'
+          }
+        },
         legend: {
           show: true,
           showForSingleSeries: true,
           customLegendItems: ["ENTRADA (Contra nota)", "SAÍDA (NF saída)"],
-          markers: { fillColors: ["#81d4fa", "#ff9500"] }
+          markers: { 
+            fillColors: ["#81d4fa", "#ff9500"],
+            radius: 12
+          },
+          fontSize: '13px',
+          fontWeight: 500,
+          itemMargin: {
+            horizontal: 12,
+            vertical: 8
+          }
+        },
+        grid: {
+          borderColor: "#e2e8f0",
+          strokeDashArray: 3,
+          xaxis: {
+            lines: {
+              show: false
+            }
+          },
+          padding: {
+            top: 0,
+            right: 10,
+            bottom: 0,
+            left: 10
+          }
         }
       }
     ).render();

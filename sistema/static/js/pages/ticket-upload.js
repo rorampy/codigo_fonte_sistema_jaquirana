@@ -1,425 +1,520 @@
 /**
- * Módulo para processamento de upload e extração de dados de tickets
- * @module ticket-upload
+ * Upload e extração de dados de tickets
+ * Versão refatorada com modal de upload, preview e confirmação
  */
 
-class TicketUploadManager {
-  constructor() {
-    this.arquivoInput = document.querySelector('input[name="arquivoTicket"]');
-    this.btnCadastrar = document.querySelector('button[type="submit"]');
-    this.textoOriginalBtn = this.btnCadastrar?.innerHTML;
-    this.init();
-  }
+(() => {
+  'use strict';
 
-  init() {
-    if (this.arquivoInput) {
-      this.arquivoInput.addEventListener('change', (e) => this.handleFileChange(e));
-    }
-    this.criarModais();
-  }
+  // Estado do módulo
+  let arquivoSelecionado = null;
+  let imagemBase64 = null;
+  let estaProcessando = false;
 
-  criarModais() {
-    const modaisHTML = `
-      <!-- Loader OCR -->
-      <div id="loader-ocr" class="modal modal-blur fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" style="display: none;">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-body text-center py-5">
-              <div class="mb-3">
-                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                  <span class="visually-hidden">Processando...</span>
-                </div>
-              </div>
-              <h3 class="mb-2">Processando Ticket</h3>
-              <p class="text-secondary mb-0">Extraindo dados automaticamente...</p>
-              <small class="text-muted">Isso pode levar alguns segundos</small>
-            </div>
-          </div>
-        </div>
-      </div>
+  // Elementos do DOM
+  const elementos = {
+    // Áreas principais
+    areaUploadInicial: null,
+    areaFormulario: null,
+    rodapeFormulario: null,
 
-      <!-- Modal Sucesso -->
-      <div class="modal modal-blur fade" id="modal-ticket-sucesso" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-          <div class="modal-content">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            <div class="modal-status bg-success"></div>
-            <div class="modal-body text-center py-4">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="icon mb-2 text-green icon-lg">
-                <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-                <path d="M9 12l2 2l4 -4" />
-              </svg>
-              <h3>Dados Extraídos com Sucesso!</h3>
-              <div class="text-secondary" id="mensagem-sucesso-conteudo"></div>
-            </div>
-            <div class="modal-footer">
-              <div class="w-100">
-                <button class="btn btn-success w-100" data-bs-dismiss="modal">
-                  Continuar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    // Modal de upload
+    modalUpload: null,
+    dropZone: null,
+    dropZoneConteudo: null,
+    dropZonePreview: null,
+    inputUploadModal: null,
+    imagemPreview: null,
+    nomeArquivo: null,
+    btnProcessarUpload: null,
 
-      <!-- Modal Aviso (Extração Parcial) -->
-      <div class="modal modal-blur fade" id="modal-ticket-aviso" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-          <div class="modal-content">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            <div class="modal-status bg-warning"></div>
-            <div class="modal-body text-center py-4">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="icon mb-2 text-yellow icon-lg">
-                <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-                <path d="M12 8l0 4" />
-                <path d="M12 16l.01 0" />
-              </svg>
-              <h3>Extração Parcial</h3>
-              <div class="text-secondary" id="mensagem-aviso-conteudo"></div>
-            </div>
-            <div class="modal-footer">
-              <div class="w-100">
-                <button class="btn w-100" data-bs-dismiss="modal">
-                  Entendido - Preencher Manualmente
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    // Modal de visualização
+    modalVisualizarImagem: null,
+    imagemVisualizacao: null,
 
-      <!-- Modal Erro (Qualidade Insuficiente) -->
-      <div class="modal modal-blur fade" id="modal-ticket-erro-qualidade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-          <div class="modal-content">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            <div class="modal-status bg-danger"></div>
-            <div class="modal-body text-center py-4">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="icon mb-2 text-red icon-lg">
-                <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-                <path d="M10 10l4 4m0 -4l-4 4" />
-              </svg>
-              <h3>Qualidade de Imagem Inadequada</h3>
-              <div class="text-secondary text-start" id="mensagem-erro-qualidade-conteudo"></div>
-            </div>
-            <div class="modal-footer">
-              <div class="w-100">
-                <div class="row">
-                  <div class="col">
-                    <button class="btn w-100" data-bs-dismiss="modal">
-                      Preencher Manualmente
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    // Modal de confirmação
+    modalConfirmacao: null,
+    btnConfirmarCadastro: null,
 
-      <!-- Modal Erro Genérico -->
-      <div class="modal modal-blur fade" id="modal-ticket-erro" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-          <div class="modal-content">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            <div class="modal-status bg-danger"></div>
-            <div class="modal-body text-center py-4">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="icon mb-2 text-red icon-lg">
-                <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-                <path d="M10 10l4 4m0 -4l-4 4" />
-              </svg>
-              <h3>Erro ao Processar Ticket</h3>
-              <div class="text-secondary" id="mensagem-erro-conteudo"></div>
-            </div>
-            <div class="modal-footer">
-              <div class="w-100">
-                <button class="btn btn-danger w-100" data-bs-dismiss="modal">
-                  Entendido
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+    // Botões do formulário
+    btnAlterarImagem: null,
+    btnConfirmar: null,
+
+    // Campos do formulário
+    campos: {},
+
+    // Formulário
+    formTicket: null,
+    arquivoTicket: null,
+
+    // Loader
+    loaderFullscreen: null
+  };
+
+  // Inicialização
+  const inicializar = () => {
+    cachearElementos();
+    criarLoaderFullscreen();
+    vincularEventos();
+  };
+
+  // Cache dos elementos
+  const cachearElementos = () => {
+    // Áreas principais
+    elementos.areaUploadInicial = document.getElementById('areaUploadInicial');
+    elementos.areaFormulario = document.getElementById('areaFormulario');
+    elementos.rodapeFormulario = document.getElementById('rodapeFormulario');
+
+    // Modal de upload
+    elementos.modalUpload = document.getElementById('modalUpload');
+    elementos.dropZone = document.getElementById('dropZone');
+    elementos.dropZoneConteudo = document.getElementById('dropZoneConteudo');
+    elementos.dropZonePreview = document.getElementById('dropZonePreview');
+    elementos.inputUploadModal = document.getElementById('inputUploadModal');
+    elementos.imagemPreview = document.getElementById('imagemPreview');
+    elementos.nomeArquivo = document.getElementById('nomeArquivo');
+    elementos.btnProcessarUpload = document.getElementById('btnProcessarUpload');
+
+    // Imagem direta na tela (sem modal)
+    elementos.imagemTicketDireta = document.getElementById('imagemTicketDireta');
+
+    // Miniatura da imagem
+    elementos.imagemMiniatura = document.getElementById('imagemMiniatura');
+
+    // Modal de confirmação
+    elementos.modalConfirmacao = document.getElementById('modalConfirmacao');
+    elementos.btnConfirmarCadastro = document.getElementById('btnConfirmarCadastro');
+    elementos.confirmaImagemTicket = document.getElementById('confirma-imagem-ticket');
+
+    // Botões do formulário
+    elementos.btnAlterarImagem = document.getElementById('btnAlterarImagem');
+    elementos.btnConfirmar = document.getElementById('btnConfirmar');
+
+    // Campos do formulário
+    elementos.campos = {
+      numeroNf: document.getElementById('numeroNf'),
+      pesoLiquido: document.getElementById('pesoLiquido'),
+      dataEntrega: document.getElementById('dataEntregaTicket')
+    };
+
+    // Formulário
+    elementos.formTicket = document.getElementById('formTicket');
+    elementos.arquivoTicket = document.getElementById('arquivoTicket');
+  };
+
+  // Cria loader fullscreen
+  const criarLoaderFullscreen = () => {
+    const loader = document.createElement('div');
+    loader.id = 'ticket-loader';
+    loader.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      z-index: 10000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    `;
+    loader.innerHTML = `
+      <div class="text-center">
+        <div class="spinner-border text-light" style="width: 3rem; height: 3rem;"></div>
+        <div class="text-white mt-3 fs-4">Processando Ticket...</div>
+        <div class="text-white-50 mt-1">Extraindo dados automaticamente</div>
       </div>
     `;
+    document.body.appendChild(loader);
+    elementos.loaderFullscreen = loader;
+  };
 
-    document.body.insertAdjacentHTML('beforeend', modaisHTML);
-  }
+  // Vincula eventos
+  const vincularEventos = () => {
+    // Evento de click na zona de drop
+    if (elementos.dropZone) {
+      elementos.dropZone.addEventListener('click', () => {
+        elementos.inputUploadModal.click();
+      });
 
-  handleFileChange(e) {
-    const arquivo = e.target.files[0];
-    if (!arquivo) return;
+      // Drag and drop
+      elementos.dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        elementos.dropZone.style.borderColor = 'var(--tblr-success)';
+        elementos.dropZone.style.background = 'var(--tblr-success-lt)';
+      });
 
-    if (!this.validarTipoArquivo(arquivo)) {
-      this.mostrarErro('Arquivo deve estar em formato JPG, JPEG ou PNG.');
-      e.target.value = '';
+      elementos.dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        elementos.dropZone.style.borderColor = 'var(--tblr-primary)';
+        elementos.dropZone.style.background = 'var(--tblr-bg-surface-tertiary)';
+      });
+
+      elementos.dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        elementos.dropZone.style.borderColor = 'var(--tblr-primary)';
+        elementos.dropZone.style.background = 'var(--tblr-bg-surface-tertiary)';
+
+        const arquivo = e.dataTransfer.files[0];
+        if (arquivo) {
+          processarArquivoSelecionado(arquivo);
+        }
+      });
+    }
+
+    // Input file no modal
+    if (elementos.inputUploadModal) {
+      elementos.inputUploadModal.addEventListener('change', (e) => {
+        const arquivo = e.target.files[0];
+        if (arquivo) {
+          processarArquivoSelecionado(arquivo);
+        }
+      });
+    }
+
+    // Botão processar upload
+    if (elementos.btnProcessarUpload) {
+      elementos.btnProcessarUpload.addEventListener('click', processarUpload);
+    }
+
+    // Botão alterar imagem
+    if (elementos.btnAlterarImagem) {
+      elementos.btnAlterarImagem.addEventListener('click', abrirModalAlterarImagem);
+    }
+
+    // Botão confirmar (abre modal de confirmação)
+    if (elementos.btnConfirmar) {
+      elementos.btnConfirmar.addEventListener('click', abrirModalConfirmacao);
+    }
+
+    // Botão confirmar cadastro no modal
+    if (elementos.btnConfirmarCadastro) {
+      elementos.btnConfirmarCadastro.addEventListener('click', confirmarCadastro);
+    }
+
+    // Reset do modal de upload ao fechar
+    if (elementos.modalUpload) {
+      elementos.modalUpload.addEventListener('hidden.bs.modal', () => {
+        // Não reseta se já tem arquivo selecionado
+        if (!arquivoSelecionado) {
+          resetarModalUpload();
+        }
+      });
+    }
+  };
+
+  // Processa arquivo selecionado para preview
+  const processarArquivoSelecionado = (arquivo) => {
+    // Valida tipo
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!tiposPermitidos.includes(arquivo.type)) {
+      exibirToast('Arquivo deve estar em formato JPG, JPEG ou PNG.', 'error');
       return;
     }
 
-    // Limpar campos antes de processar novo arquivo
-    this.limparCampos();
-    
-    this.processarTicket(arquivo);
-  }
-
-  validarTipoArquivo(arquivo) {
-    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/jpg'];
-    return tiposPermitidos.includes(arquivo.type);
-  }
-
-  limparCampos() {
-    const campoNumeroNf = document.querySelector('input[name="numeroNf"]');
-    const campoPesoLiquido = document.querySelector('input[name="pesoLiquido"]');
-    const campoDataEntrega = document.querySelector('input[name="dataEntregaTicket"]');
-    const campoPlaca = document.querySelector('input[name="placaVeiculo"]');
-    
-    if (campoNumeroNf) campoNumeroNf.value = '';
-    if (campoPesoLiquido) campoPesoLiquido.value = '';
-    if (campoDataEntrega) campoDataEntrega.value = '';
-    if (campoPlaca) campoPlaca.value = '';
-  }
-
-  mostrarCarregamento() {
-    // Desabilitar botão de cadastrar
-    if (this.btnCadastrar) {
-      this.btnCadastrar.disabled = true;
-      this.btnCadastrar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando ticket...';
+    // Valida tamanho (10MB)
+    if (arquivo.size > 10 * 1024 * 1024) {
+      exibirToast('Arquivo deve ter no máximo 10MB.', 'error');
+      return;
     }
-    
-    // Mostrar modal de loader
-    const loaderModal = new bootstrap.Modal(document.getElementById('loader-ocr'));
-    this.loaderModal = loaderModal;
-    loaderModal.show();
-  }
 
-  esconderCarregamento() {
-    // Reabilitar botão de cadastrar
-    if (this.btnCadastrar) {
-      this.btnCadastrar.disabled = false;
-      this.btnCadastrar.innerHTML = this.textoOriginalBtn;
+    arquivoSelecionado = arquivo;
+
+    // Gera preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagemBase64 = e.target.result;
+      elementos.imagemPreview.src = imagemBase64;
+      elementos.nomeArquivo.textContent = arquivo.name;
+
+      // Mostra preview, esconde conteúdo padrão
+      elementos.dropZoneConteudo.classList.add('d-none');
+      elementos.dropZonePreview.classList.remove('d-none');
+
+      // Habilita botão de processar
+      elementos.btnProcessarUpload.disabled = false;
+    };
+    reader.readAsDataURL(arquivo);
+  };
+
+  // Processa upload e extrai dados
+  const processarUpload = async () => {
+    if (!arquivoSelecionado || estaProcessando) return;
+
+    estaProcessando = true;
+
+    // Fecha modal de upload
+    const modalUploadInstance = bootstrap.Modal.getInstance(elementos.modalUpload);
+    if (modalUploadInstance) {
+      modalUploadInstance.hide();
     }
-    
-    // Esconder modal de loader e remover backdrop
-    if (this.loaderModal) {
-      this.loaderModal.hide();
-      
-      // Remover backdrop manualmente após esconder o modal
-      const loaderElement = document.getElementById('loader-ocr');
-      if (loaderElement) {
-        loaderElement.addEventListener('hidden.bs.modal', () => {
-          // Remover qualquer backdrop que possa ter ficado
-          const backdrops = document.querySelectorAll('.modal-backdrop');
-          backdrops.forEach(backdrop => backdrop.remove());
-        }, { once: true });
-      }
-      
-      this.loaderModal = null;
-    }
-  }
 
-  async processarTicket(arquivo) {
-    this.mostrarCarregamento();
-
-    const formData = new FormData();
-    formData.append('arquivo', arquivo);
+    // Mostra loader
+    exibirLoader();
 
     try {
-      const response = await fetch('/api/processar-ticket', {
+      // Envia para API de extração
+      const formData = new FormData();
+      formData.append('arquivo', arquivoSelecionado);
+
+      const resposta = await fetch('/api/processar-ticket', {
         method: 'POST',
         body: formData
       });
 
-      // Tratar erros HTTP antes de fazer parse do JSON
-      if (!response.ok) {
-        let mensagemErro = 'Erro ao processar ticket.';
-        
-        try {
-          const data = await response.json();
-          mensagemErro = data.mensagem || mensagemErro;
-        } catch {
-          // Se não conseguir fazer parse do JSON (erro 502, etc)
-          if (response.status === 502) {
-            mensagemErro = 'Servidor temporariamente indisponível. Tente novamente em alguns instantes.';
-            console.error('Erro 502: Bad Gateway - Possível problema com o servidor OCR.');
-          } else if (response.status === 507) {
-            mensagemErro = 'Servidor sem memória. Tente com uma imagem menor.';
-            console.error('Erro 507: Insufficient Storage - Possível problema com o servidor OCR.');
-          } else if (response.status === 413) {
-            mensagemErro = 'Arquivo muito grande (máximo 10MB).';
-            console.error('Erro 413: Payload Too Large - Arquivo excede o tamanho máximo permitido.');
-          } else {
-            mensagemErro = `Erro no servidor (${response.status}). Tente novamente.`;
-          }
-        }
-        
-        this.mostrarErro(mensagemErro);
+      esconderLoader();
+
+      if (!resposta.ok) {
+        const erro = await resposta.json().catch(() => ({}));
+        exibirToast(erro.mensagem || 'Erro ao processar ticket.', 'error');
+        estaProcessando = false;
         return;
       }
 
-      const data = await response.json();
+      const dados = await resposta.json();
 
-      // Aguardar um pequeno delay antes de esconder o loading e mostrar o próximo modal
-      await new Promise(resolve => setTimeout(resolve, 200));
-      this.esconderCarregamento();
-
-      // Aguardar um pouco mais para garantir que o backdrop foi removido
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      if (data.sucesso) {
-        this.preencherCampos(data.dados);
-        this.mostrarSucesso(data);
-      } else {
-        this.tratarErro(data);
+      // Preenche campos com dados extraídos (apenas NF, Peso e Data)
+      if (dados.dados) {
+        if (dados.dados.numero_nf && elementos.campos.numeroNf) {
+          elementos.campos.numeroNf.value = dados.dados.numero_nf;
+        }
+        if (dados.dados.peso_liquido && elementos.campos.pesoLiquido) {
+          elementos.campos.pesoLiquido.value = parseFloat(dados.dados.peso_liquido).toFixed(2);
+        }
+        if (dados.dados.data_entrega && elementos.campos.dataEntrega) {
+          elementos.campos.dataEntrega.value = dados.dados.data_entrega;
+        }
       }
-    } catch (error) {
-      console.error('Erro:', error);
-      this.esconderCarregamento();
-      await new Promise(resolve => setTimeout(resolve, 300));
-      this.mostrarErro(error.message || 'Erro ao processar ticket. Verifique sua conexão e tente novamente.');
-    }
-  }
 
-  preencherCampos(dados) {
-    if (dados.numero_nf) {
-      document.querySelector('input[name="numeroNf"]').value = dados.numero_nf;
-    }
-    if (dados.peso_liquido) {
-      document.querySelector('input[name="pesoLiquido"]').value = parseFloat(dados.peso_liquido).toFixed(2);
-    }
-    if (dados.data_entrega) {
-      document.querySelector('input[name="dataEntregaTicket"]').value = dados.data_entrega;
-    }
-    if (dados.placa) {
-      document.querySelector('input[name="placaVeiculo"]').value = dados.placa;
-    }
-  }
+      // Transfere arquivo para o input do formulário
+      transferirArquivoParaInput();
 
-  mostrarSucesso(data) {
-    let mensagem = 'Os seguintes dados foram extraídos automaticamente:<br><br>';
+      // Mostra formulário
+      exibirFormulario();
+
+      // Mostra mensagem de sucesso
+      exibirToast('Imagem processada! Verifique os dados extraídos.', 'success');
+
+    } catch (erro) {
+      esconderLoader();
+      console.error('Erro:', erro);
+      exibirToast('Erro ao processar ticket. Verifique sua conexão.', 'error');
+    }
+
+    estaProcessando = false;
+  };
+
+  // Transfere arquivo para input file do formulário
+  const transferirArquivoParaInput = () => {
+    if (!arquivoSelecionado || !elementos.arquivoTicket) return;
+
+    // Cria DataTransfer para setar o arquivo
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(arquivoSelecionado);
+    elementos.arquivoTicket.files = dataTransfer.files;
     
-    const camposExtraidos = [];
-    if (data.dados.numero_nf) camposExtraidos.push('Número NF');
-    if (data.dados.peso_liquido) camposExtraidos.push('Peso Líquido');
-    if (data.dados.data_entrega) camposExtraidos.push('Data de Entrega');
-    if (data.dados.placa) camposExtraidos.push('Placa');
-    
-    // Layout em grid com ícones de check
-    mensagem += '<div class="row g-2">';
-    camposExtraidos.forEach(campo => {
-      mensagem += `
-        <div class="col-6">
-          <div class="d-flex align-items-center text-success">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" 
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
-              class="me-2" style="min-width: 20px;">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M9 12l2 2 4-4"/>
+    // Atualiza a imagem direta na tela
+    atualizarImagemDireta();
+  };
+
+  // Atualiza a imagem direta na tela
+  const atualizarImagemDireta = () => {
+    const imagemSrc = imagemBase64 || window.imagemBase64;
+    if (imagemSrc && elementos.imagemTicketDireta) {
+      elementos.imagemTicketDireta.src = imagemSrc;
+    }
+  };
+
+  // Exibe formulário
+  const exibirFormulario = () => {
+    elementos.areaUploadInicial.style.display = 'none';
+    elementos.areaFormulario.style.display = 'block';
+    elementos.rodapeFormulario.style.display = 'block';
+  };
+
+  // Abre modal para alterar imagem
+  const abrirModalAlterarImagem = () => {
+    resetarModalUpload();
+    const modal = new bootstrap.Modal(elementos.modalUpload);
+    modal.show();
+  };
+
+  // Reseta modal de upload
+  const resetarModalUpload = () => {
+    elementos.dropZoneConteudo.classList.remove('d-none');
+    elementos.dropZonePreview.classList.add('d-none');
+    elementos.imagemPreview.src = '';
+    elementos.nomeArquivo.textContent = 'Imagem selecionada';
+    elementos.inputUploadModal.value = '';
+    elementos.btnProcessarUpload.disabled = true;
+    arquivoSelecionado = null;
+    imagemBase64 = null;
+  };
+
+  // Abre modal de confirmação
+  const abrirModalConfirmacao = () => {
+    // Valida campos obrigatórios
+    const fornecedor = document.getElementById('fornecedorIdentificacao');
+    const numeroNf = elementos.campos.numeroNf;
+    const pesoLiquido = elementos.campos.pesoLiquido;
+    const dataEntrega = elementos.campos.dataEntrega;
+    const placaVeiculo = document.querySelector('input[name="placaVeiculo"]');
+    const motorista = document.querySelector('input[name="motoristaTicket"]');
+
+    // Verifica campos obrigatórios
+    let camposInvalidos = [];
+
+    if (!fornecedor?.value) camposInvalidos.push('Fornecedor');
+    if (!numeroNf?.value) camposInvalidos.push('Número NF');
+    if (!pesoLiquido?.value) camposInvalidos.push('Peso Líquido');
+    if (!dataEntrega?.value) camposInvalidos.push('Data Entrega');
+    if (!placaVeiculo?.value) camposInvalidos.push('Placa');
+    if (!motorista?.value) camposInvalidos.push('Motorista');
+
+    if (camposInvalidos.length > 0) {
+      exibirToast(`Preencha os campos obrigatórios: ${camposInvalidos.join(', ')}`, 'warning');
+      return;
+    }
+
+    // Pega informações estáticas da página (vindas do backend)
+    const infoInputs = document.querySelectorAll('.card.border-primary input[disabled]');
+    let cliente = '-', produto = '-', bitola = '-', nfVenda = '-';
+    let transportadora = '-', documento = '-', telefone = '-';
+
+    // Pega valores dos inputs desabilitados do card de informações
+    if (infoInputs.length >= 9) {
+      cliente = infoInputs[0]?.value || '-';
+      produto = infoInputs[1]?.value || '-';
+      bitola = infoInputs[2]?.value || '-';
+      nfVenda = infoInputs[3]?.value || '-';
+      transportadora = infoInputs[4]?.value || '-';
+      documento = infoInputs[5]?.value || '-';
+      telefone = infoInputs[6]?.value || '-';
+    }
+
+    // Preenche dados da solicitação
+    const confirmaCliente = document.getElementById('confirma-cliente');
+    const confirmaProduto = document.getElementById('confirma-produto');
+    const confirmaBitola = document.getElementById('confirma-bitola');
+    const confirmaNfVenda = document.getElementById('confirma-nf-venda');
+    const confirmaTransportadora = document.getElementById('confirma-transportadora');
+    const confirmaDocumento = document.getElementById('confirma-documento');
+    const confirmaTelefone = document.getElementById('confirma-telefone');
+
+    if (confirmaCliente) confirmaCliente.value = cliente;
+    if (confirmaProduto) confirmaProduto.value = produto;
+    if (confirmaBitola) confirmaBitola.value = bitola;
+    if (confirmaNfVenda) confirmaNfVenda.value = nfVenda;
+    if (confirmaTransportadora) confirmaTransportadora.value = transportadora;
+    if (confirmaDocumento) confirmaDocumento.value = documento;
+    if (confirmaTelefone) confirmaTelefone.value = telefone;
+
+    // Preenche dados do ticket (preenchidos pelo usuário)
+    document.getElementById('confirma-nf').value = numeroNf.value;
+    document.getElementById('confirma-peso').value = pesoLiquido.value;
+    document.getElementById('confirma-data').value = formatarData(dataEntrega.value);
+    document.getElementById('confirma-fornecedor').value =
+      fornecedor.options[fornecedor.selectedIndex]?.text || '-';
+    document.getElementById('confirma-placa').value = placaVeiculo.value;
+    document.getElementById('confirma-motorista').value = motorista.value;
+
+    // Preenche imagem do ticket no modal de confirmação
+    const imagemSrc = imagemBase64 || window.imagemBase64;
+    if (imagemSrc && elementos.confirmaImagemTicket) {
+      elementos.confirmaImagemTicket.src = imagemSrc;
+    }
+
+    // Abre modal
+    const modal = new bootstrap.Modal(elementos.modalConfirmacao);
+    modal.show();
+  };
+
+  // Confirma cadastro e submete formulário
+  const confirmarCadastro = () => {
+    // Fecha modal
+    const modalInstance = bootstrap.Modal.getInstance(elementos.modalConfirmacao);
+    if (modalInstance) {
+      modalInstance.hide();
+    }
+
+    // Submete formulário
+    elementos.formTicket.submit();
+  };
+
+  // Formata data para exibição
+  const formatarData = (dataISO) => {
+    if (!dataISO) return '-';
+    const [ano, mes, dia] = dataISO.split('-');
+    return `${dia}/${mes}/${ano}`;
+  };
+
+  // Exibe loader
+  const exibirLoader = () => {
+    if (elementos.loaderFullscreen) {
+      elementos.loaderFullscreen.style.display = 'flex';
+    }
+  };
+
+  // Esconde loader
+  const esconderLoader = () => {
+    if (elementos.loaderFullscreen) {
+      elementos.loaderFullscreen.style.display = 'none';
+    }
+  };
+
+  // Exibe toast de notificação
+  const exibirToast = (mensagem, tipo = 'info') => {
+    // Remove toast anterior se existir
+    const toastAnterior = document.getElementById('toast-ticket');
+    if (toastAnterior) {
+      toastAnterior.remove();
+    }
+
+    const cores = {
+      success: 'bg-success',
+      error: 'bg-danger',
+      warning: 'bg-warning',
+      info: 'bg-info'
+    };
+
+    const icones = {
+      success: '<path d="M5 12l5 5l10 -10"/>',
+      error: '<path d="M18 6l-12 12"/><path d="M6 6l12 12"/>',
+      warning: '<path d="M12 9v4"/><path d="M12 17h.01"/>',
+      info: '<path d="M12 9h.01"/><path d="M11 12h1v4h1"/>'
+    };
+
+    const toastHtml = `
+      <div id="toast-ticket" class="toast align-items-center text-white ${cores[tipo]} border-0" 
+           role="alert" aria-live="assertive" aria-atomic="true" 
+           style="position: fixed; top: 20px; right: 20px; z-index: 11000;">
+        <div class="d-flex">
+          <div class="toast-body d-flex align-items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" 
+                 viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" 
+                 stroke-linecap="round" stroke-linejoin="round">
+              ${icones[tipo]}
             </svg>
-            <span class="fw-medium">${campo}</span>
+            ${mensagem}
           </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
-      `;
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', toastHtml);
+    const toast = new bootstrap.Toast(document.getElementById('toast-ticket'), {
+      autohide: true,
+      delay: 4000
     });
-    mensagem += '</div>';
+    toast.show();
+  };
 
-    if (data.campos_faltantes && data.campos_faltantes.length > 0) {
-      mensagem += '<br><div class="alert alert-warning mb-0 mt-3" role="alert">';
-      mensagem += '<strong>⚠️ Atenção:</strong><br>Não foi possível extrair: ' + data.campos_faltantes.join(', ');
-      mensagem += '<br><small>Preencha manualmente os campos faltantes.</small>';
-      mensagem += '</div>';
-    }
-
-    document.getElementById('mensagem-sucesso-conteudo').innerHTML = mensagem;
-    const modal = new bootstrap.Modal(document.getElementById('modal-ticket-sucesso'));
-    modal.show();
+  // Inicia quando DOM estiver pronto
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializar);
+  } else {
+    inicializar();
   }
 
-  tratarErro(data) {
-    if (data.erro === 'QUALIDADE_IMAGEM_INSUFICIENTE') {
-      this.mostrarErroQualidade(data);
-    } else if (data.erro === 'EXTRACAO_INCOMPLETA') {
-      this.preencherCampos(data.dados);
-      this.mostrarAviso(data);
-    } else {
-      this.mostrarErro(data.mensagem || 'Erro desconhecido ao processar ticket.');
-    }
-  }
-
-  mostrarErroQualidade(data) {
-    let mensagem = `<p><strong>${data.mensagem}</strong></p>`;
-    mensagem += '<hr>';
-    mensagem += '<p class="mb-2"><strong>Dicas para melhorar a qualidade:</strong></p>';
-    mensagem += '<ul class="text-start">';
-    mensagem += '<li>Tire a foto mais próxima do documento</li>';
-    mensagem += '<li>Certifique-se de ter boa iluminação</li>';
-    mensagem += '<li>Evite sombras sobre o documento</li>';
-    mensagem += '<li>Mantenha a câmera estável (evite tremor)</li>';
-    mensagem += '<li>Limpe a lente da câmera</li>';
-    mensagem += '</ul>';
-
-    document.getElementById('mensagem-erro-qualidade-conteudo').innerHTML = mensagem;
-    const modal = new bootstrap.Modal(document.getElementById('modal-ticket-erro-qualidade'));
-    modal.show();
-  }
-
-  mostrarAviso(data) {
-    let mensagem = `<div class="alert alert-warning mb-3" role="alert">${data.mensagem}</div>`;
-    
-    if (data.dados) {
-      mensagem += '<p class="mb-2 fw-bold">Dados extraídos com sucesso:</p>';
-      
-      const dadosExtraidos = [];
-      if (data.dados.numero_nf) dadosExtraidos.push('Número NF');
-      if (data.dados.peso_liquido) dadosExtraidos.push('Peso Líquido');
-      if (data.dados.data_entrega) dadosExtraidos.push('Data de Entrega');
-      if (data.dados.placa) dadosExtraidos.push('Placa');
-      
-      mensagem += '<div class="row g-2 mb-3">';
-      dadosExtraidos.forEach(campo => {
-        mensagem += `
-          <div class="col-6">
-            <div class="d-flex align-items-center text-success">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" 
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
-                class="me-2" style="min-width: 20px;">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9 12l2 2 4-4"/>
-              </svg>
-              <span class="fw-medium">${campo}</span>
-            </div>
-          </div>
-        `;
-      });
-      mensagem += '</div>';
-    }
-    
-    mensagem += '<div class="alert alert-info mb-0" role="alert">';
-    mensagem += '<strong>Próximos passos:</strong><br>';
-    mensagem += 'Preencha manualmente os campos que não foram extraídos.';
-    mensagem += '</div>';
-
-    document.getElementById('mensagem-aviso-conteudo').innerHTML = mensagem;
-    const modal = new bootstrap.Modal(document.getElementById('modal-ticket-aviso'));
-    modal.show();
-  }
-
-  mostrarErro(mensagem) {
-    document.getElementById('mensagem-erro-conteudo').innerHTML = mensagem;
-    const modal = new bootstrap.Modal(document.getElementById('modal-ticket-erro'));
-    modal.show();
-  }
-}
-
-// Inicializar quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', () => {
-  new TicketUploadManager();
-});
+})();

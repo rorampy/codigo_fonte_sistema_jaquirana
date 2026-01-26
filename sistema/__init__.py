@@ -568,9 +568,9 @@ from sistema.models_views.faturamento.cargas_a_faturar.fornecedor import fornece
 from sistema.models_views.faturamento.cargas_a_faturar.transportadora import frete_a_pagar_model
 from sistema.models_views.faturamento.cargas_a_faturar.fornecedor import fornecedor_a_pagar_view
 from sistema.models_views.faturamento.cargas_a_faturar.transportadora import frete_a_pagar_view
-from sistema.models_views.faturamento.controle_credito.extrato_terceiros import saldo_fornecedores_view
-from sistema.models_views.faturamento.controle_credito.extrato_terceiros import saldo_extratores_view
-from sistema.models_views.faturamento.controle_credito.extrato_terceiros import saldo_freteiros_view
+from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento_terceiros import saldo_fornecedores_view
+from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento_terceiros import saldo_extratores_view
+from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento_terceiros import saldo_freteiros_view
 from sistema.models_views.faturamento.cargas_a_faturar.comissionado import comissionado_a_pagar_model
 from sistema.models_views.faturamento.cargas_a_faturar.comissionado import comissionado_a_pagar_view
 from sistema.models_views.financeiro.operacional.faturamento_model import faturamento_model
@@ -587,6 +587,11 @@ from sistema.models_views.financeiro.operacional.categorizar_fatura.parcela_cate
 from sistema.models_views.financeiro.operacional.carga_a_receber import cargas_a_receber_view
 from sistema.models_views.relatorios.relatorios_financeiros.relatorio_dfc_dre.relatorio_dfc import relatorio_financeiro_dfc_view
 from sistema.models_views.relatorios.relatorios_financeiros.relatorio_dfc_dre.relatorio_dre import relatorio_financeiro_dre_view
+
+# Nova arquitetura de créditos (modelos unificados)
+from sistema.models_views.financeiro.controle_adiantamentos import transacao_credito_model
+from sistema.models_views.financeiro.controle_adiantamentos import faturamento_credito_vinculo_model
+from sistema.models_views.financeiro.controle_adiantamentos import historico_transacao_model
 
 # Operacional
 from sistema.models_views.financeiro.operacional.carga_a_pagar import carga_a_pagar_view

@@ -31,6 +31,16 @@ from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_c
 from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_extrator_model import ExtratoCreditoExtratorModel
 from sistema._utilitarios import *
 
+# === Nova Arquitetura de Créditos ===
+from sistema.models_views.financeiro.controle_adiantamentos.servico_creditos import ServicoCreditos
+from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import (
+    TransacaoCreditoModel, TipoTransacaoCredito, TipoPessoa
+)
+from sistema.models_views.financeiro.controle_adiantamentos.faturamento_credito_vinculo_model import FaturamentoCreditoVinculoModel
+from sistema.models_views.financeiro.controle_adiantamentos.historico_transacao_model import HistoricoTransacaoCreditoModel, AcaoHistoricoCredito
+
+
+
 
 @app.route("/financeiro/operacional/cargas-a-pagar", methods=["GET"])
 @login_required
@@ -644,7 +654,7 @@ def excluir_faturamento_a_pagar(faturamento_id):
                             comissionado_pagar.situacao_pagamento_id = 2
 
                 # Devolver créditos utilizados
-                _devolver_creditos_faturamento(detalhes)
+                _devolver_creditos_faturamento(faturamento_id)
                 
             except (json.JSONDecodeError, TypeError) as e:
                 print(f"[ERROR] Erro ao processar detalhes do faturamento: {e}")
@@ -665,134 +675,43 @@ def excluir_faturamento_a_pagar(faturamento_id):
     return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
 
 
-def _devolver_creditos_faturamento(detalhes):
+def _devolver_creditos_faturamento(faturamento_id):
     """
-    Devolve os créditos utilizados no faturamento.
+    Devolve os créditos utilizados no faturamento usando a nova arquitetura.
     
     Args:
-        detalhes (dict): Dicionário com os detalhes do faturamento
+        faturamento_id (int): ID do faturamento que teve seus créditos utilizados
+        
+    Returns:
+        dict: Resultado da operação de estorno
     """
+    print(f"[INFO _devolver_creditos_faturamento] Iniciando devolução de créditos para faturamento ID: {faturamento_id}")
     try:
-        # Processar créditos de fornecedor
-        credito_fornecedor = detalhes.get('credito_fornecedor', [])
-        for credito_data in credito_fornecedor:
-            credito_id = credito_data.get('credito_id')
-            valor_utilizado = credito_data.get('valor', 0)
-            fornecedor_id = credito_data.get('fornecedor_id')
-            
-            if credito_id and valor_utilizado and fornecedor_id:
-                # Buscar o registro de crédito original
-                credito_original = ExtratoCreditoFornecedorModel.query.get(credito_id)
-                if credito_original:
-                    # Criar novo registro de estorno
-                    estorno = ExtratoCreditoFornecedorModel(
-                        data_movimentacao=date.today(),
-                        descricao=f"{credito_data.get('descricao', 'Crédito')}",
-                        fornecedor_id=fornecedor_id,
-                        valor_credito_100=valor_utilizado,
-                        usuario_id=current_user.id,
-                        tipo_movimentacao=4,  # Tipo 4 = Estorno
-                        ativo=True
-                    )
-                    db.session.add(estorno)
-                    
-                    # Atualizar o crédito agrupado
-                    credito_agrupado = CreditoFornecedorModel.obtem_registro_id(fornecedor_id)
-                    if credito_agrupado:
-                        credito_agrupado.valor_total_credito_100 += valor_utilizado
-                    else:
-                        # Criar novo registro de crédito agrupado se não existir
-                        novo_credito = CreditoFornecedorModel(
-                            data_movimentacao=date.today(),
-                            fornecedor_id=fornecedor_id,
-                            valor_total_credito_100=valor_utilizado
-                        )
-                        db.session.add(novo_credito)
-                    
-        # Processar créditos de transportadora
-        credito_transportadora = detalhes.get('credito_transportadora', [])
-        for credito_data in credito_transportadora:
-            credito_id = credito_data.get('credito_id')
-            valor_utilizado = credito_data.get('valor', 0)
-            transportadora_id = credito_data.get('transportadora_id')
-            
-            if credito_id and valor_utilizado and transportadora_id:
-                # Buscar o registro de crédito original
-                credito_original = ExtratoCreditoFreteiroModel.query.get(credito_id)
-                if credito_original: 
-                                       
-                    # Criar novo registro de estorno
-                    estorno = ExtratoCreditoFreteiroModel(
-                        data_movimentacao=date.today(),
-                        descricao=f"{credito_data.get('descricao', 'Crédito')}",
-                        transportadora_id=transportadora_id,
-                        valor_credito_100=valor_utilizado,
-                        usuario_id=current_user.id,
-                        tipo_movimentacao=4,  # Tipo 4 = Estorno
-                        ativo=True
-                    )
-                    db.session.add(estorno)
-                    
-                    # Atualizar o crédito agrupado
-                    credito_agrupado = CreditoFreteiroModel.query.filter_by(
-                        transportadora_id=transportadora_id,
-                        ativo=True,
-                        deletado=False
-                    ).first()
-                    if credito_agrupado:
-                        credito_agrupado.valor_total_credito_100 += valor_utilizado
-                    else:
-                        # Criar novo registro de crédito agrupado se não existir
-                        novo_credito = CreditoFreteiroModel(
-                            data_movimentacao=date.today(),
-                            transportadora_id=transportadora_id,
-                            valor_total_credito_100=valor_utilizado
-                        )
-                        db.session.add(novo_credito)
-                    
-        # Processar créditos de extrator
-        credito_extrator = detalhes.get('credito_extrator', [])
-        for credito_data in credito_extrator:
-            credito_id = credito_data.get('credito_id')
-            valor_utilizado = credito_data.get('valor', 0)
-            extrator_id = credito_data.get('extrator_id')
-            
-            if credito_id and valor_utilizado and extrator_id:
-                # Buscar o registro de crédito original
-                credito_original = ExtratoCreditoExtratorModel.query.get(credito_id)
-                if credito_original:
-                
-                    # Criar novo registro de estorno
-                    estorno = ExtratoCreditoExtratorModel(
-                        data_movimentacao=date.today(),
-                        descricao=f"{credito_data.get('descricao', 'Crédito')}",
-                        extrator_id=extrator_id,
-                        valor_credito_100=valor_utilizado,
-                        usuario_id=current_user.id,
-                        tipo_movimentacao=4,  # Tipo 4 = Estorno
-                        ativo=True
-                    )
-                    db.session.add(estorno)
-                    
-                    # Atualizar o crédito agrupado
-                    credito_agrupado = CreditoExtratorModel.query.filter_by(
-                        extrator_id=extrator_id,
-                        ativo=True,
-                        deletado=False
-                    ).first()
-                    if credito_agrupado:
-                        credito_agrupado.valor_total_credito_100 += valor_utilizado
-                    else:
-                        # Criar novo registro de crédito agrupado se não existir
-                        novo_credito = CreditoExtratorModel(
-                            data_movimentacao=date.today(),
-                            extrator_id=extrator_id,
-                            valor_total_credito_100=valor_utilizado
-                        )
-                        db.session.add(novo_credito)
+        # Buscar código do faturamento para mensagem mais descritiva
+        faturamento = FaturamentoModel.query.get(faturamento_id)
+        codigo_fat = faturamento.codigo_faturamento if faturamento else faturamento_id
+        
+        # Usar Nova Arquitetura via ServicoCreditos
+        resultado_estorno = ServicoCreditos.estornar_utilizacao_creditos(
+            faturamento_id=faturamento_id,
+            usuario_id=current_user.id,
+            motivo=f"Estorno automático - Faturamento {codigo_fat}."
+        )
+        
+        if not resultado_estorno.get('sucesso'):
+            print(f"[WARN _devolver_creditos_faturamento] Erro ao estornar créditos: {resultado_estorno.get('mensagem')}")
+            return resultado_estorno
+        
+        return resultado_estorno
                     
     except Exception as e:
-        raise e
+        print(f"[ERROR _devolver_creditos_faturamento] {e}")
+        return {
+            'sucesso': False,
+            'mensagem': f'Erro ao devolver créditos: {str(e)}',
+            'estornos_criados': 0
+        }
+
 
 @app.route('/financeiro/cargas-a-pagar/exportar-pdf/<int:faturamento_id>', methods=['POST'])
 @login_required
@@ -1111,3 +1030,152 @@ def processar_dados_faturamento(faturamento):
     dados['creditos_em_aberto'] = creditos_em_aberto
 
     return dados
+
+
+
+
+@app.route("/financeiro/faturamentos/reverter-conciliacao/<int:faturamento_id>", methods=["POST"])
+@login_required
+@requires_roles
+def reverter_conciliacao_faturamento(faturamento_id):
+    """
+    Reverte a conciliação de um faturamento específico.
+    Remove os vínculos com transações OFX, movimentações financeiras e reembolsa créditos/adiantamentos.
+    Também reverte a situação dos registros "a pagar" (fornecedores, transportadoras, extratores, comissionados).
+    """
+    try:
+        faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
+        
+        # Verificar se o faturamento está conciliado (situação 8)
+        if faturamento.situacao_pagamento_id != 8:
+            return jsonify({
+                "sucesso": False,
+                "mensagem": "Este faturamento não está conciliado e não pode ser revertido."
+            }), 400
+        
+        # Buscar o agendamento vinculado ao faturamento
+        agendamento = AgendamentoPagamentoModel.query.filter_by(
+            faturamento_id=faturamento_id,
+            ativo=True
+        ).first()
+        
+        if agendamento:
+            # Reverter a situação do agendamento para pendente (situação 2)
+            agendamento.situacao_id = 2
+            agendamento.transacao_ofx_id = None
+        
+        # Reverter a situação do faturamento para pendente (situação 2)
+        faturamento.situacao_pagamento_id = 2
+        
+        # Remover movimentações financeiras vinculadas ao agendamento
+        from sistema.models_views.financeiro.movimentacao_financeira.movimentacao_financeira_model import MovimentacaoFinanceiraModel
+        
+        if agendamento:
+            movimentacoes = MovimentacaoFinanceiraModel.query.filter_by(
+                agendamento_id=agendamento.id,
+                ativo=True
+            ).all()
+            
+            if movimentacoes:
+                for movimentacao in movimentacoes:
+                    movimentacao.ativo = False
+                    movimentacao.deletado = True
+        
+        # ===== REVERTER SITUAÇÃO DOS REGISTROS "A PAGAR" =====
+        registros_revertidos = 0
+        
+        if faturamento.detalhes_json:
+            try:
+                detalhes = faturamento.detalhes_json if isinstance(faturamento.detalhes_json, dict) else json.loads(faturamento.detalhes_json)
+                
+                # Reverter fornecedores a pagar
+                fornecedores = detalhes.get('fornecedores', [])
+                for fornecedor_data in fornecedores:
+                    fornecedor_a_pagar_id = fornecedor_data.get('id') or fornecedor_data.get('fornecedor_a_pagar_id')
+                    if fornecedor_a_pagar_id:
+                        registro = FornecedorPagarModel.query.get(fornecedor_a_pagar_id)
+                        if registro:
+                            registro.situacao_pagamento_id = 2  # Pendente
+                            registros_revertidos += 1
+                
+                # Reverter transportadoras/fretes a pagar
+                transportadoras = detalhes.get('transportadoras', [])
+                for transportadora_data in transportadoras:
+                    frete_a_pagar_id = transportadora_data.get('id') or transportadora_data.get('frete_a_pagar_id')
+                    if frete_a_pagar_id:
+                        registro = FretePagarModel.query.get(frete_a_pagar_id)
+                        if registro:
+                            registro.situacao_pagamento_id = 2  # Pendente
+                            registros_revertidos += 1
+                
+                # Reverter extratores a pagar
+                extratores = detalhes.get('extratores', [])
+                for extrator_data in extratores:
+                    extrator_a_pagar_id = extrator_data.get('id') or extrator_data.get('extrator_a_pagar_id')
+                    if extrator_a_pagar_id:
+                        registro = ExtratorPagarModel.query.get(extrator_a_pagar_id)
+                        if registro:
+                            registro.situacao_pagamento_id = 2  # Pendente
+                            registros_revertidos += 1
+                
+                # Reverter comissionados a pagar
+                comissionados = detalhes.get('comissionados', [])
+                for comissionado_data in comissionados:
+                    comissionado_a_pagar_id = comissionado_data.get('id') or comissionado_data.get('comissionado_a_pagar_id')
+                    if comissionado_a_pagar_id:
+                        registro = ComissionadoPagarModel.query.get(comissionado_a_pagar_id)
+                        if registro:
+                            registro.situacao_pagamento_id = 2  # Pendente
+                            registros_revertidos += 1
+                            
+            except Exception as e:
+                print(f"[WARN reverter_conciliacao_faturamento] Erro ao reverter registros a pagar: {e}")
+                    
+        creditos_reembolsados = 0
+        valor_total_reembolsado = 0
+        
+        if faturamento.utilizou_credito:
+            resultado_estorno = ServicoCreditos.estornar_utilizacao_creditos(
+                faturamento_id=faturamento_id,
+                usuario_id=current_user.id,
+                motivo=f"Reversão de conciliação bancária - Faturamento {faturamento.codigo_faturamento}."
+            )
+            
+            if resultado_estorno.get('sucesso'):
+                creditos_reembolsados = resultado_estorno.get('estornos_criados', 0)
+                valor_total_reembolsado = resultado_estorno.get('total_estornado_100', 0) / 100
+                print(f"[INFO reverter_conciliacao_faturamento] {resultado_estorno.get('mensagem')}")
+                print(f"[INFO reverter_conciliacao_faturamento] Valor total reembolsado: R$ {valor_total_reembolsado:.2f}")
+            else:
+                print(f"[WARN reverter_conciliacao_faturamento] Erro ao estornar créditos: {resultado_estorno.get('mensagem')}")
+        
+        # Salvar alterações no banco
+        db.session.commit()
+        
+        mensagem = f"✓ Conciliação do faturamento {faturamento.codigo_faturamento} revertida com sucesso!"
+        detalhes = []
+        
+        if registros_revertidos > 0:
+            detalhes.append(f"{registros_revertidos} registro(s) a pagar voltaram para status Pendente")
+        
+        if creditos_reembolsados > 0:
+            valor_formatado = f"R$ {valor_total_reembolsado:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+            detalhes.append(f"{creditos_reembolsados} transação(ões) de crédito estornadas (Total: {valor_formatado})")
+        
+        if detalhes:
+            mensagem += "\n\nDetalhes:\n- " + "\n- ".join(detalhes)
+        
+        return jsonify({
+            "sucesso": True,
+            "mensagem": mensagem
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR reverter_conciliacao_faturamento] {e}")
+        return jsonify({
+            "sucesso": False,
+            "mensagem": f"Erro ao reverter conciliação: {str(e)}"
+        }), 500
+
+

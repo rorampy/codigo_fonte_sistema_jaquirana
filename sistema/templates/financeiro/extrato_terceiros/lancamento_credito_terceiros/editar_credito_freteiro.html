@@ -1,0 +1,166 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <small class="text-muted text-uppercase">Editar Crédito
+            Freteiro</small>
+          <h2 class="page-title fw-bold mt-1">Edição</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body py-4">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white border-bottom-0">
+          <h3 class="card-title mb-0 d-flex align-items-center">
+            <i class="ti ti-wallet me-2"></i>
+            Freteiro: {{ transportadora.identificacao }}
+            {% set saldo_valor = saldo / 100 %}
+            {% if saldo_valor >= 0 %}
+            <span class="badge bg-success-lt text-success ms-3 fs-6 px-3 py-2 rounded-pill">{{saldo | formatar_float_para_brl}}
+            </span>
+            {% else %}
+            <span class="badge bg-danger-lt text-danger ms-3 fs-6 px-3 py-2 rounded-pill">
+              {{saldo | formatar_float_para_brl}}
+            </span>
+            {% endif %}
+          </h3>
+        </div>
+
+        <div class="card-body">
+          <form
+            action="{{ url_for('editar_credito_freteiro', credito_id=credito.id) }}"
+            method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="transportadora_id" value="{{ transportadora.id }}">
+            
+            <div class="row">
+
+              <div class="col-md-12 mb-3">
+                <div class="mb-3">
+                  <div class="form-label required">Tipo de Valor</div>
+                  <div>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="tipo_valor" value="positivo" 
+                             {% if dados_corretos.get('tipo_valor') == 'positivo' %}checked
+                             {% elif not dados_corretos.get('tipo_valor') and (not credito.tipo_valor or credito.tipo_valor == 'positivo') %}checked{% endif %}>
+                      <span class="form-check-label">Positivo</span>
+                    </label>
+                    <label class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="tipo_valor" value="negativo" 
+                             {% if dados_corretos.get('tipo_valor') == 'negativo' %}checked
+                             {% elif not dados_corretos.get('tipo_valor') and credito.tipo_valor == 'negativo' %}checked{% endif %}>
+                      <span class="form-check-label">Negativo</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Data do Lançamento -->
+              <div class="col-md-3 mb-3">
+                <label class="form-label required">Data Movimentação</label>
+                <input
+                  type="date"
+                  name="data_movimentacao"
+                  value="{{ dados_corretos.get('data_movimentacao') or (credito.data_movimentacao.strftime('%Y-%m-%d') if credito.data_movimentacao else '') }}"
+                  class="form-control {% if 'data_movimentacao' in campos_obrigatorios or 'data_movimentacao' in campos_erros %}is-invalid{% endif %}">
+                <div class="invalid-feedback">
+                  {% if 'data_movimentacao' in campos_obrigatorios %}
+                  {{ campos_obrigatorios['data_movimentacao'] }}
+                  {% elif 'data_movimentacao' in campos_erros %}
+                  {{ campos_erros['data_movimentacao'] }}
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Valor do crédito -->
+              <div class="col-md-3 mb-3">
+                <label class="form-label required">Valor</label>
+                <input
+                  type="text"
+                  name="valor_credito"
+                  value="{{ dados_corretos.get('valor_credito') or ('{:,.2f}'.format(credito.valor_original_100 / 100).replace(',', 'X').replace('.', ',').replace('X', '.') if credito.valor_original_100 else '') }}"
+                  class="form-control campo-moeda-brl {% if 'valor_credito' in campos_obrigatorios or 'valor_credito' in campos_erros %}is-invalid{% endif %}"
+                  placeholder="R$ 0,00">
+                <div class="invalid-feedback">
+                  {% if 'valor_credito' in campos_obrigatorios %}
+                  {{ campos_obrigatorios['valor_credito'] }}
+                  {% elif 'valor_credito' in campos_erros %}
+                  {{ campos_erros['valor_credito'] }}
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Descrição -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label required">Descrição</label>
+                <input
+                  type="text"
+                  name="descricao"
+                  placeholder="Descrição"
+                  value="{{ dados_corretos.get('descricao') or credito.descricao or '' }}"
+                  class="form-control {% if 'descricao' in campos_obrigatorios or 'descricao' in campos_erros %}is-invalid{% endif %}">
+                <div class="invalid-feedback">
+                  {% if 'descricao' in campos_obrigatorios %}
+                  {{ campos_obrigatorios['descricao'] }}
+                  {% elif 'descricao' in campos_erros %}
+                  {{ campos_erros['descricao'] }}
+                  {% endif %}
+                </div>
+              </div>
+              
+              <!-- Alerta informativo -->
+              <div class="col-12 mb-3">
+                <div class="alert alert-info mb-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4"/>
+                    <path d="M12 8h.01"/>
+                  </svg>
+                  <strong>Atenção:</strong> Apenas lançamentos não utilizados podem ser editados.
+                </div>
+              </div>
+              
+              <!-- Ações -->
+              <div class="col-12 text-end mt-4">
+                <a href="{{url_for('extrato_freteiro', id=transportadora.id)}}"
+                  class="btn btn-primary me-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left"><path
+                      stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+                      d="M5 12l14 0" /><path d="M5 12l6 6" /><path
+                      d="M5 12l6 -6" /></svg> Voltar
+                </a>
+                <button type="submit" class="btn btn-success">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-check"><path
+                      stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+                      d="M5 12l5 5l10 -10" /></svg> Salvar Alterações
+                </button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

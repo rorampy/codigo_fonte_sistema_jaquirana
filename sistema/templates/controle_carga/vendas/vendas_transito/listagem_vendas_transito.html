@@ -203,8 +203,18 @@
                           <path d="M18 20l3 -3l-3 -3" />
                         </svg>
                       </a>
-                      <a href="{{url_for('cadastrar_ticket', id=registro.solicitacao.id)}}"
-                        class="btn btn-icon btn-outline-info {% if registro.solicitacao.ticket_emitido == 1 %}disabled{% endif %}"
+                      <button type="button"
+                        class="btn btn-icon btn-outline-info btn-lancar-ticket {% if registro.solicitacao.ticket_emitido == 1 %}disabled{% endif %}"
+                        data-solicitacao-id="{{ registro.solicitacao.id }}"
+                        data-cliente="{{ registro.solicitacao.cliente.identificacao | truncate(40, true, '...') }}"
+                        data-produto="{{ registro.solicitacao.produto.nome }}"
+                        data-bitola="{{ registro.solicitacao.bitola.bitola }}"
+                        data-nf="{{ registro.numero_nota_fiscal or '-' }}"
+                        data-transportadora="{{ registro.solicitacao.transportadora_exibicao.identificacao | truncate(30, true, '...') }}"
+                        data-documento="{{ registro.solicitacao.transportadora_exibicao.numero_documento }}"
+                        data-telefone="{{ registro.solicitacao.transportadora_exibicao.telefone }}"
+                        data-motorista="{{ registro.solicitacao.motorista.nome_completo }}"
+                        data-placa="{{ registro.solicitacao.veiculo.placa_veiculo }}"
                         data-bs-toggle="tooltip" data-bs-placement="top" title="Lançar Ticket">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-ticket" width="24"
                           height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
@@ -217,7 +227,7 @@
                             d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2">
                           </path>
                         </svg>
-                      </a>
+                      </button>
                       {% if registro.deletado == 0%}
                       <a href="#"
                         class="btn btn-icon btn-outline-danger excluir {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%}"
@@ -549,6 +559,364 @@
   {% include 'estrutura/footer.html' %}
 </div>
 
+<!-- Modal de Upload do Ticket -->
+<div class="modal modal-blur fade" id="modalUploadTicket" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-ticket me-2 text-info" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M15 5l0 2"/>
+            <path d="M15 11l0 2"/>
+            <path d="M15 17l0 2"/>
+            <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2"/>
+          </svg>
+          Lançar Ticket
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Card: Informações da Solicitação -->
+        <div class="card border border-primary shadow-sm mb-4">
+          <div class="card-body">
+            <h3 class="card-title mb-3 text-primary">Informações da Solicitação</h3>
+            <div class="row">
+              <div class="col-sm-12 col-md-5">
+                <div class="mb-3">
+                  <label class="form-label text-muted small mb-1">Cliente</label>
+                  <input type="text" class="form-control" id="modal-cliente" value="-" disabled>
+                </div>
+              </div>
+              <div class="col-sm-6 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label text-muted small mb-1">Produto</label>
+                  <input type="text" class="form-control" id="modal-produto" value="-" disabled>
+                </div>
+              </div>
+              <div class="col-sm-6 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label text-muted small mb-1">Bitola</label>
+                  <input type="text" class="form-control" id="modal-bitola" value="-" disabled>
+                </div>
+              </div>
+              <div class="col-sm-12 col-md-3">
+                <div class="mb-3">
+                  <label class="form-label text-muted small mb-1">Número NF</label>
+                  <input type="text" class="form-control" id="modal-nf" value="-" disabled>
+                </div>
+              </div>
+            </div>
+            
+            <h3 class="card-title mb-3 text-primary">Informações da Transportadora</h3>
+            <div class="row">
+              <div class="col-sm-12 col-md-4">
+                <div class="mb-3">
+                  <label class="form-label text-muted small mb-1">Transportadora</label>
+                  <input type="text" class="form-control" id="modal-transportadora" value="-" disabled>
+                </div>
+              </div>
+              <div class="col-sm-6 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label text-muted small mb-1">CPF/CNPJ</label>
+                  <input type="text" class="form-control" id="modal-documento" value="-" disabled>
+                </div>
+              </div>
+              <div class="col-sm-6 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label text-muted small mb-1">Telefone</label>
+                  <input type="text" class="form-control" id="modal-telefone" value="-" disabled>
+                </div>
+              </div>
+              <div class="col-sm-6 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label text-muted small mb-1">Motorista</label>
+                  <input type="text" class="form-control" id="modal-motorista" value="-" disabled>
+                </div>
+              </div>
+              <div class="col-sm-6 col-md-2">
+                <div class="mb-3">
+                  <label class="form-label text-muted small mb-1">Placa</label>
+                  <input type="text" class="form-control" id="modal-placa" value="-" disabled>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Seção: Upload do Ticket -->
+        <h4 class="subheader mb-3">Upload do Ticket</h4>
+        <div id="dropZoneTicket" class="dropzone-area text-center py-5 border border-2 border-dashed rounded-3"
+             style="border-color: var(--tblr-primary) !important; background: var(--tblr-bg-surface-tertiary); cursor: pointer; transition: all 0.3s ease;">
+          <div id="dropZoneConteudoTicket">
+            <span class="avatar avatar-xl bg-primary-lt text-primary mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/>
+                <path d="M7 9l5 -5l5 5"/>
+                <path d="M12 4l0 12"/>
+              </svg>
+            </span>
+            <h4 class="mb-2">Arraste a imagem do ticket aqui</h4>
+            <p class="text-secondary mb-2">ou clique para selecionar</p>
+            <p class="text-muted small mb-0">Formatos aceitos: JPG, JPEG, PNG (máx. 10MB)</p>
+          </div>
+          <div id="dropZonePreviewTicket" class="d-none">
+            <img id="imagemPreviewTicket" src="" alt="Preview" class="img-fluid rounded" style="max-height: 250px;">
+            <p class="mt-3 mb-0 text-success fw-bold">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M5 12l5 5l10 -10"/>
+              </svg>
+              <span id="nomeArquivoTicket">Imagem selecionada</span>
+            </p>
+          </div>
+          <input type="file" id="inputUploadTicket" class="d-none" accept=".jpg, .jpeg, .png">
+        </div>
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M18 6l-12 12"/>
+            <path d="M6 6l12 12"/>
+          </svg>
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" id="btnProcessarTicket" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M4 7v-1a2 2 0 0 1 2 -2h2" />
+            <path d="M4 17v1a2 2 0 0 0 2 2h2" />
+            <path d="M16 4h2a2 2 0 0 1 2 2v1" />
+            <path d="M16 20h2a2 2 0 0 0 2 -2v-1" />
+            <path d="M5 12l14 0" />
+          </svg>
+          Processar e Continuar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loader para processamento -->
+<div id="loaderTicket" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center;">
+  <div class="text-center">
+    <div class="spinner-border text-light" style="width: 3rem; height: 3rem;"></div>
+    <div class="text-white mt-3 fs-4">Processando Ticket...</div>
+    <div class="text-white-50 mt-1">Extraindo dados automaticamente</div>
+  </div>
+</div>
+
 <!-- Script específico da página -->
 <script src="{{ url_for('static', filename='js/pages/vendas-em-transito-listagem.js') }}"></script>
+
+<!-- Script do upload de ticket na listagem -->
+<script>
+(function() {
+  'use strict';
+  
+  let arquivoSelecionado = null;
+  let solicitacaoIdAtual = null;
+  
+  // Elementos
+  const modal = document.getElementById('modalUploadTicket');
+  const dropZone = document.getElementById('dropZoneTicket');
+  const dropZoneConteudo = document.getElementById('dropZoneConteudoTicket');
+  const dropZonePreview = document.getElementById('dropZonePreviewTicket');
+  const inputUpload = document.getElementById('inputUploadTicket');
+  const imagemPreview = document.getElementById('imagemPreviewTicket');
+  const nomeArquivo = document.getElementById('nomeArquivoTicket');
+  const btnProcessar = document.getElementById('btnProcessarTicket');
+  const loader = document.getElementById('loaderTicket');
+  
+  // Campos do modal
+  const modalCliente = document.getElementById('modal-cliente');
+  const modalProduto = document.getElementById('modal-produto');
+  const modalBitola = document.getElementById('modal-bitola');
+  const modalNf = document.getElementById('modal-nf');
+  const modalTransportadora = document.getElementById('modal-transportadora');
+  const modalDocumento = document.getElementById('modal-documento');
+  const modalTelefone = document.getElementById('modal-telefone');
+  const modalMotorista = document.getElementById('modal-motorista');
+  const modalPlaca = document.getElementById('modal-placa');
+  
+  // Usa event delegation para vincular eventos aos botões de lançar ticket
+  // Isso garante que funcione mesmo após atualização via AJAX/filtro rápido
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-lancar-ticket');
+    if (!btn) return;
+    
+    e.preventDefault();
+    if (btn.classList.contains('disabled')) return;
+    
+    solicitacaoIdAtual = btn.dataset.solicitacaoId;
+    
+    // Preenche todos os campos do modal
+    if (modalCliente) modalCliente.value = btn.dataset.cliente || '-';
+    if (modalProduto) modalProduto.value = btn.dataset.produto || '-';
+    if (modalBitola) modalBitola.value = btn.dataset.bitola || '-';
+    if (modalNf) modalNf.value = btn.dataset.nf || '-';
+    if (modalTransportadora) modalTransportadora.value = btn.dataset.transportadora || '-';
+    if (modalDocumento) modalDocumento.value = formatarDocumento(btn.dataset.documento) || '-';
+    if (modalTelefone) modalTelefone.value = formatarTelefone(btn.dataset.telefone) || '-';
+    if (modalMotorista) modalMotorista.value = btn.dataset.motorista || '-';
+    if (modalPlaca) modalPlaca.value = btn.dataset.placa || '-';
+    
+    resetarModal();
+    new bootstrap.Modal(modal).show();
+  });
+  
+  // Formatar CPF/CNPJ
+  function formatarDocumento(doc) {
+    if (!doc) return '-';
+    doc = doc.replace(/\D/g, '');
+    if (doc.length === 11) {
+      return doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    } else if (doc.length === 14) {
+      return doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+    return doc;
+  }
+  
+  // Formatar telefone
+  function formatarTelefone(tel) {
+    if (!tel) return '-';
+    tel = tel.replace(/\D/g, '');
+    if (tel.length === 11) {
+      return tel.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (tel.length === 10) {
+      return tel.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    }
+    return tel;
+  }
+  
+  // Click no dropzone
+  if (dropZone) {
+    dropZone.addEventListener('click', () => inputUpload.click());
+    
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--tblr-success)';
+      dropZone.style.background = 'var(--tblr-success-lt)';
+    });
+    
+    dropZone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--tblr-info)';
+      dropZone.style.background = 'var(--tblr-bg-surface-tertiary)';
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--tblr-info)';
+      dropZone.style.background = 'var(--tblr-bg-surface-tertiary)';
+      const arquivo = e.dataTransfer.files[0];
+      if (arquivo) processarArquivo(arquivo);
+    });
+  }
+  
+  // Input file change
+  if (inputUpload) {
+    inputUpload.addEventListener('change', (e) => {
+      const arquivo = e.target.files[0];
+      if (arquivo) processarArquivo(arquivo);
+    });
+  }
+  
+  // Botão processar
+  if (btnProcessar) {
+    btnProcessar.addEventListener('click', processarUpload);
+  }
+  
+  function processarArquivo(arquivo) {
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!tiposPermitidos.includes(arquivo.type)) {
+      alert('Arquivo deve estar em formato JPG, JPEG ou PNG.');
+      return;
+    }
+    if (arquivo.size > 10 * 1024 * 1024) {
+      alert('Arquivo deve ter no máximo 10MB.');
+      return;
+    }
+    
+    arquivoSelecionado = arquivo;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagemPreview.src = e.target.result;
+      nomeArquivo.textContent = arquivo.name;
+      dropZoneConteudo.classList.add('d-none');
+      dropZonePreview.classList.remove('d-none');
+      btnProcessar.disabled = false;
+    };
+    reader.readAsDataURL(arquivo);
+  }
+  
+  async function processarUpload() {
+    if (!arquivoSelecionado || !solicitacaoIdAtual) return;
+    
+    // Fecha modal e mostra loader
+    bootstrap.Modal.getInstance(modal).hide();
+    loader.style.display = 'flex';
+    
+    try {
+      const formData = new FormData();
+      formData.append('arquivo', arquivoSelecionado);
+      
+      const resposta = await fetch('/api/processar-ticket', {
+        method: 'POST',
+        body: formData
+      });
+      
+      loader.style.display = 'none';
+      
+      if (!resposta.ok) {
+        const erro = await resposta.json().catch(() => ({}));
+        alert(erro.mensagem || 'Erro ao processar ticket.');
+        return;
+      }
+      
+      const dados = await resposta.json();
+      
+      // Armazena dados extraídos no sessionStorage para usar na página de cadastro
+      sessionStorage.setItem('ticketDadosExtraidos', JSON.stringify({
+        numero_nf: dados.dados?.numero_nf || '',
+        peso_liquido: dados.dados?.peso_liquido || '',
+        data_entrega: dados.dados?.data_entrega || ''
+      }));
+      
+      // Armazena arquivo para transferir
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        sessionStorage.setItem('ticketArquivoBase64', e.target.result);
+        sessionStorage.setItem('ticketArquivoNome', arquivoSelecionado.name);
+        sessionStorage.setItem('ticketArquivoTipo', arquivoSelecionado.type);
+        
+        // Redireciona para página de cadastro
+        window.location.href = `/controle-cargas/cadastrar/ticket/${solicitacaoIdAtual}`;
+      };
+      reader.readAsDataURL(arquivoSelecionado);
+      
+    } catch (erro) {
+      loader.style.display = 'none';
+      console.error('Erro:', erro);
+      alert('Erro ao processar ticket. Verifique sua conexão.');
+    }
+  }
+  
+  function resetarModal() {
+    dropZoneConteudo.classList.remove('d-none');
+    dropZonePreview.classList.add('d-none');
+    imagemPreview.src = '';
+    nomeArquivo.textContent = 'Imagem selecionada';
+    inputUpload.value = '';
+    btnProcessar.disabled = true;
+    arquivoSelecionado = null;
+  }
+})();
+</script>
+
 {% endblock conteudo %}

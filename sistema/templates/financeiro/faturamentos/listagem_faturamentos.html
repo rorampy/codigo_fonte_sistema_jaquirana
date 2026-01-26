@@ -13,8 +13,7 @@
             <h2 class="page-title">
               Listagem
             </h2>
-            <a href="{{ url_for('listagem_fornecedores_a_pagar') }}"
-              class="btn btn-outline-danger">
+            <a href="{{ url_for('listagem_fornecedores_a_pagar') }}" class="btn btn-outline-danger">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="icon icon-tabler icons-tabler-outline icon-tabler-user">
@@ -24,8 +23,7 @@
               </svg>
               Faturar > Fornecedor
             </a>
-            <a href="{{ url_for('listagem_fretes_a_pagar') }}"
-              class="btn btn-outline-danger">
+            <a href="{{ url_for('listagem_fretes_a_pagar') }}" class="btn btn-outline-danger">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="icon icon-tabler icons-tabler-outline icon-tabler-truck">
@@ -55,6 +53,17 @@
                 <path d="M5 18l0 .01" />
               </svg>
               Todos
+            </a>
+            <a href="{{ url_for('listagem_faturamentos_cargas_a_pagar', situacaoFaturamento=8) }}"
+              class="btn btn-outline-dark">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-circle-check">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                <path d="m9 12 2 2 4 -4" />
+              </svg>
+              Conciliados
             </a>
             <a href="{{ url_for('listagem_faturamentos_cargas_a_pagar', situacaoFaturamento=6) }}"
               class="btn btn-outline-success">
@@ -222,7 +231,7 @@
                         </svg>
                       </button>
 
-                      {% if faturamento.situacao_pagamento_id == 6 or faturamento.situacao_pagamento_id == 8 %}
+                      {% if faturamento.situacao_pagamento_id == 6 %}
                       <!-- Botão para ver categorização (já categorizado) -->
                       <button type="button" class="btn btn-icon btn-outline-dark" data-bs-toggle="modal"
                         data-bs-target="#modal-categorizacao" onclick="carregarCategorizacao({{ faturamento.id }})"
@@ -235,7 +244,9 @@
                           <path d="m9 12 2 2 4 -4" />
                         </svg>
                       </button>
+
                       {% else %}
+                      {% if faturamento.situacao_pagamento_id == 7 %}
                       <!-- Botão para categorizar (não categorizado) -->
                       <a href="{{ url_for('categorizar_fatura', id=faturamento.id) }}"
                         class="btn btn-icon btn-outline-orange" data-bs-toggle="tooltip" data-bs-placement="top"
@@ -250,6 +261,7 @@
                           <path d="M17 17m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
                         </svg>
                       </a>
+                      {%endif%}
                       {% endif %}
                       <button type="button" class="btn btn-icon btn-outline-success" data-bs-toggle="tooltip"
                         data-bs-placement="top" title="Copiar dados bancários"
@@ -294,9 +306,9 @@
                           <path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
                         </svg>
                       </button>
-
+                      {% if dados_corretos.get('situacaoFaturamento')|string != '8' %}
                       <a href="#"
-                        class="btn btn-icon btn-outline-danger excluir  {%if faturamento.situacao_pagamento_id == 6 and current_user.role_id != 1%} disabled {%endif%}"
+                        class="btn btn-icon btn-outline-danger excluir  {%if faturamento.situacao_pagamento_id == 6 %} disabled {%endif%}"
                         data-bs-toggle="modal" data-bs-target="#modal-desativar-{{faturamento.id}}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -349,6 +361,69 @@
                           </div>
                         </div>
                       </div>
+                      {% endif %}
+                      {% if dados_corretos.get('situacaoFaturamento')|string == '8' %}
+                      <button type="button" class="btn btn-icon btn-outline-danger" data-bs-toggle="modal"
+                        data-bs-target="#modal-reverter-conciliacao-{{ faturamento.id }}" title="Reverter Conciliação">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M9 14l-4 -4l4 -4" />
+                          <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
+                        </svg>
+                      </button>
+                      <!-- Modal de Confirmação para Reverter Conciliação -->
+                      <div class="modal modal-blur fade" id="modal-reverter-conciliacao-{{ faturamento.id }}" tabindex="-1"
+                        role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                          <div class="modal-content">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-status bg-warning"></div>
+                            <div class="modal-body text-center py-4">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon mb-2 text-warning icon-lg">
+                                <path d="M12 9v4" />
+                                <path
+                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                                <path d="M12 16h.01" />
+                              </svg>
+                              <h3 class="mb-2">Reverter Conciliação</h3>
+                              <div class="text-secondary">
+                                <p class="mb-2">Você realmente deseja reverter a conciliação do faturamento <strong>{{ faturamento.codigo_faturamento }}</strong>?</p>
+                                <small class="text-muted">
+                                  Esta ação irá:
+                                  <ul class="text-start mt-2" style="font-size: 12px;">
+                                    <li>Desvincular da transação OFX</li>
+                                    <li>Retornar para status "Pendente"</li>
+                                    <li>Remover movimentações financeiras</li>
+                                    <li>Reembolsar créditos/adiantamentos (se houver)</li>
+                                  </ul>
+                                </small>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <div class="w-100">
+                                <div class="row">
+                                  <div class="col">
+                                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">
+                                      Cancelar
+                                    </button>
+                                  </div>
+                                  <div class="col">
+                                    <button type="button" class="btn btn-warning w-100"
+                                      onclick="confirmarReverterConciliacao({{ faturamento.id }})">
+                                      Confirmar
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {% endif %}
                     </div>
                   </td>
                 </tr>
@@ -1953,6 +2028,44 @@ Conta: ${conta}
 PIX: ${pix}`;
   }
 
+  // ===== FUNÇÃO DE REVERTER CONCILIAÇÃO =====
+
+  function confirmarReverterConciliacao(faturamentoId) {
+    // Fechar o modal de confirmação
+    const modal = document.getElementById(`modal-reverter-conciliacao-${faturamentoId}`);
+    const bsModal = bootstrap.Modal.getInstance(modal);
+    if (bsModal) {
+      bsModal.hide();
+    }
+
+    // Mostrar loading
+    mostrarNotificacao('Revertendo conciliação...', 'info');
+
+    // Fazer requisição para reverter
+    fetch(`/${faturamentoId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.sucesso) {
+          mostrarNotificacao(data.mensagem || 'Conciliação revertida com sucesso!', 'success');
+          // Recarregar a página após 1 segundo
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } else {
+          mostrarNotificacao(data.mensagem || 'Erro ao reverter conciliação', 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao reverter conciliação:', error);
+        mostrarNotificacao('Erro ao reverter conciliação. Tente novamente.', 'error');
+      });
+  }
+
   // ===== FUNÇÕES DE EXPORTAR PDF =====
 
   function abrirModalExportarPDF(faturamentoId) {
@@ -1983,6 +2096,9 @@ PIX: ${pix}`;
     newBtnGerar.onclick = function () {
       gerarPDFFaturamento();
     };
+
+    // Carregar beneficiários do faturamento
+    carregarBeneficiariosParaModal(faturamentoId);
 
     try {
       if (window.bootstrap && window.bootstrap.Modal) {

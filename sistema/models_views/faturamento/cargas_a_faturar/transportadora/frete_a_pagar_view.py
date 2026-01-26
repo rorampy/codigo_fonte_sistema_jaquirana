@@ -10,9 +10,7 @@ from sistema.models_views.controle_carga.produto.produto_model import ProdutoMod
 from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
-from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_freteiro_model import CreditoFreteiroModel
 from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
-from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_freteiro_model import ExtratoCreditoFreteiroModel
 from sistema.models_views.financeiro.movimentacao_financeira.movimentacao_financeira_model import MovimentacaoFinanceiraModel
 from sistema.models_views.financeiro.movimentacao_financeira.saldo_movimentacao_financeira_model import SaldoMovimentacaoFinanceiraModel
 from sistema.models_views.upload_arquivo.upload_arquivo_model import UploadArquivoModel
@@ -25,20 +23,28 @@ from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema._utilitarios import *
 from sistema._utilitarios.utilitario_semanal import UtilitariosSemana
 
+# === Nova Arquitetura de Créditos ===
+from sistema.models_views.financeiro.controle_adiantamentos.servico_creditos import ServicoCreditos
+from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import (
+    TransacaoCreditoModel, TipoTransacaoCredito, TipoPessoa
+)
+from sistema.models_views.financeiro.controle_adiantamentos.faturamento_credito_vinculo_model import FaturamentoCreditoVinculoModel
+from sistema.models_views.financeiro.controle_adiantamentos.historico_transacao_model import HistoricoTransacaoCreditoModel, AcaoHistoricoCredito
+
 
 @app.route("/financeiro/fretes-a-faturar", methods=["GET"])
 @login_required
 @requires_roles
 def listagem_fretes_a_pagar():
     from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
-    from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
+    from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
     from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
     
     bitolas = BitolaModel.listar_bitolas_ativas()
     produtos = ProdutoModel.listar_produtos()
     statusPagamentos = SituacaoPagamentoModel.listar_status_filtro()
     transportadoras = TransportadoraModel.listar_transportadoras_ativas()
-    fornecedores = FornecedorCadastroModel.listar_fornecedores_ativos()
+    fornecedores = FornecedorModel.listar_fornecedores_ativos()
     motoristas = MotoristaModel.listar_motoristas_ativos()
     clientes = ClienteModel.listar_clientes_ativos()
 
@@ -109,18 +115,8 @@ def listagem_fretes_a_pagar():
             statusPagamento=statusPagamento
         )
         
-        # for registro_dict in registros:
-        #     registro = registro_dict.get('registro')
-        #     faturamento_codigo = FaturamentoModel.buscar_faturamento_origem_por_carga_pagar_id(registro.id, 'transportadora')
-        #     registro_dict['cod_faturamento'] = faturamento_codigo
-        
     else:
         registros = FretePagarModel.obter_frete_transportadora_agrupados()
-        
-        # for registro_dict in registros:
-        #     registro = registro_dict.get('registro')
-        #     faturamento_codigo = FaturamentoModel.buscar_faturamento_origem_por_carga_pagar_id(registro.id, 'transportadora')
-        #     registro_dict['cod_faturamento'] = faturamento_codigo
         
     return render_template(
         "/financeiro/fretes_a_pagar_listagem.html",
@@ -169,16 +165,13 @@ def frete_a_pagar(id):
             flash(("Registro já consta como faturado!", "warning"))
             return redirect(url_for("listagem_fretes_a_pagar"))
 
-        # Crédito disponível do freteiro (total)
-        saldo_credito = CreditoFreteiroModel.obtem_registro_id(
+        # === Usando nova arquitetura via ServicoCreditos ===
+        credito_disponivel = ServicoCreditos.obter_saldo_transportadora(
             registro.transportadora_id
-        )
-        credito_disponivel = (
-            saldo_credito.valor_total_credito_100 if saldo_credito else 0
         )
 
         # Buscar créditos individuais disponíveis da transportadora
-        creditos_individuais = ExtratoCreditoFreteiroModel.obter_creditos_disponiveis_transportadora(
+        creditos_individuais = ServicoCreditos.obter_creditos_disponiveis_transportadora(
             registro.transportadora_id
         )
 
@@ -213,8 +206,8 @@ def frete_a_pagar(id):
                 registro.valor_total_a_pagar_100 = valor_total_float * 100
                
             usar_credito = request.form.get("usar_credito")
-
-            # Processar créditos selecionados individualmente
+            
+            # Parse dos créditos selecionados (formato JSON do frontend)
             creditos_selecionados_json = request.form.get("creditos_selecionados", "{}")
             try:
                 creditos_selecionados = json.loads(creditos_selecionados_json) if creditos_selecionados_json else {}
@@ -223,125 +216,78 @@ def frete_a_pagar(id):
 
             valor_pendente = registro.valor_total_a_pagar_100
 
-            # Variável para armazenar detalhes dos créditos utilizados
+            # Variáveis para armazenar detalhes dos créditos utilizados
             detalhes_creditos_utilizados = []
             total_credito_aplicado = 0
+            creditos_a_processar = []
 
             if usar_credito == "sim":
-                # Verificar se há créditos selecionados
+                # === Extrair IDs dos créditos selecionados para esta transportadora ===
+                creditos_ids = []
                 total_creditos_selecionados = 0
                 
-                # Calcular total de créditos selecionados para esta transportadora
                 if 'transportadora' in creditos_selecionados:
-                    for transportadora_id_str, credito_ids in creditos_selecionados['transportadora'].items():
+                    for transportadora_id_str, ids_list in creditos_selecionados['transportadora'].items():
                         if int(transportadora_id_str) == registro.transportadora_id:
-                            for credito_id in credito_ids:
-                                credito = ExtratoCreditoFreteiroModel.query.get(credito_id)
-                                if credito:
-                                    total_creditos_selecionados += credito.valor_credito_100
+                            for credito_id in ids_list:
+                                # Usar TransacaoCreditoModel (nova arquitetura)
+                                credito = TransacaoCreditoModel.query.get(credito_id)
+                                saldo_credito = credito.obter_saldo_disponivel_100() if credito else 0
+                                if credito and saldo_credito != 0:  # Permite tanto créditos positivos quanto negativos (débitos)
+                                    creditos_ids.append(int(credito_id))
+                                    total_creditos_selecionados += saldo_credito
+                                    
+                                    # Capturar detalhes para o faturamento
+                                    detalhes_creditos_utilizados.append({
+                                        'credito_id': credito_id,
+                                        'transportadora_id': registro.transportadora_id,
+                                        'valor': saldo_credito,
+                                        'valor_original': saldo_credito,
+                                        'descricao': credito.descricao,
+                                        'data_movimentacao': credito.data_movimentacao.strftime('%Y-%m-%d') if credito.data_movimentacao else '',
+                                        'uso_parcial': False
+                                    })
                 
-                if not creditos_selecionados or 'transportadora' not in creditos_selecionados:
+                # === Validações ===
+                if not creditos_ids:
                     flash(("Nenhum crédito selecionado para aplicar!", "warning"))
                     gravar_banco = False
                 elif total_creditos_selecionados == 0:
                     flash(("O total dos créditos selecionados é zero!", "warning"))
                     gravar_banco = False
                 else:
-                    # Processar créditos selecionados (permite valores negativos)
-                    
-                    # Processar créditos selecionados da transportadora
-                    if 'transportadora' in creditos_selecionados:
-                        for transportadora_id_str, credito_ids in creditos_selecionados['transportadora'].items():
-                            if int(transportadora_id_str) == registro.transportadora_id:
-                                
-                                for credito_id in credito_ids:
-                                    credito_individual = ExtratoCreditoFreteiroModel.query.filter_by(id=credito_id, ativo=True, credito_utilizado=False).first()
-                                    if credito_individual:  # Permite tanto créditos quanto débitos
-                                        
-                                        # Calcular quanto deste crédito será realmente utilizado para permitir uso parcial
-                                        valor_credito_a_usar = min(abs(credito_individual.valor_credito_100), credito_restante_para_usar)
-                                        if credito_individual.valor_credito_100 < 0:
-                                            valor_credito_a_usar = -valor_credito_a_usar  # Manter sinal negativo para débitos
-
-                                        credito_individual.credito_utilizado = True
-                                        db.session.add(credito_individual)
-                                        
-                                        # Se há uso parcial, criar registro para o valor restante
-                                        if abs(valor_credito_a_usar) < abs(credito_individual.valor_credito_100):
-                                            valor_restante = credito_individual.valor_credito_100 - valor_credito_a_usar
-                                            
-                                            credito_restante = ExtratoCreditoFreteiroModel(
-                                                tipo_movimentacao=1,  # Entrada
-                                                descricao=f"Crédito restante após uso parcial individual - Original: {credito_individual.descricao}",
-                                                data_movimentacao=datetime.now(),
-                                                transportadora_id=registro.transportadora_id,
-                                                valor_credito_100=valor_restante,
-                                                usuario_id=current_user.id,
-                                                ativo=True
-                                            )
-                                            db.session.add(credito_restante)
-                                        
-                                        # Criar extrato com o valor que será utilizado (permite créditos negativos)
-                                        tipo_mov = 2 if valor_credito_a_usar > 0 else 1  # Saída para crédito positivo, Entrada para débito
-                                        descricao_mov = f"{'Débito' if valor_credito_a_usar > 0 else 'Crédito'} referente ao credito {credito_individual.descricao}."
-                                        extrato_transportadora = ExtratoCreditoFreteiroModel(
-                                            tipo_movimentacao=tipo_mov,
-                                            descricao=descricao_mov,
-                                            data_movimentacao=datetime.now(),
-                                            transportadora_id=registro.transportadora_id,
-                                            valor_credito_100=abs(valor_credito_a_usar),
-                                            usuario_id=current_user.id,
-                                            credito_utilizado=True
-                                        )
-                                        db.session.add(extrato_transportadora)
-                                        
-                                        # Atualizar saldo da transportadora
-                                        if saldo_credito:
-                                            saldo_atual_transp = saldo_credito.valor_total_credito_100 or 0
-                                            saldo_credito.valor_total_credito_100 = saldo_atual_transp - valor_credito_a_usar
-                                        
-                                        # Atualizar credito restante para usar
-                                        credito_restante_para_usar -= abs(valor_credito_a_usar)
-                                        
-                                        # Armazenar detalhes do crédito utilizado
-                                        detalhes_creditos_utilizados.append({
-                                            'credito_id': credito_id,
-                                            'transportadora_id': registro.transportadora_id,
-                                            'valor': valor_credito_a_usar,
-                                            'valor_original': credito_individual.valor_credito_100,
-                                            'descricao': credito_individual.descricao,
-                                            'data_movimentacao': credito_individual.data_movimentacao.strftime('%Y-%m-%d'),
-                                            'uso_parcial': abs(valor_credito_a_usar) < abs(credito_individual.valor_credito_100)
-                                        })
-                                        
-                                        total_credito_aplicado += valor_credito_a_usar
-
-                    # Aplicar crédito no registro (permite créditos negativos)
-                    if total_credito_aplicado != 0:
-                        registro.utiliza_credito = 1
-                        registro.valor_credito_100 = total_credito_aplicado
+                    # === Calcular valor a utilizar ===
+                    # Para créditos negativos (débitos), usa o valor total
+                    # Para créditos positivos, limita ao valor pendente
+                    if total_creditos_selecionados < 0:
+                        valor_credito_a_usar = total_creditos_selecionados
                     else:
-                        registro.utiliza_credito = 0
-                        registro.valor_credito_100 = 0
+                        valor_credito_a_usar = min(total_creditos_selecionados, valor_pendente)
+                    
+                    # === ATUALIZAR REGISTRO COM O CRÉDITO ===
+                    registro.utiliza_credito = 1
+                    registro.valor_credito_100 = valor_credito_a_usar
+                    total_credito_aplicado = valor_credito_a_usar
+                    
+                    # === PROCESSAR UTILIZAÇÃO DOS CRÉDITOS ===
+                    # Adicionar faturamento ao banco primeiro para ter o ID
+                    creditos_a_processar = creditos_ids
+                    
             else:
                 # Não usar crédito
                 registro.utiliza_credito = 0
                 registro.valor_credito_100 = 0
+                creditos_a_processar = []
 
             if gravar_banco:
                 registro.situacao_pagamento_id = 5
 
-                # Calcular valor líquido após crédito
+                # Calcular valor inicial (será atualizado se usar crédito)
                 valor_bruto = registro.valor_total_a_pagar_100 or 0
-                valor_credito = registro.valor_credito_100 or 0
-                # Se crédito é negativo, ele deve somar ao valor (débito): valor_bruto + abs(credito_negativo)  
-                # Se crédito é positivo, ele deve subtrair do valor (crédito): valor_bruto - credito_positivo
-                if valor_credito < 0:
-                    valor_liquido = valor_bruto + abs(valor_credito)  # Soma débito (crédito negativo)
-                else:
-                    valor_liquido = valor_bruto - valor_credito       # Subtrai crédito (crédito positivo)
+                # === DESCONTO DO CRÉDITO NO VALOR LÍQUIDO ===
+                valor_liquido = valor_bruto - (total_credito_aplicado if usar_credito == "sim" else 0)
 
-                # Criação do faturamento para o registro individual
+                # === CRIAR FATURAMENTO PRIMEIRO (para ter o ID) ===
                 novo_faturamento = FaturamentoModel(
                     usuario_id=current_user.id,
                     codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
@@ -349,7 +295,6 @@ def frete_a_pagar(id):
                     ids_fornecedores=None,
                     ids_fretes=str(registro.id),
                     utilizou_credito=(usar_credito == "sim"),
-                    situacao_pagamento_id=7,
                     tipo_operacao=1,
                     direcao_financeira=2
                 )
@@ -361,6 +306,33 @@ def frete_a_pagar(id):
                     novo_faturamento.valor_fornecedor = 0
                 if hasattr(novo_faturamento, 'valor_transportadora'):
                     novo_faturamento.valor_transportadora = valor_liquido
+
+                # Adicionar faturamento e fazer flush para obter o ID
+                db.session.add(novo_faturamento)
+                db.session.flush()
+
+                # === PROCESSAR CRÉDITOS COM faturamento_id ===
+                if usar_credito == "sim" and creditos_a_processar:
+                    resultado_utilizacao = ServicoCreditos.processar_utilizacao_creditos(
+                        tipo='freteiro',
+                        pessoa_id=registro.transportadora_id,
+                        creditos_ids=creditos_a_processar,
+                        valor_maximo_100=int(valor_bruto),
+                        usuario_id=current_user.id,
+                        faturamento_id=novo_faturamento.id,
+                        descricao_base=None
+                    )
+                    
+                    if resultado_utilizacao.get('sucesso'):
+                        # Atualizar detalhes com dados dos créditos processados
+                        for cred_proc in resultado_utilizacao.get('creditos_processados', []):
+                            detalhes_creditos_utilizados.append({
+                                'credito_id': cred_proc.get('credito_id'),
+                                'transportadora_id': registro.transportadora_id,
+                                'valor': cred_proc.get('valor_utilizado', 0),
+                                'descricao': cred_proc.get('descricao', ''),
+                                'data_movimentacao': cred_proc.get('data_movimentacao', '')
+                            })
 
                 valor_bruto_registro = registro.valor_total_a_pagar_100 or 0
                 valor_credito_registro = registro.valor_credito_100 or 0
@@ -404,7 +376,12 @@ def frete_a_pagar(id):
                     credito_transportadora=detalhes_creditos_utilizados
                 )
                 
-                db.session.add(novo_faturamento)
+                if novo_faturamento.valor_total == 0:
+                    novo_faturamento.situacao_pagamento_id = 8 # Conciliado
+                else:
+                    novo_faturamento.situacao_pagamento_id = 7 # Não Categorizado
+                
+                # Créditos já vinculados automaticamente via faturamento_id em processar_utilizacao_creditos
 
                 # Marcar transação OFX como conciliada se existe
                 if transacao_ofx and not transacao_ofx.conciliado:
@@ -458,15 +435,30 @@ def frete_a_pagar(id):
 @login_required
 @requires_roles
 def frete_a_pagar_massa():
+    """Processa faturamento em massa de fretes de transportadoras.
+    
+    Permite faturar múltiplos fretes de uma ou mais transportadoras simultaneamente,
+    com suporte a aplicação de créditos/débitos via nova arquitetura TransacaoCreditoModel.
+    """
     try:
+        # Validar se há usuário logado (previne erros de FK em faturamento)
+        if not current_user or not current_user.is_authenticated:
+            flash(("Sessão expirada. Faça login novamente.", "warning"))
+            return redirect(url_for("login"))
+        
+        # Validar se o usuário existe no banco
+        from sistema.models_views.autenticacao.usuario_model import UsuarioModel
+        usuario_existe = UsuarioModel.query.filter_by(id=current_user.id).first()
+        if not usuario_existe:
+            flash(("Usuário não encontrado no sistema.", "warning"))
+            return redirect(url_for("logout"))
+        
         campos_obrigatorios = {}
         campos_erros = {}
         gravar_banco = True
         creditos_selecionados = {}
 
-        dados_conciliacao = session.get('dados_conciliacao', {})
-        conciliar_transacao_id = dados_conciliacao.get('transacao_id')
-
+        # === OBTER E VALIDAR IDS SELECIONADOS ===
         if request.method == "GET":
             ids_selecionados = request.args.get('ids', '')
             if not ids_selecionados:
@@ -499,22 +491,19 @@ def frete_a_pagar_massa():
         if not registros:
             flash(("Nenhum registro válido encontrado para faturamento!", "warning"))
             return redirect(url_for("listagem_fretes_a_pagar"))
-        
-        transacao_ofx = None
-        if conciliar_transacao_id:
-            transacao_ofx = ImportacaoOfx.query.get(conciliar_transacao_id)
-            print(f"[DEBUG] transacao_ofx encontrada: {transacao_ofx}")
 
         if len(registros) != len(ids_list):
             flash(("Alguns registros selecionados não estão disponíveis para faturamento!", "warning"))
         
-        # Atribuir registro operacional a cada registro
+        # === ASSOCIAR REGISTROS OPERACIONAIS ===
+        # Cada frete precisa ter seu registro operacional para acessar dados da carga
         for registro in registros:
             if not hasattr(registro, 'registro_operacional') or registro.registro_operacional is None:
                 registro_oper = RegistroOperacionalModel.obter_registro_solicitacao_por_id(registro.solicitacao_id)
                 registro.registro_operacional = registro_oper
 
-        # Processamento de transportadoras
+        # === AGRUPAR FRETES POR TRANSPORTADORA ===
+        # Agrupa múltiplos fretes da mesma transportadora e busca créditos disponíveis
         transportadoras_dict = {}
         valor_total_geral = 0
         
@@ -526,42 +515,74 @@ def frete_a_pagar_massa():
             valor_total_geral += registro.valor_total_a_pagar_100
             
             if transportadora_id not in transportadoras_dict:
-                saldo_credito = CreditoFreteiroModel.obtem_registro_id(transportadora_id)
-                credito_disponivel = saldo_credito.valor_total_credito_100 if saldo_credito else 0
+                # Buscar saldo total de créditos/débitos da transportadora (nova arquitetura)
+                credito_disponivel = ServicoCreditos.obter_saldo_transportadora(transportadora_id)
                 
-                # Buscar créditos individuais disponíveis da transportadora
-                creditos_individuais_transp = ExtratoCreditoFreteiroModel.obter_creditos_disponiveis_transportadora(transportadora_id)
+                # Buscar lista detalhada de créditos individuais disponíveis
+                # (para o usuário selecionar quais usar)
+                creditos_individuais_transp = ServicoCreditos.obter_creditos_disponiveis_transportadora(transportadora_id)
                 
+                # Criar estrutura para armazenar dados desta transportadora
                 transportadoras_dict[transportadora_id] = {
-                    'registros': [],
-                    'valor_total': 0,
-                    'credito_disponivel': credito_disponivel or 0,
-                    'creditos_individuais': creditos_individuais_transp,
-                    'saldo_credito_obj': saldo_credito or 0,
-                    'transportadora': None
+                    'registros': [],           # Lista de fretes desta transportadora
+                    'valor_total': 0,          # Soma dos valores de todos os fretes
+                    'credito_disponivel': credito_disponivel or 0,  # Saldo total de créditos
+                    'creditos_individuais': creditos_individuais_transp,  # Lista de créditos individuais
+                    'transportadora': None     # Objeto da transportadora (preenchido depois)
                 }
             
+            # Adicionar frete à lista da transportadora
             transportadoras_dict[transportadora_id]['registros'].append(registro)
+            
+            # Somar valor ao total da transportadora
             transportadoras_dict[transportadora_id]['valor_total'] += registro.valor_total_a_pagar_100
             
+            # Obter objeto da transportadora (apenas uma vez)
             if not transportadoras_dict[transportadora_id]['transportadora']:
                 if registro.registro_operacional and registro.registro_operacional.solicitacao and registro.registro_operacional.solicitacao.transportadora_exibicao:
                     transportadoras_dict[transportadora_id]['transportadora'] = registro.registro_operacional.solicitacao.transportadora_exibicao
 
-        # Cálculo do total de crédito disponível
-        total_credito_disponivel = sum(t['credito_disponivel'] for t in transportadoras_dict.values())
+        # === FUNÇÃO AUXILIAR PARA CALCULAR TOTAIS ===
+        def calcular_totais():
+            """Centraliza todos os cálculos de totais (valores e créditos).
+            
+            Returns:
+                dict: Dicionário com todos os totais calculados
+            """
+            # Valor total de todos os fretes
+            valor_total_fretes = sum(t['valor_total'] for t in transportadoras_dict.values())
+            
+            # Total de registros
+            total_registros = sum(len(t['registros']) for t in transportadoras_dict.values())
+            
+            # Total de crédito disponível de todas as transportadoras
+            credito_total = sum(t['credito_disponivel'] for t in transportadoras_dict.values())
+            
+            return {
+                'valor_total_geral': valor_total_fretes,
+                'total_registros': total_registros,
+                'total_credito_disponivel': credito_total
+            }
+        
+        # Calcular totais iniciais para exibição no template
+        totais = calcular_totais()
+        valor_total_geral = totais['valor_total_geral']
+        total_credito_disponivel = totais['total_credito_disponivel']
 
+        # === PROCESSAMENTO POST - CONFIRMAÇÃO DE FATURAMENTO ===
         if request.method == "POST":
+            # Verificar se usuário quer usar créditos
             usar_credito = request.form.get("usar_credito")
             
-            # Processar créditos selecionados individualmente
+            # Parse dos créditos selecionados (vem como JSON do frontend)
             creditos_selecionados_json = request.form.get("creditos_selecionados", "{}")
             try:
                 creditos_selecionados = json.loads(creditos_selecionados_json) if creditos_selecionados_json else {}
             except json.JSONDecodeError:
                 creditos_selecionados = {}
 
-            # Processamento de valores editados pelo usuário
+            # === PROCESSAR VALORES EDITADOS PELO USUÁRIO ===
+            # O frontend pode alterar preço de custo e valor total de cada frete
             valores_calculados_json = request.form.get("valores_calculados", "")
             valores_calculados = {}
             
@@ -576,29 +597,31 @@ def frete_a_pagar_massa():
                     flash(("Erro nos valores calculados!", "warning"))
                     return redirect(request.url)
 
-            # Atualizar registros com valores calculados
+            # Atualizar banco com valores editados pelo usuário no frontend
             for registro in registros:
                 registro_id_str = str(registro.id)
                 if registro_id_str in valores_calculados:
                     dados_calculo = valores_calculados[registro_id_str]
                     try:
-                        # Verificar se o preço de custo foi alterado
+                        # Atualizar preço de custo se foi alterado
                         if 'preco_custo' in dados_calculo:
+                            # Converter de reais para centavos
                             preco_custo_frontend = float(dados_calculo['preco_custo'])
                             preco_custo_frontend_100 = preco_custo_frontend * 100
                             
-                            # Comparar com valor original do banco
+                            # Só atualizar se houver alteração real
                             preco_original = registro.preco_custo_bitola_100 or 0
                             if preco_custo_frontend_100 != preco_original:
                                 registro.preco_custo_bitola_100 = preco_custo_frontend_100
                                 alteracoes_detectadas = True
                         
-                        # Verificar se o valor total foi alterado
+                        # Atualizar valor total se foi alterado
                         if 'valor_total' in dados_calculo:
+                            # Converter de reais para centavos
                             valor_total_frontend = float(dados_calculo['valor_total'])
                             valor_total_frontend_100 = valor_total_frontend * 100
                             
-                            # Comparar com valor original do banco
+                            # Só atualizar se houver alteração real
                             valor_original = registro.valor_total_a_pagar_100 or 0
                             if valor_total_frontend_100 != valor_original:
                                 registro.valor_total_a_pagar_100 = valor_total_frontend_100
@@ -609,182 +632,179 @@ def frete_a_pagar_massa():
                         flash(f"Erro nos valores do registro {registro.id}!", "warning")
                         return redirect(request.url)
 
-            # Salva as alterações se houver
+            # Salvar alterações de preço/valor no banco (se houver)
             if alteracoes_detectadas:
                 db.session.commit()
                 print("[DEBUG] Alterações de preço custo e valores totais salvas")
 
-            # Recalcula totais após edições
+            # === RECALCULAR TOTAIS APÓS EDIÇÕES ===
+            # Os valores podem ter sido alterados pelo usuário, então recalcular tudo
             valor_total_geral = 0
             for transportadora_id, dados in transportadoras_dict.items():
-                dados['valor_total'] = 0
+                dados['valor_total'] = 0  # Zerar para recalcular
+                
                 for registro in dados['registros']:
                     valor_registro = registro.valor_total_a_pagar_100 or 0
                     if valor_registro > 0:
                         dados['valor_total'] += valor_registro
                         valor_total_geral += valor_registro
 
-            # Processamento de créditos selecionados
-            total_credito_aplicado = 0
-            valor_final_transportadoras = valor_total_geral
+            # === CRIAR FATURAMENTO PRIMEIRO (para obter faturamento_id) ===
+            # O faturamento precisa ser criado ANTES de processar créditos
+            # para que tenhamos um faturamento_id válido para vincular os créditos
+            valor_final_a_faturar = valor_total_geral  # Será atualizado após aplicar créditos
+            
+            novo_faturamento = FaturamentoModel(
+                usuario_id=current_user.id,                              # Usuário que está faturando
+                codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
+                valor_total=valor_final_a_faturar,                      # Valor líquido (será atualizado)
+                ids_fornecedores=None,                                   # Não há fornecedores neste faturamento
+                ids_fretes=ids_selecionados,                             # IDs dos fretes sendo faturados
+                utilizou_credito=(usar_credito == "sim"),               # Flag se usou crédito
+                situacao_pagamento_id=7,                                 # 7 = Não Categorizado
+                tipo_operacao=1,                                         # 1 = Carga
+                direcao_financeira=2                                     # 2 = Despesa (saída)
+            )
 
-            # Variável para armazenar detalhes dos créditos utilizados
+            # Configurar campos adicionais do faturamento (se o modelo suportar)
+            if hasattr(novo_faturamento, 'valor_bruto_total'):
+                novo_faturamento.valor_bruto_total = valor_total_geral          # Valor antes de créditos
+            if hasattr(novo_faturamento, 'valor_credito_aplicado'):
+                novo_faturamento.valor_credito_aplicado = 0                     # Será atualizado após processar
+            if hasattr(novo_faturamento, 'valor_fornecedor'):
+                novo_faturamento.valor_fornecedor = 0                           # Não há fornecedor neste faturamento
+            if hasattr(novo_faturamento, 'valor_transportadora'):
+                novo_faturamento.valor_transportadora = valor_final_a_faturar   # Valor total de transportadoras
+            
+            # Adicionar ao banco e fazer flush para obter o ID (necessário para vincular créditos)
+            db.session.add(novo_faturamento)
+            db.session.flush()
+
+            # === PROCESSAR CRÉDITOS/DÉBITOS COM faturamento_id ===
+            total_credito_aplicado = 0
             detalhes_creditos_utilizados = {
-                'transportadoras': []
+                'transportadoras': []  # Lista de créditos utilizados (para registro histórico)
             }
 
             if usar_credito == "sim":
-                # Verificar se há créditos selecionados
+                # Calcular total de créditos selecionados pelo usuário
+                # (Inclui créditos positivos e débitos negativos)
                 total_creditos_selecionados = 0
                 
-                # Calcular total de créditos selecionados
+                # Somar saldos de todos os créditos selecionados
                 for tipo_entidade, entidades in creditos_selecionados.items():
                     for entidade_id, credito_ids in entidades.items():
                         for credito_id in credito_ids:
                             if tipo_entidade == 'transportadora':
-                                credito = ExtratoCreditoFreteiroModel.query.get(credito_id)
+                                credito = TransacaoCreditoModel.query.get(credito_id)
                                 if credito:
-                                    total_creditos_selecionados += credito.valor_credito_100
+                                    # Soma créditos positivos e débitos negativos
+                                    total_creditos_selecionados += credito.obter_saldo_disponivel_100()
                 
+                # Validar se há créditos selecionados
                 if not creditos_selecionados or ('transportadora' not in creditos_selecionados and len(creditos_selecionados) == 0):
+                    db.session.rollback()
                     flash(("Nenhum crédito selecionado para aplicar!", "warning"))
                     return redirect(request.url)
                 
-                # Calcular crédito disponível e valor total da fatura
-                credito_restante_para_usar = valor_total_geral  # Não usar mais crédito que o necessário
-                
-                # Processar créditos selecionados por transportadora (permite créditos negativos)
+                # Calcular limite de crédito a usar
+                # Para débitos (negativos), não há limite - eles AUMENTAM o valor total
+                # Para créditos (positivos), limitar ao valor total da fatura
+                credito_restante_para_usar = float('inf') if total_creditos_selecionados < 0 else valor_total_geral                
                 if 'transportadora' in creditos_selecionados:
                     for transportadora_id_str, credito_ids in creditos_selecionados['transportadora'].items():
                         transportadora_id = int(transportadora_id_str)
                         
-                        for credito_id in credito_ids:
-                                
-                            credito_individual = ExtratoCreditoFreteiroModel.query.get(credito_id)
-                            if credito_individual:  # Permite tanto créditos quanto débitos
-                                
-                                # Calcular quanto deste crédito será realmente utilizado para permitir uso parcial
-                                valor_credito_a_usar = min(abs(credito_individual.valor_credito_100), credito_restante_para_usar)
-                                if credito_individual.valor_credito_100 < 0:
-                                    valor_credito_a_usar = -valor_credito_a_usar  # Manter sinal negativo para débitos
-                                
-                                credito_individual.credito_utilizado = True
-                                db.session.add(credito_individual)
-                                
-                                # Se há uso parcial, criar registro para o valor restante
-                                if abs(valor_credito_a_usar) < abs(credito_individual.valor_credito_100):
-                                    valor_restante = credito_individual.valor_credito_100 - valor_credito_a_usar
-                                    
-                                    credito_restante = ExtratoCreditoFreteiroModel(
-                                        tipo_movimentacao=1,  # Entrada
-                                        descricao=f"Crédito restante após uso parcial em faturamento massa - Original: {credito_individual.descricao}",
-                                        data_movimentacao=datetime.now(),
-                                        transportadora_id=transportadora_id,
-                                        valor_credito_100=valor_restante,
-                                        usuario_id=current_user.id,
-                                        ativo=True
-                                    )
-                                    db.session.add(credito_restante)
-                                
-                                # Criar extrato com o valor que será utilizado (permite créditos negativos)
-                                tipo_mov = 2 if valor_credito_a_usar > 0 else 1  # Saída para crédito positivo, Entrada para débito
-                                descricao_mov = f"{'Débito' if valor_credito_a_usar > 0 else 'Crédito'} referente ao credito {credito_individual.descricao}."
-                                extrato_transportadora = ExtratoCreditoFreteiroModel(
-                                    tipo_movimentacao=tipo_mov,
-                                    descricao=descricao_mov,
-                                    data_movimentacao=datetime.now(),
-                                    transportadora_id=transportadora_id,
-                                    valor_credito_100=abs(valor_credito_a_usar),
-                                    usuario_id=current_user.id,
-                                    credito_utilizado=True
-                                )
-                                db.session.add(extrato_transportadora)
-                                
-                                # Atualizar saldo da transportadora (considera créditos negativos)
-                                dados_transportadora = transportadoras_dict.get(transportadora_id)
-                                if dados_transportadora and dados_transportadora.get('saldo_credito_obj'):
-                                    saldo_atual_transp = dados_transportadora['saldo_credito_obj'].valor_total_credito_100 or 0
-                                    dados_transportadora['saldo_credito_obj'].valor_total_credito_100 = saldo_atual_transp - valor_credito_a_usar
-                                
-                                # Atualizar credito restante para usar
-                                credito_restante_para_usar -= abs(valor_credito_a_usar)
-                                
-                                # Armazenar detalhes do crédito utilizado
+                        # Processar créditos/débitos via ServicoCreditos
+                        resultado_utilizacao = ServicoCreditos.processar_utilizacao_creditos(
+                            tipo='freteiro',                     # Tipo de entidade
+                            pessoa_id=transportadora_id,          # ID da transportadora
+                            creditos_ids=credito_ids,             # IDs dos créditos selecionados
+                            valor_maximo_100=int(credito_restante_para_usar) if credito_restante_para_usar != float('inf') else 999999999,
+                            usuario_id=current_user.id,           # Usuário logado (quem fez a operação)
+                            faturamento_id=novo_faturamento.id,   # ID do faturamento (vincula automaticamente)
+                            descricao_base=None                   # Usar descrição padrão
+                        )
+                        
+                        if resultado_utilizacao.get('sucesso'):
+                            # Obter valor utilizado (pode ser negativo para débitos)
+                            valor_utilizado = resultado_utilizacao.get('total_utilizado_100', 0)
+                            total_credito_aplicado += valor_utilizado
+                            credito_restante_para_usar -= valor_utilizado
+                            
+                            # Armazenar detalhes para registro histórico (salvar_detalhes)
+                            for cred_proc in resultado_utilizacao.get('creditos_processados', []):
                                 detalhes_creditos_utilizados['transportadoras'].append({
-                                    'credito_id': credito_id,
+                                    'credito_id': cred_proc.get('credito_id'),
                                     'transportadora_id': transportadora_id,
-                                    'valor': valor_credito_a_usar,
-                                    'valor_original': credito_individual.valor_credito_100,
-                                    'descricao': credito_individual.descricao,
-                                    'data_movimentacao': credito_individual.data_movimentacao.strftime('%Y-%m-%d'),
-                                    'uso_parcial': abs(valor_credito_a_usar) < abs(credito_individual.valor_credito_100)
+                                    'valor': cred_proc.get('valor_utilizado', 0),
+                                    'descricao': cred_proc.get('descricao', ''),
+                                    'data_movimentacao': cred_proc.get('data_movimentacao', '')
                                 })
-                                
-                                total_credito_aplicado += valor_credito_a_usar
 
-                # APLICAR DESCONTO GLOBAL: Permite créditos negativos
+                # === CALCULAR VALOR FINAL APÓS APLICAÇÃO DE CRÉDITOS ===
+                # Observação: Débitos (negativos) AUMENTAM o valor total
+                # Exemplo: R$ 5.000,00 - (-R$ 300,00) = R$ 5.300,00
                 total_credito_utilizado = total_credito_aplicado
+                valor_final_a_faturar = valor_total_geral - total_credito_utilizado
                 
-                # Calcular valor final - Se crédito é negativo, ele deve somar ao valor (débito)
-                # Se crédito é positivo, ele deve subtrair do valor (crédito)
-                if total_credito_utilizado < 0:
-                    valor_final_a_faturar = valor_total_geral + abs(total_credito_utilizado)  # Soma débito (crédito negativo)
-                else:
-                    valor_final_a_faturar = valor_total_geral - total_credito_utilizado       # Subtrai crédito (crédito positivo)
+                # Atualizar valores no faturamento com créditos aplicados
+                novo_faturamento.valor_total = valor_final_a_faturar
+                if hasattr(novo_faturamento, 'valor_credito_aplicado'):
+                    novo_faturamento.valor_credito_aplicado = total_credito_aplicado
+                if hasattr(novo_faturamento, 'valor_transportadora'):
+                    novo_faturamento.valor_transportadora = valor_final_a_faturar
                 
-                # Atualizar o total de crédito aplicado para refletir o valor utilizado
-                total_credito_aplicado = total_credito_utilizado
-                
-                # Marcar todos os registros como utilizando crédito (permite créditos negativos)
+                # Marcar registros como utilizando crédito (para auditoria/relatórios)
                 if total_credito_aplicado != 0:
                     for transportadora_id, dados_transp in transportadoras_dict.items():
                         for registro in dados_transp['registros']:
                             registro.utiliza_credito = 1
                             registro.valor_credito_100 = 0  # Será calculado proporcionalmente se necessário
+
             else:
-                # Não usar crédito
+                # === NÃO USAR CRÉDITO ===
+                # Manter valor original sem aplicação de créditos
                 valor_final_a_faturar = valor_total_geral
                 for dados_transp in transportadoras_dict.values():
                     for registro in dados_transp['registros']:
                         registro.utiliza_credito = 0
                         registro.valor_credito_100 = 0
 
-            # Atualizar status de todos os registros
+            # === ATUALIZAR STATUS DOS REGISTROS ===
+            # Marcar todos os fretes como faturados (situação 5)
             for registro in registros:
-                registro.situacao_pagamento_id = 5
+                registro.situacao_pagamento_id = 5  # 5 = Faturado
 
-            # Marcar transação OFX como conciliada se existe
-            if transacao_ofx and not transacao_ofx.conciliado:
-                transacao_ofx.conciliado = True
-                transacao_ofx.tipo_conciliacao = 'faturamento_frete'
-                transacao_ofx.pagamento_id = registros[0].id
-                transacao_ofx.data_conciliacao = datetime.now()
-                transacao_ofx.usuario_conciliacao_id = current_user.id
-                transacao_ofx.observacoes_conciliacao = f"Conciliado com faturamento de fretes em massa - {len(registros)} registros"
-
-            # Criar detalhes das transportadoras
+            # === CRIAR DETALHES JSON PARA FRONTEND ===
+            # Preparar dados estruturados para salvar no campo JSON do faturamento
             detalhes_transportadoras = []
             for transp_id, dados in transportadoras_dict.items():
                 for registro in dados['registros']:
+                    # Pular registros sem valor
                     if registro.valor_total_a_pagar_100 is None:
                         continue
-                        
+                    
+                    # Obter dados do registro operacional
                     registro_oper = registro.registro_operacional
+                    
+                    # Calcular valores (créditos negativos somam ao valor total)
                     valor_bruto_registro = registro.valor_total_a_pagar_100 or 0
                     valor_credito_registro = getattr(registro, 'valor_credito_100', 0) or 0
-                    # Créditos negativos devem somar ao valor total
-                    valor_faturado = valor_bruto_registro - valor_credito_registro
+                    valor_faturado = valor_bruto_registro - valor_credito_registro  # Valor líquido
                     preco_custo_registro = registro.preco_custo_bitola_100 or 0
 
+                    # Obter número da nota fiscal (com marcação * se for estorno)
                     numero_nf = ""
                     if registro_oper:
                         if registro_oper.estorno_nf and registro_oper.numero_nota_fiscal_estorno:
-                            numero_nf = f"{registro_oper.numero_nota_fiscal_estorno} *"
+                            numero_nf = f"{registro_oper.numero_nota_fiscal_estorno} *"  # * indica estorno
                         elif registro_oper.numero_nota_fiscal:
                             numero_nf = registro_oper.numero_nota_fiscal
                         else:
                             numero_nf = ""
 
+                    # Adicionar dados estruturados deste frete à lista
                     detalhes_transportadoras.append({
                         "frete_a_pagar_id": registro.id,
                         "transportadora_id": registro.transportadora_id,
@@ -807,7 +827,7 @@ def frete_a_pagar_massa():
                         "motorista": registro.solicitacao.motorista.nome_completo if registro.solicitacao and registro.solicitacao.motorista else ""
                     })
                     
-                    # Pontuação do usuário
+                    # Registrar pontuação de gamificação para o usuário
                     PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                         current_user.id,
                         TipoAcaoEnum.CADASTRO,
@@ -815,48 +835,26 @@ def frete_a_pagar_massa():
                         modulo=f"informar_faturamento_freteiro_massa_{registro.id}",
                     )
 
-            # Criação do faturamento em massa
-            novo_faturamento = FaturamentoModel(
-                usuario_id=current_user.id,
-                codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
-                valor_total=valor_final_a_faturar,
-                ids_fornecedores=None,
-                ids_fretes=ids_selecionados,
-                utilizou_credito=(usar_credito == "sim"),
-                situacao_pagamento_id=7,
-                tipo_operacao=1, # carga
-                direcao_financeira=2 # despesa
-            )
-
-            # Campos extras do faturamento
-            if hasattr(novo_faturamento, 'valor_bruto_total'):
-                novo_faturamento.valor_bruto_total = valor_total_geral
-            if hasattr(novo_faturamento, 'valor_credito_aplicado'):
-                novo_faturamento.valor_credito_aplicado = total_credito_aplicado
-            if hasattr(novo_faturamento, 'valor_fornecedor'):
-                novo_faturamento.valor_fornecedor = 0
-            if hasattr(novo_faturamento, 'valor_transportadora'):
-                novo_faturamento.valor_transportadora = valor_final_a_faturar
-
-            # Salvar detalhes com créditos utilizados
+            # === SALVAR DETALHES NO FATURAMENTO ===
+            # Salva dados estruturados JSON com todos os detalhes da operação
             novo_faturamento.salvar_detalhes(
-                fornecedores=[], 
-                transportadoras=detalhes_transportadoras,
-                credito_fornecedor=[],
-                credito_transportadora=detalhes_creditos_utilizados['transportadoras']
+                fornecedores=[],                                                     # Não há fornecedores
+                transportadoras=detalhes_transportadoras,                           # Lista de fretes faturados
+                credito_fornecedor=[],                                              # Não há créditos de fornecedor
+                credito_transportadora=detalhes_creditos_utilizados['transportadoras']  # Créditos de transportadora
             )
             
-            db.session.add(novo_faturamento)
+            # Definir situação final do faturamento
+            if novo_faturamento.valor_total == 0:
+                novo_faturamento.situacao_pagamento_id = 8  # 8 = Conciliado (valor zerado por créditos)
+            else:
+                novo_faturamento.situacao_pagamento_id = 7  # 7 = Não Categorizado (aguardando categorização)
 
+            # Commit final de todas as alterações
             db.session.commit()
             
-            if conciliar_transacao_id:
-                limpar_dados_conciliacao()
-                flash(("Faturamentos informados e transação OFX conciliada com sucesso!", "success"))
-                return redirect(url_for("listagem_ofx"))
-            else:
-                flash(("Faturamentos informados com sucesso!", "success"))
-                return redirect(url_for("listagem_faturamentos_cargas_a_pagar"))
+            flash(("Faturamentos informados com sucesso!", "success"))
+            return redirect(url_for("listagem_faturamentos_cargas_a_pagar"))
 
         return render_template(
             "financeiro/informar_pagamento/informar_pagamento_frete_massa.html",
@@ -868,12 +866,7 @@ def frete_a_pagar_massa():
             valor_total_geral=valor_total_geral,
             total_credito_disponivel=total_credito_disponivel,
             ids_selecionados=ids_selecionados,
-            creditos_selecionados=creditos_selecionados,
-            conciliar_transacao_id=conciliar_transacao_id,
-            valor_conciliar=dados_conciliacao.get('valor'),
-            data_conciliar=dados_conciliacao.get('data'),
-            descricao_conciliar=dados_conciliacao.get('descricao'),
-            fitid_conciliar=dados_conciliacao.get('fitid')
+            creditos_selecionados=creditos_selecionados
         )
 
     except Exception as e:
@@ -911,34 +904,21 @@ def cancelar_pagamento_freteiro(id):
         if mov_antiga:
             mov_antiga.deletado = True
 
-        if usou_credito and valor_credito != 0:  # Permite tanto créditos positivos quanto negativos
-
-            estorno_cred = ExtratoCreditoFreteiroModel(
-                tipo_movimentacao=4,
-                descricao=f"Estorno de crédito por cancelamento de faturamento",
-                data_movimentacao=datetime.now(),
-                transportadora_id=registro.transportadora_id,
-                usuario_id=current_user.id,
-                valor_credito_100=valor_credito,
-            )
-            db.session.add(estorno_cred)
-            db.session.flush()
-
-            saldo_credito = CreditoFreteiroModel.obtem_registro_id(registro.transportadora_id)
-            if saldo_credito:
-                saldo_credito.valor_total_credito_100 += valor_credito
-
-            mov_est_cred = MovimentacaoFinanceiraModel(
-                tipo_movimentacao=4,
-                usuario_id=current_user.id,
-                data_movimentacao=datetime.now(),
-                movimentacao_extra=1,
-                valor_movimentacao_100=valor_credito,
-                credito_freteiro_id=estorno_cred.id,
-                conta_bancaria_id=registro.conta_bancaria_id
-            )
-            db.session.add(mov_est_cred)
-            db.session.flush()
+        # Estornar créditos se foram utilizados
+        if usou_credito and valor_credito != 0:
+            # Buscar o faturamento associado a este pagamento
+            faturamento = FaturamentoModel.query.filter(
+                FaturamentoModel.ids_fretes.contains(str(registro.id))
+            ).first()
+            
+            if faturamento:
+                resultado_estorno = ServicoCreditos.estornar_utilizacao_creditos(
+                    faturamento_id=faturamento.id,
+                    usuario_id=current_user.id,
+                    motivo=f"Cancelamento de pagamento de freteiro ID {registro.id}"
+                )
+                if not resultado_estorno.get('sucesso'):
+                    print(f"[WARN] Erro ao estornar créditos: {resultado_estorno.get('mensagem')}")
 
         if usou_saldo and valor_saldo > 0:
             mov_est_din = MovimentacaoFinanceiraModel(
