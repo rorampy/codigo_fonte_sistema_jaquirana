@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedido de Compra - {{ pedido.codigo_transacao }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      margin: 10px;
+      color: #333;
+      line-height: 1.2;
+    }
+
+    .header {
+      border-bottom: 2px solid #1c5f20;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .header table {
+      width: 100%;
+      border: none;
+    }
+
+    .header img {
+      width: 120px;
+    }
+
+    .system-info {
+      text-align: right;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .relatorio-title {
+      text-align: center;
+      font-size: 16px;
+      color: #1c5f20;
+      font-weight: bold;
+      margin: 10px 0;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      color: #1c5f20;
+      font-weight: bold;
+      font-size: 13px;
+      margin: 10px 0 5px 0;
+      padding: 5px 8px;
+      background-color: #f0f8f0;
+      border-left: 4px solid #1c5f20;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      page-break-after: avoid;
+    }
+
+    .simple-info {
+      margin: 3px 0;
+      font-size: 11px;
+      padding: 2px 0;
+    }
+
+    .simple-info strong {
+      color: #1c5f20;
+      display: inline-block;
+      min-width: 140px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 10px 0;
+      border: 1px solid #ddd;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    thead {
+      display: table-header-group;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    tbody {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      page-break-after: auto;
+    }
+
+    th {
+      background-color: #1c5f20;
+      color: white;
+      padding: 6px 5px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 10px;
+    }
+
+    td {
+      border: 1px solid #ddd;
+      padding: 5px;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .valor-destaque {
+      color: #1c5f20;
+      font-weight: bold;
+    }
+
+    .info-faturamento {
+      background-color: #f8f9fa;
+      padding: 8px;
+      margin: 8px 0;
+      border-radius: 3px;
+      border: 1px solid #dee2e6;
+    }
+
+    .info-faturamento .simple-info {
+      margin: 2px 0;
+    }
+
+    .subtotal {
+      background-color: #e8f5e8;
+      font-weight: bold;
+      color: #1c5f20;
+    }
+
+    .total-principal {
+      background-color: #1c5f20 !important;
+      color: white !important;
+    }
+
+    .total-principal td {
+      background-color: #1c5f20 !important;
+      color: white !important;
+      font-size: 12px !important;
+      padding: 8px 5px !important;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .total-valor {
+      font-size: 15px !important;
+      font-weight: bold !important;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 9px;
+      color: #777;
+      border-top: 1px solid #ddd;
+      padding-top: 8px;
+    }
+
+    .detalhes-registro {
+      font-size: 10px;
+    }
+
+    .fornecedor-section {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      margin: 8px 0;
+    }
+
+    h5 {
+      page-break-after: avoid;
+      break-after: avoid;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      color: #1c5f20;
+      margin: 8px 0;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <table>
+      <tr>
+        <td style="width: 200px;">
+          <img src="{{ logo_path }}" alt="Logo Jaquirana Extração" />
+        </td>
+        <td class="system-info">
+          <div><strong>Sistema de Gestão Jaquirana</strong></div>
+          <div><strong>Relatório gerado em:</strong> {{ data_geracao.strftime('%d/%m/%Y às %H:%M') if data_geracao else '-' }}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="relatorio-title">Pedido de Compra - Escala de Cargas</div>
+
+  <!-- Dados do Pedido -->
+  <div class="section-title">DADOS DO PEDIDO</div>
+  <div class="info-faturamento">
+    <div class="simple-info">
+      <strong>Código:</strong> {{ pedido.codigo_transacao }}
+    </div>
+    <div class="simple-info">
+      <strong>Data Cadastro:</strong> {{ pedido.data_cadastro.strftime('%d/%m/%Y %H:%M') if pedido.data_cadastro else '-' }}
+    </div>
+    <div class="simple-info">
+      <strong>Criado por:</strong> {{ pedido.usuario.nome if pedido.usuario else '-' }}
+    </div>
+    <div class="simple-info">
+      <strong>Status:</strong>
+      {% if pedido.ativo %}
+      <span style="color: green;">● Ativo</span>
+      {% else %}
+      <span style="color: red;">● Inativo</span>
+      {% endif %}
+    </div>
+    <div class="simple-info">
+      <strong>Total de Cargas:</strong> <span class="valor-destaque">{{ pedido.contar_itens() }}</span>
+    </div>
+  </div>
+
+  <!-- Seções por fornecedor -->
+  {% if itens_agrupados and itens_agrupados|length > 0 %}
+    {% for fornecedor_id, itens_do_fornecedor in itens_agrupados.items() %}
+    {% set fornecedor = itens_do_fornecedor[0].fornecedor if itens_do_fornecedor[0].fornecedor else None %}
+    
+    <div class="fornecedor-section">
+      <!-- Título do Fornecedor -->
+      <div class="section-title">
+        {{ fornecedor.identificacao if fornecedor else 'Sem Fornecedor Definido' }}
+      </div>
+      
+      <!-- Tabela de itens do fornecedor -->
+      <table>
+        <thead>
+          <tr>
+            <th>Data Carga</th>
+            <th>Data Entrega</th>
+            <th>Transportadora</th>
+            <th>Motorista</th>
+            <th>Placa</th>
+            <th>Corte/Extrator</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in itens_do_fornecedor %}
+          <tr class="detalhes-registro">
+            <td>{{ item.data_carga.strftime('%d/%m/%Y') if item.data_carga else '-' }}</td>
+            <td>{{ item.data_entrega.strftime('%d/%m/%Y') if item.data_entrega else '-' }}</td>
+            <td>{{ item.obter_nome_transportadora() }}</td>
+            <td>{{ item.obter_nome_motorista() }}</td>
+            <td>{{ item.obter_placa_veiculo() }}</td>
+            <td>{{ item.obter_nome_extrator() }}</td>
+          </tr>
+          {% endfor %}
+          <tr class="subtotal">
+            <td colspan="5"><strong>Total de Cargas deste Fornecedor</strong></td>
+            <td class="valor-destaque"><strong>{{ itens_do_fornecedor|length }}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="info-faturamento" style="text-align: center;">
+      <p>Nenhuma carga cadastrada neste pedido.</p>
+    </div>
+  {% endif %}
+
+  <!-- Total Geral -->
+  <div class="section-title">RESUMO FINAL</div>
+  <table>
+    <tr class="total-principal">
+      <td><strong>TOTAL GERAL DE CARGAS</strong></td>
+      <td class="total-valor"><strong>{{ pedido.contar_itens() }}</strong></td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    <p><strong>Jaquirana Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão Jaquirana</strong></p>
+    <p>Pedido de Compra gerado automaticamente pelo Sistema de Gestão</p>
+  </div>
+</body>
+
+</html>

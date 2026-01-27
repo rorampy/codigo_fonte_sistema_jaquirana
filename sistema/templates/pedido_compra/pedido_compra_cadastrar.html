@@ -1,0 +1,545 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<style>
+  /* Remove TODOS os efeitos de transição e animação do Tom Select */
+  .ts-wrapper,
+  .ts-wrapper *,
+  .ts-control,
+  .ts-control *,
+  .ts-dropdown,
+  .ts-dropdown * {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  
+  /* Fixa o tamanho do Tom Select para não expandir */
+  .ts-wrapper {
+    min-height: 38px !important;
+    max-height: 38px !important;
+  }
+  
+  .ts-wrapper.focus .ts-control,
+  .ts-control:focus,
+  .ts-control.focus {
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  
+  .ts-control {
+    min-height: 36px !important;
+    max-height: 36px !important;
+    padding: 6px 10px !important;
+  }
+  
+  /* Remove efeito de hover/focus nos inputs também */
+  .form-control,
+  .form-select {
+    transition: none !important;
+  }
+</style>
+
+<div class="page-wrapper">
+  <!-- Cabeçalho da página -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">
+            PEDIDO DE COMPRA
+          </div>
+          <h2 class="page-title">
+            Lançar Escala de Pedido
+          </h2>
+        </div>
+        
+        <!-- Botão voltar -->
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <a href="{{ url_for('listar_pedidos_compra') }}" class="btn btn-outline-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M5 12l14 0" />
+              <path d="M5 12l6 6" />
+              <path d="M5 12l6 -6" />
+            </svg>
+            Voltar para listagem
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Corpo da página -->
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <!-- Formulário de cadastro -->
+      <form action="{{ url_for('cadastrar_pedido_compra') }}" method="POST" id="form-pedido-compra">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Itens do Pedido (Cargas)</h3>
+            <div class="card-actions">
+              <!-- Botão para adicionar nova linha de item -->
+              <button type="button" class="btn btn-primary" id="btn-adicionar-item">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M12 5l0 14" />
+                  <path d="M5 12l14 0" />
+                </svg>
+                Adicionar Carga
+              </button>
+            </div>
+          </div>
+          
+          <div class="card-body">
+            <!-- Tabela de itens -->
+            <div class="table">
+              <table class="table table-vcenter" id="tabela-itens">
+                <thead>
+                  <tr>
+                    <th style="width: 120px;">Data Carga</th>
+                    <th style="width: 120px;">Data Entrega</th>
+                    <th>Fornecedor/Floresta</th>
+                    <th>Transportadora</th>
+                    <th>Motorista</th>
+                    <th>Placa</th>
+                    <th>Corte/Extrator</th>
+                    <th style="width: 50px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-itens">
+                  <!-- Linha modelo (será clonada via JavaScript) -->
+                  <tr class="item-row" data-index="0">
+                    <!-- Data Carga -->
+                    <td>
+                      <input type="date" class="form-control" name="data_carga[]" required>
+                    </td>
+                    
+                    <!-- Data Entrega -->
+                    <td>
+                      <input type="date" class="form-control" name="data_entrega[]" required>
+                    </td>
+                    
+                    <!-- Fornecedor/Floresta -->
+                    <td>
+                      <select class="form-select select-fornecedor" name="fornecedor_id[]">
+                        <option value="">Selecione...</option>
+                        {% for f in fornecedores %}
+                        <option value="{{ f.id }}">{{ f.identificacao }}</option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                    
+                    <!-- Transportadora -->
+                    <td>
+                      <select class="form-select select-transportadora" name="transportadora_id[]">
+                        <option value="">Selecione...</option>
+                        {% for t in transportadoras %}
+                        <option value="{{ t.id }}">{{ t.identificacao }}</option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                    
+                    <!-- Motorista -->
+                    <td>
+                      <select class="form-select select-motorista" name="motorista_id[]">
+                        <option value="">Selecione...</option>
+                        {% for m in motoristas %}
+                        <option value="{{ m.id }}">{{ m.nome_completo }}</option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                    
+                    <!-- Placa (Veículo) -->
+                    <td>
+                      <select class="form-select select-veiculo" name="veiculo_id[]">
+                        <option value="">Selecione...</option>
+                        {% for v in veiculos %}
+                        <option value="{{ v.id }}">{{ v.placa_veiculo }}</option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                    
+                    <!-- Extrator -->
+                    <td>
+                      <select class="form-select select-extrator" name="extrator_id[]">
+                        <option value="">Selecione...</option>
+                        {% for e in extratores %}
+                        <option value="{{ e.id }}">{{ e.identificacao }}</option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                    
+                    <!-- Botão remover linha -->
+                    <td>
+                      <button type="button" class="btn btn-icon btn-outline-danger btn-remover-item" title="Remover carga">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                          <path d="M18 6l-12 12" />
+                          <path d="M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Mensagem quando não há itens -->
+            <div id="msg-sem-itens" class="text-center text-muted py-4" style="display: none;">
+              Nenhuma carga adicionada. Clique em "Adicionar Carga" para começar.
+            </div>
+          </div>
+          
+          <!-- Rodapé do card com contador e botões -->
+          <div class="card-footer">
+            <div class="row align-items-center">
+              <div class="col">
+                <!-- Contador de cargas -->
+                <span class="text-muted">
+                  Total de cargas: <strong id="contador-itens">1</strong>
+                </span>
+              </div>
+              <div class="col-auto">
+                <!-- Botão cancelar -->
+                <a href="{{ url_for('listar_pedidos_compra') }}" class="btn btn-outline-secondary me-2">
+                  Cancelar
+                </a>
+                <!-- Botão salvar -->
+                <button type="submit" class="btn btn-primary">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
+                    <path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                    <path d="M14 4l0 4l-6 0l0 -4" />
+                  </svg>
+                  Salvar Pedido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * Script para gerenciar a adição/remoção dinâmica de itens no formulário
+ * 
+ * Funcionalidades:
+ * - Adicionar nova linha de item clonando a linha modelo
+ * - Remover linha de item
+ * - Atualizar contador de itens
+ * - Filtrar motoristas e veículos por transportadora selecionada
+ * - Tom Select para campos de seleção com busca
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos do DOM
+    const btnAdicionar = document.getElementById('btn-adicionar-item');
+    const tbody = document.getElementById('tbody-itens');
+    const contador = document.getElementById('contador-itens');
+    const msgSemItens = document.getElementById('msg-sem-itens');
+    
+    // Índice para controle de linhas
+    let itemIndex = 1;
+    
+    /**
+     * Inicializa Tom Select em um elemento select
+     */
+    function inicializarTomSelect(select, placeholder = 'Selecione...') {
+        // Verifica se já tem Tom Select inicializado
+        if (select.tomselect) {
+            return select.tomselect;
+        }
+        
+        return new TomSelect(select, {
+            create: false,
+            allowEmptyOption: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            }
+        });
+    }
+    
+    /**
+     * Inicializa Tom Select em todos os selects de uma linha
+     */
+    function inicializarTomSelectsLinha(linha) {
+        const selects = {
+            fornecedor: linha.querySelector('.select-fornecedor'),
+            transportadora: linha.querySelector('.select-transportadora'),
+            motorista: linha.querySelector('.select-motorista'),
+            veiculo: linha.querySelector('.select-veiculo'),
+            extrator: linha.querySelector('.select-extrator')
+        };
+        
+        // Inicializa cada select
+        if (selects.fornecedor) inicializarTomSelect(selects.fornecedor, 'Selecione o fornecedor...');
+        if (selects.transportadora) inicializarTomSelect(selects.transportadora, 'Selecione a transportadora...');
+        if (selects.motorista) inicializarTomSelect(selects.motorista, 'Selecione o motorista...');
+        if (selects.veiculo) inicializarTomSelect(selects.veiculo, 'Selecione a placa...');
+        if (selects.extrator) inicializarTomSelect(selects.extrator, 'Selecione o extrator...');
+    }
+    
+    /**
+     * Destrói Tom Select de todos os selects de uma linha
+     */
+    function destruirTomSelectsLinha(linha) {
+        linha.querySelectorAll('select').forEach(select => {
+            if (select.tomselect) {
+                select.tomselect.destroy();
+            }
+        });
+    }
+    
+    /**
+     * Atualiza o contador de itens e exibe/oculta mensagem de vazio
+     */
+    function atualizarContador() {
+        const rows = tbody.querySelectorAll('.item-row');
+        contador.textContent = rows.length;
+        
+        // Mostra/oculta mensagem de vazio
+        if (rows.length === 0) {
+            msgSemItens.style.display = 'block';
+        } else {
+            msgSemItens.style.display = 'none';
+        }
+    }
+    
+    /**
+     * Adiciona uma nova linha de item usando template HTML
+     */
+    btnAdicionar.addEventListener('click', function() {
+        // Cria uma nova linha limpa usando o template
+        const novaLinha = document.createElement('tr');
+        novaLinha.className = 'item-row';
+        novaLinha.setAttribute('data-index', itemIndex);
+        itemIndex++;
+        
+        // HTML template da nova linha (copiado da estrutura original)
+        novaLinha.innerHTML = `
+            <td>
+                <input type="date" class="form-control" name="data_carga[]" required>
+            </td>
+            <td>
+                <input type="date" class="form-control" name="data_entrega[]" required>
+            </td>
+            <td>
+                <select class="form-select select-fornecedor" name="fornecedor_id[]">
+                    <option value="">Selecione...</option>
+                    {% for f in fornecedores %}
+                    <option value="{{ f.id }}">{{ f.identificacao }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select class="form-select select-transportadora" name="transportadora_id[]">
+                    <option value="">Selecione...</option>
+                    {% for t in transportadoras %}
+                    <option value="{{ t.id }}">{{ t.identificacao }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select class="form-select select-motorista" name="motorista_id[]">
+                    <option value="">Selecione...</option>
+                    {% for m in motoristas %}
+                    <option value="{{ m.id }}">{{ m.nome_completo }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select class="form-select select-veiculo" name="veiculo_id[]">
+                    <option value="">Selecione...</option>
+                    {% for v in veiculos %}
+                    <option value="{{ v.id }}">{{ v.placa_veiculo }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select class="form-select select-extrator" name="extrator_id[]">
+                    <option value="">Selecione...</option>
+                    {% for e in extratores %}
+                    <option value="{{ e.id }}">{{ e.identificacao }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <button type="button" class="btn btn-icon btn-outline-danger btn-remover-item" title="Remover carga">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M18 6l-12 12" />
+                        <path d="M6 6l12 12" />
+                    </svg>
+                </button>
+            </td>
+        `;
+        
+        // Adiciona evento de remover na nova linha
+        const btnRemover = novaLinha.querySelector('.btn-remover-item');
+        btnRemover.addEventListener('click', function() {
+            destruirTomSelectsLinha(novaLinha);
+            novaLinha.remove();
+            atualizarContador();
+        });
+        
+        // Adiciona a nova linha na tabela
+        tbody.appendChild(novaLinha);
+        
+        // Inicializa Tom Select na nova linha
+        inicializarTomSelectsLinha(novaLinha);
+        
+        // Adiciona evento de filtro por transportadora na nova linha
+        configurarFiltroTransportadora(novaLinha);
+        
+        // Atualiza o contador
+        atualizarContador();
+        
+        // Foca no primeiro input da nova linha
+        novaLinha.querySelector('input[type="date"]').focus();
+    });
+    
+    /**
+     * Configura eventos de remover para linhas existentes
+     */
+    document.querySelectorAll('.btn-remover-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const row = this.closest('.item-row');
+            
+            // Não permite remover se for a última linha
+            const rows = tbody.querySelectorAll('.item-row');
+            if (rows.length === 1) {
+                alert('O pedido deve ter pelo menos uma carga.');
+                return;
+            }
+            
+            destruirTomSelectsLinha(row);
+            row.remove();
+            atualizarContador();
+        });
+    });
+    
+    /**
+     * Configura o filtro de motoristas e veículos por transportadora
+     */
+    function configurarFiltroTransportadora(linha) {
+        const selectTransportadora = linha.querySelector('.select-transportadora');
+        const selectMotorista = linha.querySelector('.select-motorista');
+        const selectVeiculo = linha.querySelector('.select-veiculo');
+        
+        // Usa o evento do Tom Select se existir
+        if (selectTransportadora.tomselect) {
+            selectTransportadora.tomselect.on('change', function(value) {
+                atualizarMotoristaVeiculo(value, selectMotorista, selectVeiculo);
+            });
+        } else {
+            selectTransportadora.addEventListener('change', function() {
+                atualizarMotoristaVeiculo(this.value, selectMotorista, selectVeiculo);
+            });
+        }
+    }
+    
+    /**
+     * Atualiza os selects de motorista e veículo baseado na transportadora
+     */
+    function atualizarMotoristaVeiculo(transportadoraId, selectMotorista, selectVeiculo) {
+        if (transportadoraId) {
+            // Busca motoristas da transportadora via AJAX
+            fetch(`/pedido-compra/api/motoristas/${transportadoraId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.sucesso) {
+                        // Atualiza via Tom Select se existir
+                        if (selectMotorista.tomselect) {
+                            selectMotorista.tomselect.clear();
+                            selectMotorista.tomselect.clearOptions();
+                            selectMotorista.tomselect.addOption({value: '', text: 'Selecione...'});
+                            data.motoristas.forEach(m => {
+                                selectMotorista.tomselect.addOption({value: m.id, text: m.nome});
+                            });
+                            selectMotorista.tomselect.refreshOptions(false);
+                        } else {
+                            selectMotorista.innerHTML = '<option value="">Selecione...</option>';
+                            data.motoristas.forEach(m => {
+                                const option = document.createElement('option');
+                                option.value = m.id;
+                                option.textContent = m.nome;
+                                selectMotorista.appendChild(option);
+                            });
+                        }
+                    }
+                });
+            
+            // Busca veículos da transportadora via AJAX
+            fetch(`/pedido-compra/api/veiculos/${transportadoraId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.sucesso) {
+                        // Atualiza via Tom Select se existir
+                        if (selectVeiculo.tomselect) {
+                            selectVeiculo.tomselect.clear();
+                            selectVeiculo.tomselect.clearOptions();
+                            selectVeiculo.tomselect.addOption({value: '', text: 'Selecione...'});
+                            data.veiculos.forEach(v => {
+                                selectVeiculo.tomselect.addOption({value: v.id, text: v.placa});
+                            });
+                            selectVeiculo.tomselect.refreshOptions(false);
+                        } else {
+                            selectVeiculo.innerHTML = '<option value="">Selecione...</option>';
+                            data.veiculos.forEach(v => {
+                                const option = document.createElement('option');
+                                option.value = v.id;
+                                option.textContent = v.placa_veiculo;
+                                selectVeiculo.appendChild(option);
+                            });
+                        }
+                    }
+                });
+        }
+    }
+    
+    // Inicializa Tom Select em todas as linhas existentes
+    document.querySelectorAll('.item-row').forEach(linha => {
+        inicializarTomSelectsLinha(linha);
+        configurarFiltroTransportadora(linha);
+    });
+    
+    // Validação do formulário antes de enviar
+    document.getElementById('form-pedido-compra').addEventListener('submit', function(e) {
+        const rows = tbody.querySelectorAll('.item-row');
+        
+        if (rows.length === 0) {
+            e.preventDefault();
+            alert('Adicione pelo menos uma carga ao pedido.');
+            return false;
+        }
+        
+        // Verifica se todas as datas obrigatórias estão preenchidas
+        let valid = true;
+        rows.forEach(row => {
+            const dataCarga = row.querySelector('input[name="data_carga[]"]');
+            const dataEntrega = row.querySelector('input[name="data_entrega[]"]');
+            
+            if (!dataCarga.value || !dataEntrega.value) {
+                valid = false;
+            }
+        });
+        
+        if (!valid) {
+            e.preventDefault();
+            alert('Preencha as datas de carga e entrega de todos os itens.');
+            return false;
+        }
+    });
+});
+</script>
+
+{% endblock %}
