@@ -1,10 +1,10 @@
-from datetime import datetime, date
-from sistema.models_views.base_model import BaseModel, db
 from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
-from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
-from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
-from sqlalchemy import and_, or_, extract
+from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
+from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 import json
 
 
@@ -12,6 +12,139 @@ class DREModel:
     """
     Modelo para processamento de dados do DRE (Demonstrativo de Resultado do Exercício)
     """
+    
+    @staticmethod
+    def _varrer_tabelas_a_pagar(data_inicio, data_fim):
+        """
+        Varre as tabelas de 'a pagar' e retorna valores agrupados por código de categoria.
+        
+        Este método realiza queries diretas nas tabelas de fornecedor, frete, extrator e comissionado
+        filtrando por data_entrega_ticket e somando os valores para categorização automática no DRE.
+        
+        Args:
+            data_inicio (date): Data de início do período
+            data_fim (date): Data de fim do período
+            
+        Returns:
+            dict: Dicionário com códigos de categoria como chave e valores totais (em centavos)
+        """
+        valores_por_codigo = {}
+        
+        try:
+            # 2.01.01 - Compra de Madeira (Fornecedores)
+            fornecedores_query = FornecedorPagarModel.query.filter(
+                FornecedorPagarModel.ativo == True,
+                FornecedorPagarModel.deletado == False,
+                FornecedorPagarModel.data_entrega_ticket.isnot(None)
+            )
+            
+            if data_inicio:
+                fornecedores_query = fornecedores_query.filter(
+                    FornecedorPagarModel.data_entrega_ticket >= data_inicio
+                )
+            if data_fim:
+                fornecedores_query = fornecedores_query.filter(
+                    FornecedorPagarModel.data_entrega_ticket <= data_fim
+                )
+            
+            fornecedores = fornecedores_query.all()
+            total_fornecedores = sum(f.valor_total_a_pagar_100 or 0 for f in fornecedores)
+            
+            if total_fornecedores > 0:
+                valores_por_codigo['2.01.01'] = total_fornecedores
+            
+            # 2.01.02 - Fretes (Transportadoras)
+            fretes_query = FretePagarModel.query.filter(
+                FretePagarModel.ativo == True,
+                FretePagarModel.deletado == False,
+                FretePagarModel.data_entrega_ticket.isnot(None)
+            )
+            
+            if data_inicio:
+                fretes_query = fretes_query.filter(
+                    FretePagarModel.data_entrega_ticket >= data_inicio
+                )
+            if data_fim:
+                fretes_query = fretes_query.filter(
+                    FretePagarModel.data_entrega_ticket <= data_fim
+                )
+            
+            fretes = fretes_query.all()
+            total_fretes = sum(f.valor_total_a_pagar_100 or 0 for f in fretes)
+            
+            if total_fretes > 0:
+                valores_por_codigo['2.01.02'] = total_fretes
+            
+            # 2.01.03 - Extração de madeira (Extratores)
+            extratores_query = ExtratorPagarModel.query.filter(
+                ExtratorPagarModel.ativo == True,
+                ExtratorPagarModel.deletado == False,
+                ExtratorPagarModel.data_entrega_ticket.isnot(None)
+            )
+            
+            if data_inicio:
+                extratores_query = extratores_query.filter(
+                    ExtratorPagarModel.data_entrega_ticket >= data_inicio
+                )
+            if data_fim:
+                extratores_query = extratores_query.filter(
+                    ExtratorPagarModel.data_entrega_ticket <= data_fim
+                )
+            
+            extratores = extratores_query.all()
+            total_extratores = sum(e.valor_total_a_pagar_100 or 0 for e in extratores)
+            
+            if total_extratores > 0:
+                valores_por_codigo['2.01.03'] = total_extratores
+            
+            # 2.01.04 - Comissões Compra Madeira (Comissionados)
+            comissionados_query = ComissionadoPagarModel.query.filter(
+                ComissionadoPagarModel.ativo == True,
+                ComissionadoPagarModel.deletado == False,
+                ComissionadoPagarModel.data_entrega_ticket.isnot(None)
+            )
+            
+            if data_inicio:
+                comissionados_query = comissionados_query.filter(
+                    ComissionadoPagarModel.data_entrega_ticket >= data_inicio
+                )
+            if data_fim:
+                comissionados_query = comissionados_query.filter(
+                    ComissionadoPagarModel.data_entrega_ticket <= data_fim
+                )
+            
+            comissionados = comissionados_query.all()
+            total_comissionados = sum(c.valor_total_a_pagar_100 or 0 for c in comissionados)
+            
+            if total_comissionados > 0:
+                valores_por_codigo['2.01.04'] = total_comissionados
+            
+            # 1.01.01 - Vendas Madeira (Registro Operacional)
+            vendas_query = RegistroOperacionalModel.query.filter(
+                RegistroOperacionalModel.ativo == True,
+                RegistroOperacionalModel.deletado == False,
+                RegistroOperacionalModel.data_entrega_ticket.isnot(None)
+            )
+            
+            if data_inicio:
+                vendas_query = vendas_query.filter(
+                    RegistroOperacionalModel.data_entrega_ticket >= data_inicio
+                )
+            if data_fim:
+                vendas_query = vendas_query.filter(
+                    RegistroOperacionalModel.data_entrega_ticket <= data_fim
+                )
+            
+            vendas = vendas_query.all()
+            total_vendas = sum(v.valor_total_nota_100 or 0 for v in vendas)
+            
+            if total_vendas > 0:
+                valores_por_codigo['1.01.01'] = total_vendas
+            
+        except Exception as e:
+            print(f"[DRE] Erro ao varrer tabelas a pagar: {e}")
+        
+        return valores_por_codigo
     
     @staticmethod
     def calcular_valores_por_categoria(data_inicio=None, data_fim=None, categoria_ids=None):
@@ -61,6 +194,27 @@ class DREModel:
                                         valores_categoria[categoria_id] += valor
                     except (json.JSONDecodeError, TypeError):
                         continue
+            
+            # Varrer tabelas 'a pagar' para categorização automática
+            valores_a_pagar = DREModel._varrer_tabelas_a_pagar(data_inicio, data_fim)
+            
+            # Converter códigos para IDs de categoria e adicionar aos valores
+            for codigo, valor in valores_a_pagar.items():
+                try:
+                    categoria = PlanoContaModel.query.filter_by(
+                        codigo=codigo,
+                        ativo=True,
+                        deletado=False
+                    ).first()
+                    
+                    if categoria:
+                        # Filtrar por categoria_ids se fornecido
+                        if categoria_ids is None or categoria.id in categoria_ids:
+                            if categoria.id not in valores_categoria:
+                                valores_categoria[categoria.id] = 0
+                            valores_categoria[categoria.id] += valor
+                except Exception as e:
+                    pass
             
             return valores_categoria
             

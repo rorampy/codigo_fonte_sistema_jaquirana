@@ -1,15 +1,14 @@
 from datetime import datetime, date
-import calendar
-from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem, formatar_float_para_brl, formatar_data_para_brl, formatar_float_para_brl_sem_cifrao
+from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem, formatar_float_para_brl, formatar_data_para_brl
 from sistema._utilitarios.data_e_hora import DataHora
-from flask import render_template, request, redirect, url_for, flash, session, jsonify, make_response, send_file
+from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required
 from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
 from sistema.models_views.relatorios.relatorios_financeiros.relatorio_dfc_dre.relatorio_dre.dre_model import DREModel
+from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
 from sistema._utilitarios import *
 import json
-import os
 
 @app.route('/relatorios/relatorios-financeiros/dre-analitico', methods=['GET', 'POST'])
 @login_required
@@ -312,6 +311,15 @@ def dre_categoria_detalhes(categoria_id):
         from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
         from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
         from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
+        from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
+        from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
+        from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
+        from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
+        
+        # Obter código da categoria para verificar se é uma categoria automática
+        categoria = PlanoContaModel.query.filter_by(id=categoria_id, ativo=True, deletado=False).first()
+        if not categoria:
+            return jsonify({'error': 'Categoria não encontrada'}), 404
         
         # Buscar registros da categoria no período com joins para obter dados completos
         registros = db.session.query(AgendamentoPagamentoModel)\
@@ -578,6 +586,167 @@ def dre_categoria_detalhes(categoria_id):
                                 })
                 except (json.JSONDecodeError, TypeError):
                     continue
+        
+        # Buscar registros das tabelas 'a pagar' para categorias automáticas
+        if categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04', '1.01.01']:
+            # Mapear código para modelo e descrição
+            mapeamento_a_pagar = {
+                '2.01.01': {
+                    'model': FornecedorPagarModel,
+                    'tipo': 'Fornecedor',
+                    'origem': 'Compra de Madeira',
+                    'relacionamento': 'fornecedor'
+                },
+                '2.01.02': {
+                    'model': FretePagarModel,
+                    'tipo': 'Frete',
+                    'origem': 'Transporte',
+                    'relacionamento': 'fornecedor'  # FretePagarModel usa fornecedor_id para transportadora
+                },
+                '2.01.03': {
+                    'model': ExtratorPagarModel,
+                    'tipo': 'Extrator',
+                    'origem': 'Extração de Madeira',
+                    'relacionamento': 'fornecedor'
+                },
+                '2.01.04': {
+                    'model': ComissionadoPagarModel,
+                    'tipo': 'Comissionado',
+                    'origem': 'Comissão',
+                    'relacionamento': 'fornecedor'  # ComissionadoPagarModel usa fornecedor_id para comissionado
+                },
+                '1.01.01': {
+                    'model': RegistroOperacionalModel,
+                    'tipo': 'Venda',
+                    'origem': 'Venda de Madeira',
+                    'relacionamento': 'solicitacao'
+                }
+            }
+            
+            config = mapeamento_a_pagar.get(categoria.codigo)
+            if config:
+                Model = config['model']
+                
+                # Buscar registros da tabela 'a pagar' ou registro operacional
+                query_a_pagar = Model.query.filter(
+                    Model.ativo == True,
+                    Model.deletado == False,
+                    Model.data_entrega_ticket.isnot(None)
+                )
+                
+                if data_inicio:
+                    query_a_pagar = query_a_pagar.filter(Model.data_entrega_ticket >= data_inicio)
+                if data_fim:
+                    query_a_pagar = query_a_pagar.filter(Model.data_entrega_ticket <= data_fim)
+                
+                registros_a_pagar = query_a_pagar.all()
+                
+                # Adicionar registros formatados
+                for registro in registros_a_pagar:
+                    # Para vendas, usar valor_total_nota_100
+                    if categoria.codigo == '1.01.01':
+                        valor = (registro.valor_total_nota_100 or 0) / 100.0
+                        
+                        # Buscar cliente (destinatário)
+                        beneficiario = registro.destinatario_nome or 'Não informado'
+                        
+                        # Buscar informações da carga/solicitação
+                        observacoes = ''
+                        numero_nf = registro.numero_nota_fiscal or ''
+                        if hasattr(registro, 'solicitacao') and registro.solicitacao:
+                            solicitacao = registro.solicitacao
+                            detalhes_obs = []
+                            
+                            if hasattr(solicitacao, 'produto') and solicitacao.produto:
+                                detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
+                            
+                            if hasattr(solicitacao, 'bitola') and solicitacao.bitola:
+                                detalhes_obs.append(f"Bitola: {solicitacao.bitola.bitola}")
+                            
+                            if hasattr(solicitacao, 'cliente') and solicitacao.cliente:
+                                beneficiario = solicitacao.cliente.identificacao
+                            
+                            if hasattr(solicitacao, 'motorista') and solicitacao.motorista:
+                                detalhes_obs.append(f"Motorista: {solicitacao.motorista.nome_completo}")
+                            
+                            if hasattr(solicitacao, 'veiculo') and solicitacao.veiculo:
+                                detalhes_obs.append(f"Veículo: {solicitacao.veiculo.placa_veiculo}")
+                            
+                            observacoes = ' • '.join(detalhes_obs)
+                        
+                        registros_categoria.append({
+                            'id': registro.id,
+                            'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y'),
+                            'valor': valor,
+                            'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                            'detalhamento': config['tipo'],
+                            'referencia': numero_nf or f"{config['tipo']}-{registro.id}",
+                            'descricao': observacoes,
+                            'beneficiario': beneficiario,
+                            'origem': config['origem'],
+                            'tipo_documento': 'Nota Fiscal',
+                            'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{registro.id}",
+                            'situacao_pagamento_id': registro.situacao_financeira_id if hasattr(registro, 'situacao_financeira_id') else None,
+                            'data_vencimento': None,
+                            'valor_total_original': valor,
+                            'faturamento_id': None,
+                            'lancamento_avulso_id': None,
+                            'origem_automatica': True
+                        })
+                    else:
+                        # Para despesas (a pagar), usar valor_total_a_pagar_100
+                        valor = (registro.valor_total_a_pagar_100 or 0) / 100.0
+                        
+                        # Buscar beneficiário (fornecedor/transportadora/extrator/comissionado)
+                        beneficiario = 'Não informado'
+                        if hasattr(registro, 'fornecedor') and registro.fornecedor:
+                            beneficiario = registro.fornecedor.identificacao
+                        
+                        # Buscar informações da carga/solicitação
+                        observacoes = ''
+                        numero_ticket = ''
+                        if hasattr(registro, 'solicitacao') and registro.solicitacao:
+                            solicitacao = registro.solicitacao
+                            detalhes_obs = []
+                            
+                            if hasattr(solicitacao, 'produto') and solicitacao.produto:
+                                detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
+                            
+                            if hasattr(registro, 'bitola') and registro.bitola:
+                                detalhes_obs.append(f"Bitola: {registro.bitola.bitola}")
+                            
+                            if hasattr(solicitacao, 'motorista') and solicitacao.motorista:
+                                detalhes_obs.append(f"Motorista: {solicitacao.motorista.nome_completo}")
+                            
+                            if hasattr(solicitacao, 'veiculo') and solicitacao.veiculo:
+                                detalhes_obs.append(f"Veículo: {solicitacao.veiculo.placa_veiculo}")
+                            
+                            # Buscar número do ticket
+                            if hasattr(solicitacao, 'numero_ticket') and solicitacao.numero_ticket:
+                                numero_ticket = solicitacao.numero_ticket
+                                detalhes_obs.append(f"Ticket: {numero_ticket}")
+                            
+                            observacoes = ' • '.join(detalhes_obs)
+                        
+                        registros_categoria.append({
+                            'id': registro.id,
+                            'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y'),
+                            'valor': valor,
+                            'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                            'detalhamento': config['tipo'],
+                            'referencia': numero_ticket or f"{config['tipo']}-{registro.id}",
+                            'descricao': observacoes,
+                            'beneficiario': beneficiario,
+                            'origem': config['origem'],
+                            'tipo_documento': f'{config["tipo"]} a Pagar',
+                            'codigo_documento': f"{config['tipo'].upper()[:3]}-{registro.id}",
+                            'situacao_pagamento_id': registro.situacao_pagamento_id if hasattr(registro, 'situacao_pagamento_id') else None,
+                            'data_vencimento': None,
+                            'valor_total_original': valor,
+                            'faturamento_id': None,
+                            'lancamento_avulso_id': None,
+                            'origem_automatica': True  # Flag para identificar origem automática
+                        })
         
         # Calcular total
         total = sum(reg['valor'] for reg in registros_categoria)

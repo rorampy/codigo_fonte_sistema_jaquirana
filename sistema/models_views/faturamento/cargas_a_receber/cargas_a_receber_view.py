@@ -2,7 +2,7 @@ from datetime import datetime
 from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem, formatar_float_para_brl, formatar_data_para_brl, formatar_float_para_brl_sem_cifrao
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_required, current_user
-from sistema.models_views.controle_carga.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
@@ -16,11 +16,11 @@ from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model imp
 from sistema.models_views.configuracoes_gerais.categorizacao_fiscal.categorizacao_fiscal_model import CategorizacaoFiscalModel
 from sistema.models_views.financeiro.movimentacao_financeira.movimentacao_financeira_model import MovimentacaoFinanceiraModel
 from sistema.models_views.financeiro.movimentacao_financeira.saldo_movimentacao_financeira_model import SaldoMovimentacaoFinanceiraModel
-from sistema.models_views.financeiro.situacao_pagamento_model import SituacaoPagamentoModel
+from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
 from sistema.models_views.importacao_ofx.importacao_ofx_model import ImportacaoOfx
 from sistema.models_views.importacao_ofx.importacao_ofx_view import limpar_dados_conciliacao
 from sistema.models_views.importacao_ofx.importacao_ofx_view import verificar_e_limpar_conciliacao_incorreta
-from sistema.models_views.faturamento.faturamento_model import FaturamentoModel
+from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
 from sistema._utilitarios import *
 from sistema._utilitarios.utilitario_semanal import UtilitariosSemana
 
