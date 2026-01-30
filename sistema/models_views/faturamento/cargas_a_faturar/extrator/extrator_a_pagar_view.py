@@ -143,6 +143,67 @@ def listagem_extratores_a_pagar():
         fitid_conciliar=fitid_conciliar
     )
 
+
+@app.route("/sincronizar/precos/extrator", methods=["GET", "POST"])
+@login_required
+@requires_roles
+def atualizar_precos_extrator():
+    """
+    Sincroniza os preços de extração para os registros dentro do período informado.
+    """
+    try:
+        from servidor_huey.tarefas import sincronizar_precos_extratores
+        
+        if request.method == 'POST':
+            data_inicio = request.form.get('data_inicio')
+            data_fim = request.form.get('data_fim')
+            extrator_id = request.form.get('extrator_id')
+
+            if not data_inicio or not data_fim:
+                flash(("Por favor, informe o período para atualização dos valores de extração!", "warning"))
+                return redirect(url_for("listagem_extratores_a_pagar"))
+            
+            try:
+                data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+                data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
+                
+                if data_inicio_obj > data_fim_obj:
+                    flash(("A data de início não pode ser maior que a data fim!", "warning"))
+                    return redirect(url_for("listagem_extratores_a_pagar"))
+                
+            except ValueError:
+                flash(("Formato de data inválido!", "warning"))
+                return redirect(url_for("listagem_extratores_a_pagar"))
+        else:
+            return redirect(url_for("listagem_extratores_a_pagar"))
+
+        # Converter extrator_id para None se for "todos"
+        extrator_filtro = None if extrator_id == "todos" else extrator_id
+
+        # Iniciar a tarefa assíncrona
+        task = sincronizar_precos_extratores(data_inicio, data_fim, extrator_id=extrator_filtro)
+
+        try:
+            resultado = task(blocking=True, timeout=120) 
+
+            if resultado['sucesso']:
+                if resultado['sincronizados'] > 0:
+                    flash((f"{resultado['sincronizados']} valores de extração sincronizados!", "success"))
+                else:
+                    flash(("Todos os extratores no período informado já estão sincronizados", "warning"))
+            else:
+                flash(("Não foi possível atualizar os registros de extração no período informado", "warning"))
+                
+        except Exception as e:
+            flash(("Processo de atualização de extratores pode levar alguns minutos para concluir.", "warning"))
+            
+        return redirect(url_for("listagem_extratores_a_pagar"))
+        
+    except Exception as e:
+        flash(("Não foi possível iniciar a sincronização de extratores", "warning"))
+        return redirect(url_for("listagem_extratores_a_pagar"))
+
+
 @app.route("/financeiro/a-pagar/extrator-a-pagar/<int:id>", methods=["GET", "POST"])
 @login_required
 @requires_roles
@@ -170,11 +231,13 @@ def extrator_a_pagar(id):
             return redirect(url_for("listagem_extratores_a_pagar"))
 
         # === Usando nova arquitetura via ServicoCreditos ===
-        credito_disponivel = ServicoCreditos.obter_saldo_extrator(registro.fornecedor.extrator_id)
+        extrator_id_registro = registro.obter_extrator_id()
+        extrator_obj = registro.obter_extrator()
+        credito_disponivel = ServicoCreditos.obter_saldo_extrator(extrator_id_registro)
         
         # Buscar créditos individuais disponíveis do extrator
         creditos_individuais = ServicoCreditos.obter_creditos_disponiveis_extrator(
-            registro.fornecedor.extrator_id
+            extrator_id_registro
         )
 
         registro_oper = RegistroOperacionalModel.obter_registro_solicitacao_por_id(
@@ -217,7 +280,7 @@ def extrator_a_pagar(id):
                 creditos_selecionados = {}
 
             valor_pendente = registro.valor_total_a_pagar_100
-            extrator_id = registro.fornecedor.extrator_id
+            extrator_id = extrator_id_registro
 
             detalhes_creditos_utilizados = []
             total_credito_aplicado = 0
@@ -361,9 +424,9 @@ def extrator_a_pagar(id):
 
                 detalhes_extratores = [{
                     "extrator_a_pagar_id": registro.id,
-                    "extrator_id": registro.fornecedor.extrator_id,
+                    "extrator_id": extrator_id_registro,
                     "solicitacao_id": registro.solicitacao_id if registro.solicitacao else "",
-                    "extrator_identificacao": registro.fornecedor.extrator.identificacao if registro and registro.fornecedor and registro.fornecedor.extrator else str(registro.fornecedor.extrator_id),
+                    "extrator_identificacao": extrator_obj.identificacao if extrator_obj else str(extrator_id_registro),
                     "cliente": registro.solicitacao.cliente.identificacao if registro.solicitacao and registro.solicitacao.cliente else "",
                     "valor_bruto": valor_bruto_registro,
                     "valor_credito": valor_credito_registro,
@@ -433,6 +496,8 @@ def extrator_a_pagar(id):
             registro_operacional=registro_oper,
             saldo_credito=credito_disponivel,
             creditos_individuais=creditos_individuais,
+            extrator_id=extrator_id_registro,
+            extrator=extrator_obj,
             conciliar_transacao_id=conciliar_transacao_id,
             valor_conciliar=dados_conciliacao.get('valor'),
             data_conciliar=dados_conciliacao.get('data'),
@@ -539,7 +604,7 @@ def extrator_a_pagar_massa():
                 continue
             
             # Obter o extrator id
-            extrator_id = registro.fornecedor.extrator_id
+            extrator_id = registro.obter_extrator_id()
             valor_total_geral += registro.valor_total_a_pagar_100
 
             # Se o extrator ainda não estiver no dicionário, criar estrutura
@@ -567,11 +632,7 @@ def extrator_a_pagar_massa():
             
             # Obter objeto do extrator (apenas uma vez)
             if not extratores_dict[extrator_id]['extrator']:
-                if (registro.registro_operacional and 
-                    registro.registro_operacional.solicitacao and 
-                    registro.registro_operacional.solicitacao.fornecedor and
-                    registro.registro_operacional.solicitacao.fornecedor.extrator):
-                    extratores_dict[extrator_id]['extrator'] = registro.registro_operacional.solicitacao.fornecedor.extrator
+                extratores_dict[extrator_id]['extrator'] = registro.obter_extrator()
 
         # === FUNÇÃO AUXILIAR PARA CALCULAR TOTAIS ===
         def calcular_totais():
