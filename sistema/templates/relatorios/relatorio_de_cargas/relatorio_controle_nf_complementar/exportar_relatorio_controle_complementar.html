@@ -19,7 +19,7 @@
 
         <div class="relatorio-title">Relatório de Controle NF Complementar</div>
 
-        {% if dados_corretos %}
+        {% if dados_corretos and (dados_corretos.get('dataInicioExport') or dados_corretos.get('dataFimExport') or dados_corretos.get('clienteExport')) %}
         <div class="dados-registro no-break">
           <div class="filtros-title">Filtros Aplicados</div>
           <div
@@ -27,8 +27,8 @@
 
             <div style="flex: 1 1 48%; margin-bottom: 10px;">
               <p><span class="label"><strong>Data Início:</strong></span>
-                {% if dados_corretos.get('dataInicio') %}
-                {{ dados_corretos.get('dataInicio') |
+                {% if dados_corretos.get('dataInicioExport') %}
+                {{ dados_corretos.get('dataInicioExport') |
                 converte_data_para_datetime_converte_data_brl }}
                 {% else %}
                 -
@@ -38,8 +38,8 @@
 
             <div style="flex: 1 1 48%; margin-bottom: 10px;">
               <p><span class="label"><strong>Data Fim:</strong></span>
-                {% if dados_corretos.get('dataFim') %}
-                {{ dados_corretos.get('dataFim') |
+                {% if dados_corretos.get('dataFimExport') %}
+                {{ dados_corretos.get('dataFimExport') |
                 converte_data_para_datetime_converte_data_brl }}
                 {% else %}
                 -
@@ -47,34 +47,13 @@
               </p>
             </div>
 
+            {% if cliente_nome %}
             <div style="flex: 1 1 48%; margin-bottom: 10px;">
               <p><span class="label"><strong>Cliente:</strong></span>
-                {{ dados_corretos.get('clienteNfComplementar') or '-' }}
+                {{ cliente_nome }}
               </p>
             </div>
-
-            <div style="flex: 1 1 48%; margin-bottom: 10px;">
-              <p><span class="label"><strong>Número NF:</strong></span>
-                {{ dados_corretos.get('numeroNfComplementar') or '-' }}
-              </p>
-            </div>
-
-            <div style="flex: 1 1 48%; margin-bottom: 10px;">
-              <p><span class="label"><strong>Status NF:</strong></span>
-                {% if dados_corretos.get('statusNfComplementarEmitida') == '1'
-                %}
-                Emitida
-                {% elif dados_corretos.get('statusNfComplementarEmitida') == '2'
-                %}
-                Não Emitida
-                {% elif dados_corretos.get('statusNfComplementarEmitida') == '3'
-                %}
-                Cancelada
-                {% else %}
-                -
-                {% endif %}
-              </p>
-            </div>
+            {% endif %}
 
           </div>
         </div>
@@ -104,13 +83,13 @@
         <table>
           <thead>
             <tr>
-              <th class="text-center text-primary">Data Emissão NF</th>
-              <th class="text-center">Cliente</th>
-              <th class="text-center">Número NF</th>
-              <th class="text-center">Peso NF</th>
-              <th class="text-center">Peso Ticket</th>
-              <th class="text-center">Diferença</th>
-              <th class="text-center">NF Complementar Emitida</th>
+              <th style="text-align: center;" class="text-primary">Data Emissão NF</th>
+              <th style="text-align: center;">Cliente</th>
+              <th style="text-align: center;">Número NF</th>
+              <th style="text-align: center;">Peso NF</th>
+              <th style="text-align: center;">Peso Ticket</th>
+              <th style="text-align: center;">Diferença</th>
+              <th style="text-align: center;">NF Complementar Emitida</th>
             </tr>
           </thead>
           <tbody>
@@ -121,7 +100,7 @@
             {% set dif = (peso_nf - peso_ticket) | round(2) %}
 
             <tr>
-              <td class="text-center">
+              <td style="text-align: center;">
                 {% if registro.destinatario_data_emissao %}
                 {{ registro.destinatario_data_emissao | formatar_data_para_brl
                 }}
@@ -129,10 +108,10 @@
                 -
                 {% endif %}
               </td>
-              <td class="text-center">
+              <td style="text-align: center;">
                 {{ registro.solicitacao.cliente.identificacao or '-' }}
               </td>
-              <td class="text-center">
+              <td style="text-align: center;">
                 {% if registro.estorno_nf%}
                 {{ registro.numero_nota_fiscal_estorno
                 }} *
@@ -142,15 +121,15 @@
                 -
                 {% endif %}
               </td>
-              <td class="text-center">{{ peso_nf }} Ton.</td>
-              <td class="text-center">{{ peso_ticket }} Ton.</td>
-              <td class="text-center">
+              <td style="text-align: center;">{{ peso_nf }} Ton.</td>
+              <td style="text-align: center;">{{ peso_ticket }} Ton.</td>
+              <td style="text-align: center;">
                 <span
                   class="badge {{ 'bg-danger-lt' if dif < 0 else 'bg-green-lt' }}">
                   {{ dif }} Ton.
                 </span>
               </td>
-              <td class="text-center">
+              <td style="text-align: center;">
                 {% if dif < 0 %}
                 <span class="badge 
                               {% if registro.status_emissao_nf_complementar_id == 1 %}

@@ -724,18 +724,18 @@ class RegistroOperacionalModel(BaseModel):
 
         if data_inicio and data_fim:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket.between(data_inicio, data_fim),
+                RegistroOperacionalModel.destinatario_data_emissao.isnot(None),
+                RegistroOperacionalModel.destinatario_data_emissao.between(data_inicio, data_fim),
             )
         elif data_inicio:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
+                RegistroOperacionalModel.destinatario_data_emissao.isnot(None),
+                RegistroOperacionalModel.destinatario_data_emissao >= data_inicio,
             )
         elif data_fim:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket <= data_fim,
+                RegistroOperacionalModel.destinatario_data_emissao.isnot(None),
+                RegistroOperacionalModel.destinatario_data_emissao <= data_fim,
             )
 
         if cliente:

@@ -108,6 +108,8 @@
                               <span class="text-muted me-2">Total a
                                 pagar:</span>
                               <span id="total-valor-{{ groupId }}" class="badge bg-green-lt">R$ 0,00</span>
+                              <span class="text-muted ms-3 me-2">Toneladas:</span>
+                              <span id="total-toneladas-{{ groupId }}" class="badge bg-blue-lt">0.00 Ton.</span>
                             </strong>
                           </div>
                         </div>
@@ -143,7 +145,8 @@
                                   <!-- CHECKBOX DESABILITADO PARA REGISTROS JÁ PAGOS -->
                                   <input type="checkbox" class="form-check-input registro-checkbox"
                                     data-id="{{ item.registro.id }}" data-group="{{ groupId }}"
-                                    data-diff="{{ item.registro.valor_total_a_pagar_100 / 100 or 0 }}" {% if
+                                    data-diff="{{ item.registro.valor_total_a_pagar_100 / 100 or 0 }}"
+                                    data-peso="{{ item.registro_operacional.peso_liquido_ticket or 0 }}" {% if
                                     item.registro.situacao_pagamento_id in [5, 6, 8, 9, 10] %}disabled{% endif %}>
                                 </td>
                                 <td class="text-center text-primary">{{
@@ -642,9 +645,17 @@
         if (span) span.textContent = formatarParaBRL(total);
       }
 
+      function updateGroupTonnage(group) {
+        const total = Array.from(document.querySelectorAll(`.registro-checkbox[data-group="${group}"]:checked`))
+          .reduce((sum, cb) => sum + (parseFloat(cb.dataset.peso) || 0), 0);
+        const span = document.getElementById(`total-toneladas-${group}`);
+        if (span) span.textContent = total.toFixed(2) + ' Ton.';
+      }
+
       document.body.addEventListener('change', e => {
         if (e.target.matches('.registro-checkbox')) {
           updateGroupTotal(e.target.dataset.group);
+          updateGroupTonnage(e.target.dataset.group);
           updatePagamentoMassaButton();
         }
         if (e.target.matches('.select-all-group')) {
@@ -653,6 +664,7 @@
             if (!cb.disabled) cb.checked = e.target.checked;
           });
           updateGroupTotal(g);
+          updateGroupTonnage(g);
           updatePagamentoMassaButton();
         }
       });

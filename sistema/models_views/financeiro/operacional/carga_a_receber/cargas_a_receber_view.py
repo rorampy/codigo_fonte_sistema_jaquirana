@@ -464,6 +464,35 @@ def processar_dados_faturamento(faturamento):
         'ocultar_receitas_avulsas': True,
         'ocultar_despesas_avulsas': True,
     }
+    
+    # Calcular total de toneladas somando todos os peso_ticket das cargas a receber
+    total_toneladas = 0.0
+    for carga in cargas_a_receber:
+        peso = carga.get('peso_ticket', 0)
+        if peso:
+            try:
+                # Converter para float se for string
+                if isinstance(peso, str):
+                    peso = float(peso.replace(',', '.'))
+                total_toneladas += float(peso)
+            except (ValueError, TypeError):
+                pass  # Ignorar valores inválidos
+    
+    # Somar também toneladas das NFs complementares (registros operacionais)
+    for nf_grupo in nfs_agrupadas.values():
+        for registro in nf_grupo.get('registros_operacionais', []):
+            peso = registro.get('peso_liquido_ticket', 0)
+            if peso:
+                try:
+                    if isinstance(peso, str):
+                        peso = float(peso.replace(',', '.'))
+                    total_toneladas += float(peso)
+                except (ValueError, TypeError):
+                    pass
+    
+    dados['totais'] = {
+        'total_toneladas': round(total_toneladas, 2)
+    }
 
     return dados
 

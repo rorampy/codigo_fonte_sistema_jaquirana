@@ -73,6 +73,54 @@ def faturamento_nf_complementar():
         agrupar_cargas_receber=agrupar_cargas_receber
     )
 
+@app.route("/faturamento/nf-complementar/exportar-excel", methods=["GET", "POST"])
+@login_required
+@requires_roles
+def exportar_nf_complementar_excel():
+    """Exporta NFs complementares para Excel com informações de peso e diferença"""
+    try:
+        dataHoje = datetime.now().strftime('%d-%m-%Y')
+        
+        # Buscar todas as NFs complementares ativas
+        nfs_complementares = NfComplementarModel.listar_ativas()
+        
+        linhas = []
+        for nf in nfs_complementares:
+            # Calcular peso total dos tickets (soma dos registros operacionais)
+            peso_ticket_total = 0.0
+            if nf.nf_complementar_detalhes and 'registros_operacionais' in nf.nf_complementar_detalhes:
+                registro_ids = [item['registro_id'] for item in nf.nf_complementar_detalhes['registros_operacionais']]
+                if registro_ids:
+                    registros_operacionais = RegistroOperacionalModel.query.filter(
+                        RegistroOperacionalModel.id.in_(registro_ids)
+                    ).all()
+                    for reg in registros_operacionais:
+                        if reg.peso_liquido_ticket:
+                            peso_ticket_total += reg.peso_liquido_ticket
+            
+            # Calcular diferença
+            peso_nf = nf.peso_ton_nf if nf.peso_ton_nf else 0
+            diferenca = round(peso_nf - peso_ticket_total, 2)
+            
+            linha = {
+                'Data Emissão': nf.destinatario_data_emissao.strftime('%d/%m/%Y') if nf.destinatario_data_emissao else '-',
+                'Cliente': nf.cliente.identificacao if nf.cliente else '-',
+                'Número NF': nf.numero_nota_fiscal or '-',
+                'Peso NF': f"{peso_nf} Ton." if peso_nf > 0 else '-',
+                'Peso Ticket': f"{peso_ticket_total} Ton." if peso_ticket_total > 0 else '-',
+                'Diferença': f"{diferenca} Ton.",
+                'Status': nf.situacao.situacao if nf.situacao else '-'
+            }
+            linhas.append(linha)
+        
+        nome_arquivo_saida = f'nf-complementar_{dataHoje}'
+        return ManipulacaoArquivos.exportar_excel(linhas, nome_arquivo_saida)
+        
+    except Exception as e:
+        print(f"[ERROR] Erro ao exportar NF Complementar para Excel: {e}")
+        flash((f"Erro ao exportar relatório! Contate o suporte.", "error"))
+        return redirect(url_for('faturamento_nf_complementar'))
+
 @app.route("/faturamento/nf-complementar/informar-faturamento/<int:id>", methods=["GET", "POST"])
 @login_required
 @requires_roles

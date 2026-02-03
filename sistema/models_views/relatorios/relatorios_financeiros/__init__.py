@@ -1,0 +1,1 @@
+from .relatorio_cargas_gerais_cliente import relatorio_cargas_gerais_cliente_view

@@ -150,6 +150,7 @@
               <thead>
                 <tr>
                   <th style="text-align: center;">Beneficiário</th>
+                  <th style="text-align: center;">Cliente</th>
                   <th style="text-align: center;">Cód. Faturamento</th>
                   <th style="text-align: center;">Data/Hora</th>
                   <th style="text-align: center;">Valor Bruto</th>
@@ -166,6 +167,11 @@
                   <td class="text-secondary text-center">
                     <span id="beneficiario-{{ faturamento.id }}" class="text-muted">
                       <span class="beneficiario-nome">-</span>
+                    </span>
+                  </td>
+                  <td class="text-secondary text-center">
+                    <span id="cliente-{{ faturamento.id }}" class="text-muted">
+                      <span class="cliente-nome">-</span>
                     </span>
                   </td>
                   <td class="text-secondary text-center">
@@ -308,7 +314,7 @@
                       </button>
                       {% if dados_corretos.get('situacaoFaturamento')|string != '8' %}
                       <a href="#"
-                        class="btn btn-icon btn-outline-danger excluir  {%if faturamento.situacao_pagamento_id == 6 %} disabled {%endif%}"
+                        class="btn btn-icon btn-outline-danger excluir"
                         data-bs-toggle="modal" data-bs-target="#modal-desativar-{{faturamento.id}}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -844,6 +850,9 @@
 
     // Carregar beneficiários para cada faturamento
     carregarBeneficiariosFaturamentos();
+    
+    // Carregar clientes para cada faturamento
+    carregarClientesFaturamentos();
   });
 
   // ===== FUNÇÃO PARA CARREGAR BENEFICIÁRIOS =====
@@ -853,6 +862,55 @@
       const faturamentoId = elemento.id.replace('beneficiario-', '');
       carregarBeneficiarioFaturamento(faturamentoId);
     });
+  }
+
+  function carregarClientesFaturamentos() {
+    // Buscar todos os elementos de clientes na tabela
+    document.querySelectorAll('[id^="cliente-"]').forEach(elemento => {
+      const faturamentoId = elemento.id.replace('cliente-', '');
+      carregarClienteFaturamento(faturamentoId);
+    });
+  }
+
+  function carregarClienteFaturamento(faturamentoId) {
+    // Fazer requisição direta sempre
+    fetch(`/financeiro/faturamentos/detalhes/${faturamentoId}`)
+      .then(response => response.text())
+      .then(text => {
+        try {
+          const data = JSON.parse(text);
+          if (data.erro) {
+            const elemento = document.getElementById(`cliente-${faturamentoId}`);
+            if (elemento) {
+              const nomeElemento = elemento.querySelector('.cliente-nome');
+              if (nomeElemento) {
+                nomeElemento.textContent = 'N/A';
+              }
+            }
+            return;
+          }
+          processarClientes(faturamentoId, data);
+        } catch (e) {
+          // Se não for JSON válido, definir como "N/A" silenciosamente
+          const elemento = document.getElementById(`cliente-${faturamentoId}`);
+          if (elemento) {
+            const nomeElemento = elemento.querySelector('.cliente-nome');
+            if (nomeElemento) {
+              nomeElemento.textContent = 'N/A';
+            }
+          }
+        }
+      })
+      .catch(() => {
+        // Em caso de erro, definir como "N/A" silenciosamente
+        const elemento = document.getElementById(`cliente-${faturamentoId}`);
+        if (elemento) {
+          const nomeElemento = elemento.querySelector('.cliente-nome');
+          if (nomeElemento) {
+            nomeElemento.textContent = 'N/A';
+          }
+        }
+      });
   }
 
   function carregarBeneficiarioFaturamento(faturamentoId) {
@@ -1005,6 +1063,83 @@
 
       // Adicionar ícone indicativo de mais informações
       nomeElemento.innerHTML = `${primeiroNome} <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-primary"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`;
+
+      // Inicializar tooltip do Bootstrap com HTML habilitado
+      new bootstrap.Tooltip(elemento, {
+        html: true,
+        title: tooltipHtml,
+        placement: 'top'
+      });
+    }
+  }
+
+  function processarClientes(faturamentoId, data) {
+    const elemento = document.getElementById(`cliente-${faturamentoId}`);
+    const nomeElemento = elemento.querySelector('.cliente-nome');
+
+    // Coletar todos os clientes únicos
+    const clientes = new Set();
+
+    // Extrair clientes de fornecedores
+    if (data.fornecedores && data.fornecedores.length > 0) {
+      data.fornecedores.forEach(f => {
+        const cliente = f.cliente || f.cliente_identificacao || f.cliente_nome;
+        if (cliente) {
+          clientes.add(cliente);
+        }
+      });
+    }
+
+    // Extrair clientes de transportadoras
+    if (data.transportadoras && data.transportadoras.length > 0) {
+      data.transportadoras.forEach(t => {
+        const cliente = t.cliente || t.cliente_identificacao || t.cliente_nome;
+        if (cliente) {
+          clientes.add(cliente);
+        }
+      });
+    }
+
+    // Extrair clientes de extratores
+    if (data.extratores && data.extratores.length > 0) {
+      data.extratores.forEach(e => {
+        const cliente = e.cliente || e.cliente_identificacao || e.cliente_nome;
+        if (cliente) {
+          clientes.add(cliente);
+        }
+      });
+    }
+
+    // Extrair clientes de comissionados
+    if (data.comissionados && data.comissionados.length > 0) {
+      data.comissionados.forEach(c => {
+        const cliente = c.cliente || c.cliente_identificacao || c.cliente_nome;
+        if (cliente) {
+          clientes.add(cliente);
+        }
+      });
+    }
+
+    const clientesArray = Array.from(clientes);
+
+    if (clientesArray.length === 0) {
+      nomeElemento.textContent = 'N/A';
+    } else if (clientesArray.length === 1) {
+      // Apenas um cliente, não precisa de tooltip
+      nomeElemento.textContent = clientesArray[0];
+    } else {
+      // Múltiplos clientes, mostrar o primeiro e criar tooltip
+      nomeElemento.textContent = clientesArray[0];
+
+      // Criar tooltip com lista de clientes
+      let tooltipHtml = '<div style="text-align: left;"><strong>Clientes:</strong><br>';
+      clientesArray.forEach(nome => {
+        tooltipHtml += `• ${nome}<br>`;
+      });
+      tooltipHtml += '</div>';
+
+      // Adicionar ícone indicativo de mais informações
+      nomeElemento.innerHTML = `${clientesArray[0]} <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-primary"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`;
 
       // Inicializar tooltip do Bootstrap com HTML habilitado
       new bootstrap.Tooltip(elemento, {
@@ -2097,8 +2232,6 @@ PIX: ${pix}`;
       gerarPDFFaturamento();
     };
 
-    // Carregar beneficiários do faturamento
-    carregarBeneficiariosParaModal(faturamentoId);
 
     try {
       if (window.bootstrap && window.bootstrap.Modal) {

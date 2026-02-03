@@ -579,19 +579,14 @@ def excluir_faturamento_a_pagar(faturamento_id):
     faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
     
     try:
-        # Verificar se o faturamento possui situação 6 (não pode ser excluído)
-        if faturamento.situacao_pagamento_id == 6 and current_user.role_id != 1:
-            flash(('Não é possível excluir este faturamento pois ele possui situação que não permite exclusão.', 'error'))
-            return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
-        
         # Buscar todos os agendamentos relacionados ao faturamento
         agendamentos = AgendamentoPagamentoModel.query.filter_by(
             faturamento_id=faturamento_id
         ).all()
         
-        # Verificar se algum agendamento possui situação 1 (não pode ser excluído)
-        agendamentos_situacao_1 = [ag for ag in agendamentos if ag.situacao_pagamento_id == 1]
-        if agendamentos_situacao_1:
+        # Verificar se algum agendamento possui situação 8 (não pode ser excluído) pois ja esta conciliado
+        agendamentos_situacao_8 = [ag for ag in agendamentos if ag.situacao_pagamento_id == 8]
+        if agendamentos_situacao_8:
             flash(('Não é possível excluir este faturamento pois possui agendamentos com situação que não permite exclusão.', 'error'))
             return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
         
@@ -891,6 +886,23 @@ def processar_dados_faturamento(faturamento):
             totais_globais['comissionados'] += totais_produto.get('comissionados', 0.0)
             totais_globais['cargas_a_receber'] += totais_produto.get('cargas_a_receber', 0.0)
             totais_globais['total_geral'] += totais_produto.get('total_geral', 0.0)
+    
+    # Calcular total de toneladas somando todos os peso_ticket dos registros
+    total_toneladas = 0.0
+    for categoria in ['fornecedores', 'transportadoras', 'extratores', 'comissionados', 'cargas_a_receber']:
+        registros = detalhes.get(categoria, [])
+        for registro in registros:
+            peso = registro.get('peso_ticket', 0)
+            if peso:
+                try:
+                    # Converter para float se for string
+                    if isinstance(peso, str):
+                        peso = float(peso.replace(',', '.'))
+                    total_toneladas += float(peso)
+                except (ValueError, TypeError):
+                    pass  # Ignorar valores inválidos
+    
+    totais_globais['total_toneladas'] = round(total_toneladas, 2)
     
     dados['totais'] = totais_globais
     # Calcular totais gerais para compatibilidade

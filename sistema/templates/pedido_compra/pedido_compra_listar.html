@@ -69,8 +69,8 @@
               
               <div class="accordion-item">
                 <!-- Cabeçalho do accordion (nome do fornecedor) -->
-                <h2 class="accordion-header" id="heading-fornecedor-{{ loop.index }}">
-                  <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" 
+                <h2 class="accordion-header d-flex align-items-center" id="heading-fornecedor-{{ loop.index }}">
+                  <button class="accordion-button {% if not loop.first %}collapsed{% endif %} flex-grow-1" type="button" 
                           data-bs-toggle="collapse"
                           data-bs-target="#collapse-fornecedor-{{ loop.index }}" 
                           aria-expanded="{% if loop.first %}true{% else %}false{% endif %}">
@@ -83,13 +83,69 @@
                           <path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
                           <path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5" />
                         </svg>
-                        <strong>{{ fornecedor.identificacao if fornecedor else 'Sem Fornecedor Definido' }}</strong>
+                        <strong>{{ fornecedor.identificacao if fornecedor else 'Sem Fornecedor Definido' }} - {{ itens[0].data_carga.strftime('%d/%m/%Y') if itens and itens[0].data_carga else '' }}</strong>
                       </div>
                       <!-- Badge com quantidade de cargas -->
                       <span class="badge bg-azure-lt ms-2">{{ itens|length }} cargas</span>
                     </div>
                   </button>
+                  <!-- Botão: Excluir Escala Completa -->
+                  <button class="btn btn-sm btn-outline-danger me-2" 
+                          data-bs-toggle="modal"
+                          data-bs-target="#modal-excluir-escala-{{ loop.index }}"
+                          title="Excluir todas as cargas desta escala">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M4 7l16 0" />
+                      <path d="M10 11l0 6" />
+                      <path d="M14 11l0 6" />
+                      <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                      <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                    </svg>
+                    Excluir Escala
+                  </button>
                 </h2>
+                
+                <!-- Modal de confirmação de exclusão da escala -->
+                <div class="modal modal-blur fade" id="modal-excluir-escala-{{ loop.index }}" tabindex="-1" role="dialog" aria-hidden="true">
+                  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      <div class="modal-status bg-danger"></div>
+                      <div class="modal-body text-center py-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
+                          <path d="M12 9v4" />
+                          <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                          <path d="M12 16h.01" />
+                        </svg>
+                        <h3>Excluir Escala Completa</h3>
+                        <div class="text-secondary">
+                          Deseja excluir TODAS as <strong>{{ itens|length }} cargas</strong> da escala<br>
+                          <strong>{{ itens[0].pedido_compra.codigo_transacao if itens and itens[0].pedido_compra else '' }}</strong>?<br><br>
+                          <small class="text-danger">Esta ação não pode ser desfeita!</small>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <div class="w-100">
+                          <div class="row">
+                            <div class="col">
+                              <a href="#" class="btn w-100" data-bs-dismiss="modal">Cancelar</a>
+                            </div>
+                            <div class="col">
+                              <form method="POST" action="{{ url_for('excluir_pedido_compra', id=itens[0].pedido_compra.id if itens and itens[0].pedido_compra else 0) }}">
+                                <button type="submit" class="btn btn-danger w-100">
+                                  Excluir Escala
+                                </button>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 
                 <!-- Corpo do accordion (tabela de itens) -->
                 <div id="collapse-fornecedor-{{ loop.index }}"
@@ -102,6 +158,7 @@
                         <thead class="bg-light">
                           <tr>
                             <th class="text-center" style="width: 100px;">Data Carga</th>
+                            <th class="text-center" style="width: 130px;">Data Lançamento</th>
                             <th class="text-center" style="width: 100px;">Data Entrega</th>
                             <th class="text-center">Transportadora</th>
                             <th class="text-center">Motorista</th>
@@ -115,27 +172,31 @@
                           {% for item in itens %}
                           <tr>
                             <!-- Data Carga -->
-                            <td class="text-center fw-bold text-primary">
+                            <td class="text-center fw-bold text-primary" style="text-align: center;">
                               {{ item.data_carga.strftime('%d/%m/%Y') if item.data_carga else '-' }}
+                            </td>
+                            <!-- Data Lançamento -->
+                            <td class="text-center text-muted" style="text-align: center;">
+                              {{ item.data_cadastro.strftime('%d/%m/%Y %H:%M') if item.data_cadastro else '-' }}
                             </td>
                             
                             <!-- Data Entrega -->
-                            <td class="text-center">
+                            <td class="text-center" style="text-align: center;">
                               {{ item.data_entrega.strftime('%d/%m/%Y') if item.data_entrega else '-' }}
                             </td>
                             
                             <!-- Transportadora -->
-                            <td class="text-center">
+                            <td class="text-center" style="text-align: center;">
                               {{ item.obter_nome_transportadora() | truncate(25, True, '...') }}
                             </td>
                             
                             <!-- Motorista -->
-                            <td class="text-center">
+                            <td class="text-center" style="text-align: center;">
                               {{ item.obter_nome_motorista() | truncate(20, True, '...') }}
                             </td>
                             
                             <!-- Placa -->
-                            <td class="text-center">
+                            <td class="text-center" style="text-align: center;">
                               {% if item.veiculo %}
                               <span class="badge bg-yellow-lt">{{ item.obter_placa_veiculo() }}</span>
                               {% else %}
@@ -144,12 +205,12 @@
                             </td>
                             
                             <!-- Extrator -->
-                            <td class="text-center">
+                            <td class="text-center" style="text-align: center;">
                               {{ item.obter_nome_extrator() | truncate(20, True, '...') }}
                             </td>
                             
                             <!-- Código do Pedido (Escala) -->
-                            <td class="text-center">
+                            <td class="text-center" style="text-align: center;">
                               <a href="{{ url_for('editar_pedido_compra', id=item.pedido_compra.id) }}" 
                                  class="badge bg-blue-lt text-decoration-none"
                                  title="Clique para ver/editar a escala completa">
@@ -158,7 +219,7 @@
                             </td>
                             
                             <!-- Botões de ação -->
-                            <td class="text-center">
+                            <td class="text-center" style="text-align: center;">
                               <div class="btn-list flex-nowrap justify-content-center">
                                 <!-- Botão: Editar pedido -->
                                 <a href="{{ url_for('editar_pedido_compra', id=item.pedido_compra.id) }}" 
@@ -286,7 +347,7 @@
  * Script para gerenciar exclusão de itens via AJAX
  */
 document.addEventListener('DOMContentLoaded', function() {
-    // Adiciona evento de clique nos botões de excluir
+    // Adiciona evento de clique nos botões de excluir item individual
     document.querySelectorAll('.btn-excluir-item').forEach(btn => {
         btn.addEventListener('click', function() {
             const itemId = this.getAttribute('data-item-id');

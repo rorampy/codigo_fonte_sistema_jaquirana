@@ -519,6 +519,10 @@
         <td class="valor-destaque">{{ (nfs_servico.values() | sum(attribute='total')) | formatar_float_para_brl }}</td>
       </tr>
       {% endif %}
+      <tr>
+        <td>Total de toneladas</td>
+        <td class="valor-destaque">{{ "%.2f"|format(totais.total_toneladas if totais.total_toneladas else 0) }} Ton</td>
+      </tr>
       <tr class="total-principal">
         <td><strong>VALOR TOTAL GERAL</strong></td>
         <td class="total-valor"><strong>{{ faturamento.valor_total | formatar_float_para_brl }}</strong></td>

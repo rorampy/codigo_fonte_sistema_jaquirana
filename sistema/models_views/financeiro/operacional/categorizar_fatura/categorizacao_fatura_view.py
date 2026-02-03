@@ -207,6 +207,7 @@ def categorizar_fatura(id, tipo='despesa'):
                     if not isinstance(parcelas, list) or len(parcelas) == 0:
                         campos_erros['parcelas_json'] = 'Dados de parcelas são obrigatórios quando parcelamento está ativo!'
                     else:
+                        total_parcelas = 0
                         for i, parcela in enumerate(parcelas, 1):
                             if not parcela.get('vencimento'):
                                 campos_erros['parcelas_json'] = f'Data de vencimento da parcela {i} é obrigatória!'
@@ -214,6 +215,11 @@ def categorizar_fatura(id, tipo='despesa'):
                             if not parcela.get('valor') or parcela.get('valor') <= 0:
                                 campos_erros['parcelas_json'] = f'Valor da parcela {i} deve ser maior que zero!'
                                 break
+                            total_parcelas += parcela.get('valor', 0)
+                        
+                        # Validar se a soma das parcelas é igual ao valor total
+                        if 'parcelas_json' not in campos_erros and total_parcelas != valor_total:
+                            campos_erros['parcelas_json'] = f'A soma das parcelas (R$ {total_parcelas/100:.2f}) deve ser igual ao valor total (R$ {valor_total/100:.2f})!'
                 except json.JSONDecodeError:
                     campos_erros['parcelas_json'] = 'Formato de parcelas inválido!'
             else:
@@ -919,6 +925,7 @@ def editar_categorizacao(agendamento_id, tipo=None):
                     if not isinstance(parcelas, list) or len(parcelas) == 0:
                         campos_erros['parcelas_json'] = 'Dados de parcelas são obrigatórios quando parcelamento está ativo!'
                     else:
+                        total_parcelas = 0
                         for i, parcela in enumerate(parcelas, 1):
                             if not parcela.get('vencimento'):
                                 campos_erros['parcelas_json'] = f'Data de vencimento da parcela {i} é obrigatória!'
@@ -926,6 +933,11 @@ def editar_categorizacao(agendamento_id, tipo=None):
                             if not parcela.get('valor') or parcela.get('valor') <= 0:
                                 campos_erros['parcelas_json'] = f'Valor da parcela {i} deve ser maior que zero!'
                                 break
+                            total_parcelas += parcela.get('valor', 0)
+                        
+                        # Validar se a soma das parcelas é igual ao valor total
+                        if 'parcelas_json' not in campos_erros and total_parcelas != valor_total:
+                            campos_erros['parcelas_json'] = f'A soma das parcelas (R$ {total_parcelas/100:.2f}) deve ser igual ao valor total (R$ {valor_total/100:.2f})!'
                 except json.JSONDecodeError:
                     campos_erros['parcelas_json'] = 'Formato de parcelas inválido!'
             else:

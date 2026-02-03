@@ -305,6 +305,58 @@ def excluir_pedido_compra(id):
 
 
 # =============================================================================
+# EXCLUSÃO DE ESCALA COMPLETA (AJAX)
+# =============================================================================
+
+@app.route("/pedido-compra/escala/excluir/<int:pedido_id>", methods=["POST"])
+@login_required
+@requires_roles
+def excluir_escala_completa(pedido_id):
+    """
+    Exclui todas as cargas de uma escala específica via AJAX.
+    
+    Remove o pedido de compra e todos os seus itens (soft delete).
+    Usado quando o usuário clica no botão "Excluir Escala" na listagem.
+    
+    Args:
+        pedido_id: ID do pedido de compra (escala) a ser excluído
+    
+    Returns:
+        JSON: Resposta indicando sucesso ou erro
+    """
+    try:
+        pedido = PedidoCompraModel.obter_por_id(pedido_id)
+        
+        if not pedido:
+            return jsonify({'sucesso': False, 'mensagem': 'Escala não encontrada'}), 404
+        
+        # Conta itens antes da exclusão
+        total_itens = pedido.contar_itens()
+        codigo = pedido.codigo_transacao
+        
+        # Soft delete do pedido
+        pedido.ativo = False
+        pedido.deletado = True
+        
+        # Soft delete de todos os itens
+        for item in pedido.itens.all():
+            item.ativo = False
+            item.deletado = True
+        
+        db.session.commit()
+        
+        return jsonify({
+            'sucesso': True,
+            'mensagem': f'Escala {codigo} excluída com sucesso! {total_itens} cargas removidas.'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] Erro ao excluir escala completa: {e}")
+        return jsonify({'sucesso': False, 'mensagem': str(e)}), 500
+
+
+# =============================================================================
 # EXCLUSÃO DE ITEM DO PEDIDO (AJAX)
 # =============================================================================
 
@@ -497,6 +549,7 @@ def exportar_pedido_compra_excel(id):
         dados_excel.append({
             "Fornecedor/Floresta": f"PEDIDO DE COMPRA - {pedido.codigo_transacao}",
             "Data Carga": "",
+            "Data Lançamento": "",
             "Data Entrega": "",
             "Transportadora": "",
             "Motorista": "",
@@ -507,6 +560,7 @@ def exportar_pedido_compra_excel(id):
         dados_excel.append({
             "Fornecedor/Floresta": "",
             "Data Carga": "",
+            "Data Lançamento": "",
             "Data Entrega": "",
             "Transportadora": "",
             "Motorista": "",
@@ -522,6 +576,7 @@ def exportar_pedido_compra_excel(id):
             dados_excel.append({
                 "Fornecedor/Floresta": fornecedor.identificacao.upper() if fornecedor else "SEM FORNECEDOR DEFINIDO",
                 "Data Carga": "",
+                "Data Lançamento": "",
                 "Data Entrega": "",
                 "Transportadora": "",
                 "Motorista": "",
@@ -534,6 +589,7 @@ def exportar_pedido_compra_excel(id):
                 dados_excel.append({
                     "Fornecedor/Floresta": "",
                     "Data Carga": item.data_carga.strftime('%d/%m/%Y') if item.data_carga else "-",
+                    "Data Lançamento": item.data_cadastro.strftime('%d/%m/%Y %H:%M') if item.data_cadastro else "-",
                     "Data Entrega": item.data_entrega.strftime('%d/%m/%Y') if item.data_entrega else "-",
                     "Transportadora": item.obter_nome_transportadora(),
                     "Motorista": item.obter_nome_motorista(),
@@ -545,6 +601,7 @@ def exportar_pedido_compra_excel(id):
             dados_excel.append({
                 "Fornecedor/Floresta": "",
                 "Data Carga": "",
+                "Data Lançamento": "",
                 "Data Entrega": "",
                 "Transportadora": "",
                 "Motorista": "",
@@ -556,6 +613,7 @@ def exportar_pedido_compra_excel(id):
             dados_excel.append({
                 "Fornecedor/Floresta": "",
                 "Data Carga": "",
+                "Data Lançamento": "",
                 "Data Entrega": "",
                 "Transportadora": "",
                 "Motorista": "",

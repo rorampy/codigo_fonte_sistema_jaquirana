@@ -698,6 +698,11 @@
         <td class="valor-destaque">{{ totais.total_geral | formatar_float_para_brl or 'Não informado' }}</td>
       </tr>
 
+      <tr>
+        <td>Total de toneladas</td>
+        <td class="valor-destaque">{{ "%.2f"|format(totais.total_toneladas if totais.total_toneladas else 0) }} Ton</td>
+      </tr>
+
 
       {% if faturamento.valor_credito_aplicado > 0 %}
       <tr>

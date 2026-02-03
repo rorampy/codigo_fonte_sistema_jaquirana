@@ -552,6 +552,9 @@
                     <a href="#" data-bs-toggle="modal" data-bs-target="#modal-cargas-receber" class="dropdown-item">
                       Relatório Cargas a Receber
                     </a>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#modal-cargas-gerais-cliente" class="dropdown-item">
+                      Cargas Gerais por Clientes
+                    </a>
                   </div>
                 </div>
                 <a class="dropdown-item" href="#" data-bs-toggle="modal"
@@ -748,6 +751,81 @@
               <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" />
             </svg>
             Exportar
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Cargas Gerais por Clientes -->
+<div class="modal modal-blur fade" id="modal-cargas-gerais-cliente" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <form action="{{ url_for('relatorio_cargas_gerais_cliente') }}" method="POST" target="_blank">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Exportar Cargas Gerais por Clientes</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Data Início</label>
+              <input type="date" name="dataInicio" class="form-control">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Data Fim</label>
+              <input type="date" name="dataFim" class="form-control">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Cliente</label>
+              <input type="text" name="clienteCarga" class="form-control clienteCarga">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Número NF</label>
+              <input type="text" name="numeroNfCliente" class="form-control">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Produto</label>
+              <input type="text" name="produtoFiltro" class="form-control">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Bitola</label>
+              <input type="text" name="bitolaFiltro" class="form-control">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Fornecedor/Origem</label>
+              <input type="text" name="fornecedorCargaCliente" class="form-control">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" name="exportar_excel" value="true" class="btn btn-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-file-spreadsheet">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+              <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+              <path d="M8 11h8v7h-8z" />
+              <path d="M8 15h8" />
+              <path d="M11 11v7" />
+            </svg>
+            Exportar Excel
+          </button>
+          <button type="submit" name="exportar_pdf" value="true" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-file-text">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+              <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+              <path d="M9 9l1 0" />
+              <path d="M9 13l6 0" />
+              <path d="M9 17l6 0" />
+            </svg>
+            Exportar PDF
           </button>
         </div>
       </div>

@@ -12,6 +12,33 @@
         </div>
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="d-flex gap-2">
+            <!-- Botões de Exportação -->
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-exportar-excel">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-file-spreadsheet">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                <path d="M8 11h8v7h-8z" />
+                <path d="M8 15h8" />
+                <path d="M11 11v7" />
+              </svg>
+              Excel
+            </button>
+            <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modal-exportar-pdf">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-file-text">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                <path d="M9 9l1 0" />
+                <path d="M9 13l6 0" />
+                <path d="M9 17l6 0" />
+              </svg>
+              PDF
+            </button>
             <button id="btn-emitir-massa" class="btn btn-outline-success">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -83,10 +110,11 @@
                             {{ produto_group.list|length }}
                           </span>
                         </div>
-                        <div class="d-flex align-items-center" style="justify-content: space-between;">
+                        <div class="d-flex align-items-center gap-3" style="justify-content: space-between;">
                           <strong><span class="text-muted me-2">Total
                               selecionado:</span><span id="totalDiff-{{ groupId }}" class="badge bg-danger-lt">0.00
                               Ton.</span></strong>
+                          <strong><span class="text-muted me-2">Total Valor Complementar:</span><span id="totalValor-{{ groupId }}" class="badge bg-success-lt">R$ 0,00</span></strong>
                         </div>
                       </div>
                       <div class="p-3">
@@ -105,6 +133,8 @@
                                 <th class="text-center">Peso NF</th>
                                 <th class="text-center">Peso Ticket</th>
                                 <th class="text-center">Diferença</th>
+                                <th class="text-center">Preço NFe</th>
+                                <th class="text-center">Valor Diferença</th>
                                 <th class="text-center">Status</th>
                               </tr>
                             </thead>
@@ -116,13 +146,17 @@
                               item.registro.peso_ton_nf %}
                               {% set dif = (peso_nf_final -
                               item.registro.peso_liquido_ticket) | round(2) %}
+                              {% set preco_nf = item.registro.preco_un_nf if item.registro.preco_un_nf else 0 %}
+                              {% set valor_diferenca = (dif * preco_nf) | round(2) %}
                               <tr>
                                 <td class="text-center">
                                   <input type="checkbox" class="form-check-input registro-checkbox"
                                     data-id="{{ item.registro.id }}" 
                                     data-cliente="{{ cliente_group.grouper }}"
                                     data-cliente-id="{{ item.registro.solicitacao.cliente.id }}"
-                                    data-group="{{ groupId }}" data-diff="{{ dif }}" data-peso="{{ dif | round(2) }}" {%
+                                    data-group="{{ groupId }}" data-diff="{{ dif }}" data-peso="{{ dif | round(2) }}"
+                                    data-preco="{{ preco_nf }}"
+                                    data-valor-diferenca="{{ valor_diferenca }}" {%
                                     if item.registro.status_emissao_nf_complementar_id==1 %}disabled{% endif %} />
                                 </td>
                                 <td class="text-center">
@@ -169,6 +203,26 @@
                                     <span class="badge bg-green-lt">{{ dif }}
                                       Ton.</span>
                                     {% endif %}
+                                </td>
+                                <td class="text-center">
+                                  {% if item.registro.preco_un_nf %}
+                                  {% set preco_nf = item.registro.preco_un_nf %}
+                                  <span class="badge bg-blue-lt">{{ preco_nf | formatar_float_para_brl }}</span>
+                                  {% else %}
+                                  <span class="text-muted">-</span>
+                                  {% endif %}
+                                </td>
+                                <td class="text-center">
+                                  {% if item.registro.preco_un_nf and dif %}
+                                  {% set valor_diferenca = (dif * item.registro.preco_un_nf) | round(2) %}
+                                  {% if valor_diferenca < 0 %}
+                                  <span class="badge bg-danger-lt">{{ (valor_diferenca | abs) | formatar_float_para_brl }}</span>
+                                  {% else %}
+                                  <span class="badge bg-success-lt">{{ valor_diferenca | formatar_float_para_brl }}</span>
+                                  {% endif %}
+                                  {% else %}
+                                  <span class="text-muted">-</span>
+                                  {% endif %}
                                 </td>
                                 <td class="text-center">
                                   {% if item.registro.status_emissao_nf_complementar_id == 1 %}
@@ -363,6 +417,104 @@
     </div>
   </div>
 
+  <!-- Modal para Exportar Excel -->
+  <div class="modal modal-blur fade" id="modal-exportar-excel" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <form method="POST" action="{{ url_for('exportar_nf_complementar_listagem_excel') }}">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Exportar para Excel</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="dataInicioExport" class="form-control">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="dataFimExport" class="form-control">
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Cliente</label>
+                <select name="clienteExport" class="form-select" id="clienteExportExcel">
+                  <option value="">Todos</option>
+                  {% for c in clientes %}
+                  <option value="{{ c.id }}">{{ c.identificacao }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-download">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                <path d="M7 11l5 5l5 -5" />
+                <path d="M12 4l0 12" />
+              </svg>
+              Exportar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para Exportar PDF -->
+  <div class="modal modal-blur fade" id="modal-exportar-pdf" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <form method="POST" action="{{ url_for('exportar_nf_complementar_listagem_pdf') }}">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Exportar para PDF</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="dataInicioExport" class="form-control">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="dataFimExport" class="form-control">
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Cliente</label>
+                <select name="clienteExport" class="form-select" id="clienteExportPdf">
+                  <option value="">Todos</option>
+                  {% for c in clientes %}
+                  <option value="{{ c.id }}">{{ c.identificacao }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-download">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                <path d="M7 11l5 5l5 -5" />
+                <path d="M12 4l0 12" />
+              </svg>
+              Exportar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     document.querySelectorAll('select.form-select').forEach(function (select) {
       new TomSelect(select, {
@@ -474,12 +626,26 @@
 
       // === Soma de diffs por grupo ===
       function updateGroupTotal(group) {
-        const total = Array.from(
+        const checkboxes = Array.from(
           document.querySelectorAll(`.registro-checkbox[data-group="${group}"]:checked`)
-        ).reduce((sum, cb) => sum + (parseFloat(cb.dataset.diff) || 0), 0);
+        );
+        
+        const totalPeso = checkboxes.reduce((sum, cb) => sum + (parseFloat(cb.dataset.diff) || 0), 0);
+        const totalValor = checkboxes.reduce((sum, cb) => sum + (parseFloat(cb.dataset.valorDiferenca) || 0), 0);
+        
         const totalElement = document.getElementById(`totalDiff-${group}`);
         if (totalElement) {
-          totalElement.textContent = `${total.toFixed(2)} Ton.`;
+          totalElement.textContent = `${totalPeso.toFixed(2)} Ton.`;
+        }
+        
+        const totalValorElement = document.getElementById(`totalValor-${group}`);
+        if (totalValorElement) {
+          // Divide por 100 e formata como moeda BRL
+          const valorFormatado = (totalValor / 100).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+          });
+          totalValorElement.textContent = valorFormatado;
         }
       }
 
@@ -682,6 +848,21 @@
       document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el =>
         new bootstrap.Tooltip(el, { trigger: 'hover focus', html: true })
       );
+      
+      // === Inicializar TomSelect para modais de exportação ===
+      new TomSelect('#clienteExportExcel', {
+        create: false,
+        allowEmptyOption: true,
+        placeholder: 'Selecione um cliente...',
+        sortField: { field: "text", direction: "asc" }
+      });
+      
+      new TomSelect('#clienteExportPdf', {
+        create: false,
+        allowEmptyOption: true,
+        placeholder: 'Selecione um cliente...',
+        sortField: { field: "text", direction: "asc" }
+      });
     });
   </script>
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from sistema import app, requires_roles, db, current_user
+from sistema import app, requires_roles, db, current_user, obter_url_absoluta_de_imagem
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required
 from sistema.models_views.upload_arquivo.upload_arquivo_view import upload_arquivo
@@ -42,6 +42,119 @@ def listagem_nf_complementar():
         changelog=changelog,
         dataHoje=dataHoje
     )
+
+@app.route("/controle-cargas/nfs-complementares/exportar-excel", methods=["POST"])
+@login_required
+@requires_roles
+def exportar_nf_complementar_listagem_excel():
+    """Exporta NFs complementares filtradas para Excel"""
+    try:
+        dataHoje = datetime.now().strftime('%d-%m-%Y')
+        
+        # Obter filtros do formulário
+        data_inicio = request.form.get('dataInicioExport')
+        data_fim = request.form.get('dataFimExport')
+        cliente_id = request.form.get('clienteExport')
+        
+        # Aplicar filtros
+        if data_inicio or data_fim or cliente_id:
+            # Buscar nome do cliente se ID foi fornecido
+            cliente_nome = None
+            if cliente_id:
+                cliente_obj = ClienteModel.query.get(int(cliente_id))
+                if cliente_obj:
+                    cliente_nome = cliente_obj.identificacao
+            
+            registros = RegistroOperacionalModel.filtrar_registros_carga_cliente(
+                data_inicio=data_inicio,
+                data_fim=data_fim,
+                numero_nf=None,
+                cliente=cliente_nome,
+                status_nf_complementar=None
+            )
+        else:
+            registros = RegistroOperacionalModel.obter_registros_carga_agrupados()
+        
+        linhas = []
+        for item in registros:
+            registro = item['registro']
+            
+            # Calcular diferença
+            peso_nf = registro.peso_ton_nf if registro.peso_ton_nf else 0
+            peso_ticket = registro.peso_liquido_ticket if registro.peso_liquido_ticket else 0
+            diferenca = round(peso_nf - peso_ticket, 2)
+            
+            linha = {
+                'Data Emissão': registro.destinatario_data_emissao.strftime('%d/%m/%Y') if registro.destinatario_data_emissao else '-',
+                'Cliente': item.get('cliente', '-'),
+                'Número NF': f"{registro.numero_nota_fiscal_estorno} *" if registro.estorno_nf else (registro.numero_nota_fiscal or '-'),
+                'Peso NF': f"{peso_nf} Ton." if peso_nf > 0 else '-',
+                'Peso Ticket': f"{peso_ticket} Ton." if peso_ticket > 0 else '-',
+                'Diferença': f"{diferenca} Ton.",
+                'Status': registro.status_emissao_nf_complementar.status if registro.status_emissao_nf_complementar else '-'
+            }
+            linhas.append(linha)
+        
+        nome_arquivo_saida = f'nf-complementar_{dataHoje}'
+        return ManipulacaoArquivos.exportar_excel(linhas, nome_arquivo_saida)
+        
+    except Exception as e:
+        print(f"[ERROR] Erro ao exportar NF Complementar para Excel: {e}")
+        flash((f"Erro ao exportar relatório! Contate o suporte.", "error"))
+        return redirect(url_for('listagem_nf_complementar'))
+
+@app.route("/controle-cargas/nfs-complementares/exportar-pdf", methods=["POST"])
+@login_required
+@requires_roles
+def exportar_nf_complementar_listagem_pdf():
+    """Exporta NFs complementares filtradas para PDF"""
+    try:
+        dataHoje = datetime.now().strftime('%d-%m-%Y')
+        
+        # Obter filtros do formulário
+        data_inicio = request.form.get('dataInicioExport')
+        data_fim = request.form.get('dataFimExport')
+        cliente_id = request.form.get('clienteExport')
+        
+        # Aplicar filtros
+        if data_inicio or data_fim or cliente_id:
+            # Buscar nome do cliente se ID foi fornecido
+            cliente_nome = None
+            if cliente_id:
+                cliente_obj = ClienteModel.query.get(int(cliente_id))
+                if cliente_obj:
+                    cliente_nome = cliente_obj.identificacao
+            
+            registros = RegistroOperacionalModel.filtrar_registros_carga_cliente(
+                data_inicio=data_inicio,
+                data_fim=data_fim,
+                numero_nf=None,
+                cliente=cliente_nome,
+                status_nf_complementar=None
+            )
+        else:
+            registros = RegistroOperacionalModel.obter_registros_carga_agrupados()
+            cliente_nome = None
+        
+        changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
+        logo_path = obter_url_absoluta_de_imagem('logo.png')
+        html = render_template(
+            "relatorios/relatorio_de_cargas/relatorio_controle_nf_complementar/exportar_relatorio_controle_complementar.html",
+            logo_path=logo_path,
+            dataHoje=dataHoje,
+            registros=registros,
+            dados_corretos=request.form,
+            changelog=changelog,
+            cliente_nome=cliente_nome
+        )
+        
+        nome_arquivo_saida = f'nf-complementar_{dataHoje}'
+        return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo_saida)
+        
+    except Exception as e:
+        print(f"[ERROR] Erro ao exportar NF Complementar para PDF: {e}")
+        flash((f"Erro ao exportar relatório! Contate o suporte.", "error"))
+        return redirect(url_for('listagem_nf_complementar'))
     
 
 @app.route("/controle-cargas/nfs-complementares/emitir-nfs-complementares", methods=["POST"])

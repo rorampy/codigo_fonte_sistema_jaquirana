@@ -406,7 +406,7 @@
                               <thead class="bg-white">
                                 <tr>
                                   <th style="width: 60px;">#</th>
-                                  <th style="width: 120px;">Valor</th>
+                                  <th style="width: 160px;">Valor</th>
                                   <th style="width: 160px;">Vencimento</th>
                                   <th>Descrição <span class="text-muted">(opcional)</span></th>
                                   <th>Referência <span class="text-muted">(opcional)</span></th>
@@ -418,7 +418,9 @@
                                     <td x-text="(idx+1) + '/' + qtdParcelas"></td>
                                     <td>
                                       <input type="text" class="form-control text-start campo-moeda-brl"
-                                        :value="formatarMoeda(parcela.valor)" readonly disabled>
+                                        :value="formatarMoeda(parcela.valor)"
+                                        @input="atualizarValorParcela($event, idx)"
+                                        placeholder="R$ 0,00">
                                     </td>
                                     <td>
                                       <input type="date" class="form-control" x-model="parcela.vencimento">
@@ -436,8 +438,26 @@
                               </tbody>
                               <tfoot>
                                 <tr>
-                                  <td colspan="4" class="text-end fw-bold">Total:</td>
-                                  <td class="fw-bold text-primary" x-text="formatarMoeda(totalParcelas)"></td>
+                                  <td colspan="3" class="text-end fw-bold">Total:</td>
+                                  <td colspan="2" class="fw-bold" :class="totalParcelasValido ? 'text-success' : 'text-danger'">
+                                    <span x-text="formatarMoeda(totalParcelas)"></span>
+                                    <span x-show="!totalParcelasValido" class="ms-2">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-triangle">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                        <path d="M12 9v4" />
+                                        <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                                        <path d="M12 16h.01" />
+                                      </svg>
+                                      Diferente do total
+                                    </span>
+                                  </td>
+                                </tr>
+                                <tr x-show="!totalParcelasValido" class="bg-warning bg-opacity-10">
+                                  <td colspan="5" class="text-center py-2">
+                                    <small class="text-danger fw-bold">
+                                      ⚠️ Total das parcelas (<span x-text="formatarMoeda(totalParcelas)"></span>) deve ser igual ao valor total (<span x-text="formatarMoeda(totalPagar)"></span>)
+                                    </small>
+                                  </td>
                                 </tr>
                               </tfoot>
                             </table>
@@ -617,9 +637,18 @@
       diasEntre: {{ dados_corretos.dias_entre_parcelas or 30 }},
       parcelas: [],
       totalParcelas: 0,
+      totalParcelasValido: true,
 
       // === FUNÇÕES ===
       prepararEnvio() {
+        // Validar total das parcelas se parcelamento estiver ativo
+        if (this.mostrarParcelamento && this.parcelas.length > 0) {
+          if (!this.totalParcelasValido) {
+            alert('O total das parcelas deve ser igual ao valor total do faturamento!');
+            return false;
+          }
+        }
+        
         // Preparar categorias com código + nome combinados
         const categoriasComDados = this.lista.map(categoria => {
           const dadosCategoria = this.mapaCategorias[categoria.nome] || {};
@@ -693,6 +722,15 @@
       },
       calcularTotalParcelas() {
         this.totalParcelas = this.parcelas.reduce((acc, p) => acc + p.valor, 0);
+        this.totalParcelasValido = (this.totalParcelas === this.totalPagar);
+      },
+      atualizarValorParcela(event, index) {
+        let valor = event.target.value.replace(/\D/g, '');
+        const valorCentavos = parseInt(valor) || 0;
+        this.parcelas[index].valor = valorCentavos;
+        const valorFormatado = this.formatarParaExibicao(valorCentavos);
+        event.target.value = valorFormatado;
+        this.calcularTotalParcelas();
       },
       initParcelamento() {
         if (this.mostrarParcelamento && this.qtdParcelas > 0) {

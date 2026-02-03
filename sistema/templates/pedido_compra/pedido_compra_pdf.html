@@ -247,6 +247,7 @@
         <thead>
           <tr>
             <th>Data Carga</th>
+            <th>Data Lançamento</th>
             <th>Data Entrega</th>
             <th>Transportadora</th>
             <th>Motorista</th>
@@ -258,6 +259,7 @@
           {% for item in itens_do_fornecedor %}
           <tr class="detalhes-registro">
             <td>{{ item.data_carga.strftime('%d/%m/%Y') if item.data_carga else '-' }}</td>
+            <td>{{ item.data_cadastro.strftime('%d/%m/%Y %H:%M') if item.data_cadastro else '-' }}</td>
             <td>{{ item.data_entrega.strftime('%d/%m/%Y') if item.data_entrega else '-' }}</td>
             <td>{{ item.obter_nome_transportadora() }}</td>
             <td>{{ item.obter_nome_motorista() }}</td>
