@@ -416,6 +416,11 @@ def fornecedor_a_pagar_massa():
         campos_erros = {}
         fretes_dict = {}
         creditos_selecionados = {}
+        
+        # Capturar datas do período do filtro (da URL)
+        data_inicio_filtro_str = request.args.get('dataInicio', '')
+        data_fim_filtro_str = request.args.get('dataFim', '')
+        tipo_periodo_filtro = request.args.get('tipoFiltro', 'quinzenal')
       
         # Obter IDs selecionados (GET ou POST)
         if request.method == "GET":
@@ -573,6 +578,25 @@ def fornecedor_a_pagar_massa():
         if request.method == "POST":
             usar_credito = request.form.get("usar_credito")
             
+            # Capturar datas do período do filtro
+            data_inicio_filtro_str = request.form.get("data_inicio_filtro")
+            data_fim_filtro_str = request.form.get("data_fim_filtro")
+            tipo_periodo_filtro = request.form.get("tipo_periodo_filtro", "quinzenal")
+            
+            # Converter strings para date
+            data_inicio_filtro = None
+            data_fim_filtro = None
+            if data_inicio_filtro_str:
+                try:
+                    data_inicio_filtro = datetime.strptime(data_inicio_filtro_str, "%Y-%m-%d").date()
+                except ValueError:
+                    pass
+            if data_fim_filtro_str:
+                try:
+                    data_fim_filtro = datetime.strptime(data_fim_filtro_str, "%Y-%m-%d").date()
+                except ValueError:
+                    pass
+            
             # Processar créditos selecionados individualmente
             creditos_selecionados_json = request.form.get("creditos_selecionados", "{}")
             try:
@@ -705,7 +729,10 @@ def fornecedor_a_pagar_massa():
                 ids_fretes=','.join(str(transp_id) for transp_id in fretes_dict.keys()) if fretes_dict else None,
                 utilizou_credito=(usar_credito == "sim"),
                 tipo_operacao=1,  # carga
-                direcao_financeira=2  # despesa
+                direcao_financeira=2,  # despesa
+                data_inicio_filtro=data_inicio_filtro,
+                data_fim_filtro=data_fim_filtro,
+                tipo_periodo_filtro=tipo_periodo_filtro
             )
 
             # Configurar campos adicionais se o modelo suportar
@@ -757,7 +784,8 @@ def fornecedor_a_pagar_massa():
                 # Calcular limite de crédito a usar
                 # Para créditos negativos (débitos), não há limite - eles AUMENTAM o valor total
                 # Para créditos positivos, limitar ao valor da fatura
-                valor_total_geral_com_fretes = valor_total_geral + totais.get('valor_total_fretes', 0)
+                # valor_total_geral já inclui fornecedores + fretes (calculado em calcular_totais())
+                valor_total_geral_com_fretes = valor_total_geral  # Já inclui fretes
                 credito_restante_para_usar = float('inf') if total_creditos_selecionados < 0 else valor_total_geral_com_fretes
                 
                 # Processar créditos de FORNECEDORES
@@ -836,7 +864,8 @@ def fornecedor_a_pagar_massa():
                 valor_final_fornecedores = 0
                 valor_final_fretes = 0
                 if valor_total_geral_com_fretes > 0:
-                    proporcao_fornecedores = valor_total_geral / valor_total_geral_com_fretes
+                    # Usar totais['valor_total_fornecedores'] pois valor_total_geral já inclui fretes
+                    proporcao_fornecedores = totais['valor_total_fornecedores'] / valor_total_geral_com_fretes
                     proporcao_fretes = totais.get('valor_total_fretes', 0) / valor_total_geral_com_fretes
                     
                     valor_final_fornecedores = valor_final_global * proporcao_fornecedores
@@ -1028,6 +1057,10 @@ def fornecedor_a_pagar_massa():
             ids_selecionados=ids_selecionados,
             fretes_dict=fretes_dict,
             creditos_selecionados=creditos_selecionados,
+            # Datas do período do filtro
+            data_inicio_filtro=data_inicio_filtro_str,
+            data_fim_filtro=data_fim_filtro_str,
+            tipo_periodo_filtro=tipo_periodo_filtro,
         )
 
     except Exception as e:
