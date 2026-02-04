@@ -578,25 +578,6 @@ def fornecedor_a_pagar_massa():
         if request.method == "POST":
             usar_credito = request.form.get("usar_credito")
             
-            # Capturar datas do período do filtro
-            data_inicio_filtro_str = request.form.get("data_inicio_filtro")
-            data_fim_filtro_str = request.form.get("data_fim_filtro")
-            tipo_periodo_filtro = request.form.get("tipo_periodo_filtro", "quinzenal")
-            
-            # Converter strings para date
-            data_inicio_filtro = None
-            data_fim_filtro = None
-            if data_inicio_filtro_str:
-                try:
-                    data_inicio_filtro = datetime.strptime(data_inicio_filtro_str, "%Y-%m-%d").date()
-                except ValueError:
-                    pass
-            if data_fim_filtro_str:
-                try:
-                    data_fim_filtro = datetime.strptime(data_fim_filtro_str, "%Y-%m-%d").date()
-                except ValueError:
-                    pass
-            
             # Processar créditos selecionados individualmente
             creditos_selecionados_json = request.form.get("creditos_selecionados", "{}")
             try:
@@ -730,9 +711,6 @@ def fornecedor_a_pagar_massa():
                 utilizou_credito=(usar_credito == "sim"),
                 tipo_operacao=1,  # carga
                 direcao_financeira=2,  # despesa
-                data_inicio_filtro=data_inicio_filtro,
-                data_fim_filtro=data_fim_filtro,
-                tipo_periodo_filtro=tipo_periodo_filtro
             )
 
             # Configurar campos adicionais se o modelo suportar
