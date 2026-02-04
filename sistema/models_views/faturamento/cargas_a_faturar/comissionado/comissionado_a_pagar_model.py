@@ -340,9 +340,6 @@ class ComissionadoPagarModel(BaseModel):
         from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
         from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
 
-        data_inicio = date.today() - timedelta(days=30)
-        data_fim = date.today()
-
         query = (
             db.session.query(
                 ComissionadoPagarModel, RegistroOperacionalModel, ComissionadoModel, FornecedorComissionadoModel
@@ -378,22 +375,6 @@ class ComissionadoPagarModel(BaseModel):
                 ComissionadoPagarModel.id.desc()
             )
         )
-
-        if data_inicio and data_fim:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket.between(data_inicio, data_fim),
-            )
-        elif data_inicio:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
-            )
-        elif data_fim:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket <= data_fim,
-            )
 
         registros = []
         for registro, registro_operacional, comissionado, vinculo_comissao in query.all():
@@ -436,10 +417,6 @@ class ComissionadoPagarModel(BaseModel):
             RegistroOperacionalModel,
         )
         from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
-        
-        if not data_inicio or not data_fim:
-            data_inicio = date.today() - timedelta(days=30)
-            data_fim = date.today()
 
         query = (
             db.session.query(
@@ -467,21 +444,21 @@ class ComissionadoPagarModel(BaseModel):
             )
         )
 
-        # Aplica filtros de data
+        # Aplica filtros de data usando RegistroOperacionalModel.data_entrega_ticket
         if data_inicio and data_fim:
             query = query.filter(
-                ComissionadoPagarModel.data_entrega_ticket.isnot(None),
-                ComissionadoPagarModel.data_entrega_ticket.between(data_inicio, data_fim),
+                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
+                RegistroOperacionalModel.data_entrega_ticket.between(data_inicio, data_fim),
             )
         elif data_inicio:
             query = query.filter(
-                ComissionadoPagarModel.data_entrega_ticket.isnot(None),
-                ComissionadoPagarModel.data_entrega_ticket >= data_inicio,
+                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
+                RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
             )
         elif data_fim:
             query = query.filter(
-                ComissionadoPagarModel.data_entrega_ticket.isnot(None),
-                ComissionadoPagarModel.data_entrega_ticket <= data_fim,
+                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
+                RegistroOperacionalModel.data_entrega_ticket <= data_fim,
             )
 
         # JOINs condicionais - só quando necessários

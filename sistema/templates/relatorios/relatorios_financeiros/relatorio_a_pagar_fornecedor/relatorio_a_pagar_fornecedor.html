@@ -12,7 +12,7 @@
         </div>
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="d-flex gap-2">
-            <form action="{{ url_for('relatorio_a_pagar_fornecedores') }}" method="POST" id="exportPdfForm" target="_blank">
+            <form action="{{ url_for('relatorio_a_pagar_fornecedores_exportar_pdf') }}" method="POST" id="exportPdfForm" target="_blank">
               {% for key, value in dados_corretos.items() %}
               {% if key not in ['exportar_pdf', 'exportar_excel'] %}
               <input type="hidden" name="{{ key }}" value="{{ value }}">
@@ -34,7 +34,7 @@
                 Exportar em PDF
               </button>
             </form>
-            <form action="{{ url_for('relatorio_a_pagar_fornecedores') }}" method="POST" id="exportExcelForm">
+            <form action="{{ url_for('relatorio_a_pagar_fornecedores_exportar_excel') }}" method="POST" id="exportExcelForm">
               {% for key, value in dados_corretos.items() %}
               {% if key not in ['exportar_pdf', 'exportar_excel'] %}
               <input type="hidden" name="{{ key }}" value="{{ value }}">

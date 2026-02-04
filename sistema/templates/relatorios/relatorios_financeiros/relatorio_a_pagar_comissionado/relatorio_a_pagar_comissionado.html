@@ -12,13 +12,12 @@
         </div>
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="d-flex gap-2">
-            <form action="{{ url_for('relatorio_a_pagar_comissionados') }}" method="POST" id="exportPdfForm" target="_blank"> 
+            <form action="{{ url_for('relatorio_a_pagar_comissionados_exportar_pdf') }}" method="POST" id="exportPdfForm" target="_blank"> 
               {% for key, value in dados_corretos.items() %}
               {% if key not in ['exportar_pdf', 'exportar_excel'] %}
               <input type="hidden" name="{{ key }}" value="{{ value }}">
               {% endif %}
               {% endfor %}
-              <input type="hidden" name="exportar_pdf" value="1">
               <button type="submit" class="btn btn-outline-danger">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -34,13 +33,12 @@
                 Exportar em PDF
               </button>
             </form>
-            <form action="{{ url_for('relatorio_a_pagar_comissionados') }}" method="POST" id="exportExcelForm">
+            <form action="{{ url_for('relatorio_a_pagar_comissionados_exportar_excel') }}" method="POST" id="exportExcelForm">
               {% for key, value in dados_corretos.items() %}
               {% if key not in ['exportar_pdf', 'exportar_excel'] %}
               <input type="hidden" name="{{ key }}" value="{{ value }}">
               {% endif %}
               {% endfor %}
-              <input type="hidden" name="exportar_excel" value="1">
               <button type="submit" class="btn btn-outline-success">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"

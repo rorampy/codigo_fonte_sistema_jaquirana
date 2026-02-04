@@ -271,9 +271,6 @@ class FornecedorPagarModel(BaseModel):
         """
         from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 
-        data_inicio = date.today() - timedelta(days=30)
-        data_fim = date.today()
-
         query = (
             db.session.query(FornecedorPagarModel, RegistroOperacionalModel)
             .join(CargaModel, FornecedorPagarModel.solicitacao)
@@ -298,22 +295,6 @@ class FornecedorPagarModel(BaseModel):
                 FornecedorPagarModel.id.desc(),
             )
         )
-
-        if data_inicio and data_fim:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket.between(data_inicio, data_fim),
-            )
-        elif data_inicio:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
-            )
-        elif data_fim:
-            query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket <= data_fim,
-            )
 
         registros = []
         for registro, registro_operacional in query.all():
@@ -376,7 +357,14 @@ class FornecedorPagarModel(BaseModel):
             db.session.query(FornecedorPagarModel, RegistroOperacionalModel)
             .join(CargaModel, FornecedorPagarModel.solicitacao)
             .join(RegistroOperacionalModel, CargaModel.id == RegistroOperacionalModel.solicitacao_nf_id)
-            .join(FornecedorCadastroModel, FornecedorPagarModel.fornecedor) 
+            .join(FornecedorCadastroModel, FornecedorPagarModel.fornecedor)
+            .outerjoin(BitolaModel, FornecedorPagarModel.bitola)
+            .outerjoin(SituacaoPagamentoModel, FornecedorPagarModel.situacao)
+            .outerjoin(ClienteModel, CargaModel.cliente)
+            .outerjoin(VeiculoModel, CargaModel.veiculo)
+            .outerjoin(MotoristaModel, CargaModel.motorista)
+            .outerjoin(ProdutoModel, CargaModel.produto_id == ProdutoModel.id)
+            .outerjoin(TransportadoraModel, CargaModel.transportadora_id == TransportadoraModel.id)
             .filter(
                 FornecedorPagarModel.deletado == False,
                 FornecedorPagarModel.ativo == True,
@@ -385,23 +373,23 @@ class FornecedorPagarModel(BaseModel):
 
         if data_inicio and data_fim:
             query = query.filter(
-                FornecedorPagarModel.data_entrega_ticket.isnot(None),
-                FornecedorPagarModel.data_entrega_ticket.between(data_inicio, data_fim),
+                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
+                RegistroOperacionalModel.data_entrega_ticket.between(data_inicio, data_fim),
             )
         elif data_inicio:
             query = query.filter(
-                FornecedorPagarModel.data_entrega_ticket.isnot(None),
-                FornecedorPagarModel.data_entrega_ticket >= data_inicio,
+                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
+                RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
             )
         elif data_fim:
             query = query.filter(
-                FornecedorPagarModel.data_entrega_ticket.isnot(None),
-                FornecedorPagarModel.data_entrega_ticket <= data_fim,
+                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
+                RegistroOperacionalModel.data_entrega_ticket <= data_fim,
             )
 
-        # JOINs condicionais - só quando necessários
+        # Aplicar filtros
         if cliente:
-            query = query.join(ClienteModel, CargaModel.cliente).filter(ClienteModel.identificacao.ilike(f"%{cliente}%"))
+            query = query.filter(ClienteModel.identificacao.ilike(f"%{cliente}%"))
 
         if numero_nf:
             query = query.filter(
@@ -414,28 +402,25 @@ class FornecedorPagarModel(BaseModel):
             )
 
         if produto:
-            query = query.join(ProdutoModel, CargaModel.produto_id == ProdutoModel.id).filter(ProdutoModel.nome.ilike(f"%{produto}%"))
+            query = query.filter(ProdutoModel.nome.ilike(f"%{produto}%"))
 
         if bitola:
-            query = query.join(BitolaModel, FornecedorPagarModel.bitola).filter(BitolaModel.bitola.ilike(f"%{bitola}%"))
+            query = query.filter(BitolaModel.bitola.ilike(f"%{bitola}%"))
 
         if motorista:
-            query = query.join(MotoristaModel, CargaModel.motorista).filter(MotoristaModel.nome_completo.ilike(f"%{motorista}%"))
+            query = query.filter(MotoristaModel.nome_completo.ilike(f"%{motorista}%"))
 
         if transportadora:
-            query = query.outerjoin(
-                TransportadoraModel,
-                CargaModel.transportadora_id == TransportadoraModel.id,
-            ).filter(TransportadoraModel.identificacao.ilike(f"%{transportadora}%"))
+            query = query.filter(TransportadoraModel.identificacao.ilike(f"%{transportadora}%"))
 
         if fornecedor:
             query = query.filter(FornecedorCadastroModel.identificacao.ilike(f"%{fornecedor}%"))
 
         if placa:
-            query = query.join(VeiculoModel, CargaModel.veiculo).filter(VeiculoModel.placa_veiculo.ilike(f"%{placa}%"))
+            query = query.filter(VeiculoModel.placa_veiculo.ilike(f"%{placa}%"))
 
         if statusPagamento and statusPagamento != "":
-            query = query.join(SituacaoPagamentoModel, FornecedorPagarModel.situacao).filter(SituacaoPagamentoModel.id == statusPagamento)
+            query = query.filter(SituacaoPagamentoModel.id == statusPagamento)
 
         query = query.order_by(
             case((FornecedorCadastroModel.identificacao == None, 1), else_=0),
