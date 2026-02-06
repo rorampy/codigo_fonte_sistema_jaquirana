@@ -1,0 +1,65 @@
+{#
+  Include: botões de exportação PDF/Excel + botão filtrar.
+  Variáveis esperadas:
+    - url_pdf   : url_for do endpoint de exportação PDF
+    - url_excel : url_for do endpoint de exportação Excel
+    - dados_corretos : request.args ou request.form
+#}
+
+<div class="d-flex gap-2">
+  {# PDF #}
+  <form action="{{ url_pdf }}" method="POST" target="_blank">
+    {% for key, value in dados_corretos.items() %}
+    {% if key not in ['exportar_pdf', 'exportar_excel'] %}
+    <input type="hidden" name="{{ key }}" value="{{ value }}">
+    {% endif %}
+    {% endfor %}
+    <button type="submit" class="btn btn-outline-danger">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+        <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
+        <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
+        <path d="M17 18h2" />
+        <path d="M20 15h-3v6" />
+        <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" />
+      </svg>
+      Exportar PDF
+    </button>
+  </form>
+
+  {# Excel #}
+  <form action="{{ url_excel }}" method="POST">
+    {% for key, value in dados_corretos.items() %}
+    {% if key not in ['exportar_pdf', 'exportar_excel'] %}
+    <input type="hidden" name="{{ key }}" value="{{ value }}">
+    {% endif %}
+    {% endfor %}
+    <button type="submit" class="btn btn-outline-success">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="icon icon-tabler icons-tabler-outline icon-tabler-file-spreadsheet">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+        <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+        <path d="M8 11h8v7h-8z" />
+        <path d="M8 15h8" />
+        <path d="M11 11v7" />
+      </svg>
+      Exportar Excel
+    </button>
+  </form>
+
+  {# Filtrar #}
+  <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-report">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+      class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+    </svg>
+    Filtrar
+  </a>
+</div>

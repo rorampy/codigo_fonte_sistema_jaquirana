@@ -557,6 +557,40 @@
                     </a>
                   </div>
                 </div>
+                <div class="dropend">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside" role="button" aria-expanded="false">
+                    Contas a Pagar (AP)
+                  </a>
+                  <div class="dropdown-menu">
+                    <a href="{{url_for('relatorio_ap_emissoes')}}" class="dropdown-item">
+                      AP – Emissões
+                    </a>
+                    <a href="{{url_for('relatorio_ap_pagamentos')}}" class="dropdown-item">
+                      AP – Pagamentos
+                    </a>
+                    <a href="{{url_for('relatorio_ap_pendentes')}}" class="dropdown-item">
+                      AP – Pendentes
+                    </a>
+                  </div>
+                </div>
+                <div class="dropend">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside" role="button" aria-expanded="false">
+                    Contas a Receber (AR)
+                  </a>
+                  <div class="dropdown-menu">
+                    <a href="{{url_for('relatorio_ar_emissoes')}}" class="dropdown-item">
+                      AR – Emissões
+                    </a>
+                    <a href="{{url_for('relatorio_ar_recebimentos')}}" class="dropdown-item">
+                      AR – Recebimentos
+                    </a>
+                    <a href="{{url_for('relatorio_ar_pendentes')}}" class="dropdown-item">
+                      AR – Pendentes
+                    </a>
+                  </div>
+                </div>
                 <a class="dropdown-item" href="#" data-bs-toggle="modal"
                   data-bs-target="#modal-movimentacaoes-financeiras">
                   Relatório Movimentações Financeiras

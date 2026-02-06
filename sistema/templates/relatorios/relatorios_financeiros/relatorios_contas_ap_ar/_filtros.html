@@ -1,0 +1,158 @@
+{# 
+  Include reutilizável: modal de filtros para relatórios AP/AR.
+  Variáveis esperadas:
+    - url_filtro       : url_for do endpoint de listagem (GET)
+    - dados_corretos   : request.args ou request.form
+    - pessoas          : lista de PessoaFinanceiroModel
+    - planos_contas    : lista de PlanoContaModel
+    - centros_custo    : lista de CentroCustoModel
+    - situacoes        : lista de SituacaoPagamentoModel
+    - label_entidade   : "Fornecedor" ou "Cliente"
+    - tipo_relatorio   : "emissoes", "baixas" ou "pendentes"
+    - direcao          : "ap" ou "ar"
+
+  Filtros por contexto:
+    - Pessoa (Fornecedor / Cliente): sempre visível (Pendentes usa FornecedorCadastroModel/ClienteModel)
+    - Centro de Custo: oculto em Pendentes (tabelas _a_pagar e RegistroOperacional não possuem centro_custo)
+    - Plano de Contas: oculto em AR Pendentes (RegistroOperacionalModel não possui plano_conta_id)
+    - Situação: sempre visível
+#}
+
+{# Flags para esconder filtros que não se aplicam ao contexto #}
+{% set is_pendentes  = (tipo_relatorio == 'pendentes') %}
+{% set ar_pendentes  = (direcao == 'ar' and tipo_relatorio == 'pendentes') %}
+
+<div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
+    <form action="{{ url_filtro }}" method="GET">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Filtrar Relatório</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+
+            {# --- Datas: emissões e baixas usam início/fim; pendentes usa data de referência --- #}
+            {% if tipo_relatorio in ['emissoes', 'baixas'] %}
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Data Início</label>
+              <input type="date" name="dataInicio" class="form-control"
+                value="{{ dados_corretos.get('dataInicio', '') }}">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Data Fim</label>
+              <input type="date" name="dataFim" class="form-control"
+                value="{{ dados_corretos.get('dataFim', '') }}">
+            </div>
+            {% else %}
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Data de Referência (corte)</label>
+              <input type="date" name="dataReferencia" class="form-control"
+                value="{{ dados_corretos.get('dataReferencia', '') }}">
+            </div>
+            <div class="col-md-6 mb-3"></div>
+            {% endif %}
+
+            {# --- Pessoa (Fornecedor / Cliente) — sempre visível --- #}
+            <div class="col-md-6 mb-3">
+              <label class="form-label">{{ label_entidade }}</label>
+              <select id="filtro-pessoa" name="pessoaId" class="form-select">
+                <option value="">Todos</option>
+                {% for p in pessoas %}
+                <option value="{{ p.id }}" {% if dados_corretos.get('pessoaId') == p.id|string %}selected{% endif %}>
+                  {{ p.identificacao }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            {# --- Plano de Contas — oculto em AR Pendentes --- #}
+            {% if not ar_pendentes %}
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Plano de Contas</label>
+              <select id="filtro-plano-contas" name="planoContasId" class="form-select">
+                <option value="">Todos</option>
+                {% for pc in planos_contas %}
+                <option value="{{ pc.id }}" {% if dados_corretos.get('planoContasId') == pc.id|string %}selected{% endif %}>
+                  {{ pc.codigo }} - {{ pc.nome }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+
+            {# --- Centro de Custo — não se aplica a Pendentes (AP e AR) --- #}
+            {% if not is_pendentes %}
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Centro de Custo</label>
+              <select id="filtro-centro-custo" name="centroCustoId" class="form-select">
+                <option value="">Todos</option>
+                {% for cc in centros_custo %}
+                <option value="{{ cc.id }}" {% if dados_corretos.get('centroCustoId') == cc.id|string %}selected{% endif %}>
+                  {{ cc.nome }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+
+            {# --- Situação --- #}
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Situação</label>
+              <select id="filtro-situacao" name="situacaoId" class="form-select">
+                <option value="">Todas</option>
+                {% for s in situacoes %}
+                <option value="{{ s.id }}" {% if dados_corretos.get('situacaoId') == s.id|string %}selected{% endif %}>
+                  {{ s.situacao }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <a href="{{ url_filtro }}" class="btn btn-link link-secondary btn-3">
+            Limpar Filtros
+          </a>
+          <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="icon icon-tabler icon-tabler-filter">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+            </svg>
+            Filtrar
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# --- Tom Select nos selects do modal de filtros --- #}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var tomSelectConfig = {
+      create: false,
+      allowEmptyOption: true,
+      sortField: { field: "text", direction: "asc" }
+    };
+
+    var selectIds = [
+      'filtro-pessoa',
+      'filtro-plano-contas',
+      'filtro-centro-custo',
+      'filtro-situacao'
+    ];
+
+    selectIds.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) {
+        new TomSelect(el, tomSelectConfig);
+      }
+    });
+  });
+</script>

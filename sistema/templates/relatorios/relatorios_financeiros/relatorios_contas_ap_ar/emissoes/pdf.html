@@ -1,0 +1,126 @@
+{% include 'relatorios/estrutura/style.html' %}
+<style>
+  .card-section .card { flex: 1 1 45%; }
+</style>
+<div class="page-wrapper">
+  <div class="page body">
+    <div class="container">
+      <div class="watermark">
+        <img src="{{logo_path}}" alt="Jaquirana Extração Watermark" />
+      </div>
+
+      <div class="content">
+        {# --- Cabeçalho --- #}
+        <div class="header no-break">
+          <img src="{{logo_path}}" alt="Logo Jaquirana Extração" />
+          <div class="system-info">
+            <div><strong>Sistema de Gestão Jaquirana</strong></div>
+            <div><strong>Versão</strong> {{changelog.versao}}</div>
+            <div><strong>Data:</strong> {{changelog.data_lancamento}}</div>
+          </div>
+        </div>
+
+        <div class="relatorio-title">{{ titulo_relatorio }}</div>
+
+        {# --- Filtros aplicados --- #}
+        {% if dados_corretos %}
+        <div class="filtros-container no-break">
+          <div class="filtros-title">Filtros Aplicados</div>
+          <div class="filtros-grid">
+            <div class="filtro-item">
+              <span class="filtro-label">Data Início:</span>
+              <span class="filtro-valor">
+                {{ dados_corretos.get('dataInicio', '') | converte_data_para_datetime_converte_data_brl if dados_corretos.get('dataInicio') else '-' }}
+              </span>
+            </div>
+            <div class="filtro-item">
+              <span class="filtro-label">Data Fim:</span>
+              <span class="filtro-valor">
+                {{ dados_corretos.get('dataFim', '') | converte_data_para_datetime_converte_data_brl if dados_corretos.get('dataFim') else '-' }}
+              </span>
+            </div>
+            <div class="filtro-item">
+              <span class="filtro-label">{{ label_entidade }}:</span>
+              <span class="filtro-valor">{{ dados_corretos.get('pessoa_nome', 'Todos') }}</span>
+            </div>
+            <div class="filtro-item">
+              <span class="filtro-label">Plano de Contas:</span>
+              <span class="filtro-valor">{{ dados_corretos.get('plano_contas_nome', 'Todos') }}</span>
+            </div>
+            <div class="filtro-item">
+              <span class="filtro-label">Centro de Custo:</span>
+              <span class="filtro-valor">{{ dados_corretos.get('centro_custo_nome', 'Todos') }}</span>
+            </div>
+            <div class="filtro-item">
+              <span class="filtro-label">Situação:</span>
+              <span class="filtro-valor">{{ dados_corretos.get('situacao_nome', 'Todas') }}</span>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {# --- Dados --- #}
+        {% if registros %}
+
+        {# Cards resumo #}
+        <div class="section-title no-break">Resumo</div>
+        <div class="card-section no-break">
+          <div class="card">
+            <div class="card-title">Total de Títulos</div>
+            <div style="font-size: 18px; font-weight: bold; color: #1e5631;">
+              {{ totais.quantidade }}
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Valor Total Emitido</div>
+            <div style="font-size: 18px; font-weight: bold; color: #1e5631;">
+              {{ totais.total_original_100 | formatar_float_para_brl }}
+            </div>
+          </div>
+        </div>
+
+        {# Tabela detalhada #}
+        <div class="section-title no-break" style="margin-top: 20px;">Detalhamento</div>
+        <table>
+          <thead>
+            <tr>
+              <th class="text-center">Código</th>
+              <th class="text-center">{{ label_entidade }}</th>
+              <th class="text-center">Descrição</th>
+              <th class="text-center">Emissão</th>
+              <th class="text-center">Vencimento</th>
+              <th class="text-center">{{ label_valor }}</th>
+              <th class="text-center">Situação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in registros %}
+            <tr>
+              <td class="text-center">{{ item.codigo_faturamento }}</td>
+              <td class="text-center">{{ item.pessoa_nome }}</td>
+              <td class="text-center">{{ item.descricao | truncate(35, True, '…') }}</td>
+              <td class="text-center">{{ item.data_emissao | formatar_data_para_brl if item.data_emissao else '-' }}</td>
+              <td class="text-center">{{ item.data_vencimento | formatar_data_para_brl if item.data_vencimento else '-' }}</td>
+              <td class="text-center">{{ item.valor_original_100 | formatar_float_para_brl }}</td>
+              <td class="text-center">{{ item.situacao }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        {% else %}
+        <div style="text-align: center; padding: 50px 0;">
+          <h3 style="color: #666;">Nenhum registro encontrado</h3>
+          <p style="color: #999;">Não há registros de emissões para o período selecionado.</p>
+        </div>
+        {% endif %}
+
+        {# --- Rodapé --- #}
+        <div class="footer">
+          <p><strong>Jaquirana Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+          <p><strong>Sistema de Gestão Jaquirana</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

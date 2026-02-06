@@ -1,0 +1,146 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+
+<div class="page-wrapper">
+  {# ========== HEADER ========== #}
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">RELATÓRIO</div>
+          <h2 class="page-title">{{ titulo_relatorio }}</h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          {% if direcao == 'ap' %}
+            {% set url_pdf   = url_for('relatorio_ap_pagamentos_pdf') %}
+            {% set url_excel = url_for('relatorio_ap_pagamentos_excel') %}
+            {% set url_filtro = url_for('relatorio_ap_pagamentos') %}
+          {% else %}
+            {% set url_pdf   = url_for('relatorio_ar_recebimentos_pdf') %}
+            {% set url_excel = url_for('relatorio_ar_recebimentos_excel') %}
+            {% set url_filtro = url_for('relatorio_ar_recebimentos') %}
+          {% endif %}
+          {% include 'relatorios/relatorios_financeiros/relatorios_contas_ap_ar/_botoes_exportar.html' %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ========== BODY ========== #}
+  <div class="page-body">
+    <div class="container-xl">
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      {# --- Totalizadores --- #}
+      {% if registros %}
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <div class="card card-sm">
+            <div class="card-body">
+              <div class="d-flex align-items-center">
+                <div>
+                  <div class="subheader">Títulos Baixados</div>
+                  <div class="h3 mb-0">{{ totais.quantidade }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card card-sm">
+            <div class="card-body">
+              <div class="d-flex align-items-center">
+                <div>
+                  <div class="subheader">Valor Original</div>
+                  <div class="h3 mb-0">{{ totais.total_original_100 | formatar_float_para_brl }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card card-sm">
+            <div class="card-body">
+              <div class="d-flex align-items-center">
+                <div>
+                  <div class="subheader">Total {{ 'Pago' if direcao == 'ap' else 'Recebido' }}</div>
+                  <div class="h3 mb-0">{{ totais.total_pago_100 | formatar_float_para_brl }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# --- Tabela de dados --- #}
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body p-0">
+            {% if registros %}
+            <div class="table-responsive">
+              <table class="table table-vcenter table-hover table-striped">
+                <thead class="bg-light">
+                  <tr>
+                    <th class="text-center">Código</th>
+                    <th class="text-center">{{ label_entidade }}</th>
+                    <th class="text-center">Descrição</th>
+                    <th class="text-center">Vencimento</th>
+                    <th class="text-center">Data {{ 'Pagamento' if direcao == 'ap' else 'Recebimento' }}</th>
+                    <th class="text-center">Valor Original</th>
+                    <th class="text-center">Valor {{ 'Pago' if direcao == 'ap' else 'Recebido' }}</th>
+                    <th class="text-center">Situação</th>
+                    <th class="text-center">Plano de Contas</th>
+                    <th class="text-center">Centro de Custo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in registros %}
+                  <tr>
+                    <td class="text-center">
+                      <span class="badge bg-azure-lt">{{ item.codigo_faturamento }}</span>
+                    </td>
+                    <td class="text-center">{{ item.pessoa_nome }}</td>
+                    <td class="text-center">{{ item.descricao | truncate(30, True, '...') }}</td>
+                    <td class="text-center">
+                      {{ item.data_vencimento | formatar_data_para_brl if item.data_vencimento else '-' }}
+                    </td>
+                    <td class="text-center text-primary">
+                      {{ item.data_pagamento | formatar_data_para_brl if item.data_pagamento else '-' }}
+                    </td>
+                    <td class="text-center">
+                      {{ item.valor_original_100 | formatar_float_para_brl }}
+                    </td>
+                    <td class="text-center">
+                      <span class="badge bg-green-lt p-2">{{ item.valor_pago_100 | formatar_float_para_brl }}</span>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge badge-outline text-green">{{ item.situacao }}</span>
+                    </td>
+                    <td class="text-center">{{ item.plano_contas }}</td>
+                    <td class="text-center">{{ item.centro_custo }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="area-info-card" style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">
+              <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
+              <h2 style="font-size: 22px; margin-bottom: 10px; color: #555;">Nenhum dado disponível</h2>
+              <p style="color: #777;">No momento não há registros para exibir. Utilize os filtros para refinar a busca.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ========== MODAL FILTROS ========== #}
+  {% include 'relatorios/relatorios_financeiros/relatorios_contas_ap_ar/_filtros.html' with context %}
+
+  {% include 'estrutura/footer.html' %}
+</div>
+{% endblock conteudo %}

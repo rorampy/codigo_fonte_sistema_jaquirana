@@ -1,0 +1,203 @@
+"""
+Relatório de Baixas — AP: Pagamentos / AR: Recebimentos.
+
+Rotas:
+  GET  /relatorios/contas-a-pagar/pagamentos        → listagem AP
+  POST /relatorios/contas-a-pagar/pagamentos/pdf     → exportar PDF AP
+  POST /relatorios/contas-a-pagar/pagamentos/excel   → exportar Excel AP
+  GET  /relatorios/contas-a-receber/recebimentos       → listagem AR
+  POST /relatorios/contas-a-receber/recebimentos/pdf   → exportar PDF AR
+  POST /relatorios/contas-a-receber/recebimentos/excel → exportar Excel AR
+"""
+
+from datetime import datetime
+from sistema import app, requires_roles, obter_url_absoluta_de_imagem
+from flask import render_template, request
+from flask_login import login_required
+from sistema._utilitarios import ManipulacaoArquivos
+from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
+from sistema.models_views.configuracoes_gerais.centro_custo.centro_custo_model import CentroCustoModel
+from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
+from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
+from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
+
+from .contas_ap_ar_service import ContasAPARService
+
+
+# =============================================================================
+# HELPERS
+# =============================================================================
+
+def _extrair_filtros():
+    source = request.form if request.method == 'POST' else request.args
+    return {
+        'data_inicio': source.get('dataInicio') or None,
+        'data_fim': source.get('dataFim') or None,
+        'pessoa_id': source.get('pessoaId') or None,
+        'plano_contas_id': source.get('planoContasId') or None,
+        'centro_custo_id': source.get('centroCustoId') or None,
+        'situacao_id': source.get('situacaoId') or None,
+    }
+
+
+def _contexto_base():
+    return {
+        'pessoas': PessoaFinanceiroModel.listar_pessoas_ativas(),
+        'planos_contas': PlanoContaModel.listar_todos_planos(),
+        'centros_custo': CentroCustoModel.obter_centro_custos_ativos(),
+        'situacoes': SituacaoPagamentoModel.listar_status(),
+    }
+
+
+# =============================================================================
+# AP — PAGAMENTOS
+# =============================================================================
+
+@app.route('/relatorios/contas-a-pagar/pagamentos', methods=['GET'])
+@login_required
+@requires_roles
+def relatorio_ap_pagamentos():
+    filtros = _extrair_filtros()
+    registros = ContasAPARService.obter_baixas('ap', filtros)
+    totais = ContasAPARService.totalizar(registros)
+
+    return render_template(
+        'relatorios/relatorios_financeiros/relatorios_contas_ap_ar/baixas/listar.html',
+        registros=registros,
+        totais=totais,
+        direcao='ap',
+        titulo_relatorio='AP – Pagamentos',
+        label_entidade='Fornecedor',
+        label_baixa='Data Pagamento',
+        label_valor_baixa='Valor Pago',
+        tipo_relatorio='baixas',
+        dados_corretos=request.args,
+        **_contexto_base(),
+    )
+
+
+@app.route('/relatorios/contas-a-pagar/pagamentos/pdf', methods=['POST'])
+@login_required
+@requires_roles
+def relatorio_ap_pagamentos_pdf():
+    filtros = _extrair_filtros()
+    registros = ContasAPARService.obter_baixas('ap', filtros)
+    totais = ContasAPARService.totalizar(registros)
+
+    changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
+    logo_path = obter_url_absoluta_de_imagem('logo.png')
+    data_hoje = datetime.now().strftime('%d-%m-%Y')
+
+    html = render_template(
+        'relatorios/relatorios_financeiros/relatorios_contas_ap_ar/baixas/pdf.html',
+        registros=registros,
+        totais=totais,
+        direcao='ap',
+        titulo_relatorio='AP – Pagamentos',
+        label_entidade='Fornecedor',
+        label_baixa='Data Pagamento',
+        label_valor_baixa='Valor Pago',
+        logo_path=logo_path,
+        changelog=changelog,
+        dados_corretos=request.form,
+    )
+    return ManipulacaoArquivos.gerar_pdf_from_html(html, f'ap_pagamentos_{data_hoje}', 'Landscape', abrir_em_nova_aba=False)
+
+
+@app.route('/relatorios/contas-a-pagar/pagamentos/excel', methods=['POST'])
+@login_required
+@requires_roles
+def relatorio_ap_pagamentos_excel():
+    filtros = _extrair_filtros()
+    registros = ContasAPARService.obter_baixas('ap', filtros)
+    totais = ContasAPARService.totalizar(registros)
+    dados = ContasAPARService.preparar_dados_excel_baixas(registros, 'ap')
+    data_hoje = datetime.now().strftime('%d-%m-%Y')
+    return ManipulacaoArquivos.exportar_excel_formatado(
+        dados,
+        f'ap_pagamentos_{data_hoje}',
+        titulo_planilha='AP – Pagamentos',
+        colunas_monetarias=['Valor Original', 'Valor Pago', 'Saldo'],
+        linha_totais={
+            'Valor Original': totais['total_original_100'] / 100,
+            'Valor Pago': totais['total_pago_100'] / 100,
+            'Saldo': totais['total_saldo_100'] / 100,
+        },
+    )
+
+
+# =============================================================================
+# AR — RECEBIMENTOS
+# =============================================================================
+
+@app.route('/relatorios/contas-a-receber/recebimentos', methods=['GET'])
+@login_required
+@requires_roles
+def relatorio_ar_recebimentos():
+    filtros = _extrair_filtros()
+    registros = ContasAPARService.obter_baixas('ar', filtros)
+    totais = ContasAPARService.totalizar(registros)
+
+    return render_template(
+        'relatorios/relatorios_financeiros/relatorios_contas_ap_ar/baixas/listar.html',
+        registros=registros,
+        totais=totais,
+        direcao='ar',
+        titulo_relatorio='AR – Recebimentos',
+        label_entidade='Cliente',
+        label_baixa='Data Recebimento',
+        label_valor_baixa='Valor Recebido',
+        tipo_relatorio='baixas',
+        dados_corretos=request.args,
+        **_contexto_base(),
+    )
+
+
+@app.route('/relatorios/contas-a-receber/recebimentos/pdf', methods=['POST'])
+@login_required
+@requires_roles
+def relatorio_ar_recebimentos_pdf():
+    filtros = _extrair_filtros()
+    registros = ContasAPARService.obter_baixas('ar', filtros)
+    totais = ContasAPARService.totalizar(registros)
+
+    changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
+    logo_path = obter_url_absoluta_de_imagem('logo.png')
+    data_hoje = datetime.now().strftime('%d-%m-%Y')
+
+    html = render_template(
+        'relatorios/relatorios_financeiros/relatorios_contas_ap_ar/baixas/pdf.html',
+        registros=registros,
+        totais=totais,
+        direcao='ar',
+        titulo_relatorio='AR – Recebimentos',
+        label_entidade='Cliente',
+        label_baixa='Data Recebimento',
+        label_valor_baixa='Valor Recebido',
+        logo_path=logo_path,
+        changelog=changelog,
+        dados_corretos=request.form,
+    )
+    return ManipulacaoArquivos.gerar_pdf_from_html(html, f'ar_recebimentos_{data_hoje}', 'Landscape', abrir_em_nova_aba=False)
+
+
+@app.route('/relatorios/contas-a-receber/recebimentos/excel', methods=['POST'])
+@login_required
+@requires_roles
+def relatorio_ar_recebimentos_excel():
+    filtros = _extrair_filtros()
+    registros = ContasAPARService.obter_baixas('ar', filtros)
+    totais = ContasAPARService.totalizar(registros)
+    dados = ContasAPARService.preparar_dados_excel_baixas(registros, 'ar')
+    data_hoje = datetime.now().strftime('%d-%m-%Y')
+    return ManipulacaoArquivos.exportar_excel_formatado(
+        dados,
+        f'ar_recebimentos_{data_hoje}',
+        titulo_planilha='AR – Recebimentos',
+        colunas_monetarias=['Valor Original', 'Valor Recebido', 'Saldo'],
+        linha_totais={
+            'Valor Original': totais['total_original_100'] / 100,
+            'Valor Recebido': totais['total_pago_100'] / 100,
+            'Saldo': totais['total_saldo_100'] / 100,
+        },
+    )

@@ -522,6 +522,11 @@ from sistema.models_views.relatorios.relatorios_financeiros.relatorio_cargas_a_r
 from sistema.models_views.relatorios.relatorio_movimentacao_financeira import relatorio_movimentacao_financeira_view
 from sistema.models_views.relatorios.relatorio_controle_emissao import relatorio_controle_emissao_view
 
+# Relatórios Contas AP/AR
+from sistema.models_views.relatorios.relatorios_financeiros.relatorios_contas_ap_ar import emissoes_view
+from sistema.models_views.relatorios.relatorios_financeiros.relatorios_contas_ap_ar import baixas_view
+from sistema.models_views.relatorios.relatorios_financeiros.relatorios_contas_ap_ar import pendentes_view
+
 # Configurações
 from sistema.models_views.configuracoes_gerais.empresa_emissora import empresa_emissora_model
 from sistema.models_views.configuracoes_gerais.empresa_emissora import empresa_emissora_view
