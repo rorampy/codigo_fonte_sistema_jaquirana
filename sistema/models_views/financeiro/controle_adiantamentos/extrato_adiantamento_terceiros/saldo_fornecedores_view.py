@@ -1,32 +1,21 @@
 from datetime import datetime
 from sistema import app, requires_roles, db
-from flask import render_template, request, redirect, url_for, flash, session, jsonify
+from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
-from sistema.models_views.upload_arquivo.upload_arquivo_view import upload_arquivo
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
-from sistema.models_views.financeiro.movimentacao_financeira.movimentacao_financeira_model import MovimentacaoFinanceiraModel
-from sistema.models_views.financeiro.movimentacao_financeira.saldo_movimentacao_financeira_model import SaldoMovimentacaoFinanceiraModel
-from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
-from sistema.models_views.configuracoes_gerais.categorizacao_fiscal.categorizacao_fiscal_model import CategorizacaoFiscalModel
 from sistema.models_views.configuracoes_gerais.conta_bancaria.conta_bancaria_model import ContaBancariaModel
-from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_view import inicializar_categorias_padrao, obter_subcategorias_recursivo
-from sistema.models_views.configuracoes_gerais.categorizacao_fiscal.categorizacao_fiscal_view import inicializar_categorias_padrao_categorizacao_fiscal, obter_subcategorias_recursivo_categorizacao_fiscal
 from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema._utilitarios import *
 
 # === Nova Arquitetura de Créditos ===
 from sistema.models_views.financeiro.controle_adiantamentos.servico_creditos import ServicoCreditos
 from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import (
-    TransacaoCreditoModel, TipoTransacaoCredito, TipoPessoa
+    TransacaoCreditoModel, TipoPessoa
 )
 from sistema.models_views.financeiro.controle_adiantamentos.faturamento_credito_vinculo_model import FaturamentoCreditoVinculoModel
 from sistema.models_views.financeiro.controle_adiantamentos.historico_transacao_model import HistoricoTransacaoCreditoModel, AcaoHistoricoCredito
-
-# === Imports Legado (mantidos para compatibilidade durante transição) ===
-from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_fornecedor_model import ExtratoCreditoFornecedorModel
-from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_fornecedor_model import CreditoFornecedorModel
 
 
 @app.route("/financeiro/extrato_terceiros/fornecedores", methods=["GET"])
@@ -40,14 +29,14 @@ def saldo_fornecedores():
         celular = request.args.get("celular")
         celularFormatado = ValidaDocs.somente_numeros(celular) if celular else None
         
-        fornecedores = FornecedorModel.filtrar_fornecedores(
+        fornecedores = FornecedorCadastroModel.filtrar_fornecedores(
             identificacao=request.args.get("identificacao"),
             numero_documento=numeroDocFormatado,
             celular=celularFormatado,
         )
     else:
-        fornecedores = FornecedorModel.listar_fornecedores()
-
+        fornecedores = FornecedorCadastroModel.listar_fornecedores()
+    print(fornecedores)
     # === Usando nova arquitetura via ServicoCreditos ===
     for f in fornecedores:
         f.valor_credito_100 = ServicoCreditos.obter_saldo_fornecedor(f.id)
@@ -65,7 +54,7 @@ def saldo_fornecedores():
 def extrato_fornecedor(id):
     # === Usando nova arquitetura via ServicoCreditos ===
     extrato = ServicoCreditos.obter_historico_fornecedor(id)
-    fornecedor = FornecedorModel.obter_fornecedor_por_id(id)
+    fornecedor = FornecedorCadastroModel.obter_fornecedor_por_id(id)
     
     if fornecedor is None:
         flash(("Este fornecedor nâo possui dados a serem mostrados!", "warning"))
@@ -91,7 +80,7 @@ def lancar_credito_fornecedor(id):
         validacao_campos_erros = {}
         gravar_banco = True
 
-        fornecedor = FornecedorModel.obter_fornecedor_por_id(id)
+        fornecedor = FornecedorCadastroModel.obter_fornecedor_por_id(id)
 
         if not fornecedor:
             flash(("Fornecedor informado não existe!", "warning"))
@@ -289,7 +278,7 @@ def editar_credito_fornecedor(credito_id):
             return redirect(url_for("saldo_fornecedores"))
         
         # Buscar fornecedor
-        fornecedor = FornecedorModel.obter_fornecedor_por_id(credito.fornecedor_id)
+        fornecedor = FornecedorCadastroModel.obter_fornecedor_por_id(credito.fornecedor_id)
         if not fornecedor:
             flash(("Fornecedor não encontrado!", "warning"))
             return redirect(url_for("saldo_fornecedores"))

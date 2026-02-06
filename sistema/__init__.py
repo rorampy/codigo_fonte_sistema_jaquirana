@@ -456,7 +456,6 @@ from sistema.models_views.gerenciar.floresta import floresta_view
 
 from sistema.models_views.gerenciar.fornecedor import fornecedor_model
 from sistema.models_views.gerenciar.fornecedor import fornecedor_madeira_posta_model
-# from sistema.models_views.gerenciar.fornecedor import fornecedor_view
 from sistema.models_views.gerenciar.fornecedor.fornecedor_tag_model import FornecedorTag
 from sistema.models_views.faturamento.cargas_a_faturar.extrator import extrator_a_pagar_model
 from sistema.models_views.faturamento.cargas_a_faturar.extrator import extrator_a_pagar_view
@@ -562,15 +561,15 @@ from sistema.models_views.faturamento.cargas_a_receber.nf_complementar import nf
 from sistema.models_views.faturamento.cargas_a_receber.nf_complementar import nf_complementar_view
 from sistema.models_views.faturamento.cargas_a_receber.nf_servico import nf_servico_model
 from sistema.models_views.faturamento.cargas_a_receber.nf_servico import nf_servico_view
+from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento_terceiros import saldo_fornecedores_view
+from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento_terceiros import saldo_extratores_view
+from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento_terceiros import saldo_freteiros_view
 
 # Faturamento
 from sistema.models_views.faturamento.cargas_a_faturar.fornecedor import fornecedor_a_pagar_model
 from sistema.models_views.faturamento.cargas_a_faturar.transportadora import frete_a_pagar_model
 from sistema.models_views.faturamento.cargas_a_faturar.fornecedor import fornecedor_a_pagar_view
 from sistema.models_views.faturamento.cargas_a_faturar.transportadora import frete_a_pagar_view
-from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento_terceiros import saldo_fornecedores_view
-from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento_terceiros import saldo_extratores_view
-from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento_terceiros import saldo_freteiros_view
 from sistema.models_views.faturamento.cargas_a_faturar.comissionado import comissionado_a_pagar_model
 from sistema.models_views.faturamento.cargas_a_faturar.comissionado import comissionado_a_pagar_view
 from sistema.models_views.financeiro.operacional.faturamento_model import faturamento_model

@@ -41,7 +41,7 @@ def listar_fornecedores():
         )
     else:
         fornecedores = FornecedorCadastroModel.listar_fornecedores()
-        
+    print(fornecedores)
     return render_template(
         "gerenciar/fornecedores/fornecedores_listar.html",
         fornecedores=fornecedores,
