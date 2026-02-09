@@ -913,20 +913,31 @@ class ConciliacaoOfxBuscarExistente {
             // Retornar dados básicos mesmo sem encontrar o card
             return {
                 valor: 'R$ 0,00',
+                valorOriginal: 'R$ 0,00',
+                valorDisponivel: 'R$ 0,00',
+                isParcial: false,
                 data: new Date().toLocaleDateString('pt-BR'),
                 descricao: 'Transação via Buscar Existente',
                 fitid: transacaoId
             };
         }
 
-        // Extrair dados dos atributos data-* (igual às sugestões)
-        const valor = cardTransacao.dataset.transacaoValor || 'R$ 0,00';
+        // Verificar se é conciliação parcial e usar valor disponível
+        const isParcial = cardTransacao.dataset.conciliacaoParcial === 'true';
+        const valorDisponivel = cardTransacao.dataset.transacaoValorDisponivel || cardTransacao.dataset.transacaoValor || 'R$ 0,00';
+        const valorOriginal = cardTransacao.dataset.transacaoValor || 'R$ 0,00';
+        
+        // Usar valor disponível para transações parciais
+        const valor = isParcial ? valorDisponivel : valorOriginal;
         const data = cardTransacao.dataset.transacaoData || '';
         const descricao = cardTransacao.dataset.transacaoDescricao || 'Sem descrição';
         const fitid = cardTransacao.dataset.transacaoFitid || transacaoId;
 
         return {
             valor: valor,
+            valorOriginal: valorOriginal,
+            valorDisponivel: valorDisponivel,
+            isParcial: isParcial,
             data: data,
             descricao: descricao,
             fitid: fitid
@@ -1067,40 +1078,9 @@ class ConciliacaoOfxBuscarExistente {
                 // Notificar sucesso
                 this.mostrarToastSucesso(resultado.message);
                 
-                // Disparar evento para outros sistemas
-                document.dispatchEvent(new CustomEvent('conciliacao-realizada', {
-                    detail: { 
-                        agendamentoId: agendamentoId,
-                        transacaoId: transacaoId 
-                    }
-                }));
-                
-                // Disparar evento específico para remover a transação da interface principal
-                document.dispatchEvent(new CustomEvent('transacao-conciliada', {
-                    detail: { 
-                        transacaoId: transacaoId,
-                        agendamentoId: agendamentoId,
-                        tipo: resultado.dados.conciliacao_parcial ? 'individual-parcial' : 'individual'
-                    }
-                }));
-                
-                // Se agendamento foi totalmente conciliado, remover da lista
-                if (resultado.dados.agendamento_totalmente_conciliado) {
-                    this.removerAgendamentoDaLista(agendamentoId);
-                    this.atualizarContadoresAposRemocao();
-                } else {
-                    // Se foi conciliação parcial, atualizar linha do agendamento
-                    this.atualizarLinhaAgendamento(agendamentoId, resultado.dados);
-                }
-                
-                // Verificar se a transação foi totalmente utilizada
-                if (resultado.dados.transacao_totalmente_utilizada) {
-                    // Marcar transação como totalmente conciliada
-                    this.marcarTransacaoComoConciliada(transacaoId);
-                } else {
-                    // Atualizar informações da transação com valor restante
-                    this.atualizarInformacoesTransacao(transacaoId, resultado.dados);
-                }
+                // Recarregar página após 1.5s para atualizar valores
+                setTimeout(() => window.location.reload(), 1500);
+                return;
             } else {
                 this.mostrarToastErro(resultado.message || 'Erro ao processar conciliação');
             }
@@ -1474,36 +1454,8 @@ class ConciliacaoOfxBuscarExistente {
             if (resultado.success) {
                 this.mostrarToastSucesso(resultado.message);
                 
-                // Verificar se a transação foi totalmente utilizada
-                if (resultado.dados.transacao_totalmente_utilizada) {
-                    // Marcar transação como totalmente conciliada
-                    this.marcarTransacaoComoConciliada(transacaoId);
-                } else {
-                    // Atualizar informações da transação com novo status parcial
-                    this.atualizarInformacoesTransacao(transacaoId, resultado.dados);
-                }
-                
-                // Disparar evento para cada agendamento
-                agendamentosIds.forEach(agendamentoId => {
-                    document.dispatchEvent(new CustomEvent('conciliacao-realizada', {
-                        detail: { 
-                            agendamentoId: agendamentoId,
-                            transacaoId: transacaoId,
-                            tipo: 'MASSA'
-                        }
-                    }));
-                });
-                
-                // Remover todos os agendamentos da lista (foram conciliados)
-                agendamentosIds.forEach(id => this.removerAgendamentoDaLista(id));
-                this.atualizarContadoresAposRemocao();
-                
-                // Notificar sistema global se existir
-                if (window.notificarConciliacao) {
-                    agendamentosIds.forEach(agendamentoId => {
-                        window.notificarConciliacao(transacaoId, agendamentoId);
-                    });
-                }
+                // Recarregar página após 1.5s para atualizar valores
+                setTimeout(() => window.location.reload(), 1500);
                 
                 return { success: true, message: resultado.message };
             } else {
@@ -1685,29 +1637,10 @@ class ConciliacaoOfxBuscarExistente {
 
                 // Mostrar sucesso
                 this.mostrarToastSucesso(resultado.message);
-
-                // Atualizar dados do agendamento na linha
-                this.atualizarLinhaAgendamento(agendamentoId, resultado.dados);
-
-                // Se agendamento totalmente conciliado, remover da lista
-                if (resultado.dados.agendamento_totalmente_conciliado) {
-                    this.removerAgendamentoDaLista(agendamentoId);
-                    this.atualizarContadoresAposRemocao();
-                }
-
-                // Verificar se a transação foi totalmente utilizada
-                if (resultado.dados.transacao_totalmente_utilizada) {
-                    // Marcar transação como conciliada e desabilitar
-                    this.marcarTransacaoComoConciliada(transacaoId);
-                } else {
-                    // Atualizar informações da transação com valor restante
-                    this.atualizarInformacoesTransacao(transacaoId, resultado.dados);
-                }
-
-                // Notificar sistema global
-                if (window.notificarConciliacao) {
-                    window.notificarConciliacao(transacaoId, agendamentoId);
-                }
+                
+                // Recarregar página após 1.5s para atualizar valores
+                setTimeout(() => window.location.reload(), 1500);
+                return;
 
             } else {
                 this.mostrarToastErro(resultado.message || 'Erro ao processar conciliação parcial');

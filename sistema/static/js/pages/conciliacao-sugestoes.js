@@ -89,8 +89,17 @@ class ConciliacaoSugestoes {
             return null;
         }
 
+        // Verificar se é conciliação parcial e usar valor disponível
+        const isParcial = cardTransacao.dataset.conciliacaoParcial === 'true';
+        const valor = isParcial 
+            ? (cardTransacao.dataset.transacaoValorDisponivel || cardTransacao.dataset.transacaoValor || '-')
+            : (cardTransacao.dataset.transacaoValor || '-');
+
         return {
-            valor: cardTransacao.dataset.transacaoValor || '-',
+            valor: valor,
+            valorOriginal: cardTransacao.dataset.transacaoValor || '-',
+            valorDisponivel: cardTransacao.dataset.transacaoValorDisponivel || cardTransacao.dataset.transacaoValor || '-',
+            isParcial: isParcial,
             data: cardTransacao.dataset.transacaoData || '-', 
             descricao: cardTransacao.dataset.transacaoDescricao || '-',
             fitid: cardTransacao.dataset.transacaoFitid || '-'
@@ -210,19 +219,12 @@ class ConciliacaoSugestoes {
             this.esconderToast('loading');
 
             if (data.success) {
-                // Disparar evento para que outras partes do sistema sejam notificadas
-                document.dispatchEvent(new CustomEvent('conciliacao-realizada', {
-                    detail: {
-                        transacaoId: this.dadosConciliacao.transacao_id,
-                        agendamentoId: this.dadosConciliacao.agendamento_id
-                    }
-                }));
-
-                // Sucesso - remover transação inteira da tela
-                this.removerTransacaoCompletaComEfeito(this.dadosConciliacao.transacao_id);
-                this.removerAgendamentoDeTodasSugestoes(this.dadosConciliacao.agendamento_id);
+                // Mostrar sucesso e fechar modal
                 this.mostrarToast('sucesso', data.message);
                 this.modal.hide();
+                
+                // Recarregar página após 1.5s para atualizar valores
+                setTimeout(() => window.location.reload(), 1500);
             } else {
                 // Erro - mostrar mensagem
                 this.mostrarToast('erro', data.message || 'Erro ao processar conciliação.');

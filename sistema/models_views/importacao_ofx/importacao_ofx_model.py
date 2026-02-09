@@ -636,7 +636,12 @@ class ImportacaoOfx(BaseModel):
             
             # Salvar dados no campo JSON
             self.dados_conciliacao_json = dados_conciliacao
-            self.conciliado = True
+            
+            # Só marcar como conciliado se estiver totalmente utilizada
+            # Respeita o estado definido por adicionar_valor_utilizado()
+            if not self.conciliacao_parcial:
+                self.conciliado = True
+            
             self.tipo_conciliacao = tipo_conciliacao
             self.data_conciliacao = DataHora.obter_data_atual_padrao_en()
             self.usuario_conciliacao_id = usuario_id
@@ -653,10 +658,12 @@ class ImportacaoOfx(BaseModel):
     def reverter_conciliacao(self):
         """
         Reverte uma conciliação, restaurando o estado anterior dos registros
+        Suporta reversão de conciliações totais e parciais
         """
         try:
-            if not self.conciliado or not self.dados_conciliacao_json:
-                return False, "Transação não está conciliada ou não possui dados para reversão"
+            # Verificar se existe dados de conciliação (suporta parcial e total)
+            if not self.dados_conciliacao_json:
+                return False, "Transação não possui dados para reversão"
             
             dados = self.dados_conciliacao_json
             
@@ -772,11 +779,11 @@ class ImportacaoOfx(BaseModel):
     @classmethod
     def obter_conciliacoes_reversiveis(cls, batch_id=None, limit=50):
         """
-        Retorna lista de transações conciliadas que podem ser revertidas
+        Retorna lista de transações conciliadas (total ou parcial) que podem ser revertidas
         """
         try:
+            # Buscar transações com dados de conciliação (total ou parcial)
             query = cls.query.filter(
-                cls.conciliado == True,
                 cls.dados_conciliacao_json.isnot(None)
             )
             

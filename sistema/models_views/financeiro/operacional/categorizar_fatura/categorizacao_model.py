@@ -506,7 +506,7 @@ class AgendamentoPagamentoModel(BaseModel):
             .filter(
                 AgendamentoPagamentoModel.ativo == True,
                 AgendamentoPagamentoModel.deletado == False,
-                AgendamentoPagamentoModel.situacao_pagamento_id.notin_([8, 9, 10])  # Excluir totalmente conciliados e liquidados e descontos por antecipação
+                AgendamentoPagamentoModel.situacao_pagamento_id.notin_([8, 9])  # Excluir totalmente conciliados e liquidados e descontos por antecipação
             )
         
         # Aplicar JOINs apenas quando necessário para filtrar por tipo

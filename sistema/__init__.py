@@ -320,6 +320,22 @@ def formatar_float_para_brl(valor):
 
     return valor_str
 
+# Função para formatar valores em Real Brasileiro (BRL)
+def formatar_float_para_brl_sem_divisao(valor):
+    # Arredonda o valor para duas casas decimais
+    valor_formatado = valor
+
+    # Converte o valor formatado para uma string
+    valor_str = "{:,.2f}".format(valor_formatado)
+
+    # Substitui ',' por '.' e vice-versa, para atender ao formato BRL
+    valor_str = valor_str.replace(',', 'temp').replace('.', ',').replace('temp', '.')
+
+    # Adiciona o símbolo R$
+    valor_str = "R$ " + valor_str
+
+    return valor_str
+
 
 # Função para formatar valores em Real Brasileiro (BRL)
 def formatar_float_para_brl_sem_cifrao(valor):
@@ -406,6 +422,7 @@ def formatar_data_hora_para_brl(data):
     return data.strftime('%d/%m/%Y %H:%M')
 
 app.jinja_env.filters['formatar_float_para_brl'] = formatar_float_para_brl
+app.jinja_env.filters['formatar_float_para_brl_sem_divisao'] = formatar_float_para_brl_sem_divisao
 app.jinja_env.filters['formatar_float_para_brl_sem_cifrao'] = formatar_float_para_brl_sem_cifrao
 app.jinja_env.filters['formatar_float_para_usd'] = formatar_float_para_usd
 app.jinja_env.filters['formatar_data_para_brl'] = formatar_data_para_brl

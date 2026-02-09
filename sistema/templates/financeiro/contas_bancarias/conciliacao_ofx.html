@@ -54,7 +54,8 @@
               </svg>
               Todos
             </a>
-            <a href="{{ url_for('conciliacao_ofx', conta_id=conta_id, tipo_movimentacao='entrada') }}" class="btn btn-outline-success">
+            <a href="{{ url_for('conciliacao_ofx', conta_id=conta_id, tipo_movimentacao='entrada') }}"
+              class="btn btn-outline-success">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="icon icon-tabler icons-tabler-outline icon-tabler-trending-up">
@@ -64,7 +65,8 @@
               </svg>
               Entradas
             </a>
-            <a href="{{ url_for('conciliacao_ofx', conta_id=conta_id, tipo_movimentacao='saida') }}" class="btn btn-outline-danger">
+            <a href="{{ url_for('conciliacao_ofx', conta_id=conta_id, tipo_movimentacao='saida') }}"
+              class="btn btn-outline-danger">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="icon icon-tabler icons-tabler-outline icon-tabler-trending-down">
@@ -289,6 +291,9 @@
         <div class="col-12 col-md-3 col-lg-3">
           <div class="card conciliacao-card" data-transacao-id="{{ transacao.id }}"
             data-transacao-valor="{{ transacao.valor_formatado }}" data-transacao-valor-original="{{ transacao.valor }}"
+            data-transacao-valor-disponivel="{{ transacao.valor_disponivel|formatar_float_para_brl_sem_divisao if transacao.conciliacao_parcial else transacao.valor_formatado }}"
+            data-transacao-valor-disponivel-original="{{ transacao.valor_disponivel if transacao.conciliacao_parcial else transacao.valor }}"
+            data-conciliacao-parcial="{{ 'true' if transacao.conciliacao_parcial else 'false' }}"
             data-transacao-data="{{ transacao.data_transacao.strftime('%d/%m/%Y') if transacao.data_transacao else 'N/A' }}"
             data-transacao-descricao="{{ transacao.descricao_limpa or transacao.memo or 'Sem descrição' }}"
             data-transacao-fitid="{{ transacao.fitid }}">
@@ -306,7 +311,7 @@
                       <path d="M6 12h.01" />
                     </svg>Transação</a>
                 </li>
-                {%if not transacao.conciliado%}
+                {%if not transacao.conciliado or transacao.conciliacao_parcial%}
                 <li class="nav-item ms-auto">
                   <a href="#" class="nav-link" title="Settings" data-bs-toggle="modal"
                     data-bs-target="#modal-excluir-ativar-transacao-{{ transacao.id }}">
@@ -345,9 +350,9 @@
                   <div class="tab-content-wrapper">
                     <div class="tab-content-text">
                       <strong class="{{ 'text-success' if transacao.valor > 0 else 'text-danger' }} fs-5">
-                        {{ transacao.valor_formatado or 'R$ 0,00' }} <svg xmlns="http://www.w3.org/2000/svg" width="24"
-                          height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                          stroke-linecap="round" stroke-linejoin="round"
+                        {{ transacao.valor_formatado or 'R$ 0,00' }}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                           class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-bar-right">
                           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                           <path d="M20 12l-10 0" />
@@ -371,6 +376,39 @@
                       <div class="text-muted small">
                         {{ transacao.descricao_limpa or transacao.memo or 'Sem descrição' | truncate(60) }}
                       </div>
+
+                      {% if transacao.conciliacao_parcial %}
+                      <!-- Seção de conciliação parcial -->
+                      <div class="mt-3 pt-2 border-top">
+                        <div class="d-flex align-items-center flex-wrap mb-2">
+                          <span class="text-decoration-line-through text-muted">{{ transacao.valor_formatado }}</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-muted mx-2">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M5 12l14 0" />
+                            <path d="M15 16l4 -4" />
+                            <path d="M15 8l4 4" />
+                          </svg>
+                          <strong class="{{ 'text-success' if transacao.valor > 0 else 'text-danger' }}">{{ transacao.valor_disponivel|formatar_float_para_brl_sem_divisao }}</strong>
+                          {% if transacao.conciliacao_parcial %}
+                          <span class="badge badge-outline text-orange"
+                            title="Conciliação parcial - Disponível: {{ transacao.valor_disponivel|formatar_float_para_brl }} de {{ transacao.valor_formatado }}">
+                            PARCIAL ({{ '%.0f'|format(transacao.percentual_utilizado|float) }}% usado)
+                          </span>
+                          {% endif %}                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger w-100"
+                          onclick="abrirModalReversao({{ transacao.id }}, '{{ transacao.fitid }}', '{{ transacao.valor_formatado }}', '{{ transacao.data_transacao.strftime('%d/%m/%Y') if transacao.data_transacao else 'N/A' }}')"
+                          title="Reverter conciliação parcial">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon me-1">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M9 14l-4 -4l4 -4" />
+                            <path d="M9 10h7a4 4 0 1 1 0 8h-1" />
+                          </svg>
+                          Reverter Conciliação
+                        </button>
+                      </div>
+                      {% endif %}
                     </div>
                   </div>
                 </div>
@@ -382,7 +420,7 @@
 
           <!-- Área destinada para sugestões e criação de transações -->
           <div class="card conciliacao-card {{ 'card-deletada' if transacao.ofx_deletada else '' }}">
-            {%if not transacao.conciliado%}
+            {%if not transacao.conciliado or transacao.conciliacao_parcial%}
             {% if not transacao.ofx_deletada %}
             <div class="card-header">
               <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
@@ -437,10 +475,11 @@
                       <div class="card">
                         <div class="card-body">
                           {% set transacao_id = transacao.id %}
-                          {% set valor_transacao = transacao.valor %}
+                          {% set valor_transacao = transacao.valor_disponivel if transacao.conciliacao_parcial else transacao.valor %}
                           {% set tipo_movimento = 'CREDITO' if transacao.valor > 0 else 'DEBITO' %}
                           {% set data_vencimento = transacao.data_transacao %}
-                          {% set data_competencia = transacao.data_transacao.strftime('%m/%Y') if transacao.data_transacao else '' %}
+                          {% set data_competencia = transacao.data_transacao.strftime('%m/%Y') if
+                          transacao.data_transacao else '' %}
                           {% set descricao_transacao = transacao.descricao_limpa %}
                           {% set campos_obrigatorios = {} %}
                           {% set campos_erros = {} %}
@@ -559,7 +598,7 @@
         </div>
 
         {% set transacao_id = transacao.id %}
-        {% set valor_transacao = transacao.valor %}
+        {% set valor_transacao = transacao.valor_disponivel if transacao.conciliacao_parcial else transacao.valor %}
         {% set tipo_movimento = 'CREDITO' if transacao.valor > 0 else 'DEBITO' %}
         {% include 'financeiro/contas_bancarias/conciliacao_buscar_existente.html' %}
       </div>
@@ -837,6 +876,8 @@
                   <option value="nao" {% if filtro_conciliado=='nao' or not filtro_conciliado %}selected{% endif %}>
                     Não conciliados
                   </option>
+                  <option value="parcial" {% if filtro_conciliado=='parcial' %}selected{% endif %}>Parcialmente
+                    conciliados</option>
                   <option value="sim" {% if filtro_conciliado=='sim' %}selected{% endif %}>Conciliados</option>
                 </select>
               </div>
@@ -915,7 +956,7 @@
   <script>
     // Configuração global para conciliação OFX
     window.contaBancariaId = {{ conta_id }};
-    
+
     // Função global simples para notificar conciliações
     window.notificarConciliacao = function (transacaoId, agendamentoId) {
       console.log('[Global] Conciliação realizada:', { transacaoId, agendamentoId });

@@ -59,6 +59,7 @@ def _extrair_filtros_conciliacao(conta_bancaria_id=None):
     # Converter status de conciliação
     filtros['conciliado_bool'] = filtros['conciliado'] == 'sim'
     filtros['ofx_ignorada_bool'] = filtros['ofx_ignorada'] == 'sim'
+    filtros['parcial_bool'] = filtros['conciliado'] == 'parcial'
     
     return filtros
 
@@ -73,13 +74,27 @@ def _buscar_transacoes_com_filtros(filtros):
     Returns:
         dict: Resultado contendo transações, totais e informações de paginação
     """
-    # Query simples das transações
-    conciliado_val = filtros['conciliado_bool']
-    ofx_ignorada_val = filtros['ofx_ignorada_bool']
-    transacoes = ImportacaoOfx.query.filter_by(conciliado=conciliado_val, ofx_deletada=ofx_ignorada_val)
+    # Query base das transações
+    transacoes = ImportacaoOfx.query
     
-    # Filtrar transações não deletadas/ignoradas por padrão
+    # Filtrar transações não deletadas por padrão
     transacoes = transacoes.filter(ImportacaoOfx.deletado == False)
+    
+    # Aplicar filtro de conciliação
+    if filtros['parcial_bool']:
+        # Mostrar apenas transações parcialmente conciliadas
+        transacoes = transacoes.filter(
+            ImportacaoOfx.conciliacao_parcial == True,
+            ImportacaoOfx.conciliado == False
+        )
+    else:
+        # Filtro normal (sim/não)
+        conciliado_val = filtros['conciliado_bool']
+        transacoes = transacoes.filter(ImportacaoOfx.conciliado == conciliado_val)
+    
+    # Filtro de ofx_deletada (ignorada)
+    ofx_ignorada_val = filtros['ofx_ignorada_bool']
+    transacoes = transacoes.filter(ImportacaoOfx.ofx_deletada == ofx_ignorada_val)
     
     # Aplicar filtros (exatamente igual ao original)
     if filtros['data_inicio']:
@@ -112,7 +127,6 @@ def _buscar_transacoes_com_filtros(filtros):
                            .all()
     
     total_paginas = (total_transacoes // filtros['por_pagina']) + (1 if total_transacoes % filtros['por_pagina'] else 0)
-    
     return {
         'transacoes': transacoes,
         'total_transacoes': total_transacoes,
@@ -510,7 +524,6 @@ def buscar_agendamentos_para_conciliacao():
             categoria_id=categoria_id,
             beneficiario_id=beneficiario_id,
             descricao=descricao
-            # Removido conta_bancaria_id pois o método não aceita este parâmetro
         )
         
         return jsonify({
@@ -563,11 +576,11 @@ def processar_conciliacao_massa():
                 'message': 'Transação não encontrada'
             }), 404
         
-        # Validar se transação já foi conciliada
-        if transacao.conciliado:
+        # Validar se transação já foi totalmente conciliada (permitir parcial)
+        if transacao.conciliado and not transacao.conciliacao_parcial:
             return jsonify({
                 'success': False,
-                'message': 'Esta transação já foi conciliada'
+                'message': 'Esta transação já foi totalmente conciliada'
             }), 400
         
         # Buscar todos os agendamentos
@@ -1003,11 +1016,11 @@ def processar_conciliacao():
                 'message': 'Agendamento não encontrado ou não pertence à mesma conta bancária'
             }), 404
         
-        # Validar se transação já foi conciliada
-        if transacao.conciliado:
+        # Validar se transação já foi totalmente conciliada (permitir parcial)
+        if transacao.conciliado and not transacao.conciliacao_parcial:
             return jsonify({
                 'success': False,
-                'message': 'Esta transação já foi conciliada'
+                'message': 'Esta transação já foi totalmente conciliada'
             }), 400
         
         # Validar se agendamento já foi conciliado
@@ -1349,11 +1362,11 @@ def processar_conciliacao_parcial():
                 'message': 'Agendamento não encontrado ou não pertence à mesma conta bancária'
             }), 404
 
-        # Validar se transação já foi conciliada
-        if transacao.conciliado:
+        # Validar se transação já foi totalmente conciliada (permitir re-conciliação de parcial)
+        if transacao.conciliado and not transacao.conciliacao_parcial:
             return jsonify({
                 'success': False,
-                'message': 'Esta transação já foi conciliada'
+                'message': 'Esta transação já foi totalmente conciliada'
             }), 400
 
         # Validar se agendamento pode receber conciliação parcial
@@ -1616,8 +1629,8 @@ def obter_detalhes_conciliacao(transacao_id):
                 'error': 'Transação não encontrada'
             }), 404
         
-        # Verificar se transação está conciliada
-        if not transacao.conciliado:
+        # Verificar se transação está conciliada (total ou parcialmente)
+        if not transacao.conciliado and not transacao.conciliacao_parcial:
             return jsonify({
                 'success': False,
                 'error': 'Transação não está conciliada'
@@ -1632,69 +1645,82 @@ def obter_detalhes_conciliacao(transacao_id):
             'impacto_saldo': None
         }
         
-        # Extrair informações dos dados JSON se disponível
+        # =====================================================================
+        # BUSCAR TODAS AS MOVIMENTAÇÕES VINCULADAS À TRANSAÇÃO
+        # =====================================================================
+        movimentacoes = MovimentacaoFinanceiraModel.query.filter(
+            MovimentacaoFinanceiraModel.importacao_ofx_id == transacao_id,
+            MovimentacaoFinanceiraModel.ativo == True
+        ).all()
+        
+        # Coletar agendamentos únicos das movimentações
+        agendamentos_ids_set = set()
+        
+        for mov in movimentacoes:
+            if mov.agendamento_id:
+                agendamentos_ids_set.add(mov.agendamento_id)
+            
+            conta_nome = mov.conta_bancaria.identificacao if mov.conta_bancaria else 'N/A'
+            
+            detalhes['movimentacoes'].append({
+                'id': mov.id,
+                'data': mov.data_movimentacao.strftime('%d/%m/%Y') if mov.data_movimentacao else 'N/A',
+                'valor': ValoresMonetarios.converter_float_brl_positivo(mov.valor_movimentacao_100 / 100),
+                'conta': conta_nome
+            })
+        
+        # Buscar detalhes dos agendamentos únicos
+        if agendamentos_ids_set:
+            agendamentos = AgendamentoPagamentoModel.query.filter(
+                AgendamentoPagamentoModel.id.in_(list(agendamentos_ids_set))
+            ).all()
+            
+            for agendamento in agendamentos:
+                tipo_origem = ''
+                if agendamento.faturamento_id:
+                    tipo_origem = 'Faturamento'
+                elif agendamento.lancamento_avulso_id:
+                    tipo_origem = 'Agendamento de lançamento avulso'
+                else:
+                    tipo_origem = 'Nova movimentação na conciliação'
+                
+                codigo = ''
+                
+                if agendamento.faturamento_id and agendamento.faturamento:
+                    codigo = agendamento.faturamento.codigo_faturamento
+                
+                if agendamento.lancamento_avulso_id and agendamento.lancamento_avulso:
+                    codigo = agendamento.lancamento_avulso_id
+                
+                # Calcular valor conciliado para este agendamento nesta transação
+                valor_conciliado_transacao = sum(
+                    mov.valor_movimentacao_100 
+                    for mov in movimentacoes 
+                    if mov.agendamento_id == agendamento.id
+                )
+                
+                detalhes['agendamentos'].append({
+                    'id': agendamento.id,
+                    'tipo': tipo_origem,
+                    'codigo': codigo,
+                    'valor': ValoresMonetarios.converter_float_brl_positivo(valor_conciliado_transacao / 100),
+                    'observacoes': f'{tipo_origem} {codigo}' if codigo else tipo_origem
+                })
+        
+        # Extrair tipo de conciliação e observações do JSON se disponível
         if transacao.dados_conciliacao_json:
             dados_json = transacao.dados_conciliacao_json
             detalhes['tipo_conciliacao'] = dados_json.get('tipo_conciliacao', 'Não especificado').replace('_', ' ').title()
-            detalhes['observacoes'] = dados_json.get('observacoes')
-            
-            # Buscar agendamentos vinculados
-            agendamentos_ids = dados_json.get('agendamentos_ids', [])
-            if agendamentos_ids:
-                agendamentos = AgendamentoPagamentoModel.query.filter(
-                    AgendamentoPagamentoModel.id.in_(agendamentos_ids)
-                ).all()
-                
-                for agendamento in agendamentos:
-                    tipo_origem = ''
-                    if agendamento.faturamento_id:
-                        tipo_origem = 'Faturamento'
-                    elif agendamento.lancamento_avulso_id:
-                        tipo_origem = 'Agendamento de lançamento avulso'
-                    else:
-                        tipo_origem = 'Nova movimentação na conciliação'
-                    
-
-                    codigo = ''
-                    
-                    if agendamento.faturamento_id and agendamento.faturamento:
-                        codigo = agendamento.faturamento.codigo_faturamento
-                    
-                    if agendamento.lancamento_avulso_id and agendamento.lancamento_avulso:
-                        codigo = agendamento.lancamento_avulso_id
-                    
-                    detalhes['agendamentos'].append({
-                        'id': agendamento.id,
-                        'tipo': tipo_origem,
-                        'codigo': codigo,
-                        'valor': ValoresMonetarios.converter_float_brl_positivo(agendamento.valor_total_100 / 100),
-                        'observacoes': f'{tipo_origem} {codigo}' if codigo else tipo_origem
-                    })
-            
-            # Buscar movimentações vinculadas
-            movimentacoes_ids = dados_json.get('movimentacoes_ids', [])
-            if movimentacoes_ids:
-                movimentacoes = MovimentacaoFinanceiraModel.query.filter(
-                    MovimentacaoFinanceiraModel.id.in_(movimentacoes_ids)
-                ).all()
-                
-                for mov in movimentacoes:
-                    conta_nome = mov.conta_bancaria.identificacao if mov.conta_bancaria else 'N/A'
-                    
-                    detalhes['movimentacoes'].append({
-                        'id': mov.id,
-                        'data': mov.data_movimentacao.strftime('%d/%m/%Y') if mov.data_movimentacao else 'N/A',
-                        'valor': ValoresMonetarios.converter_float_brl_positivo(mov.valor_movimentacao_100 / 100),
-                        'conta': conta_nome
-                    })
+            if dados_json.get('observacoes'):
+                detalhes['observacoes'] = dados_json.get('observacoes')
         
         # Data da conciliação
         if transacao.data_conciliacao:
             detalhes['data_conciliacao'] = transacao.data_conciliacao.strftime('%d/%m/%Y às %H:%M:%S')
         
-        # Calcular impacto no saldo
-        valor_transacao_centavos = int(abs(transacao.valor * 100))
-        detalhes['impacto_saldo'] = ValoresMonetarios.converter_float_brl_positivo(valor_transacao_centavos / 100)
+        # Calcular impacto no saldo (usar valor efetivamente utilizado)
+        valor_utilizado = transacao.valor_utilizado_100 or int(abs(transacao.valor * 100))
+        detalhes['impacto_saldo'] = ValoresMonetarios.converter_float_brl_positivo(valor_utilizado / 100)
         
         # Observações da transação
         if transacao.observacoes_conciliacao:
@@ -2002,11 +2028,11 @@ def reverter_conciliacao():
                 'message': 'Transação não encontrada'
             }), 404
         
-        # Verificar se pode ser revertida
-        if not transacao.conciliado or not transacao.dados_conciliacao_json:
+        # Verificar se pode ser revertida (permite parcial e total)
+        if not transacao.dados_conciliacao_json:
             return jsonify({
                 'success': False,
-                'message': 'Esta transação não pode ser revertida (não está conciliada ou não possui dados de reversão)'
+                'message': 'Esta transação não pode ser revertida (não possui dados de reversão)'
             }), 400
         
         # Reverter a conciliação
