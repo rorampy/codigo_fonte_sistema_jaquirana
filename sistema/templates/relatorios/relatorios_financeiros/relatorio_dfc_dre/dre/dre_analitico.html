@@ -1286,8 +1286,23 @@
         } else {
           data.registros.forEach(registro => {
             const row = document.createElement('tr');
+            
+            // Formatar descrição de forma mais clara
+            let descricaoFormatada = '';
+            if (registro.descricao) {
+              // Separar os itens por bullet point e criar linhas separadas
+              const itens = registro.descricao.split(' • ');
+              if (itens.length > 1) {
+                descricaoFormatada = itens.map(item => `<div class="text-muted small">${item}</div>`).join('');
+              } else {
+                descricaoFormatada = `<div>${registro.descricao}</div>`;
+              }
+            } else {
+              descricaoFormatada = '<span class="text-muted">-</span>';
+            }
+            
             row.innerHTML = `
-             <td>${(() => {
+              <td class="text-nowrap">${(() => {
                 const [dia, mes, ano] = registro.data_competencia.split('/');
                 return `${mes}/${ano}`;
               })()}
@@ -1300,9 +1315,8 @@
               </td>
               <td>${registro.beneficiario || '-'}</td>
               <td>
-                <div>${registro.descricao || '-'}</div>
-                ${registro.detalhamento ? `<small class="text-muted">${registro.detalhamento}</small>` : ''}
-                ${registro.referencia ? `<small class="text-primary">Ref: ${registro.referencia}</small>` : ''}
+                ${descricaoFormatada}
+                ${registro.referencia ? `<div class="small"><span class="badge bg-secondary-lt">Ref: ${registro.referencia}</span></div>` : ''}
               </td>
               <td class="text-end fw-medium text-nowrap">${registro.valor_formatado}</td>
             `;

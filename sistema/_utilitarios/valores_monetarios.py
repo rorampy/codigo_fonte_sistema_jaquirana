@@ -9,21 +9,20 @@ class ValoresMonetarios:
         negativo. Retorna uma string "R$...", sempre positivo (sem o sinal 
         de negativo).
         '''
-        # Configurar a localização para o formato de números brasileiro
-        try:
-            locale.setlocale(locale.LC_ALL, 'pt_BR.utf8')
-        except locale.Error:
-            try:
-                # Tentar com o nome da localização em minúsculas
-                locale.setlocale(locale.LC_ALL, 'pt_br.utf8')
-            except locale.Error:
-                # Caso a localização 'pt_BR.utf8' não esteja disponível, usar a localização 'en_US.UTF-8'
-                locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-
-        # Formatar o valor como moeda brasileira
-        valor_editado = locale.currency(abs(valor), grouping=True, symbol='R$')
-
-        return valor_editado
+        # Usar formatação manual para garantir formato brasileiro
+        valor_absoluto = abs(valor)
+        
+        # Separar parte inteira e decimal
+        parte_inteira = int(valor_absoluto)
+        parte_decimal = round((valor_absoluto - parte_inteira) * 100)
+        
+        # Formatar parte inteira com separador de milhar (ponto)
+        parte_inteira_formatada = f"{parte_inteira:,}".replace(",", ".")
+        
+        # Formatar parte decimal com vírgula
+        parte_decimal_formatada = f"{parte_decimal:02d}"
+        
+        return f"R$ {parte_inteira_formatada},{parte_decimal_formatada}"
 
 
     def converter_string_brl_para_float(valor):

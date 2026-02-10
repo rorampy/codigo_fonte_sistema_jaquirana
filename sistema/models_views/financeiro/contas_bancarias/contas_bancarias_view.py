@@ -1752,6 +1752,7 @@ def salvar_nova_movimentacao():
         valor_transacao_ofx = request.form.get('valor_transacao_ofx')
         descricao = request.form.get('descricao', '').strip()
         data_vencimento = request.form.get('data_vencimento')
+        data_competencia = request.form.get('data_competencia')
         conta_bancaria_id = request.form.get('conta_bancaria_id')
         pessoa_financeiro_id = request.form.get('pessoa_financeiro_id')
         categorias_json = request.form.get('categorias_json', '[]')
@@ -1797,6 +1798,15 @@ def salvar_nova_movimentacao():
             data_vencimento_obj = datetime.strptime(data_vencimento, '%Y-%m-%d').date()
         except ValueError:
             return jsonify({'erro': True, 'mensagem': 'Data de vencimento inválida'}), 400
+
+        # Parsear data de competência (opcional) - formato MM/AAAA do frontend
+        data_competencia_obj = None
+        if data_competencia:
+            try:
+                # Formato esperado: MM/AAAA (ex: 02/2026)
+                data_competencia_obj = datetime.strptime(f"01/{data_competencia}", '%d/%m/%Y').date()
+            except ValueError:
+                return jsonify({'erro': True, 'mensagem': 'Data de competência inválida. Use o formato MM/AAAA'}), 400
 
         try:
             categorias = json.loads(categorias_json)
@@ -1873,6 +1883,7 @@ def salvar_nova_movimentacao():
             lancamento_avulso_id=lancamento_avulso.id,
             pessoa_financeiro_id=int(pessoa_financeiro_id),
             data_vencimento=data_vencimento_obj,
+            data_competencia=data_competencia_obj,
             valor_total_100=valor_centavos,
             descricao=descricao,
             categorias_json=categorias_processadas,

@@ -272,12 +272,12 @@ class DREModel:
             return 'receitas_outras'
             
         # Custos e Despesas (código 2.xx.xx)
+        # 2.01.xx = Custos Operacionais
+        # Qualquer outro 2.xx = Despesas Operacionais (dinâmico para novos códigos criados pelo usuário)
         elif codigo.startswith('2.01'):
             return 'custos_operacionais'
-        elif codigo.startswith('2.02'):
-            return 'despesas_operacionais'
         elif codigo.startswith('2.'):
-            return 'despesas_outras'
+            return 'despesas_operacionais'
             
         # Outros códigos
         else:
@@ -480,6 +480,11 @@ class DREModel:
             
             for categoria_info in categorias_lista:
                 valor = valores_categoria.get(categoria_info['id'], 0)
+                
+                 #Ignorar categorias específicas (Colheita mecanizada 2.01.05)
+                if categoria_info['codigo'].startswith('2.01.05'):
+                    continue
+                
                 if valor != 0:  # Só incluir se tiver valor
                     detalhes_secao.append({
                         'codigo': categoria_info['codigo'],
@@ -517,7 +522,8 @@ class DREModel:
         else:
             dre['resultado']['margem_contribuicao_percentual'] = 0
         
-        dre['resultado']['operacional'] = dre['resultado']['bruto'] - dre['despesas']['total']
+        # Resultado Operacional = Margem de Contribuição - Despesas Operacionais (apenas)
+        dre['resultado']['operacional'] = dre['resultado']['margem_contribuicao'] - dre['despesas']['operacionais']['total']
         
         # Calcular Atividades de Investimento e Financiamento
         # Atividades de Investimento (categorias 1.02.xx - aplicações financeiras)

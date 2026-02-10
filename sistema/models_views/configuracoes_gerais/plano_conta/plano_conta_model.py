@@ -261,8 +261,8 @@ class PlanoContaModel(BaseModel):
         Returns:
             list: Lista estruturada com categorias principais e seus filhos aninhados
         """
-        # Buscar todas as categorias ativas ordenadas por código
-        todas_categorias = cls.query.filter_by(ativo=True).order_by(cls.codigo).all()
+        # Buscar todas as categorias ativas e não deletadas ordenadas por código
+        todas_categorias = cls.query.filter_by(ativo=True, deletado=False).order_by(cls.codigo).all()
         
         # Criar um dicionário para facilitar a busca por ID
         categorias_dict = {cat.id: cat.to_dict() for cat in todas_categorias}
