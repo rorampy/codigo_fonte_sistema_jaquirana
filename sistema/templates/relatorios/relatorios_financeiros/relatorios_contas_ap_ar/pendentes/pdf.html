@@ -30,9 +30,15 @@
           <div class="filtros-title">Filtros Aplicados</div>
           <div class="filtros-grid">
             <div class="filtro-item">
-              <span class="filtro-label">Data Referência:</span>
+              <span class="filtro-label">Data Início:</span>
               <span class="filtro-valor">
-                {{ dados_corretos.get('dataReferencia', '') | converte_data_para_datetime_converte_data_brl if dados_corretos.get('dataReferencia') else 'Hoje' }}
+                {{ dados_corretos.get('dataInicio', '') | converte_data_para_datetime_converte_data_brl if dados_corretos.get('dataInicio') else 'Sem filtro' }}
+              </span>
+            </div>
+            <div class="filtro-item">
+              <span class="filtro-label">Data Fim:</span>
+              <span class="filtro-valor">
+                {{ dados_corretos.get('dataFim', '') | converte_data_para_datetime_converte_data_brl if dados_corretos.get('dataFim') else 'Sem filtro' }}
               </span>
             </div>
             {% if not ar_pendentes %}

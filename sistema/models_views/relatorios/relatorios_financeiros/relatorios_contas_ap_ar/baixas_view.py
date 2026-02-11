@@ -19,6 +19,8 @@ from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagam
 from sistema.models_views.configuracoes_gerais.centro_custo.centro_custo_model import CentroCustoModel
 from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
 from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
+from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
 
 from .contas_ap_ar_service import ContasAPARService
@@ -40,9 +42,13 @@ def _extrair_filtros():
     }
 
 
-def _contexto_base():
+def _contexto_base(direcao='ap'):
+    if direcao == 'ar':
+        pessoas = ClienteModel.listar_clientes()
+    else:
+        pessoas = FornecedorCadastroModel.listar_fornecedores()
     return {
-        'pessoas': PessoaFinanceiroModel.listar_pessoas_ativas(),
+        'pessoas': pessoas,
         'planos_contas': PlanoContaModel.listar_todos_planos(),
         'centros_custo': CentroCustoModel.obter_centro_custos_ativos(),
         'situacoes': SituacaoPagamentoModel.listar_status(),
@@ -72,7 +78,7 @@ def relatorio_ap_pagamentos():
         label_valor_baixa='Valor Pago',
         tipo_relatorio='baixas',
         dados_corretos=request.args,
-        **_contexto_base(),
+        **_contexto_base('ap'),
     )
 
 
@@ -149,7 +155,7 @@ def relatorio_ar_recebimentos():
         label_valor_baixa='Valor Recebido',
         tipo_relatorio='baixas',
         dados_corretos=request.args,
-        **_contexto_base(),
+        **_contexto_base('ar'),
     )
 
 

@@ -31,25 +31,16 @@ from .contas_ap_ar_service import ContasAPARService
 # =============================================================================
 
 def _extrair_filtros():
+    """Extrai filtros do request (GET ou POST)."""
     source = request.form if request.method == 'POST' else request.args
     return {
+        'data_inicio': source.get('dataInicio') or None,
+        'data_fim': source.get('dataFim') or None,
         'pessoa_id': source.get('pessoaId') or None,
         'plano_contas_id': source.get('planoContasId') or None,
         'centro_custo_id': source.get('centroCustoId') or None,
         'situacao_id': source.get('situacaoId') or None,
     }
-
-
-def _extrair_data_referencia():
-    """Extrai data de referência (corte). Se não informada, usa hoje."""
-    source = request.form if request.method == 'POST' else request.args
-    data_ref_str = source.get('dataReferencia')
-    if data_ref_str:
-        try:
-            return date.fromisoformat(data_ref_str)
-        except (ValueError, TypeError):
-            pass
-    return date.today()
 
 
 def _contexto_base(direcao='ap'):
@@ -58,9 +49,9 @@ def _contexto_base(direcao='ap'):
     Para Pendentes AR: dropdown lista Clientes (ClienteModel).
     """
     if direcao == 'ap':
-        pessoas = FornecedorCadastroModel.listar_fornecedores_ativos()
+        pessoas = FornecedorCadastroModel.listar_fornecedores()
     else:
-        pessoas = ClienteModel.listar_clientes_ativos()
+        pessoas = ClienteModel.listar_clientes()
     return {
         'pessoas': pessoas,
         'planos_contas': PlanoContaModel.listar_todos_planos(),
@@ -78,8 +69,7 @@ def _contexto_base(direcao='ap'):
 @requires_roles
 def relatorio_ap_pendentes():
     filtros = _extrair_filtros()
-    data_referencia = _extrair_data_referencia()
-    registros = ContasAPARService.obter_pendentes('ap', data_referencia, filtros)
+    registros = ContasAPARService.obter_pendentes('ap', filtros)
     totais = ContasAPARService.totalizar(registros)
 
     return render_template(
@@ -89,7 +79,6 @@ def relatorio_ap_pendentes():
         direcao='ap',
         titulo_relatorio='AP – Pendentes',
         label_entidade='Fornecedor',
-        data_referencia=data_referencia,
         tipo_relatorio='pendentes',
         dados_corretos=request.args,
         **_contexto_base('ap'),
@@ -101,8 +90,7 @@ def relatorio_ap_pendentes():
 @requires_roles
 def relatorio_ap_pendentes_pdf():
     filtros = _extrair_filtros()
-    data_referencia = _extrair_data_referencia()
-    registros = ContasAPARService.obter_pendentes('ap', data_referencia, filtros)
+    registros = ContasAPARService.obter_pendentes('ap', filtros)
     totais = ContasAPARService.totalizar(registros)
 
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
@@ -116,7 +104,6 @@ def relatorio_ap_pendentes_pdf():
         direcao='ap',
         titulo_relatorio='AP – Pendentes',
         label_entidade='Fornecedor',
-        data_referencia=data_referencia,
         logo_path=logo_path,
         changelog=changelog,
         dados_corretos=request.form,
@@ -129,15 +116,14 @@ def relatorio_ap_pendentes_pdf():
 @requires_roles
 def relatorio_ap_pendentes_excel():
     filtros = _extrair_filtros()
-    data_referencia = _extrair_data_referencia()
-    registros = ContasAPARService.obter_pendentes('ap', data_referencia, filtros)
+    registros = ContasAPARService.obter_pendentes('ap', filtros)
     totais = ContasAPARService.totalizar(registros)
     dados = ContasAPARService.preparar_dados_excel_pendentes(registros, 'ap')
     data_hoje = datetime.now().strftime('%d-%m-%Y')
     return ManipulacaoArquivos.exportar_excel_formatado(
         dados,
         f'ap_pendentes_{data_hoje}',
-        titulo_planilha=f'AP – Pendentes ({data_referencia.strftime("%d/%m/%Y")})',
+        titulo_planilha='AP – Pendentes',
         colunas_monetarias=['Valor Original', 'Saldo Pendente'],
         coluna_destaque='Saldo Pendente',
         linha_totais={
@@ -156,8 +142,7 @@ def relatorio_ap_pendentes_excel():
 @requires_roles
 def relatorio_ar_pendentes():
     filtros = _extrair_filtros()
-    data_referencia = _extrair_data_referencia()
-    registros = ContasAPARService.obter_pendentes('ar', data_referencia, filtros)
+    registros = ContasAPARService.obter_pendentes('ar', filtros)
     totais = ContasAPARService.totalizar(registros)
 
     return render_template(
@@ -167,7 +152,6 @@ def relatorio_ar_pendentes():
         direcao='ar',
         titulo_relatorio='AR – Pendentes',
         label_entidade='Cliente',
-        data_referencia=data_referencia,
         tipo_relatorio='pendentes',
         dados_corretos=request.args,
         **_contexto_base('ar'),
@@ -179,8 +163,7 @@ def relatorio_ar_pendentes():
 @requires_roles
 def relatorio_ar_pendentes_pdf():
     filtros = _extrair_filtros()
-    data_referencia = _extrair_data_referencia()
-    registros = ContasAPARService.obter_pendentes('ar', data_referencia, filtros)
+    registros = ContasAPARService.obter_pendentes('ar', filtros)
     totais = ContasAPARService.totalizar(registros)
 
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
@@ -194,7 +177,6 @@ def relatorio_ar_pendentes_pdf():
         direcao='ar',
         titulo_relatorio='AR – Pendentes',
         label_entidade='Cliente',
-        data_referencia=data_referencia,
         logo_path=logo_path,
         changelog=changelog,
         dados_corretos=request.form,
@@ -207,15 +189,14 @@ def relatorio_ar_pendentes_pdf():
 @requires_roles
 def relatorio_ar_pendentes_excel():
     filtros = _extrair_filtros()
-    data_referencia = _extrair_data_referencia()
-    registros = ContasAPARService.obter_pendentes('ar', data_referencia, filtros)
+    registros = ContasAPARService.obter_pendentes('ar', filtros)
     totais = ContasAPARService.totalizar(registros)
     dados = ContasAPARService.preparar_dados_excel_pendentes(registros, 'ar')
     data_hoje = datetime.now().strftime('%d-%m-%Y')
     return ManipulacaoArquivos.exportar_excel_formatado(
         dados,
         f'ar_pendentes_{data_hoje}',
-        titulo_planilha=f'AR – Pendentes ({data_referencia.strftime("%d/%m/%Y")})',
+        titulo_planilha='AR – Pendentes',
         colunas_monetarias=['Valor Original', 'Saldo Pendente'],
         coluna_destaque='Saldo Pendente',
         linha_totais={

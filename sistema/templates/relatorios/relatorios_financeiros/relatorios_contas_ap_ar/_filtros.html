@@ -33,8 +33,7 @@
         <div class="modal-body">
           <div class="row">
 
-            {# --- Datas: emissões e baixas usam início/fim; pendentes usa data de referência --- #}
-            {% if tipo_relatorio in ['emissoes', 'baixas'] %}
+            {# --- Datas: todos os relatórios usam início/fim --- #}
             <div class="col-md-6 mb-3">
               <label class="form-label">Data Início</label>
               <input type="date" name="dataInicio" class="form-control"
@@ -45,14 +44,6 @@
               <input type="date" name="dataFim" class="form-control"
                 value="{{ dados_corretos.get('dataFim', '') }}">
             </div>
-            {% else %}
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Data de Referência (corte)</label>
-              <input type="date" name="dataReferencia" class="form-control"
-                value="{{ dados_corretos.get('dataReferencia', '') }}">
-            </div>
-            <div class="col-md-6 mb-3"></div>
-            {% endif %}
 
             {# --- Pessoa (Fornecedor / Cliente) — sempre visível --- #}
             <div class="col-md-6 mb-3">
