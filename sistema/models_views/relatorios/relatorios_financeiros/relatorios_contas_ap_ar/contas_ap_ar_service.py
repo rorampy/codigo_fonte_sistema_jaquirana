@@ -1,19 +1,14 @@
 """
-Service centralizado para consultas de Contas a Pagar (AP) e Contas a Receber (AR).
+Service centralizado para Contas a Pagar (AP) e Contas a Receber (AR).
 
-Consulta os models existentes (FaturamentoModel, AgendamentoPagamentoModel,
-ParcelaCategorizacaoModel) e retorna dados padronizados para os relatórios.
+Lógica IDÊNTICA ao DRE para garantir consistência de valores:
+- Custos operacionais (2.01.01-2.01.04): tabelas operacionais
+- Despesas/Receitas via agendamentos: categorias_json com situação 6/8/9
 
 Regras:
-- AP = FaturamentoModel.direcao_financeira == 2 (Despesa)
-       OU LancamentoAvulsoModel.tipo_movimentacao == 2 (Despesa)
-- AR = FaturamentoModel.direcao_financeira == 1 (Receber)
-       OU LancamentoAvulsoModel.tipo_movimentacao == 1 (Receita)
-- tipo_operacao (Faturamento): 1=Carga, 2=Lançamento, 3=Crédito
-- Data de emissão = data_cadastro (herdado do BaseModel)
-- Data de vencimento = AgendamentoPagamentoModel.data_vencimento
-- Data de baixa/pagamento = ParcelaCategorizacaoModel.data_pagamento
-- Valores sempre em centavos (*_100), formatação fica no template
+- AP = tipo 2 (Despesa)
+- AR = tipo 1 (Receita)  
+- Valores em centavos (*_100)
 """
 
 import json as json_lib
@@ -29,21 +24,39 @@ from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model im
 from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
 from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
 from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
+from sistema.models_views.faturamento.cargas_a_receber.nf_complementar.nf_complementar_model import NfComplementarModel
+from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
+from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
 
 
 # =============================================================================
 # CONSTANTES
 # =============================================================================
 
-DIRECAO_AP = 2  # Despesa / A Pagar
-DIRECAO_AR = 1  # Receita / A Receber
+DIRECAO_AP = 2
+DIRECAO_AR = 1
+SITUACOES_PENDENTES = [5, 6, 7]
+SITUACOES_LIQUIDADAS = [8, 9]
+SITUACAO_VENDA_PENDENTE = 2
+SITUACAO_VENDA_RECEBIDA = 3
 
-# Fluxo: Faturado(5) → Não Categorizado(6) → Categorizado(7) → Conciliado(8)
-SITUACOES_PENDENTES = [5, 6, 7]   # Títulos ainda não pagos/recebidos
-SITUACOES_LIQUIDADAS = [8, 9]         # Títulos efetivamente pagos/recebidos (conciliados/liquidados)
-# Vendas entregues (AR): situacao_financeira_id no RegistroOperacionalModel
-SITUACAO_VENDA_PENDENTE = 2        # Pendente (a receber)
-SITUACAO_VENDA_RECEBIDA = 3        # Recebido
+# Categorias automáticas - buscadas diretamente das tabelas operacionais (igual DRE)
+CATEGORIAS_AUTOMATICAS_AP = {
+    '2.01.01': {'model': 'FornecedorPagarModel', 'campo_valor': 'valor_total_a_pagar_100', 'campo_data': 'data_entrega_ticket', 'filtro_operacional': 'solicitacao_id', 'descricao': 'Compra de Madeira'},
+    '2.01.02': {'model': 'FretePagarModel', 'campo_valor': 'valor_total_a_pagar_100', 'campo_data': 'data_entrega_ticket', 'filtro_operacional': 'solicitacao_id', 'descricao': 'Fretes'},
+    '2.01.03': {'model': 'ExtratorPagarModel', 'campo_valor': 'valor_total_a_pagar_100', 'campo_data': 'data_entrega_ticket', 'filtro_operacional': 'solicitacao_id', 'descricao': 'Extração de Madeira'},
+    '2.01.04': {'model': 'ComissionadoPagarModel', 'campo_valor': 'valor_total_a_pagar_100', 'campo_data': 'data_entrega_ticket', 'filtro_operacional': 'solicitacao_id', 'descricao': 'Comissões'},
+}
+
+CATEGORIAS_AUTOMATICAS_AR = {
+    '1.01.01': {'model': 'RegistroOperacionalModel', 'campo_valor': 'valor_total_nota_100', 'campo_data': 'data_entrega_ticket', 'filtro_operacional': 'solicitacao_nf_id', 'descricao': 'Vendas NFe Peso Padrão'},
+    '1.01.03': {'model': 'NfComplementarModel', 'campo_valor': 'valor_total_nota_100', 'campo_data': 'destinatario_data_emissao', 'filtro_operacional': 'cliente_id', 'descricao': 'Vendas de NFe Complementares'},
+}
+
+# Códigos ignorados no DRE (não impactam resultado)
+CODIGOS_IGNORADOS = ['2.01.05', '3.']
 
 # =============================================================================
 # CLASSE SERVICE
@@ -598,20 +611,309 @@ class ContasAPARService:
     # --------------------------------------------------------------------- #
 
     @staticmethod
+    def _obter_model_por_nome(nome_model):
+        """Retorna a classe do model pelo nome."""
+        modelos = {
+            'RegistroOperacionalModel': RegistroOperacionalModel,
+            'NfComplementarModel': NfComplementarModel,
+            'FornecedorPagarModel': FornecedorPagarModel,
+            'FretePagarModel': FretePagarModel,
+            'ExtratorPagarModel': ExtratorPagarModel,
+            'ComissionadoPagarModel': ComissionadoPagarModel,
+        }
+        return modelos.get(nome_model)
+
+    @staticmethod
+    def _obter_codigo_plano_contas(plano_contas_id):
+        """Retorna o código do plano de contas pelo ID."""
+        if not plano_contas_id:
+            return None
+        from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
+        plano = PlanoContaModel.query.get(int(plano_contas_id))
+        return plano.codigo if plano else None
+
+    @staticmethod
+    def _obter_ids_vinculo_pessoa(pessoa_id, tipo_vinculo):
+        """
+        Retorna os IDs de vínculo operacional de uma PessoaFinanceiro.
+        tipo_vinculo: 'fornecedor', 'transportadora', 'extrator', 'comissionado'
+        """
+        if not pessoa_id:
+            return []
+        from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
+        pessoa = PessoaFinanceiroModel.query.get(int(pessoa_id))
+        if not pessoa or not pessoa.vinculos_operacionais:
+            return []
+        try:
+            vinculos = pessoa.vinculos_operacionais if isinstance(pessoa.vinculos_operacionais, dict) else json_lib.loads(pessoa.vinculos_operacionais)
+            ids = vinculos.get(tipo_vinculo, [])
+            return [int(v['id']) for v in ids if v.get('id')]
+        except (json_lib.JSONDecodeError, TypeError, KeyError):
+            return []
+
+    @staticmethod
+    def _obter_emissoes_tabela_operacional(codigo, config, filtros):
+        """
+        Busca registros das tabelas operacionais para categorias automáticas do DRE.
+        """
+        Model = ContasAPARService._obter_model_por_nome(config['model'])
+        if not Model:
+            return []
+
+        campo_valor = config['campo_valor']
+        campo_data = config['campo_data']
+        filtro_op = config['filtro_operacional']
+        descricao = config['descricao']
+
+        try:
+            # Filtros base IGUAIS ao DRE
+            query = Model.query.filter(
+                Model.ativo == True,
+                Model.deletado == False,
+                getattr(Model, campo_data).isnot(None),  # Data preenchida (igual DRE)
+                getattr(Model, filtro_op).isnot(None)    # Só operacionais (igual DRE)
+            )
+
+            # Filtro por período de datas
+            if filtros.get('data_inicio'):
+                query = query.filter(getattr(Model, campo_data) >= filtros['data_inicio'])
+            if filtros.get('data_fim'):
+                query = query.filter(getattr(Model, campo_data) <= filtros['data_fim'])
+
+            # Filtro por situação
+            if filtros.get('situacao_id'):
+                if hasattr(Model, 'situacao_pagamento_id'):
+                    query = query.filter(Model.situacao_pagamento_id == int(filtros['situacao_id']))
+                elif hasattr(Model, 'situacao_financeira_id'):
+                    query = query.filter(Model.situacao_financeira_id == int(filtros['situacao_id']))
+
+            # Filtro por pessoa: buscar IDs de vínculo operacional
+            if filtros.get('pessoa_id'):
+                pessoa_id = filtros['pessoa_id']
+                if hasattr(Model, 'fornecedor_id'):
+                    ids_vinculo = ContasAPARService._obter_ids_vinculo_pessoa(pessoa_id, 'fornecedor')
+                    if ids_vinculo:
+                        query = query.filter(Model.fornecedor_id.in_(ids_vinculo))
+                    else:
+                        return []  # Pessoa sem vínculo com fornecedor
+                elif hasattr(Model, 'transportadora_id'):
+                    ids_vinculo = ContasAPARService._obter_ids_vinculo_pessoa(pessoa_id, 'transportadora')
+                    if ids_vinculo:
+                        query = query.filter(Model.transportadora_id.in_(ids_vinculo))
+                    else:
+                        return []  # Pessoa sem vínculo com transportadora
+                elif hasattr(Model, 'extrator_id'):
+                    ids_vinculo = ContasAPARService._obter_ids_vinculo_pessoa(pessoa_id, 'extrator')
+                    if ids_vinculo:
+                        query = query.filter(Model.extrator_id.in_(ids_vinculo))
+                    else:
+                        return []  # Pessoa sem vínculo com extrator
+                elif hasattr(Model, 'comissionado_id'):
+                    ids_vinculo = ContasAPARService._obter_ids_vinculo_pessoa(pessoa_id, 'comissionado')
+                    if ids_vinculo:
+                        query = query.filter(Model.comissionado_id.in_(ids_vinculo))
+                    else:
+                        return []  # Pessoa sem vínculo com comissionado
+
+            registros = query.order_by(getattr(Model, campo_data).desc()).all()
+
+            resultado = []
+            for reg in registros:
+                valor = getattr(reg, campo_valor) or 0
+                data_emissao = getattr(reg, campo_data) if hasattr(reg, campo_data) else reg.data_cadastro
+
+                # Identificar a pessoa
+                pessoa_nome = '-'
+                if hasattr(reg, 'destinatario_nome') and reg.destinatario_nome:
+                    pessoa_nome = reg.destinatario_nome
+                elif hasattr(reg, 'cliente') and reg.cliente:
+                    pessoa_nome = reg.cliente.identificacao if hasattr(reg.cliente, 'identificacao') else str(reg.cliente)
+                elif hasattr(reg, 'fornecedor') and reg.fornecedor:
+                    pessoa_nome = reg.fornecedor.identificacao
+                elif hasattr(reg, 'transportadora') and reg.transportadora:
+                    pessoa_nome = reg.transportadora.identificacao
+                elif hasattr(reg, 'comissionado') and reg.comissionado:
+                    pessoa_nome = reg.comissionado.identificacao
+
+                # Situação
+                situacao = reg.situacao if hasattr(reg, 'situacao') and reg.situacao else None
+                situacao_nome = situacao.situacao if situacao else 'Sem situação'
+                situacao_id = None
+                if hasattr(reg, 'situacao_pagamento_id'):
+                    situacao_id = reg.situacao_pagamento_id
+                elif hasattr(reg, 'situacao_financeira_id'):
+                    situacao_id = reg.situacao_financeira_id
+
+                # Código identificador baseado no tipo de registro
+                if hasattr(reg, 'numero_nota_fiscal') and reg.numero_nota_fiscal:
+                    codigo_fat = f'NF-{reg.numero_nota_fiscal}'
+                elif hasattr(reg, 'solicitacao_id') and reg.solicitacao_id:
+                    # Tabelas operacionais vinculadas a carga
+                    prefixos = {
+                        'FornecedorPagarModel': 'FOR',
+                        'FretePagarModel': 'FRE', 
+                        'ExtratorPagarModel': 'EXT',
+                        'ComissionadoPagarModel': 'COM',
+                    }
+                    prefixo = prefixos.get(config['model'], 'OP')
+                    codigo_fat = f'{prefixo}-{reg.solicitacao_id}'
+                else:
+                    codigo_fat = f'LAN-{reg.id}'
+
+                resultado.append({
+                    'id': reg.id,
+                    'codigo_faturamento': codigo_fat,
+                    'tipo_operacao': descricao,
+                    'descricao': descricao,
+                    'pessoa_nome': pessoa_nome,
+                    'pessoa_id': None,
+                    'data_emissao': data_emissao,
+                    'data_vencimento': data_emissao,
+                    'data_pagamento': getattr(reg, 'data_liquidacao', None),
+                    'valor_original_100': valor,
+                    'valor_pago_100': 0,
+                    'saldo_100': valor,
+                    'situacao': situacao_nome,
+                    'situacao_id': situacao_id,
+                    'centro_custo': '-',
+                    'plano_contas': f'{codigo} - {descricao}',
+                    'referencia_agendamento': '-',
+                    'parcelas': [],
+                })
+
+            return resultado
+
+        except Exception as e:
+            print(f"[ContasAPARService] Erro ao buscar categoria automática {codigo}: {e}")
+            return []
+
+    @staticmethod
     def obter_emissoes(direcao_str, filtros=None):
-        """
-        Títulos emitidos no período.
-        Filtro de data aplicado sobre data_cadastro (emissão).
-        """
+        """Emissões no período - lógica idêntica ao DRE."""
+        from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
+        
         filtros = filtros or {}
-        filtros['data_campo'] = 'data_cadastro'
+        plano_contas_id = filtros.get('plano_contas_id')
+        categorias_map = CATEGORIAS_AUTOMATICAS_AP if direcao_str == 'ap' else CATEGORIAS_AUTOMATICAS_AR
+        tipo_categoria = 2 if direcao_str == 'ap' else 1
+        resultado = []
+        
+        # Filtro por plano de contas específico
+        if plano_contas_id:
+            codigo = ContasAPARService._obter_codigo_plano_contas(plano_contas_id)
+            if codigo and codigo in categorias_map:
+                return ContasAPARService._obter_emissoes_tabela_operacional(codigo, categorias_map[codigo], filtros)
+            return ContasAPARService._obter_emissoes_agendamentos(filtros, tipo_categoria, plano_contas_id_filtro=int(plano_contas_id))
+        
+        # Buscar tudo: tabelas operacionais + agendamentos
+        for codigo, config in categorias_map.items():
+            resultado.extend(ContasAPARService._obter_emissoes_tabela_operacional(codigo, config, filtros))
+        
+        ids_excluir = ContasAPARService._obter_ids_categorias_automaticas(categorias_map)
+        resultado.extend(ContasAPARService._obter_emissoes_agendamentos(filtros, tipo_categoria, ids_excluir=ids_excluir))
+        
+        # Ordenar por data (mais recente primeiro)
+        resultado.sort(key=lambda x: (x.get('data_emissao') or date.min), reverse=True)
+        return resultado
 
-        query = ContasAPARService._base_query(direcao_str)
-        query = ContasAPARService._aplicar_filtros(query, filtros)
-        query = query.order_by(AgendamentoPagamentoModel.data_cadastro.desc())
+    @staticmethod
+    def _obter_ids_categorias_automaticas(categorias_map):
+        """IDs das categorias automáticas para excluir dos agendamentos."""
+        from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
+        ids = set()
+        for codigo in categorias_map.keys():
+            cat = PlanoContaModel.query.filter_by(codigo=codigo, ativo=True, deletado=False).first()
+            if cat:
+                ids.add(cat.id)
+        return ids
 
-        agendamentos = query.all()
-        return [ContasAPARService._serializar_agendamento(ag) for ag in agendamentos]
+    @staticmethod
+    def _obter_emissoes_agendamentos(filtros, tipo_categoria, plano_contas_id_filtro=None, ids_excluir=None):
+        """Busca emissões via categorias_json (igual DRE)."""
+        from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
+        
+        ids_excluir = ids_excluir or set()
+        
+        # Query: situação 6/8/9 + data_competencia (igual DRE)
+        query = AgendamentoPagamentoModel.query.filter(
+            AgendamentoPagamentoModel.ativo == True,
+            AgendamentoPagamentoModel.deletado == False,
+            AgendamentoPagamentoModel.situacao_pagamento_id.in_([6, 8, 9]),
+            AgendamentoPagamentoModel.categorias_json.isnot(None)
+        )
+        
+        # Filtro por período
+        if filtros.get('data_inicio'):
+            query = query.filter(AgendamentoPagamentoModel.data_competencia >= filtros['data_inicio'])
+        if filtros.get('data_fim'):
+            query = query.filter(AgendamentoPagamentoModel.data_competencia <= filtros['data_fim'])
+        
+        # Filtro por situação
+        if filtros.get('situacao_id'):
+            query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == int(filtros['situacao_id']))
+        
+        # Filtro por pessoa
+        if filtros.get('pessoa_id'):
+            query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
+        
+        # Filtro por centro de custo (busca dentro do JSON — campo 'centro' armazena ID como string)
+        if filtros.get('centro_custo_id'):
+            cc_id = str(filtros['centro_custo_id'])
+            query = query.filter(
+                func.json_contains(
+                    AgendamentoPagamentoModel.centros_custo_json,
+                    json_lib.dumps({'centro': cc_id})
+                )
+            )
+        
+        resultado = []
+        for ag in query.all():
+            try:
+                categorias = json_lib.loads(ag.categorias_json) if isinstance(ag.categorias_json, str) else ag.categorias_json
+                for cat_info in categorias or []:
+                    cat_id = cat_info.get('categoria_id')
+                    valor = cat_info.get('valor', 0)
+                    
+                    # Validações
+                    if plano_contas_id_filtro and cat_id != plano_contas_id_filtro:
+                        continue
+                    if cat_id in ids_excluir:
+                        continue
+                    
+                    cat = PlanoContaModel.query.get(cat_id)
+                    if not cat or cat.tipo != tipo_categoria:
+                        continue
+                    if any(cat.codigo.startswith(ign) for ign in CODIGOS_IGNORADOS):
+                        continue
+                    
+                    pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
+                    
+                    # Código: referência do agendamento ou LAN-{id}
+                    codigo = ag.referencia if ag.referencia else f'LAN-{ag.id}'
+                    
+                    resultado.append({
+                        'id': ag.id,
+                        'codigo_faturamento': codigo,
+                        'tipo_operacao': cat.nome,
+                        'descricao': ag.descricao or cat.nome,
+                        'pessoa_nome': pessoa.identificacao if pessoa else '-',
+                        'pessoa_id': ag.pessoa_financeiro_id,
+                        'data_emissao': ag.data_competencia or ag.data_cadastro,
+                        'data_vencimento': ag.data_vencimento or ag.data_cadastro,
+                        'data_pagamento': ag.data_alteracao,
+                        'valor_original_100': valor,
+                        'valor_pago_100': 0,
+                        'saldo_100': valor,
+                        'situacao': ag.situacao.situacao if ag.situacao else 'Sem situação',
+                        'situacao_id': ag.situacao_pagamento_id,
+                        'centro_custo': ContasAPARService._extrair_centros_custo(ag.centros_custo_json),
+                        'plano_contas': f'{cat.codigo} - {cat.nome}',
+                        'referencia_agendamento': ag.referencia or '-',
+                        'parcelas': [],
+                    })
+            except (json_lib.JSONDecodeError, TypeError):
+                continue
+        return resultado
 
     @staticmethod
     def obter_baixas(direcao_str, filtros=None):

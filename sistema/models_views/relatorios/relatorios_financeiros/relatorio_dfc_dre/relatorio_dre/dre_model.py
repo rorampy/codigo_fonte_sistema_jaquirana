@@ -159,7 +159,11 @@ class DREModel:
             'resultado_liquido': resultado_operacional,
             'atividades_investimento': {'total': atividades_investimento, 'itens': compra_floresta},
             'atividades_financiamento': {'total': atividades_financiamento, 'aplicacoes': aplicacoes_financeiras, 'retiradas': retirada_capital},
-            'variacao_caixa': variacao_caixa
+            'variacao_caixa': variacao_caixa,
+            # Chaves esperadas pelo template PDF
+            'receitas_aplicacoes_financeiras': total_aplicacoes,
+            'despesas_compra_floresta': total_compra_floresta,
+            'despesas_retirada_capital': total_retirada_capital
         }
     
     # ==================== MÉTODOS AUXILIARES ====================
