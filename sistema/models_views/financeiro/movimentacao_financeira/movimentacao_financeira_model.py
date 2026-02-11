@@ -90,47 +90,41 @@ class MovimentacaoFinanceiraModel(BaseModel):
         self.conciliacao_tipo_origem = conciliacao_tipo_origem
         self.conciliacao_valor_diferenca = conciliacao_valor_diferenca
     
-    def obter_valor_total_recebidos(conta_id=1):
+    def obter_valor_total_recebidos(conta_id=None):
         """
-        Retorna o valor total de recebimentos (tipo_movimentacao 1) para uma conta bancária específica.
-        Soma o campo valor_movimentacao_100 das movimentações ativas e não deletadas.
+        Retorna o valor total de recebimentos (tipo_movimentacao 1).
+        Se conta_id for informado, filtra pela conta. Caso contrário, soma de todas as contas.
         """
-        if conta_id is None:
-            conta_id = 1
-        total = (
-            db.session.query(
-                db.func.coalesce(db.func.sum(MovimentacaoFinanceiraModel.valor_movimentacao_100), 0)
-            )
-            .filter(
-                MovimentacaoFinanceiraModel.ativo == True,
-                MovimentacaoFinanceiraModel.deletado == False,
-                MovimentacaoFinanceiraModel.tipo_movimentacao == 1,
-                MovimentacaoFinanceiraModel.conta_bancaria_id == conta_id
-            )
-            .scalar()
+        query = db.session.query(
+            db.func.coalesce(db.func.sum(MovimentacaoFinanceiraModel.valor_movimentacao_100), 0)
+        ).filter(
+            MovimentacaoFinanceiraModel.ativo == True,
+            MovimentacaoFinanceiraModel.deletado == False,
+            MovimentacaoFinanceiraModel.tipo_movimentacao == 1
         )
-        return total or 0
+        
+        if conta_id and conta_id != 0:
+            query = query.filter(MovimentacaoFinanceiraModel.conta_bancaria_id == conta_id)
+        
+        return query.scalar() or 0
 
-    def obter_valor_total_saidas(conta_id=1):
+    def obter_valor_total_saidas(conta_id=None):
         """
-        Retorna o valor total de pagamentos/saídas (tipo_movimentacao 2) para uma conta bancária específica.
-        Soma o campo valor_movimentacao_100 das movimentações ativas e não deletadas.
+        Retorna o valor total de pagamentos/saídas (tipo_movimentacao 2).
+        Se conta_id for informado, filtra pela conta. Caso contrário, soma de todas as contas.
         """
-        if conta_id is None:
-            conta_id = 1
-        total = (
-            db.session.query(
-                db.func.coalesce(db.func.sum(MovimentacaoFinanceiraModel.valor_movimentacao_100), 0)
-            )
-            .filter(
-                MovimentacaoFinanceiraModel.ativo == True,
-                MovimentacaoFinanceiraModel.deletado == False,
-                MovimentacaoFinanceiraModel.tipo_movimentacao == 2,
-                MovimentacaoFinanceiraModel.conta_bancaria_id == conta_id
-            )
-            .scalar()
+        query = db.session.query(
+            db.func.coalesce(db.func.sum(MovimentacaoFinanceiraModel.valor_movimentacao_100), 0)
+        ).filter(
+            MovimentacaoFinanceiraModel.ativo == True,
+            MovimentacaoFinanceiraModel.deletado == False,
+            MovimentacaoFinanceiraModel.tipo_movimentacao == 2
         )
-        return total or 0
+        
+        if conta_id and conta_id != 0:
+            query = query.filter(MovimentacaoFinanceiraModel.conta_bancaria_id == conta_id)
+        
+        return query.scalar() or 0
 
     def obter_valor_total_saldo():
         saldo = MovimentacaoFinanceiraModel.query.filter(
@@ -180,10 +174,11 @@ class MovimentacaoFinanceiraModel(BaseModel):
 
         return movimentacoes
     
-    def listagem_movimentacoes_financeiras_por_conta(conta_id = 1):
-        if conta_id is None:
-            conta_id = 1
-
+    def listagem_movimentacoes_financeiras_por_conta(conta_id=None):
+        """
+        Lista movimentações financeiras.
+        Se conta_id for informado, filtra pela conta. Caso contrário, lista de todas as contas.
+        """
         # base da query: somente movimentações ativas
         query = MovimentacaoFinanceiraModel.query.filter(
             MovimentacaoFinanceiraModel.ativo == True

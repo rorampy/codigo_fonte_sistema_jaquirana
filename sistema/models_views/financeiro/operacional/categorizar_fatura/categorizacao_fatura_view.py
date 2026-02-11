@@ -455,6 +455,8 @@ def categorizar_fatura(id, tipo='despesa'):
         flash(('Categorização de faturamento realizado com sucesso!', 'success'))
         if tipo == 'receita':
             return redirect(url_for('listagem_faturamentos_cargas_a_receber'))
+        if tipo == 'adiantamento_creditos':
+            return redirect(url_for('listagem_faturamentos_controle_credito'))
         if tipo == 'receita_avulsa':
             return redirect(url_for('listagem_receitas_avulsas'))
         if tipo == 'despesa_avulsa':

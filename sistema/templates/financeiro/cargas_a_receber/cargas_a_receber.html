@@ -328,12 +328,19 @@
 
               <!-- Filtro por Data -->
               <div id="filtro-data" class="row" {% if dados_corretos.get('tipo_filtro') !='data' %}style="display: none;"{% endif %}>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Tipo de Data</label>
+                  <select name="tipoDataFiltro" class="form-select">
+                    <option value="data_entrega" {% if dados_corretos.get('tipoDataFiltro', 'data_entrega') == 'data_entrega' %}selected{% endif %}>Data de Entrega (Ticket)</option>
+                    <option value="data_emissao" {% if dados_corretos.get('tipoDataFiltro') == 'data_emissao' %}selected{% endif %}>Data de Emissão (NFe)</option>
+                  </select>
+                </div>
+                <div class="col-md-4 mb-3">
                   <label class="form-label">Data Início</label>
                   <input type="date" name="dataInicio" class="form-control"
                     value="{{ dados_corretos.get('dataInicio', '') }}">
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                   <label class="form-label">Data Fim</label>
                   <input type="date" name="dataFim" class="form-control" value="{{ dados_corretos.get('dataFim', '') }}">
                 </div>

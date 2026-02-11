@@ -49,22 +49,31 @@
             <div class="row w-100 align-items-end">
               <div class="col-md-12">
                 <div class="row g-2 align-items-end">
+                  <!-- Tipo de Data para Filtro -->
+                  <div class="col-md-2">
+                    <label class="form-label mb-1 small text-muted">Tipo de Data</label>
+                    <select id="tipo-data-filtro" class="form-select busca-rapida">
+                      <option value="data_entrega" {% if dados_corretos and dados_corretos.get('tipo_data_filtro', 'data_entrega') == 'data_entrega' %}selected{% endif %}>Data de Entrega</option>
+                      <option value="data_emissao" {% if dados_corretos and dados_corretos.get('tipo_data_filtro') == 'data_emissao' %}selected{% endif %}>Data de Emissão</option>
+                    </select>
+                  </div>
+                  
                   <!-- Filtros de Data -->
                   <div class="col-md-2">
                     <label class="form-label mb-1 small text-muted">Data Início</label>
                     <input type="date" id="data-inicio" class="form-control busca-rapida"
                       value="{{ dados_corretos.get('data_inicio', '') if dados_corretos else '' }}"
-                      title="Data início do vencimento">
+                      title="Data início">
                   </div>
                   <div class="col-md-2">
                     <label class="form-label mb-1 small text-muted">Data Fim</label>
                     <input type="date" id="data-fim" class="form-control busca-rapida" 
                       value="{{ dados_corretos.get('data_fim', '') if dados_corretos else '' }}"
-                      title="Data fim do vencimento">
+                      title="Data fim">
                   </div>
 
                   <!-- Campo Fornecedor -->
-                  <div class="col-md-3">
+                  <div class="col-md-2">
                     <label class="form-label mb-1 small text-muted">Fornecedor</label>
                     <input type="text" value="{{ dados_corretos.get('origem_venda', '') if dados_corretos else '' }}" class="form-control busca-rapida" id="search-fornecedor" placeholder="Buscar fornecedor...">
                   </div>
@@ -76,7 +85,7 @@
                   </div>
 
                   <!-- Campo Cliente -->
-                  <div class="col-md-3">
+                  <div class="col-md-2">
                     <label class="form-label mb-1 small text-muted">Cliente</label>
                     <input type="text" value="{{ dados_corretos.get('cliente_venda', '') if dados_corretos else '' }}" class="form-control busca-rapida" id="search-cliente" placeholder="Buscar cliente...">
                   </div>
@@ -95,7 +104,8 @@
             <table class="table table-vcenter card-table">
               <thead>
                 <tr>
-                  <th style="text-align: center;">Data ticket</th>
+                  <th style="text-align: center;">Data Emissão NFe</th>
+                  <th style="text-align: center;">Data Entrega</th>
                   <th style="text-align: center;">Fornecedor</th>
                   <th style="text-align: center;">Cliente</th>
                   <th style="text-align: center;">Produto | Bitola</th>
@@ -109,6 +119,9 @@
               <tbody id="tabela-resultados">
                 {% for registro in vendas_entregues %}
                 <tr>
+                  <td class="text-secondary text-center">
+                    {{ registro.destinatario_data_emissao | formatar_data_para_brl or '-' }}
+                  </td>
                   <td class="text-secondary text-center">
                     {{ registro.data_entrega_ticket | formatar_data_para_brl or '-' }}
                   </td>

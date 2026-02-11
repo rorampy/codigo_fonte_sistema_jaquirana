@@ -303,9 +303,14 @@ class TransacaoCreditoModel(BaseModel):
         Returns:
             Lista de transações ordenadas por data desc
         """
+        from sqlalchemy.orm import joinedload
+        from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
+        
         filtro_pessoa = TransacaoCreditoModel._filtro_pessoa(tipo_pessoa, pessoa_id)
         
-        query = TransacaoCreditoModel.query.filter(
+        query = TransacaoCreditoModel.query.options(
+            joinedload(TransacaoCreditoModel.faturamento_origem).joinedload(FaturamentoModel.situacao)
+        ).filter(
             filtro_pessoa,
             TransacaoCreditoModel.ativo == True
         ).order_by(desc(TransacaoCreditoModel.data_movimentacao), desc(TransacaoCreditoModel.id))

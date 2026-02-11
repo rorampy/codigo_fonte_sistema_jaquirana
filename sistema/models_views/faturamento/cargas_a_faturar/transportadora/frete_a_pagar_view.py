@@ -101,6 +101,8 @@ def listagem_fretes_a_pagar():
                 semana_selecionada or valor_padrao_semana
             )
         
+        tipo_data_filtro = request.args.get("tipoDataFiltro", "data_entrega")
+
         registros = FretePagarModel.filtrar_frete_transportadora_agrupados(
             data_inicio=data_inicio,
             data_fim=data_fim,
@@ -112,7 +114,8 @@ def listagem_fretes_a_pagar():
             transportadora=transportadora,
             fornecedor=fornecedor,
             cliente=cliente,
-            statusPagamento=statusPagamento
+            statusPagamento=statusPagamento,
+            tipo_data_filtro=tipo_data_filtro
         )
         
     else:

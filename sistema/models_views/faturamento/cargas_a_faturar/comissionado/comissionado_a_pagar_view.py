@@ -110,6 +110,7 @@ def listagem_comissionados_a_pagar():
             fornecedor=fornecedor,
             cliente=cliente,
             statusPagamento=statusPagamento,
+            tipo_data_filtro=request.args.get("tipoDataFiltro", "data_entrega"),
         )
         
         # for registro_dict in registros:

@@ -1,46 +1,22 @@
 from datetime import datetime
 import json
-from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem, formatar_data_para_brl
+from sistema import app, requires_roles, db, obter_url_absoluta_de_imagem
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from sistema.models_views.controle_carga.solicitacao_nf.carga_model import CargaModel
-from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
-from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
-from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
-from sistema.models_views.gerenciar.motorista.transportadora_motorista_associado_model import TransportadoraMotoristaAssocModel
-from sistema.models_views.gerenciar.veiculo.veiculo_model import VeiculoModel
-from sistema.models_views.gerenciar.veiculo.veiculo_transportadora_veiculo_associado_model import TransportadoraVeiculoAssocModel
-from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
-from sistema.models_views.parametros.bitola.bitola_model import BitolaModel
-from sistema.models_views.parametros.nome_grupo_whats.nome_grupo_whats_model import NomeGrupoWhatsModel
-from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
-from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
-from sistema.models_views.configuracoes_gerais.empresa_emissora.empresa_emissora_model import EmpresaEmissoraModel
-from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
 from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
 from sistema.models_views.autenticacao.usuario_model import UsuarioModel
 from sistema._utilitarios import *
-from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
 from sistema.models_views.configuracoes_gerais.situacao_pagamento.situacao_pagamento_model import SituacaoPagamentoModel
-from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
-from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
-from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
-from sistema.models_views.gerenciar.comissionado.comissionado_model import ComissionadoModel
-from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
 from sistema.models_views.financeiro.operacional.categorizar_fatura.parcela_categorizacao.parcela_categorizacao_model import ParcelaCategorizacaoModel
 from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
 from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
-from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_view import (inicializar_categorias_padrao, obter_subcategorias_recursivo)
-from sistema.models_views.configuracoes_gerais.categorizacao_fiscal.categorizacao_fiscal_view import (inicializar_categorias_padrao_categorizacao_fiscal, obter_subcategorias_recursivo_categorizacao_fiscal)
 from sistema.models_views.configuracoes_gerais.centro_custo.centro_custo_model import CentroCustoModel
-from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_fornecedor_model import ExtratoCreditoFornecedorModel
-from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_freteiro_model import ExtratoCreditoFreteiroModel
-from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_extrator_model import ExtratoCreditoExtratorModel
-from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_fornecedor_model import CreditoFornecedorModel
-from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_freteiro_model import CreditoFreteiroModel
-from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_extrator_model import CreditoExtratorModel
-from sistema._utilitarios import *
+
+# === Nova Arquitetura de Créditos ===
+from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import TransacaoCreditoModel
+from sistema.models_views.financeiro.controle_adiantamentos.faturamento_credito_vinculo_model import FaturamentoCreditoVinculoModel
+
 
 @app.route("/financeiro/operacional/controle-creditos", methods=["GET"])
 @login_required
@@ -483,9 +459,12 @@ def excluir_faturamento_creditos(faturamento_id):
     Exclui um faturamento e todos os registros relacionados.
     Define situacao = 2 para todos os registros de pagamento.
     Devolve créditos utilizados para os fornecedores, transportadoras e extratores.
+    
+    === Nova Arquitetura ===
+    Agora também registra o cancelamento na nova tabela de transações de crédito
+    e cria vínculos normalizados via FaturamentoCreditoVinculoModel.
     """
     faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
-    data_hoje = DataHora.obter_data_atual_padrao_en()
     
     try:
         # Verificar se o faturamento possui situação 6 (não pode ser excluído)
@@ -517,102 +496,50 @@ def excluir_faturamento_creditos(faturamento_id):
                 # Processar créditos de fornecedores
                 creditos_fornecedores = detalhes.get('credito_fornecedor', [])
                 for credito_data in creditos_fornecedores:
-                    extrato_credito_fornecedor_id = credito_data.get('extrato_credito_fornecedor_id')
-                    fornecedor_id = credito_data.get('fornecedor_id')
-                    valor_credito_100 = credito_data.get('valor_credito_100', 0)
+                    transacao_credito_id = credito_data.get('transacao_credito_id')  # Nova arquitetura
                     
-                    if extrato_credito_fornecedor_id:
-                        # Buscar registro de crédito de fornecedor no extrato
-                        extrato_credito = ExtratoCreditoFornecedorModel.query.get(extrato_credito_fornecedor_id)
-                        if extrato_credito:
-                            # Marcar como deletado e inativo
-                            extrato_credito.credito_utilizado = True
-                            
-                            novo_extrato = ExtratoCreditoFornecedorModel(
-                                tipo_movimentacao=2,
-                                fornecedor_id=extrato_credito.fornecedor_id,
-                                descricao=f'Cancelamento de adiantamento devido ao cancelamento do faturamento de adiantamento de créditos. {faturamento.codigo_faturamento}',
-                                data_movimentacao=data_hoje,
-                                valor_credito_100= extrato_credito.valor_credito_100,
-                                usuario_id=current_user.id,
-                                credito_utilizado=True
+                    # === Processar na nova arquitetura ===
+                    if transacao_credito_id:
+                        transacao_original = TransacaoCreditoModel.query.get(transacao_credito_id)
+                        if transacao_original:
+                            # Cancelar a transação original
+                            transacao_original.cancelar(
+                                usuario_id=current_user.id
                             )
-                            
-                            db.session.add(novo_extrato)
-                            db.session.commit()
-                    
-                    if fornecedor_id and valor_credito_100 > 0:
-                        # Debitar o valor do saldo agrupado do fornecedor
-                        credito_agrupado = CreditoFornecedorModel.obtem_registro_id(fornecedor_id)
-                        if credito_agrupado:
-                            # Reduzir o valor do crédito agrupado
-                            credito_agrupado.valor_total_credito_100 -= valor_credito_100
 
                 # Processar créditos de transportadoras
                 creditos_transportadoras = detalhes.get('credito_transportadora', [])
                 for credito_data in creditos_transportadoras:
-                    extrato_credito_transportadora_id = credito_data.get('extrato_credito_transportadora_id')
-                    transportadora_id = credito_data.get('transportadora_id')
-                    valor_credito_100 = credito_data.get('valor_credito_100', 0)
+                    transacao_credito_id = credito_data.get('transacao_credito_id')  # Nova arquitetura
                     
-                    if extrato_credito_transportadora_id:
-                        # Buscar registro de crédito de transportadora no extrato
-                        extrato_credito = ExtratoCreditoFreteiroModel.query.get(extrato_credito_transportadora_id)
-                        if extrato_credito:
-                            # Marcar como deletado e inativo
-                            extrato_credito.credito_utilizado = True
-                            
-                            novo_extrato = ExtratoCreditoFreteiroModel(
-                                tipo_movimentacao=2,
-                                transportadora_id=extrato_credito.transportadora_id,
-                                descricao=f'Cancelamento de adiantamento devido ao cancelamento do faturamento de adiantamento de créditos. {faturamento.codigo_faturamento}',
-                                data_movimentacao=data_hoje,
-                                valor_credito_100= extrato_credito.valor_credito_100,
-                                usuario_id=current_user.id,
-                                credito_utilizado=True
+                    # === Processar na nova arquitetura ===
+                    if transacao_credito_id:
+                        transacao_original = TransacaoCreditoModel.query.get(transacao_credito_id)
+                        if transacao_original:
+                            transacao_original.cancelar(
+                                usuario_id=current_user.id
                             )
                             
-                            db.session.add(novo_extrato)
-                            db.session.commit()
-                    
-                    if transportadora_id and valor_credito_100 > 0:
-                        # Debitar o valor do saldo agrupado da transportadora
-                        credito_agrupado = CreditoFreteiroModel.obtem_registro_id(transportadora_id)
-                        if credito_agrupado:
-                            # Reduzir o valor do crédito agrupado
-                            credito_agrupado.valor_total_credito_100 -= valor_credito_100
                 # Processar créditos de extratores
                 creditos_extratores = detalhes.get('credito_extrator', [])
                 for credito_data in creditos_extratores:
-                    extrato_credito_extrator_id = credito_data.get('extrato_credito_extrator_id')
-                    extrator_id = credito_data.get('extrator_id')
-                    valor_credito_100 = credito_data.get('valor_credito_100', 0)
+                    transacao_credito_id = credito_data.get('transacao_credito_id')  # Nova arquitetura
                     
-                    if extrato_credito_extrator_id:
-                        # Buscar registro de crédito de extrator no extrato
-                        extrato_credito = ExtratoCreditoExtratorModel.query.get(extrato_credito_extrator_id)
-                        if extrato_credito:
-                            # Marcar como deletado e inativo
-                            extrato_credito.credito_utilizado = True
-                            
-                            novo_extrato = ExtratoCreditoExtratorModel(
-                                tipo_movimentacao=2,
-                                extrator_id=extrato_credito.extrator_id,
-                                descricao=f'Cancelamento de adiantamento devido ao cancelamento do faturamento de adiantamento de créditos. {faturamento.codigo_faturamento}',
-                                data_movimentacao=data_hoje,
-                                valor_credito_100= extrato_credito.valor_credito_100,
-                                usuario_id=current_user.id,
-                                credito_utilizado=True
+                    # === Processar na nova arquitetura ===
+                    if transacao_credito_id:
+                        transacao_original = TransacaoCreditoModel.query.get(transacao_credito_id)
+                        if transacao_original:
+                            transacao_original.cancelar(
+                                usuario_id=current_user.id
                             )
-                            
-                            db.session.add(novo_extrato)
-                            db.session.commit()
-                    
-                    if extrator_id and valor_credito_100 > 0:
-                        # Debitar o valor do saldo agrupado do extrator
-                        credito_agrupado = CreditoExtratorModel.obtem_registro_extrator_id(extrator_id)
-                        if credito_agrupado:
-                            credito_agrupado.valor_total_credito_100 -= valor_credito_100
+                
+                # === Marcar vínculos da nova arquitetura como inativos ===
+                vinculos = FaturamentoCreditoVinculoModel.query.filter_by(
+                    faturamento_id=faturamento_id,
+                    ativo=True
+                ).all()
+                for vinculo in vinculos:
+                    vinculo.ativo = False
                 
             except json.JSONDecodeError as e:
                 print(f"[ERROR] Erro ao processar JSON do faturamento: {e}")

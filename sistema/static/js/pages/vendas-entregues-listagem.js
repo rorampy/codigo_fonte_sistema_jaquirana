@@ -35,7 +35,8 @@ class VendasEntreguesListagem {
             nf: document.getElementById('search-nf'),
             fornecedor: document.getElementById('search-fornecedor'),
             dataInicio: document.getElementById('data-inicio'),
-            dataFim: document.getElementById('data-fim')
+            dataFim: document.getElementById('data-fim'),
+            tipoDataFiltro: document.getElementById('tipo-data-filtro')
         };
     }
 
@@ -70,6 +71,11 @@ class VendasEntreguesListagem {
         if (dataFim && this.campos.dataFim) {
             this.campos.dataFim.value = dataFim;
         }
+
+        const tipoDataFiltro = parametrosUrl.get('tipo_data_filtro');
+        if (tipoDataFiltro && this.campos.tipoDataFiltro) {
+            this.campos.tipoDataFiltro.value = tipoDataFiltro;
+        }
     }
 
     /**
@@ -93,6 +99,11 @@ class VendasEntreguesListagem {
         }
         if (this.campos.dataFim) {
             this.campos.dataFim.addEventListener('change', () => this.buscarComDelay());
+        }
+
+        // Adiciona event listener para select de tipo de data
+        if (this.campos.tipoDataFiltro) {
+            this.campos.tipoDataFiltro.addEventListener('change', () => this.buscarComDelay());
         }
 
         // Event listener para detectar quando todos os campos ficam vazios
@@ -156,6 +167,9 @@ class VendasEntreguesListagem {
         }
         if (this.campos.dataFim && this.campos.dataFim.value) {
             params.append('data_fim', this.campos.dataFim.value);
+        }
+        if (this.campos.tipoDataFiltro && this.campos.tipoDataFiltro.value) {
+            params.append('tipo_data_filtro', this.campos.tipoDataFiltro.value);
         }
 
         // Verifica se pelo menos um campo tem valor

@@ -611,6 +611,33 @@ class RegistroOperacionalModel(BaseModel):
 
         return query.order_by(RegistroOperacionalModel.id.desc()).all()
     
+    @staticmethod
+    def obter_dados_nf_complementar_por_registro(registro_id):
+        """
+        Busca peso e valor das NFs complementares vinculadas a um registro.
+        
+        Args:
+            registro_id (int): ID do registro operacional
+            
+        Returns:
+            dict: {"peso_complementar": float, "valor_complementar": int}
+        """
+        from sistema.models_views.faturamento.cargas_a_receber.nf_complementar.nf_complementar_model import NfComplementarModel
+        
+        resultado = db.session.query(
+            func.coalesce(func.sum(NfComplementarModel.peso_ton_nf), 0).label('peso_total'),
+            func.coalesce(func.sum(NfComplementarModel.valor_total_nota_100), 0).label('valor_total')
+        ).filter(
+            NfComplementarModel.ativo == True,
+            NfComplementarModel.deletado == False,
+            NfComplementarModel.nf_complementar_detalhes.like(f'%"registro_id": {registro_id}%')
+        ).first()
+        
+        return {
+            "peso_complementar": float(resultado.peso_total) if resultado and resultado.peso_total else 0,
+            "valor_complementar": int(resultado.valor_total) if resultado and resultado.valor_total else 0
+        }
+
     def obter_registros_carga_agrupados():
         """
         Retorna todos os registros de carga agrupados por cliente e produto.
@@ -661,10 +688,15 @@ class RegistroOperacionalModel(BaseModel):
         for registro, cliente in query.all():
             produto = getattr(registro.solicitacao.produto, "nome", "Indefinido")
             
+            # Buscar dados das NFs complementares
+            dados_complementar = RegistroOperacionalModel.obter_dados_nf_complementar_por_registro(registro.id)
+            
             resultados.append({
                 "cliente": cliente.identificacao,
                 "produto": produto,
                 "registro": registro,
+                "peso_complementar": dados_complementar["peso_complementar"],
+                "valor_complementar": dados_complementar["valor_complementar"]
             })
 
         resultados.sort(key=lambda x: (x["cliente"], x["produto"]))
@@ -683,6 +715,7 @@ class RegistroOperacionalModel(BaseModel):
         bitola=None,
         status_nf_complementar=None,
         status_pagamento=None,
+        tipo_data_filtro=None,
     ):
         """
         Filtra e retorna registros de carga agrupados por cliente e produto.
@@ -700,6 +733,7 @@ class RegistroOperacionalModel(BaseModel):
             bitola (str, optional): Bitola
             status_nf_complementar (int, optional): Status da NF complementar
             status_pagamento (int, optional): ID da situação financeira
+            tipo_data_filtro (str, optional): Tipo de data para filtro ('data_emissao' ou 'data_entrega')
         
         Returns:
             list: Lista de dicionários com registros filtrados e agrupados
@@ -707,6 +741,13 @@ class RegistroOperacionalModel(BaseModel):
         if not data_inicio or not data_fim:
             data_inicio = date.today() - timedelta(days=30)
             data_fim = date.today()
+
+        # Determinar o campo de data para o filtro
+        if tipo_data_filtro == 'data_emissao':
+            campo_data = RegistroOperacionalModel.destinatario_data_emissao
+        else:
+            # Padrão: data de entrega do ticket
+            campo_data = RegistroOperacionalModel.data_entrega_ticket
 
         query = (
             db.session.query(RegistroOperacionalModel, ClienteModel)
@@ -724,18 +765,18 @@ class RegistroOperacionalModel(BaseModel):
 
         if data_inicio and data_fim:
             query = query.filter(
-                RegistroOperacionalModel.destinatario_data_emissao.isnot(None),
-                RegistroOperacionalModel.destinatario_data_emissao.between(data_inicio, data_fim),
+                campo_data.isnot(None),
+                campo_data.between(data_inicio, data_fim),
             )
         elif data_inicio:
             query = query.filter(
-                RegistroOperacionalModel.destinatario_data_emissao.isnot(None),
-                RegistroOperacionalModel.destinatario_data_emissao >= data_inicio,
+                campo_data.isnot(None),
+                campo_data >= data_inicio,
             )
         elif data_fim:
             query = query.filter(
-                RegistroOperacionalModel.destinatario_data_emissao.isnot(None),
-                RegistroOperacionalModel.destinatario_data_emissao <= data_fim,
+                campo_data.isnot(None),
+                campo_data <= data_fim,
             )
 
         if cliente:
@@ -794,10 +835,15 @@ class RegistroOperacionalModel(BaseModel):
         for registro, cliente in query.all():
             produto = getattr(registro.solicitacao.produto, "nome", "Indefinido")
             
+            # Buscar dados das NFs complementares
+            dados_complementar = RegistroOperacionalModel.obter_dados_nf_complementar_por_registro(registro.id)
+            
             resultados.append({
                 "cliente": cliente.identificacao,
                 "produto": produto,
                 "registro": registro,
+                "peso_complementar": dados_complementar["peso_complementar"],
+                "valor_complementar": dados_complementar["valor_complementar"]
             })
 
         resultados.sort(key=lambda x: (x["cliente"], x["produto"]))
@@ -2433,6 +2479,7 @@ class RegistroOperacionalModel(BaseModel):
         origem_venda=None,
         data_inicio=None,
         data_fim=None,
+        tipo_data_filtro=None,
         pagina=1,
         por_pagina=50,
         categoria_venda=None
@@ -2442,6 +2489,8 @@ class RegistroOperacionalModel(BaseModel):
         
         Args:
             (parâmetros de filtro...)
+            tipo_data_filtro (str): 'data_emissao' para filtrar por destinatario_data_emissao,
+                                   'data_entrega' para filtrar por data_entrega_ticket (padrão)
             pagina (int): Número da página (começa em 1)
             por_pagina (int): Quantidade de registros por página
             
@@ -2514,14 +2563,26 @@ class RegistroOperacionalModel(BaseModel):
                 ).filter(
                     FornecedorCadastroModel.identificacao.ilike(f"%{origem_venda}%"),
                 )
-                
-            if data_inicio:
-                data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
-                query = query.filter(RegistroOperacionalModel.data_entrega_ticket >= data_inicio_obj)
             
-            if data_fim:
-                data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
-                query = query.filter(RegistroOperacionalModel.data_entrega_ticket <= data_fim_obj)
+            # Filtro de data baseado no tipo selecionado
+            if tipo_data_filtro == 'data_emissao':
+                # Filtrar por data de emissão da NFe
+                if data_inicio:
+                    data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+                    query = query.filter(RegistroOperacionalModel.destinatario_data_emissao >= data_inicio_obj)
+                
+                if data_fim:
+                    data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
+                    query = query.filter(RegistroOperacionalModel.destinatario_data_emissao <= data_fim_obj)
+            else:
+                # Padrão: filtrar por data de entrega do ticket
+                if data_inicio:
+                    data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+                    query = query.filter(RegistroOperacionalModel.data_entrega_ticket >= data_inicio_obj)
+                
+                if data_fim:
+                    data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
+                    query = query.filter(RegistroOperacionalModel.data_entrega_ticket <= data_fim_obj)
         
     
         # Ordenação

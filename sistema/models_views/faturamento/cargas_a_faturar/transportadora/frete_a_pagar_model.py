@@ -266,7 +266,8 @@ class FretePagarModel(BaseModel):
         transportadora=None,
         fornecedor=None,
         cliente=None,
-        statusPagamento=None
+        statusPagamento=None,
+        tipo_data_filtro=None
     ):
         """Filtra fretes por transportadora com informações relacionadas."""
         from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
@@ -276,12 +277,20 @@ class FretePagarModel(BaseModel):
             data_inicio = date.today() - timedelta(days=30)
             data_fim = date.today()
 
+        # Determinar o campo de data para o filtro
+        if tipo_data_filtro == 'data_emissao':
+            campo_data = RegistroOperacionalModel.destinatario_data_emissao
+        else:
+            # Padrão: data de entrega do ticket
+            campo_data = RegistroOperacionalModel.data_entrega_ticket
+
         # Cria query base
         query = FretePagarModel._criar_query_base()
 
         # Aplica filtros de data
         query = query.filter(
-            RegistroOperacionalModel.data_entrega_ticket.between(data_inicio, data_fim)
+            campo_data.isnot(None),
+            campo_data.between(data_inicio, data_fim)
         )
 
         # Filtros por texto usando LIKE

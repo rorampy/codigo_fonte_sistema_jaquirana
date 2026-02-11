@@ -136,6 +136,7 @@
             <table class="table table-vcenter card-table">
               <thead>
                 <tr>
+                  <th style="text-align: center;">Data Emissão NFe</th>
                   <th style="text-align: center;">Cliente</th>
                   <th style="text-align: center;">Produto | Bitola</th>
                   <th style="text-align: center;">Número NF</th>
@@ -147,6 +148,9 @@
               <tbody id="tabela-resultados">
                 {% for registro in vendas_em_transito %}
                 <tr>
+                  <td class="text-secondary text-center">
+                    {{ registro.destinatario_data_emissao | formatar_data_para_brl or '-' }}
+                  </td>
                   <td class="text-secondary text-center">
                     {{ registro.solicitacao.cliente.identificacao | truncate(40, '...') or '-' }}
                   </td>

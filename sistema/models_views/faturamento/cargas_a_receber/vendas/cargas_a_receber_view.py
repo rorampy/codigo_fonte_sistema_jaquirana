@@ -84,6 +84,7 @@ def listagem_a_receber():
         produto = request.args.get("produtoCarga")
         bitola = request.args.get("bitolaCarga")
         status_pagamento = request.args.get("statusPagamentoCarga")
+        tipo_data_filtro = request.args.get("tipoDataFiltro", "data_entrega")
 
         registros = RegistroOperacionalModel.filtrar_registros_carga_cliente(
             data_inicio=data_inicio,
@@ -96,7 +97,8 @@ def listagem_a_receber():
             numero_nf=numero_nf,
             produto=produto,
             bitola=bitola,
-            status_pagamento=status_pagamento
+            status_pagamento=status_pagamento,
+            tipo_data_filtro=tipo_data_filtro
         )
     else:
         registros = RegistroOperacionalModel.obter_registros_carga_agrupados()

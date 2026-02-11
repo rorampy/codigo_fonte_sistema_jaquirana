@@ -3,18 +3,12 @@ from sqlalchemy import desc
 import json
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
 
-# Imports para modelos de crédito
-from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_fornecedor_model import CreditoFornecedorModel
-from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_freteiro_model import CreditoFreteiroModel
-from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_extrator_model import CreditoExtratorModel
-
-# Imports para modelos de extrato de crédito
-from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_fornecedor_model import ExtratoCreditoFornecedorModel
-from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_freteiro_model import ExtratoCreditoFreteiroModel
-from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_extrator_model import ExtratoCreditoExtratorModel
+# === Nova Arquitetura de Créditos ===
+# ServicoCreditos abstrai o acesso aos dados de crédito para compatibilidade
+# from sistema.models_views.faturamento.controle_credito.servico_creditos import ServicoCreditos
 
 # Imports para modelos de entidades
-from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
 from sistema.models_views.gerenciar.comissionado.comissionado_model import ComissionadoModel
@@ -55,6 +49,7 @@ class FaturamentoModel(BaseModel):
     situacao_pagamento_id = db.Column(db.Integer, db.ForeignKey("fin_situacao_pagamento.id"), nullable=True)
     situacao = db.relationship("SituacaoPagamentoModel", backref=db.backref("faturamento_status", lazy=True))
     ativo = db.Column(db.Boolean, default=True, nullable=False)
+    
 
     def __init__(self, usuario_id, valor_total, codigo_faturamento, tipo_operacao=None, direcao_financeira=None, ids_fornecedores=None, valor_bruto_total=None, valor_credito_aplicado=None, valor_fornecedor=None, valor_transportadora=None, 
                  valor_extrator=None, valor_comissionado=None, valor_receita=None, valor_despesa=None, utilizou_credito=False, ids_fretes=None, ids_extratores=None, ids_comissionados=None, 
@@ -689,6 +684,7 @@ class FaturamentoModel(BaseModel):
     def _buscar_creditos_em_aberto(detalhes):
         """
         Busca créditos em aberto das entidades vinculadas ao faturamento.
+        Utiliza ServicoCreditos para compatibilidade com a nova arquitetura.
         
         Args:
             detalhes (dict): Dicionário com os detalhes do faturamento
@@ -696,6 +692,8 @@ class FaturamentoModel(BaseModel):
         Returns:
             dict: Créditos em aberto organizados por categoria
         """
+        from sistema.models_views.financeiro.controle_adiantamentos.servico_creditos import ServicoCreditos
+        
         creditos_em_aberto = {
             'fornecedores': [],
             'transportadoras': [],
@@ -734,105 +732,52 @@ class FaturamentoModel(BaseModel):
                 if comissionado_id:
                     comissionados_ids.add(comissionado_id)
             
-            # Buscar créditos em aberto dos fornecedores
+            # Buscar créditos em aberto dos fornecedores via ServicoCreditos
             for fornecedor_id in fornecedores_ids:
-                credito_fornecedor = CreditoFornecedorModel.obtem_registro_id(fornecedor_id)
-                if credito_fornecedor and credito_fornecedor.valor_total_credito_100 > 0:
-                    fornecedor = FornecedorCadastroModel.query.get(fornecedor_id)
+                creditos = ServicoCreditos.obter_creditos_disponiveis_fornecedor(fornecedor_id)
+                if creditos:
+                    fornecedor = FornecedorModel.query.get(fornecedor_id)
                     if fornecedor:
-                        # Buscar TODOS os extratos de crédito em aberto
-                        extratos_credito = ExtratoCreditoFornecedorModel.query.filter_by(
-                            fornecedor_id=fornecedor_id,
-                            credito_utilizado=False,
-                            tipo_movimentacao=1,
-                            ativo=True
-                        ).order_by(ExtratoCreditoFornecedorModel.data_movimentacao.desc()).all()
-                        
-                        # Se não há extratos específicos, criar um item genérico
-                        if not extratos_credito:
+                        for credito in creditos:
                             creditos_em_aberto['fornecedores'].append({
                                 'identificacao': fornecedor.identificacao,
-                                'valor_credito': credito_fornecedor.valor_total_credito_100,
-                                'data_ultima_movimentacao': credito_fornecedor.data_movimentacao.strftime('%d/%m/%Y') if credito_fornecedor.data_movimentacao else '-',
-                                'descricao': "Adiantamento em aberto"
+                                'valor_credito': credito.get('saldo_disponivel_100') or credito.get('valor_credito_100', 0),
+                                'data_ultima_movimentacao': credito.get('data_movimentacao', '-'),
+                                'descricao': credito.get('descricao') or "Adiantamento em aberto"
                             })
-                        else:
-                            print('entra aqui')
-                            # Adicionar cada extrato de crédito como um item separado
-                            for extrato in extratos_credito:
-                                creditos_em_aberto['fornecedores'].append({
-                                    'identificacao': fornecedor.identificacao,
-                                    'valor_credito': extrato.valor_credito_100,
-                                    'data_ultima_movimentacao': extrato.data_movimentacao.strftime('%d/%m/%Y') if extrato.data_movimentacao else '-',
-                                    'descricao': extrato.descricao or "Adiantamento em aberto"
-                                })
             
-            # Buscar créditos em aberto das transportadoras
+            # Buscar créditos em aberto das transportadoras via ServicoCreditos
             for transportadora_id in transportadoras_ids:
-                credito_transportadora = CreditoFreteiroModel.obtem_registro_id(transportadora_id)
-                if credito_transportadora and credito_transportadora.valor_total_credito_100 > 0:
+                creditos = ServicoCreditos.obter_creditos_disponiveis_transportadora(transportadora_id)
+                if creditos:
                     transportadora = TransportadoraModel.query.get(transportadora_id)
                     if transportadora:
-                        # Buscar TODOS os extratos de crédito em aberto
-                        extratos_credito = ExtratoCreditoFreteiroModel.query.filter_by(
-                            transportadora_id=transportadora_id,
-                            credito_utilizado=False,
-                            tipo_movimentacao=1,
-                            ativo=True
-                        ).order_by(ExtratoCreditoFreteiroModel.data_movimentacao.desc()).all()
-                        
-                        # Se não há extratos específicos, criar um item genérico
-                        if not extratos_credito:
+                        for credito in creditos:
                             creditos_em_aberto['transportadoras'].append({
                                 'identificacao': transportadora.identificacao,
-                                'valor_credito': credito_transportadora.valor_total_credito_100,
-                                'data_ultima_movimentacao': credito_transportadora.data_movimentacao.strftime('%d/%m/%Y') if credito_transportadora.data_movimentacao else '-',
-                                'descricao': "Adiantamento em aberto"
+                                'valor_credito': credito.get('saldo_disponivel_100') or credito.get('valor_credito_100', 0),
+                                'data_ultima_movimentacao': credito.get('data_movimentacao', '-'),
+                                'descricao': credito.get('descricao') or "Adiantamento em aberto"
                             })
-                        else:
-                            # Adicionar cada extrato de crédito como um item separado
-                            for extrato in extratos_credito:
-                                creditos_em_aberto['transportadoras'].append({
-                                    'identificacao': transportadora.identificacao,
-                                    'valor_credito': extrato.valor_credito_100,
-                                    'data_ultima_movimentacao': extrato.data_movimentacao.strftime('%d/%m/%Y') if extrato.data_movimentacao else '-',
-                                    'descricao': extrato.descricao or "Adiantamento em aberto"
-                                })
             
-            # Buscar créditos em aberto dos extratores
+            # Buscar créditos em aberto dos extratores via ServicoCreditos
             for extrator_id in extratores_ids:
-                credito_extrator = CreditoExtratorModel.obtem_registro_extrator_id(extrator_id)
-                if credito_extrator and credito_extrator.valor_total_credito_100 > 0:
+                creditos = ServicoCreditos.obter_creditos_disponiveis_extrator(extrator_id)
+                if creditos:
                     extrator = ExtratorModel.query.get(extrator_id)
                     if extrator:
-                        # Buscar TODOS os extratos de crédito em aberto
-                        extratos_credito = ExtratoCreditoExtratorModel.query.filter_by(
-                            extrator_id=extrator_id,
-                            credito_utilizado=False,
-                            tipo_movimentacao=1,
-                            ativo=True
-                        ).order_by(ExtratoCreditoExtratorModel.data_movimentacao.desc()).all()
-                        
-                        # Se não há extratos específicos, criar um item genérico
-                        if not extratos_credito:
+                        for credito in creditos:
                             creditos_em_aberto['extratores'].append({
                                 'identificacao': extrator.identificacao,
-                                'valor_credito': credito_extrator.valor_total_credito_100,
-                                'data_ultima_movimentacao': credito_extrator.data_movimentacao.strftime('%d/%m/%Y') if credito_extrator.data_movimentacao else '-',
-                                'descricao': "Adiantamento em aberto"
+                                'valor_credito': credito.get('saldo_disponivel_100') or credito.get('valor_credito_100', 0),
+                                'data_ultima_movimentacao': credito.get('data_movimentacao', '-'),
+                                'descricao': credito.get('descricao') or "Adiantamento em aberto"
                             })
-                        else:
-                            # Adicionar cada extrato de crédito como um item separado
-                            for extrato in extratos_credito:
-                                creditos_em_aberto['extratores'].append({
-                                    'identificacao': extrator.identificacao,
-                                    'valor_credito': extrato.valor_credito_100,
-                                    'data_ultima_movimentacao': extrato.data_movimentacao.strftime('%d/%m/%Y') if extrato.data_movimentacao else '-',
-                                    'descricao': extrato.descricao or "Adiantamento em aberto"
-                                })
         
         except Exception as e:
             print(f"[ERROR] Erro ao buscar créditos em aberto: {e}")
+            import traceback
+            traceback.print_exc()
         
         return creditos_em_aberto
     
@@ -842,8 +787,8 @@ class FaturamentoModel(BaseModel):
         Busca nos detalhes JSON de todos os faturamentos.
         
         Args:
-            extrato_credito_id (int): ID do extrato de crédito
-            tipo_credito (str): Tipo do crédito ('fornecedor', 'freteiro', 'extrator')
+            extrato_credito_id (int): ID do extrato de crédito (pode ser legado ou TransacaoCreditoModel)
+            tipo_credito (str): Tipo do crédito ('fornecedor', 'freteiro', 'extrator', 'transportadora')
         
         Returns:
             str: Código do faturamento origem ou 'N/A'
@@ -852,20 +797,22 @@ class FaturamentoModel(BaseModel):
             if not extrato_credito_id:
                 return "N/A"
 
-            # Mapear tipo de crédito para o campo no JSON
-            campo_extrato = {
+            # Mapear tipo de crédito para o campo no JSON (formato legado)
+            campo_extrato_legado = {
                 'fornecedor': 'extrato_credito_fornecedor_id',
                 'transportadora': 'extrato_credito_transportadora_id', 
+                'freteiro': 'extrato_credito_transportadora_id',
                 'extrator': 'extrato_credito_extrator_id'
             }
             
             campo_credito = {
                 'fornecedor': 'credito_fornecedor',
                 'transportadora': 'credito_transportadora',
+                'freteiro': 'credito_transportadora',
                 'extrator': 'credito_extrator'
             }
             
-            if tipo_credito not in campo_extrato:
+            if tipo_credito not in campo_credito:
                 return "N/A"
                 
             # Buscar em todos os faturamentos ativos
@@ -886,11 +833,28 @@ class FaturamentoModel(BaseModel):
                     creditos = detalhes.get(campo_credito[tipo_credito], [])
                     
                     for credito in creditos:
-                        if credito.get(campo_extrato[tipo_credito]) == extrato_credito_id:
+                        # Verificar formato novo (credito_id)
+                        if credito.get('credito_id') == extrato_credito_id:
                             return faturamento.codigo_faturamento
+                        
+                        # Verificar formato legado (extrato_credito_X_id)
+                        if tipo_credito in campo_extrato_legado:
+                            if credito.get(campo_extrato_legado[tipo_credito]) == extrato_credito_id:
+                                return faturamento.codigo_faturamento
                             
                 except (json.JSONDecodeError, TypeError):
                     continue
+            
+            # Se não encontrou nos detalhes JSON, tentar buscar pelo TransacaoCreditoModel
+            try:
+                from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import TransacaoCreditoModel
+                transacao = TransacaoCreditoModel.query.get(extrato_credito_id)
+                if transacao and transacao.faturamento_origem_id:
+                    fat_origem = FaturamentoModel.query.get(transacao.faturamento_origem_id)
+                    if fat_origem:
+                        return fat_origem.codigo_faturamento
+            except Exception:
+                pass
                     
             return "N/A"
         except Exception as e:

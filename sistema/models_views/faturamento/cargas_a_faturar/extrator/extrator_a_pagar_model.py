@@ -474,6 +474,7 @@ class ExtratorPagarModel(BaseModel):
         statusPagamento=None,
         extrator=None,
         incompleto=None,
+        tipo_data_filtro=None,
     ):
         """
         Filtra e retorna extratores agrupados com informações relacionadas.
@@ -485,6 +486,13 @@ class ExtratorPagarModel(BaseModel):
         if not data_inicio or not data_fim:
             data_inicio = date.today() - timedelta(days=30)
             data_fim = date.today()
+
+        # Determinar o campo de data para o filtro
+        if tipo_data_filtro == 'data_emissao':
+            campo_data = RegistroOperacionalModel.destinatario_data_emissao
+        else:
+            # Padrão: data de entrega do ticket
+            campo_data = ExtratorPagarModel.data_entrega_ticket
 
         query = (
             db.session.query(
@@ -513,18 +521,18 @@ class ExtratorPagarModel(BaseModel):
         # Aplica filtros de data
         if data_inicio and data_fim:
             query = query.filter(
-                ExtratorPagarModel.data_entrega_ticket.isnot(None),
-                ExtratorPagarModel.data_entrega_ticket.between(data_inicio, data_fim),
+                campo_data.isnot(None),
+                campo_data.between(data_inicio, data_fim),
             )
         elif data_inicio:
             query = query.filter(
-                ExtratorPagarModel.data_entrega_ticket.isnot(None),
-                ExtratorPagarModel.data_entrega_ticket >= data_inicio,
+                campo_data.isnot(None),
+                campo_data >= data_inicio,
             )
         elif data_fim:
             query = query.filter(
-                ExtratorPagarModel.data_entrega_ticket.isnot(None),
-                ExtratorPagarModel.data_entrega_ticket <= data_fim,
+                campo_data.isnot(None),
+                campo_data <= data_fim,
             )
 
         # JOINs condicionais - só quando necessários

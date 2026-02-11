@@ -117,6 +117,7 @@ def listagem_extratores_a_pagar():
             fornecedor=fornecedor,
             cliente=cliente,
             statusPagamento=statusPagamento,
+            tipo_data_filtro=request.args.get("tipoDataFiltro", "data_entrega"),
         )
 
     else:

@@ -25,11 +25,6 @@ from sistema.models_views.financeiro.controle_adiantamentos.faturamento_credito_
 from sistema.models_views.financeiro.controle_adiantamentos.historico_transacao_model import HistoricoTransacaoCreditoModel, AcaoHistoricoCredito
 
 
-# === Imports Legado (mantidos para compatibilidade durante transição) ===
-from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_freteiro_model import ExtratoCreditoFreteiroModel
-from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_freteiro_model import CreditoFreteiroModel
-
-
 @app.route("/financeiro/extrato-terceiros/freteiros", methods=["GET"])
 @login_required
 @requires_roles

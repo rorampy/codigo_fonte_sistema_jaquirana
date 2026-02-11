@@ -42,15 +42,17 @@ class SaldoMovimentacaoFinanceiraModel(BaseModel):
 
         return conta
 
-    def obter_registro_saldo_por_conta_bancaria(id_conta=1):
-        if id_conta == None:
-            id_conta = 1
+    def obter_registro_saldo_por_conta_bancaria(id_conta=None):
+        """
+        Retorna o saldo total.
+        Se id_conta for informado, retorna o saldo da conta. Caso contrário, soma de todas as contas.
+        """
         query = SaldoMovimentacaoFinanceiraModel.query.filter(
             SaldoMovimentacaoFinanceiraModel.deletado == 0,
             SaldoMovimentacaoFinanceiraModel.ativo   == 1,
         )
 
-        if id_conta != 0:
+        if id_conta and id_conta != 0:
             registro = query.filter(
                 SaldoMovimentacaoFinanceiraModel.conta_bancaria_id == id_conta
             ).first()

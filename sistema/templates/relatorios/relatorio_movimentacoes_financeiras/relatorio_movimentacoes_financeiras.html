@@ -115,49 +115,67 @@
               <td class="text-center">
                 {# 1 - Entrada #}
                 {% if mov.tipo_movimentacao == 1 %}
-                {% if mov.conciliacao_faturamento %}
-                Recebimento: {{
-                mov.conciliacao_faturamento.codigo_faturamento |
-                truncate(25, True, '...') }}
-                {% elif mov.conciliacao_lancamento_avulso %}
-                Recebimento avulso: {{
-                mov.conciliacao_lancamento_avulso.descricao |
-                truncate(25, True, '...') }}
-                {% endif %}
+                  {% if mov.conciliacao_bancaria and mov.importacao_ofx %}
+                    {% if mov.recebimentos_massa is defined and mov.recebimentos_massa|length > 0 %}
+                      Recebimento cliente ({{ mov.recebimentos_massa|length }} transações)
+                    {% elif mov.conciliacao_faturamento %}
+                      Recebimento: {{ mov.conciliacao_faturamento.codigo_faturamento | truncate(25, True, '...') }}
+                    {% elif mov.conciliacao_lancamento_avulso %}
+                      Receita extra conciliada: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(25, True, '...') }}
+                    {% else %}
+                      Receita extra conciliada
+                    {% endif %}
+                  {% elif mov.conciliacao_faturamento %}
+                    Recebimento: {{ mov.conciliacao_faturamento.codigo_faturamento | truncate(25, True, '...') }}
+                  {% elif mov.agendamento and mov.agendamento.lancamento_avulso %}
+                    Receita avulsa: {{ mov.agendamento.lancamento_avulso.descricao | truncate(25, True, '...') }}
+                  {% else %}
+                    Entrada
+                  {% endif %}
 
-                {# 2 - Saída / Inclusão de crédito e pagamentos
-                #}
+                {# 2 - Saída / Inclusão de crédito e pagamentos #}
                 {% elif mov.tipo_movimentacao == 2 %}
-                {% if mov.conciliacao_lancamento_avulso %}
-                Saída avulsa: {{
-                mov.conciliacao_lancamento_avulso.descricao |
-                truncate(25, True, '...') }}
-                {% elif mov.credito_extrator %}
-                Inclusão de crédito: Extrator {{
-                mov.credito_extrator.extrator.identificacao |
-                truncate(20, True, '...') }}
-                {% elif mov.credito_fornecedor %}
-                Inclusão de crédito: Fornecedor {{
-                mov.credito_fornecedor.fornecedor.identificacao
-                | truncate(20, True, '...') }}
-                {% elif mov.credito_freteiro %}
-                Inclusão de crédito: Freteiro {{
-                mov.credito_freteiro.transportadora.identificacao
-                | truncate(20, True, '...') }}
-                {% elif mov.fornecedor_pagamento %}
-                Pagamento de fornecedor: {{ mov.usuario.nome |
-                truncate(20, True, '...') }}
-                {% elif mov.freteiro_pagamento %}
-                Pagamento freteiro: {{
-                mov.freteiro_pagamento.transportadora.identificacao
-                | truncate(20, True, '...') }}
-                {% elif mov.extrator_pagamento %}
-                Pagamento extrator: {{
-                mov.extrator_pagamento.fornecedor.extrator.identificacao
-                | truncate(20, True, '...') }}
-                {% else %}
-                Movimentação genérica
-                {% endif %}
+                  {% if mov.conciliacao_bancaria and mov.importacao_ofx %}
+                    {% if mov.fornecedores_pagos_massa is defined and mov.fornecedores_pagos_massa|length > 0 %}
+                      Pagamento fornecedor ({{ mov.fornecedores_pagos_massa|length }} transações)
+                    {% elif mov.transportadoras_pagas_massa is defined and mov.transportadoras_pagas_massa|length > 0 %}
+                      Pagamento transportadora ({{ mov.transportadoras_pagas_massa|length }} transações)
+                    {% elif mov.extratores_pagos_massa is defined and mov.extratores_pagos_massa|length > 0 %}
+                      Pagamento extrator ({{ mov.extratores_pagos_massa|length }} transações)
+                    {% elif mov.comissionados_pagos_massa is defined and mov.comissionados_pagos_massa|length > 0 %}
+                      Pagamento comissionado ({{ mov.comissionados_pagos_massa|length }} transações)
+                    {% elif mov.conciliacao_lancamento_avulso %}
+                      Despesa extra conciliada: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(25, True, '...') }}
+                    {% elif mov.fornecedor_pagamento %}
+                      Pagamento de fornecedor: {{ mov.fornecedor_pagamento.fornecedor.identificacao | truncate(20, True, '...') }}
+                    {% elif mov.freteiro_pagamento %}
+                      Pagamento freteiro: {{ mov.freteiro_pagamento.transportadora.identificacao | truncate(20, True, '...') }}
+                    {% elif mov.extrator_pagamento %}
+                      Pagamento extrator: {{ mov.extrator_pagamento.fornecedor.extrator.identificacao | truncate(20, True, '...') }}
+                    {% elif mov.comissionado_pagamento %}
+                      Pagamento comissionado: {{ mov.comissionado_pagamento.comissionado.identificacao | truncate(20, True, '...') }}
+                    {% else %}
+                      Pagamento conciliado
+                    {% endif %}
+                  {% elif mov.conciliacao_lancamento_avulso %}
+                    Despesa avulsa: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(25, True, '...') }}
+                  {% elif mov.credito_extrator %}
+                    Inclusão de crédito: Extrator {{ mov.credito_extrator.extrator.identificacao | truncate(20, True, '...') }}
+                  {% elif mov.credito_fornecedor %}
+                    Inclusão de crédito: Fornecedor {{ mov.credito_fornecedor.fornecedor.identificacao | truncate(20, True, '...') }}
+                  {% elif mov.credito_freteiro %}
+                    Inclusão de crédito: Freteiro {{ mov.credito_freteiro.transportadora.identificacao | truncate(20, True, '...') }}
+                  {% elif mov.fornecedor_pagamento %}
+                    Pagamento de fornecedor: {{ mov.fornecedor_pagamento.fornecedor.identificacao | truncate(20, True, '...') }}
+                  {% elif mov.freteiro_pagamento %}
+                    Pagamento freteiro: {{ mov.freteiro_pagamento.transportadora.identificacao | truncate(20, True, '...') }}
+                  {% elif mov.extrator_pagamento %}
+                    Pagamento extrator: {{ mov.extrator_pagamento.fornecedor.extrator.identificacao | truncate(20, True, '...') }}
+                  {% elif mov.comissionado_pagamento %}
+                    Pagamento comissionado: {{ mov.comissionado_pagamento.comissionado.identificacao | truncate(20, True, '...') }}
+                  {% else %}
+                    Movimentação genérica
+                  {% endif %}
 
                 {# 3 - Cancelamento #}
                 {% elif mov.tipo_movimentacao == 3 %}

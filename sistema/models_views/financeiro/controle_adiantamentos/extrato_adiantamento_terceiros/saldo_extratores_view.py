@@ -18,16 +18,9 @@ from sistema._utilitarios import *
 
 # === Nova Arquitetura de Créditos ===
 from sistema.models_views.financeiro.controle_adiantamentos.servico_creditos import ServicoCreditos
-from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import (
-    TransacaoCreditoModel, TipoTransacaoCredito, TipoPessoa
-)
+from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import (TransacaoCreditoModel, TipoTransacaoCredito, TipoPessoa)
 from sistema.models_views.financeiro.controle_adiantamentos.faturamento_credito_vinculo_model import FaturamentoCreditoVinculoModel
 from sistema.models_views.financeiro.controle_adiantamentos.historico_transacao_model import HistoricoTransacaoCreditoModel, AcaoHistoricoCredito
-
-
-# === Imports Legado (mantidos para compatibilidade durante transição) ===
-from sistema.models_views.faturamento.controle_credito.extrato_credito.extrato_credito_extrator_model import ExtratoCreditoExtratorModel
-from sistema.models_views.faturamento.controle_credito.credito_agrupado.credito_extrator_model import CreditoExtratorModel
 
 @app.route("/financeiro/extrato-terceiros/extratores", methods=["GET"])
 @login_required

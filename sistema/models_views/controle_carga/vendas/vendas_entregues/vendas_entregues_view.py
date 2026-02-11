@@ -89,6 +89,7 @@ def vendas_entregues_busca_rapida_ajax():
     origem_venda = request.args.get('origem_venda', '').strip()
     data_inicio = request.args.get('data_inicio', '').strip()
     data_fim = request.args.get('data_fim', '').strip()
+    tipo_data_filtro = request.args.get('tipo_data_filtro', 'data_entrega').strip()
 
     pagina = request.args.get('pagina', 1, type=int)
     por_pagina = 200
@@ -104,6 +105,7 @@ def vendas_entregues_busca_rapida_ajax():
         origem_venda=origem_venda,
         data_inicio=data_inicio,
         data_fim=data_fim,
+        tipo_data_filtro=tipo_data_filtro,
         pagina=pagina,
         por_pagina=por_pagina,
         categoria_venda='entregue'
@@ -117,7 +119,8 @@ def vendas_entregues_busca_rapida_ajax():
         'nf_venda': nf_venda,
         'origem_venda': origem_venda,
         'data_inicio': data_inicio,
-        'data_fim': data_fim
+        'data_fim': data_fim,
+        'tipo_data_filtro': tipo_data_filtro
     }
     
     return render_template(

@@ -92,7 +92,7 @@ def listagem_fornecedores_a_pagar():
         valor_padrao_semana = semanas_disponiveis[0]["valor"]
 
     parametros_filtro = ["tipo_filtro", "semanaSelecionada", "dataInicio", "dataFim", "numeroNF", "placaCarga", "motoristaCarga",
-                        "produtoCarga", "bitolaCarga", "transportadoraCarga", "fornecedorCarga", "clienteCarga", "statusPagamentoCarga"]
+                        "produtoCarga", "bitolaCarga", "transportadoraCarga", "fornecedorCarga", "clienteCarga", "statusPagamentoCarga", "tipoDataFiltro"]
     
     tem_filtros = any(request.args.get(param) for param in parametros_filtro)
 
@@ -110,6 +110,7 @@ def listagem_fornecedores_a_pagar():
         fornecedor = request.args.get("fornecedorCarga")
         cliente = request.args.get("clienteCarga")
         statusPagamento = request.args.get("statusPagamentoCarga")
+        tipo_data_filtro = request.args.get("tipoDataFiltro", "data_entrega")
 
         # Determinar data_inicio e data_fim baseado no tipo de filtro
         if tipo_filtro == "data" and data_inicio_form and data_fim_form:
@@ -133,7 +134,8 @@ def listagem_fornecedores_a_pagar():
             transportadora=transportadora,
             fornecedor=fornecedor,
             cliente=cliente,
-            statusPagamento=statusPagamento
+            statusPagamento=statusPagamento,
+            tipo_data_filtro=tipo_data_filtro
         )
         
     else:

@@ -5,6 +5,7 @@ from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pa
 from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
 from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
 from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
+from sistema.models_views.faturamento.cargas_a_receber.nf_complementar.nf_complementar_model import NfComplementarModel
 import json
 
 
@@ -33,7 +34,14 @@ class DREModel:
             'campo_valor': 'valor_total_nota_100',
             'campo_data': 'data_entrega_ticket',
             'filtro_operacional': 'solicitacao_nf_id',  # Exclui receitas avulsas
-            'descricao': 'Vendas Madeira'
+            'descricao': 'Vendas NFe Peso Padrão'
+        },
+        '1.01.03': {
+            'model': NfComplementarModel,
+            'campo_valor': 'valor_total_nota_100',
+            'campo_data': 'destinatario_data_emissao',
+            'filtro_operacional': 'cliente_id',  # Todas NF complementares são operacionais
+            'descricao': 'Vendas de NFe Complementares'
         },
         '2.01.01': {
             'model': FornecedorPagarModel,

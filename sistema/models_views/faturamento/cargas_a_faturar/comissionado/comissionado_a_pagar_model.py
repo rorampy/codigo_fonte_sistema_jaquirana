@@ -409,6 +409,7 @@ class ComissionadoPagarModel(BaseModel):
         statusPagamento=None,
         comissionado=None,
         incompleto=None,
+        tipo_data_filtro=None,
     ):
         """
         Filtra e retorna comissionados agrupados com informações relacionadas.
@@ -417,6 +418,13 @@ class ComissionadoPagarModel(BaseModel):
             RegistroOperacionalModel,
         )
         from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
+
+        # Determinar o campo de data para o filtro
+        if tipo_data_filtro == 'data_emissao':
+            campo_data = RegistroOperacionalModel.destinatario_data_emissao
+        else:
+            # Padrão: data de entrega do ticket
+            campo_data = RegistroOperacionalModel.data_entrega_ticket
 
         query = (
             db.session.query(
@@ -444,21 +452,21 @@ class ComissionadoPagarModel(BaseModel):
             )
         )
 
-        # Aplica filtros de data usando RegistroOperacionalModel.data_entrega_ticket
+        # Aplica filtros de data
         if data_inicio and data_fim:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket.between(data_inicio, data_fim),
+                campo_data.isnot(None),
+                campo_data.between(data_inicio, data_fim),
             )
         elif data_inicio:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
+                campo_data.isnot(None),
+                campo_data >= data_inicio,
             )
         elif data_fim:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket <= data_fim,
+                campo_data.isnot(None),
+                campo_data <= data_fim,
             )
 
         # JOINs condicionais - só quando necessários

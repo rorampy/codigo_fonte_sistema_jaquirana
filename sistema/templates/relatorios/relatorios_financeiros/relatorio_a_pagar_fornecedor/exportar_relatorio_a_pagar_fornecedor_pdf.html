@@ -93,11 +93,11 @@
         <table>
           <thead>
             <tr>
-              <th class="text-center text-primary">Data
-                Entrega</th>
+              <th class="text-center text-primary">Data Entrega</th>
               <th class="text-center">Placa/Motorista</th>
               <th class="text-center">Transportadora</th>
               <th class="text-center">Bitola</th>
+              <th class="text-center">Preço/Ton</th>
               <th class="text-center">Peso Ticket</th>
               <th class="text-center">Número NF</th>
               <th class="text-center">A pagar fornecedor</th>
@@ -108,67 +108,73 @@
           <tbody>
             {% for item in produto_group.list %}
             <tr>
-              <td class="text-center text-primary">{{
-                item.registro.data_entrega_ticket |
-                formatar_data_para_brl if
-                item.registro.data_entrega_ticket else '-'
-                }}</td>
-              <td class="text-center">{{
-                item.registro.solicitacao.veiculo.placa_veiculo
-                or '-' }} | {% set nome_split =
-                item.registro.solicitacao.motorista.nome_completo.split()
-                %}{% if nome_split|length > 1 %}{{
-                nome_split[0] }} {{ nome_split[1][0] }}.{%
-                else %}{{ nome_split[0] }}{% endif %}</td>
-              <td class="text-center">{{
-                item.registro.solicitacao.transportadora_exibicao.identificacao
-                | truncate(15, True, '...') if
-                item.registro.solicitacao.transportadora_exibicao
-                else '-' }}</td>
-              <td class="text-center">{{
-                item.registro.solicitacao.bitola.bitola |
-                truncate(15, True, '...') if
-                item.registro.solicitacao.bitola.bitola else
-                '-' }}</td>
-              <td class="text-center">{% if
-                item.registro_operacional.peso_liquido_ticket
-                %}<span class="badge bg-primary-lt p-2">{{
-                  item.registro_operacional.peso_liquido_ticket
-                  }} Ton.</span>{% else %}<span class="badge bg-secondary-lt p-2">Sem
-                  peso</span>{% endif %}</td>
-              <td class="text-center">
-                <span class="badge bg-orange-lt p-2">
-                  {% if item.registro_operacional.estorno_nf%}
-                  {{ item.registro_operacional.numero_nota_fiscal_estorno }} *
-                  {% elif item.registro_operacional.numero_nota_fiscal %}
-                  {{ item.registro_operacional.numero_nota_fiscal }}
-                  {%else%}
-                  -
-                  {% endif %}
-                </span>
-              </td>
-              <td class="text-center">{% if
-                item.registro.valor_total_a_pagar_100 %}<span class="badge bg-green-lt p-2">{{
-                  item.registro.valor_total_a_pagar_100 |
-                  formatar_float_para_brl }}</span>{% else
-                %}-{% endif %}</td>
-              <td class="text-center">{% if
-                item.registro.situacao.situacao == 'Pendente'
-                %}<span class="badge badge-outline text-orange">Pendente</span>{%
-                else %}<span class="badge badge-outline text-green">{{
-                  item.registro.situacao.situacao }}</span>{%
-                endif %}</td>
-              <td class="text-center">{% if
-                item.registro.incompleto %}<span class="badge badge-outline text-red">Sim</span>{%
-                else %}<span class="badge badge-outline text-gray">Não</span>{%
-                endif %}</td>
+              <td class="text-center text-primary">{{ item.registro.data_entrega_ticket | formatar_data_para_brl if item.registro.data_entrega_ticket else '-' }}</td>
+              <td class="text-center">{{ item.registro.solicitacao.veiculo.placa_veiculo or '-' }} | {% set nome_split = item.registro.solicitacao.motorista.nome_completo.split() %}{% if nome_split|length > 1 %}{{ nome_split[0] }} {{ nome_split[1][0] }}.{% else %}{{ nome_split[0] }}{% endif %}</td>
+              <td class="text-center">{{ item.registro.solicitacao.transportadora_exibicao.identificacao | truncate(15, True, '...') if item.registro.solicitacao.transportadora_exibicao else '-' }}</td>
+              <td class="text-center">{{ item.registro.solicitacao.bitola.bitola | truncate(15, True, '...') if item.registro.solicitacao.bitola.bitola else '-' }}</td>
+              <td class="text-center">{% if item.registro.preco_custo_bitola_100 %}<span class="badge bg-cyan-lt p-2">{{ item.registro.preco_custo_bitola_100 | formatar_float_para_brl }}</span>{% else %}-{% endif %}</td>
+              <td class="text-center">{% if item.registro_operacional.peso_liquido_ticket %}<span class="badge bg-primary-lt p-2">{{ item.registro_operacional.peso_liquido_ticket }} Ton.</span>{% else %}<span class="badge bg-secondary-lt p-2">Sem peso</span>{% endif %}</td>
+              <td class="text-center"><span class="badge bg-orange-lt p-2">{% if item.registro_operacional.estorno_nf %}{{ item.registro_operacional.numero_nota_fiscal_estorno }} *{% elif item.registro_operacional.numero_nota_fiscal %}{{ item.registro_operacional.numero_nota_fiscal }}{% else %}-{% endif %}</span></td>
+              <td class="text-center">{% if item.registro.valor_total_a_pagar_100 %}<span class="badge bg-green-lt p-2">{{ item.registro.valor_total_a_pagar_100 | formatar_float_para_brl }}</span>{% else %}-{% endif %}</td>
+              <td class="text-center">{% if item.registro.situacao.situacao == 'Pendente' %}<span class="badge badge-outline text-orange">Pendente</span>{% else %}<span class="badge badge-outline text-green">{{ item.registro.situacao.situacao }}</span>{% endif %}</td>
+              <td class="text-center">{% if item.registro.incompleto %}<span class="badge badge-outline text-red">Sim</span>{% else %}<span class="badge badge-outline text-gray">Não</span>{% endif %}</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
         {% endfor %}
+        
+        <!-- Totalizador do Fornecedor como linha de tabela -->
+        {% if totalizadores and totalizadores.por_fornecedor and cliente_group.grouper in totalizadores.por_fornecedor %}
+        <table style="margin-top: 5px;">
+          <tbody>
+            <tr style="background-color: #e9ecef; font-weight: bold;">
+              <td class="text-center" colspan="5" style="text-align: right; font-weight: bold;">
+                TOTAL {{ cliente_group.grouper|upper }}:
+              </td>
+              <td class="text-center">
+                <span class="badge bg-primary-lt p-2" style="font-size: 14px;">
+                  {{ "%.2f"|format(totalizadores.por_fornecedor[cliente_group.grouper].toneladas)|replace('.', ',') }} Ton.
+                </span>
+              </td>
+              <td class="text-center"></td>
+              <td class="text-center">
+                <span class="badge bg-green-lt p-2" style="font-size: 14px;">
+                  {{ totalizadores.por_fornecedor[cliente_group.grouper].valor_100 | formatar_float_para_brl }}
+                </span>
+              </td>
+              <td class="text-center" colspan="2"></td>
+            </tr>
+          </tbody>
+        </table>
+        {% endif %}
 
         {% endfor %}
+        
+        <!-- Totalizador Geral como linha de tabela (somente se houver mais de um fornecedor) -->
+        {% if totalizadores and totalizadores.quantidade_fornecedores > 1 %}
+        <table style="margin-top: 20px;">
+          <tbody>
+            <tr style="background-color: #1e3a5f; color: white; font-weight: bold;">
+              <td class="text-center" colspan="5" style="text-align: right; font-weight: bold; color: white;">
+                TOTAL GERAL:
+              </td>
+              <td class="text-center">
+                <span class="badge bg-primary-lt p-2" style="font-size: 14px;">
+                  {{ "%.2f"|format(totalizadores.geral.toneladas)|replace('.', ',') }} Ton.
+                </span>
+              </td>
+              <td class="text-center"></td>
+              <td class="text-center">
+                <span class="badge bg-green-lt p-2" style="font-size: 14px;">
+                  {{ totalizadores.geral.valor_100 | formatar_float_para_brl }}
+                </span>
+              </td>
+              <td class="text-center" colspan="2"></td>
+            </tr>
+          </tbody>
+        </table>
+        {% endif %}
 
         {% else %}
         <!-- Estado vazio -->

@@ -326,7 +326,8 @@ class FornecedorPagarModel(BaseModel):
         transportadora=None,
         fornecedor=None,
         cliente=None,
-        statusPagamento=None
+        statusPagamento=None,
+        tipo_data_filtro=None
     ):
         """
         Filtra e retorna fornecedores agrupados com informações relacionadas.
@@ -343,6 +344,8 @@ class FornecedorPagarModel(BaseModel):
             produto (int, optional): ID do produto
             bitola (int, optional): ID da bitola
             statusPagamento (int, optional): ID do status do pagamento
+            tipo_data_filtro (str, optional): 'data_emissao' para filtrar por destinatario_data_emissao,
+                                              'data_entrega' (padrão) para filtrar por data_entrega_ticket
         
         Returns:
             list: Lista de dicionários com fornecedores filtrados e agrupados
@@ -371,20 +374,27 @@ class FornecedorPagarModel(BaseModel):
             )
         )
 
+        # Seleciona o campo de data conforme o tipo de filtro
+        if tipo_data_filtro == 'data_emissao':
+            campo_data = RegistroOperacionalModel.destinatario_data_emissao
+        else:
+            # Padrão: data de entrega do ticket
+            campo_data = RegistroOperacionalModel.data_entrega_ticket
+
         if data_inicio and data_fim:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket.between(data_inicio, data_fim),
+                campo_data.isnot(None),
+                campo_data.between(data_inicio, data_fim),
             )
         elif data_inicio:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
+                campo_data.isnot(None),
+                campo_data >= data_inicio,
             )
         elif data_fim:
             query = query.filter(
-                RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                RegistroOperacionalModel.data_entrega_ticket <= data_fim,
+                campo_data.isnot(None),
+                campo_data <= data_fim,
             )
 
         # Aplicar filtros

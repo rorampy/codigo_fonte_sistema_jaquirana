@@ -212,6 +212,7 @@
                 <th style="width: 120px">Data</th>
                 <th>Descrição</th>
                 <th style="width: 100px" class="text-center">Tipo</th>
+                <th style="width: 120px" class="text-center">Status</th>
                 <th style="width: 150px" class="text-end">Valor</th>
                 <th style="width: 80px" class="text-center">Ações</th>
               </tr>
@@ -264,6 +265,19 @@
                     </svg>
                     Estorno
                   </span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if mov.faturamento_origem and mov.faturamento_origem.situacao_pagamento_id %}
+                    {% if mov.faturamento_origem.situacao_pagamento_id in [5, 8, 9, 10] %}
+                      <span class="badge bg-green-lt" data-bs-toggle="tooltip" data-bs-placement="top" 
+                        title="Cód: {{ mov.faturamento_origem.codigo_faturamento }}">{{ mov.faturamento_origem.situacao.situacao }}</span>
+                    {% else %}
+                      <span class="badge bg-red-lt" data-bs-toggle="tooltip" data-bs-placement="top" 
+                        title="Cód: {{ mov.faturamento_origem.codigo_faturamento }}">{{ mov.faturamento_origem.situacao.situacao }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="badge bg-dark-lt">Sem faturamento</span>
                   {% endif %}
                 </td>
                 <td class="text-end">
