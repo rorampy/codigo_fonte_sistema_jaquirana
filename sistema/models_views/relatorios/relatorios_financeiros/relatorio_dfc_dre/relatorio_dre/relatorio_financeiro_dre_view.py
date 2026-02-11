@@ -565,6 +565,24 @@ def dre_categoria_detalhes(categoria_id):
                                 if registro.pessoa_financeiro:
                                     beneficiario = registro.pessoa_financeiro.identificacao
                                 
+                                # Para categorias automáticas, excluir lançamentos que não correspondem a operações reais
+                                # A DRE deve contemplar exclusivamente as operações de compra/venda de madeira
+                                # Vendas (1.01.01): excluir Receita Avulsa e Faturamento de Carga
+                                if categoria.codigo == '1.01.01' and origem in ['Receita Avulsa', 'Faturamento de Carga']:
+                                    continue
+                                # Fornecedores (2.01.01): excluir Despesa Avulsa e Faturamento de Carga
+                                if categoria.codigo == '2.01.01' and origem in ['Despesa Avulsa', 'Faturamento de Carga']:
+                                    continue
+                                # Fretes (2.01.02): excluir Despesa Avulsa e Faturamento de Carga
+                                if categoria.codigo == '2.01.02' and origem in ['Despesa Avulsa', 'Faturamento de Carga']:
+                                    continue
+                                # Extração (2.01.03): excluir Despesa Avulsa e Faturamento de Carga
+                                if categoria.codigo == '2.01.03' and origem in ['Despesa Avulsa', 'Faturamento de Carga']:
+                                    continue
+                                # Comissão (2.01.04): excluir Despesa Avulsa e Faturamento de Carga
+                                if categoria.codigo == '2.01.04' and origem in ['Despesa Avulsa', 'Faturamento de Carga']:
+                                    continue
+                                
                                 registros_categoria.append({
                                     'id': registro.id,
                                     'data_competencia': registro.data_competencia.strftime('%d/%m/%Y'),
@@ -634,6 +652,13 @@ def dre_categoria_detalhes(categoria_id):
                     Model.data_entrega_ticket.isnot(None)
                 )
                 
+                # Para Fornecedores (2.01.01), Fretes (2.01.02), Extração (2.01.03), Comissão (2.01.04) e Vendas (1.01.01),
+                # filtrar apenas operações vinculadas a cargas (excluir "Despesas Avulsas", "Faturamento de Carga" e "Receitas Avulsas")
+                if categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
+                    query_a_pagar = query_a_pagar.filter(Model.solicitacao_id.isnot(None))
+                elif categoria.codigo == '1.01.01':
+                    query_a_pagar = query_a_pagar.filter(Model.solicitacao_nf_id.isnot(None))
+                
                 if data_inicio:
                     query_a_pagar = query_a_pagar.filter(Model.data_entrega_ticket >= data_inicio)
                 if data_fim:
@@ -699,7 +724,14 @@ def dre_categoria_detalhes(categoria_id):
                         
                         # Buscar beneficiário (fornecedor/transportadora/extrator/comissionado)
                         beneficiario = 'Não informado'
-                        if hasattr(registro, 'fornecedor') and registro.fornecedor:
+                        
+                        # Para Fretes (2.01.02), exibir nome da transportadora ao invés do fornecedor do mato
+                        if categoria.codigo == '2.01.02' and hasattr(registro, 'transportadora') and registro.transportadora:
+                            beneficiario = registro.transportadora.identificacao
+                        # Para Comissão (2.01.04), exibir nome do comissionado
+                        elif categoria.codigo == '2.01.04' and hasattr(registro, 'comissionado') and registro.comissionado:
+                            beneficiario = registro.comissionado.identificacao
+                        elif hasattr(registro, 'fornecedor') and registro.fornecedor:
                             beneficiario = registro.fornecedor.identificacao
                         
                         # Buscar informações da carga/solicitação
@@ -751,14 +783,271 @@ def dre_categoria_detalhes(categoria_id):
         # Calcular total
         total = sum(reg['valor'] for reg in registros_categoria)
         
+        # Códigos das categorias automáticas que permitem exportação
+        categorias_automaticas = ['1.01.01', '2.01.01', '2.01.02', '2.01.03', '2.01.04']
+        
         return jsonify({
             'registros': registros_categoria,
             'total': total,
             'total_formatado': ValoresMonetarios.converter_float_brl_positivo(total),
             'quantidade': len(registros_categoria),
-            'categoria_id': categoria_id
+            'categoria_id': categoria_id,
+            'categoria_codigo': categoria.codigo,
+            'permite_exportacao': categoria.codigo in categorias_automaticas
         })
         
     except Exception as e:
         print(f"Erro em dre_categoria_detalhes: {e}")
         return jsonify({'error': f'Erro ao buscar detalhes: {str(e)}'}), 500
+
+
+def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, data_fim_str):
+    """
+    Função auxiliar que busca detalhes de uma categoria para exportação PDF/Excel.
+    Retorna tuple: (categoria, registros, total, data_inicio, data_fim, erro)
+    """
+    try:
+        # Converter datas
+        data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
+        data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
+        
+        # Importar models necessários
+        from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
+        from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
+        from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
+        from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
+        from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
+        from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
+        from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
+        
+        # Obter categoria
+        categoria = PlanoContaModel.query.filter_by(id=categoria_id, ativo=True, deletado=False).first()
+        if not categoria:
+            return None, [], 0, data_inicio, data_fim, 'Categoria não encontrada'
+        
+        registros_categoria = []
+        
+        # Mapeamento para categorias automáticas
+        mapeamento_a_pagar = {
+            '2.01.01': {'model': FornecedorPagarModel, 'tipo': 'Fornecedor', 'origem': 'Compra de Madeira'},
+            '2.01.02': {'model': FretePagarModel, 'tipo': 'Frete', 'origem': 'Transporte'},
+            '2.01.03': {'model': ExtratorPagarModel, 'tipo': 'Extrator', 'origem': 'Extração de Madeira'},
+            '2.01.04': {'model': ComissionadoPagarModel, 'tipo': 'Comissionado', 'origem': 'Comissão'},
+            '1.01.01': {'model': RegistroOperacionalModel, 'tipo': 'Venda', 'origem': 'Venda de Madeira'}
+        }
+        
+        # Buscar registros das tabelas 'a pagar' para categorias automáticas
+        if categoria.codigo in mapeamento_a_pagar:
+            config = mapeamento_a_pagar.get(categoria.codigo)
+            Model = config['model']
+            
+            query_a_pagar = Model.query.filter(
+                Model.ativo == True,
+                Model.deletado == False,
+                Model.data_entrega_ticket.isnot(None)
+            )
+            
+            # Filtrar apenas operações vinculadas a cargas
+            if categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
+                query_a_pagar = query_a_pagar.filter(Model.solicitacao_id.isnot(None))
+            elif categoria.codigo == '1.01.01':
+                query_a_pagar = query_a_pagar.filter(Model.solicitacao_nf_id.isnot(None))
+            
+            query_a_pagar = query_a_pagar.filter(
+                Model.data_entrega_ticket >= data_inicio,
+                Model.data_entrega_ticket <= data_fim
+            )
+            
+            registros_a_pagar = query_a_pagar.all()
+            
+            for registro in registros_a_pagar:
+                # Para vendas
+                if categoria.codigo == '1.01.01':
+                    valor = (registro.valor_total_nota_100 or 0) / 100.0
+                    beneficiario = registro.destinatario_nome or 'Não informado'
+                    numero_nf = registro.numero_nota_fiscal or ''
+                    observacoes = ''
+                    
+                    if hasattr(registro, 'solicitacao') and registro.solicitacao:
+                        solicitacao = registro.solicitacao
+                        detalhes_obs = []
+                        if hasattr(solicitacao, 'produto') and solicitacao.produto:
+                            detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
+                        if hasattr(solicitacao, 'bitola') and solicitacao.bitola:
+                            detalhes_obs.append(f"Bitola: {solicitacao.bitola.bitola}")
+                        if hasattr(solicitacao, 'cliente') and solicitacao.cliente:
+                            beneficiario = solicitacao.cliente.identificacao
+                        observacoes = ' • '.join(detalhes_obs)
+                    
+                    registros_categoria.append({
+                        'id': registro.id,
+                        'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y'),
+                        'valor': valor,
+                        'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                        'referencia': numero_nf or f"{config['tipo']}-{registro.id}",
+                        'descricao': observacoes,
+                        'beneficiario': beneficiario,
+                        'origem': config['origem'],
+                        'tipo_documento': 'Nota Fiscal',
+                        'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{registro.id}"
+                    })
+                else:
+                    # Para despesas (a pagar)
+                    valor = (registro.valor_total_a_pagar_100 or 0) / 100.0
+                    beneficiario = 'Não informado'
+                    
+                    # Para Fretes, exibir transportadora
+                    if categoria.codigo == '2.01.02' and hasattr(registro, 'transportadora') and registro.transportadora:
+                        beneficiario = registro.transportadora.identificacao
+                    # Para Comissão, exibir comissionado
+                    elif categoria.codigo == '2.01.04' and hasattr(registro, 'comissionado') and registro.comissionado:
+                        beneficiario = registro.comissionado.identificacao
+                    elif hasattr(registro, 'fornecedor') and registro.fornecedor:
+                        beneficiario = registro.fornecedor.identificacao
+                    
+                    observacoes = ''
+                    numero_ticket = ''
+                    if hasattr(registro, 'solicitacao') and registro.solicitacao:
+                        solicitacao = registro.solicitacao
+                        detalhes_obs = []
+                        if hasattr(solicitacao, 'produto') and solicitacao.produto:
+                            detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
+                        if hasattr(registro, 'bitola') and registro.bitola:
+                            detalhes_obs.append(f"Bitola: {registro.bitola.bitola}")
+                        if hasattr(solicitacao, 'numero_ticket') and solicitacao.numero_ticket:
+                            numero_ticket = solicitacao.numero_ticket
+                        observacoes = ' • '.join(detalhes_obs)
+                    
+                    registros_categoria.append({
+                        'id': registro.id,
+                        'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y'),
+                        'valor': valor,
+                        'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                        'referencia': numero_ticket or f"{config['tipo']}-{registro.id}",
+                        'descricao': observacoes,
+                        'beneficiario': beneficiario,
+                        'origem': config['origem'],
+                        'tipo_documento': f'{config["tipo"]} a Pagar',
+                        'codigo_documento': f"{config['tipo'].upper()[:3]}-{registro.id}"
+                    })
+        
+        total = sum(reg['valor'] for reg in registros_categoria)
+        return categoria, registros_categoria, total, data_inicio, data_fim, None
+        
+    except Exception as e:
+        return None, [], 0, None, None, str(e)
+
+
+@app.route('/relatorios/relatorios-financeiros/dre-categoria-detalhes/<int:categoria_id>/excel', methods=['GET'])
+@login_required
+@requires_roles
+def dre_categoria_detalhes_excel(categoria_id):
+    """
+    Exporta os detalhes de uma categoria DRE para Excel
+    """
+    try:
+        data_inicio_str = request.args.get('data_inicio')
+        data_fim_str = request.args.get('data_fim')
+        
+        if not data_inicio_str or not data_fim_str:
+            flash(('Datas são obrigatórias para exportação.', 'error'))
+            return redirect(url_for('dre_analitico'))
+        
+        categoria, registros, total, data_inicio, data_fim, erro = _buscar_detalhes_categoria_para_exportacao(
+            categoria_id, data_inicio_str, data_fim_str
+        )
+        
+        if erro:
+            flash((f'Erro ao exportar: {erro}', 'error'))
+            return redirect(url_for('dre_analitico'))
+        
+        if not registros:
+            flash(('Nenhum registro encontrado para exportação.', 'warning'))
+            return redirect(url_for('dre_analitico'))
+        
+        # Preparar dados para Excel
+        dados_excel = []
+        for reg in registros:
+            dados_excel.append({
+                'Data': reg['data_competencia'],
+                'Documento': reg['codigo_documento'],
+                'Origem': reg['origem'],
+                'Beneficiário': reg['beneficiario'],
+                'Descrição': reg['descricao'].replace(' • ', ' | ') if reg['descricao'] else '',
+                'Referência': reg['referencia'],
+                'Valor (R$)': reg['valor']
+            })
+        
+        # Adicionar linha de total
+        dados_excel.append({
+            'Data': '',
+            'Documento': '',
+            'Origem': '',
+            'Beneficiário': '',
+            'Descrição': '',
+            'Referência': 'TOTAL',
+            'Valor (R$)': total
+        })
+        
+        nome_arquivo = f"DRE_Detalhes_{categoria.nome.replace(' ', '_')}_{data_inicio.strftime('%d%m%Y')}_{data_fim.strftime('%d%m%Y')}"
+        
+        return ManipulacaoArquivos.exportar_excel(dados_excel, nome_arquivo)
+        
+    except Exception as e:
+        print(f"Erro ao exportar Excel DRE Detalhes: {e}")
+        flash((f'Erro ao exportar para Excel: {str(e)}', 'error'))
+        return redirect(url_for('dre_analitico'))
+
+
+@app.route('/relatorios/relatorios-financeiros/dre-categoria-detalhes/<int:categoria_id>/pdf', methods=['GET'])
+@login_required
+@requires_roles
+def dre_categoria_detalhes_pdf(categoria_id):
+    """
+    Exporta os detalhes de uma categoria DRE para PDF
+    """
+    try:
+        data_inicio_str = request.args.get('data_inicio')
+        data_fim_str = request.args.get('data_fim')
+        
+        if not data_inicio_str or not data_fim_str:
+            flash(('Datas são obrigatórias para exportação.', 'error'))
+            return redirect(url_for('dre_analitico'))
+        
+        categoria, registros, total, data_inicio, data_fim, erro = _buscar_detalhes_categoria_para_exportacao(
+            categoria_id, data_inicio_str, data_fim_str
+        )
+        
+        if erro:
+            flash((f'Erro ao exportar: {erro}', 'error'))
+            return redirect(url_for('dre_analitico'))
+        
+        if not registros:
+            flash(('Nenhum registro encontrado para exportação.', 'warning'))
+            return redirect(url_for('dre_analitico'))
+        
+        # Obter logo para o PDF
+        logo_path = obter_url_absoluta_de_imagem('logo.png')
+        
+        # Renderizar template PDF
+        html = render_template(
+            'relatorios/relatorios_financeiros/relatorio_dfc_dre/dre/dre_categoria_detalhes_pdf.html',
+            categoria=categoria,
+            registros=registros,
+            total=total,
+            total_formatado=ValoresMonetarios.converter_float_brl_positivo(total),
+            quantidade=len(registros),
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            data_geracao=datetime.now(),
+            logo_path=logo_path
+        )
+        
+        nome_arquivo = f"DRE_Detalhes_{categoria.nome.replace(' ', '_')}_{data_inicio.strftime('%d%m%Y')}_{data_fim.strftime('%d%m%Y')}"
+        
+        return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo)
+        
+    except Exception as e:
+        print(f"Erro ao exportar PDF DRE Detalhes: {e}")
+        flash((f'Erro ao exportar para PDF: {str(e)}', 'error'))
+        return redirect(url_for('dre_analitico'))

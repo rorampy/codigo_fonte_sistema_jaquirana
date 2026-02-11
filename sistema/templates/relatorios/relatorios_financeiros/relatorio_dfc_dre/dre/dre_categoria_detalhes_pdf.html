@@ -1,0 +1,249 @@
+{% include 'relatorios/estrutura/style.html' %}
+
+<style>
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+  
+  .resumo-cards {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 15px 0 20px 0;
+  }
+  
+  .resumo-card {
+    background-color: #f6f8f6;
+    border-radius: 8px;
+    padding: 12px 25px;
+    text-align: center;
+    border-left: 4px solid #1e5631;
+    min-width: 180px;
+  }
+  
+  .resumo-card.destaque {
+    background-color: #1e5631;
+    border-left: none;
+    color: #fff;
+  }
+  
+  .resumo-card .label {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 3px;
+  }
+  
+  .resumo-card.destaque .label {
+    color: rgba(255,255,255,0.8);
+  }
+  
+  .resumo-card .value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e5631;
+  }
+  
+  .resumo-card.destaque .value {
+    color: #fff;
+  }
+
+  .badge-origem {
+    display: inline-block;
+    background-color: #e7f0e7;
+    color: #1e5631;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-documento {
+    display: inline-block;
+    background-color: #f0f0f0;
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: monospace;
+    font-weight: 500;
+  }
+
+  .descricao-cell {
+    text-align: left;
+  }
+
+  .descricao-item {
+    display: block;
+    font-size: 11px;
+    color: #444;
+    padding: 2px 0;
+    border-bottom: 1px dotted #ddd;
+    white-space: nowrap;
+  }
+  
+  .descricao-item:last-child {
+    border-bottom: none;
+  }
+
+  .referencia-badge {
+    display: block;
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    margin-top: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+    width: fit-content;
+  }
+
+  .total-row td {
+    background-color: #e7f0e7 !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    color: #1e5631 !important;
+    border-top: 2px solid #1e5631 !important;
+    padding: 12px 10px !important;
+  }
+  
+  /* Tabela com mais visibilidade */
+  table td {
+    font-size: 12px;
+    padding: 10px 8px;
+    vertical-align: middle;
+    text-align: center;
+  }
+  
+  table th {
+    font-size: 12px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  
+  /* Coluna de valor com destaque */
+  .valor-cell {
+    font-weight: 700;
+    font-size: 13px;
+    color: #1e5631;
+    white-space: nowrap;
+  }
+  
+  /* Beneficiário alinhado à esquerda */
+  .beneficiario-cell {
+    text-align: left;
+    font-weight: 500;
+  }
+</style>
+
+<div class="page-wrapper">
+  <div class="page body">
+    <div class="container">
+      <div class="watermark">
+        <img src="{{ logo_path }}" alt="Jaquirana Watermark" />
+      </div>
+
+      <div class="content">
+        <!-- Cabeçalho -->
+        <div class="header no-break">
+          <img src="{{ logo_path }}" alt="Logo Jaquirana" />
+          <div class="system-info">
+            <div><strong>Sistema de Gestão Jaquirana</strong></div>
+            <div><strong>Gerado em:</strong> {{ data_geracao.strftime('%d/%m/%Y às %H:%M') }}</div>
+          </div>
+        </div>
+
+        <!-- Título do Relatório -->
+        <div class="relatorio-title">DRE - Detalhes por Categoria</div>
+
+        <!-- Informações da Categoria -->
+        <div class="dados-registro no-break">
+          <div class="filtros-title">{{ categoria.codigo }} - {{ categoria.nome }}</div>
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+            <div style="flex: 1 1 48%; margin-bottom: 5px;">
+              <p><span class="label"><strong>Período:</strong></span>
+                {{ data_inicio.strftime('%d/%m/%Y') }} a {{ data_fim.strftime('%d/%m/%Y') }}
+              </p>
+            </div>
+            <div style="flex: 1 1 48%; margin-bottom: 5px;">
+              <p><span class="label"><strong>Total de Registros:</strong></span>
+                {{ quantidade }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cards de Resumo -->
+        <!-- <table style="width: 100%; margin-bottom: 15px; border: none;">
+          <tr>
+            <td style="text-align: center; border: none; padding: 5px;">
+              <div class="resumo-card" style="display: inline-block;">
+                <div class="label">Total de Registros</div>
+                <div class="value">{{ quantidade }}</div>
+              </div>
+            </td>
+            <td style="text-align: center; border: none; padding: 5px;">
+              <div class="resumo-card destaque" style="display: inline-block;">
+                <div class="label">Valor Total</div>
+                <div class="value">{{ total_formatado }}</div>
+              </div>
+            </td>
+          </tr>
+        </table> -->
+
+        <!-- Tabela de Detalhes -->
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: center;">Data</th>
+              <th style="text-align: center;">Documento</th>
+              <th style="text-align: center;">Origem</th>
+              <th style="text-align: center;">Beneficiário</th>
+              <th style="text-align: center;">Detalhes da Operação</th>
+              <th style="text-align: center;">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for reg in registros %}
+            <tr>
+              <td style="text-align: center;">{{ reg.data_competencia }}</td>
+              <td style="white-space: nowrap; text-align: center;">
+                <span class="badge-documento">{{ reg.codigo_documento }}</span>
+              </td>
+              <td style="text-align: center;">
+                <span class="badge-origem">{{ reg.origem }}</span>
+              </td>
+              <td class="beneficiario-cell" style="text-align: center;">{{ reg.beneficiario or '-' }}</td>
+              <td class="descricao-cell" style="text-align: center;">
+                {% if reg.descricao %}
+                  {% for item in reg.descricao.split(' • ') %}
+                    <span class="descricao-item">{{ item }}</span>
+                  {% endfor %}
+                {% else %}
+                  <span style="color: #999;">-</span>
+                {% endif %}
+                {% if reg.referencia %}
+                  <span class="referencia-badge">Ref: {{ reg.referencia }}</span>
+                {% endif %}
+              </td>
+              <td class="valor-cell" style="text-align: center;">{{ reg.valor_formatado }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="5" style="text-align: right;">TOTAL ({{ quantidade }} registros)</td>
+              <td style="text-align: center;">{{ total_formatado }}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- Rodapé -->
+        <div class="footer">
+          Documento gerado automaticamente pelo Sistema de Gestão Jaquirana
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
