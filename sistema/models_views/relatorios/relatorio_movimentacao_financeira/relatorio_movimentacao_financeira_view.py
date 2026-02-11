@@ -33,9 +33,19 @@ def exportar_movimentacaoes_financeiras():
         if conta_obj:
             conta_label = conta_obj.identificacao
 
-    # Obter movimentações e saldo (mesmos métodos da view principal)
+    # Obter movimentações (mesmos métodos da view principal)
     movimentacoes = MovimentacaoFinanceiraModel.listagem_movimentacoes_financeiras_por_conta(conta_selecionada_id)
-    saldo_disponivel = SaldoMovimentacaoFinanceiraModel.obter_registro_saldo_por_conta_bancaria(conta_selecionada_id)
+    
+    # Calcular saldo disponível
+    # Quando "Todas as contas", soma apenas saldos de contas ATIVAS (igual à listagem de contas bancárias)
+    if conta_selecionada_id and conta_selecionada_id != 0:
+        saldo_disponivel = SaldoMovimentacaoFinanceiraModel.obter_registro_saldo_por_conta_bancaria(conta_selecionada_id)
+    else:
+        contas_ativas = ContaBancariaModel.obter_contas_bancarias_ativas()
+        saldo_disponivel = sum(
+            SaldoMovimentacaoFinanceiraModel.obter_registro_saldo_por_conta_bancaria(conta.id) or 0
+            for conta in contas_ativas
+        )
 
     # Calcular totais a pagar (valores pendentes)
     a_pagar_frete = FretePagarModel.obter_valor_total_a_pagar()

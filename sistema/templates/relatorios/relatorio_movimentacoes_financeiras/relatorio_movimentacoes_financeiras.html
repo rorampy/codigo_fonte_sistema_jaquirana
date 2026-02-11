@@ -212,7 +212,9 @@
               <td class="text-center">
                 {% set valor = 0 %}
 
-                {% if mov.recebimento %}
+                {% if mov.conciliacao_bancaria and mov.importacao_ofx and mov.valor_movimentacao_100 %}
+                {% set valor = mov.valor_movimentacao_100 %}
+                {% elif mov.recebimento %}
                 {% set valor =
                 mov.recebimento.valor_total_recebimento_100 or 0
                 %}
@@ -252,10 +254,21 @@
                 mov.extrator_pagamento.valor_total_a_pagar_100
                 or 0 %}
                 {% endif %}
+                {% elif mov.comissionado_pagamento %}
+                {% if mov.movimentacao_extra %}
+                {% set valor = mov.valor_movimentacao_100
+                or 0 %}
+                {% else %}
+                {% set valor =
+                mov.comissionado_pagamento.valor_total_a_pagar_100
+                or 0 %}
+                {% endif %}
                 {% elif mov.conciliacao_lancamento_avulso %}
                 {% set valor =
                 mov.conciliacao_lancamento_avulso.valor_movimentacao_100
                 or 0 %}
+                {% else %}
+                {% set valor = 0 %}
                 {% endif %}
 
                 {% if mov.tipo_movimentacao == 1 %}
