@@ -40,6 +40,10 @@ def _extrair_filtros():
         'plano_contas_id': source.get('planoContasId') or None,
         'centro_custo_id': source.get('centroCustoId') or None,
         'situacao_id': source.get('situacaoId') or None,
+        # Filtros avançados
+        'codigo_faturamento': source.get('codigoFaturamento') or None,
+        'nota_fiscal': source.get('notaFiscal') or None,
+        'descricao_avulso': source.get('descricaoAvulso') or None,
     }
 
 

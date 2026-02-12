@@ -86,6 +86,15 @@
         {% set data_fim_fmt = data_fim_raw[8:10] ~ '/' ~ data_fim_raw[5:7] ~ '/' ~ data_fim_raw[0:4] %}
         {% set _ = filtros_ativos.append({'param': 'dataFim', 'label': 'Data Fim', 'valor': data_fim_fmt}) %}
       {% endif %}
+      {% if dados_corretos.get('codigoFaturamento') %}
+        {% set _ = filtros_ativos.append({'param': 'codigoFaturamento', 'label': 'Cód. Fat.', 'valor': dados_corretos.get('codigoFaturamento')}) %}
+      {% endif %}
+      {% if dados_corretos.get('notaFiscal') %}
+        {% set _ = filtros_ativos.append({'param': 'notaFiscal', 'label': 'NF', 'valor': dados_corretos.get('notaFiscal')}) %}
+      {% endif %}
+      {% if dados_corretos.get('descricaoAvulso') %}
+        {% set _ = filtros_ativos.append({'param': 'descricaoAvulso', 'label': 'Descr. Avulso', 'valor': dados_corretos.get('descricaoAvulso')}) %}
+      {% endif %}
       {% if dados_corretos.get('pessoaId') %}
         {% set pessoa_selecionada = pessoas | selectattr('id', 'equalto', dados_corretos.get('pessoaId') | int) | first %}
         {% set _ = filtros_ativos.append({'param': 'pessoaId', 'label': label_entidade, 'valor': pessoa_selecionada.identificacao if pessoa_selecionada else dados_corretos.get('pessoaId')}) %}

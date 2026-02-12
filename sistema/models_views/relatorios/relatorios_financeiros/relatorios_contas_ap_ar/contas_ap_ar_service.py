@@ -176,6 +176,44 @@ class ContasAPARService:
         if filtros.get('situacao_id'):
             query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == filtros['situacao_id'])
 
+        # Filtro por código de faturamento (busca parcial)
+        if filtros.get('codigo_faturamento'):
+            codigo_busca = filtros['codigo_faturamento'].strip()
+            if codigo_busca:
+                query = query.filter(
+                    or_(
+                        FaturamentoModel.codigo_faturamento.ilike(f'%{codigo_busca}%'),
+                        # Para lançamentos avulsos, busca pelo id
+                        and_(
+                            AgendamentoPagamentoModel.lancamento_avulso_id.isnot(None),
+                            AgendamentoPagamentoModel.lancamento_avulso_id.cast(db.String).ilike(f'%{codigo_busca}%')
+                        )
+                    )
+                )
+
+        # Filtro por descrição de lançamento avulso
+        if filtros.get('descricao_avulso'):
+            descricao_busca = filtros['descricao_avulso'].strip()
+            if descricao_busca:
+                query = query.filter(
+                    and_(
+                        AgendamentoPagamentoModel.lancamento_avulso_id.isnot(None),
+                        LancamentoAvulsoModel.descricao.ilike(f'%{descricao_busca}%')
+                    )
+                )
+
+        # Filtro por nota fiscal (busca no código do faturamento, referência ou detalhes JSON)
+        if filtros.get('nota_fiscal'):
+            nf_busca = filtros['nota_fiscal'].strip()
+            if nf_busca:
+                query = query.filter(
+                    or_(
+                        FaturamentoModel.codigo_faturamento.ilike(f'%{nf_busca}%'),
+                        AgendamentoPagamentoModel.referencia.ilike(f'%{nf_busca}%'),
+                        FaturamentoModel.detalhes_json.ilike(f'%{nf_busca}%')
+                    )
+                )
+
         return query
 
     @staticmethod
@@ -717,6 +755,40 @@ class ContasAPARService:
                 )
             )
         
+        # Filtro por código de faturamento
+        if filtros.get('codigo_faturamento'):
+            cod = filtros['codigo_faturamento'].strip()
+            query = query.filter(
+                and_(
+                    AgendamentoPagamentoModel.faturamento_id.isnot(None),
+                    FaturamentoModel.codigo_faturamento.ilike(f'%{cod}%')
+                )
+            )
+        
+        # Filtro por nota fiscal (busca no código do faturamento, referência ou detalhes JSON)
+        if filtros.get('nota_fiscal'):
+            nf = filtros['nota_fiscal'].strip()
+            query = query.filter(
+                or_(
+                    FaturamentoModel.codigo_faturamento.ilike(f'%{nf}%'),
+                    AgendamentoPagamentoModel.referencia.ilike(f'%{nf}%'),
+                    FaturamentoModel.detalhes_json.ilike(f'%{nf}%')
+                )
+            )
+        
+        # Filtro por descrição (lançamento avulso ou descrição do agendamento)
+        if filtros.get('descricao_avulso'):
+            desc = filtros['descricao_avulso'].strip()
+            query = query.filter(
+                or_(
+                    and_(
+                        AgendamentoPagamentoModel.lancamento_avulso_id.isnot(None),
+                        LancamentoAvulsoModel.descricao.ilike(f'%{desc}%')
+                    ),
+                    AgendamentoPagamentoModel.descricao.ilike(f'%{desc}%')
+                )
+            )
+        
         # Processar resultados
         for ag in query.all():
             # Calcular valor pendente
@@ -867,6 +939,40 @@ class ContasAPARService:
                 func.json_contains(
                     AgendamentoPagamentoModel.centros_custo_json,
                     json_lib.dumps({'centro': cc_id})
+                )
+            )
+        
+        # Filtro por código de faturamento
+        if filtros.get('codigo_faturamento'):
+            cod = filtros['codigo_faturamento'].strip()
+            query = query.filter(
+                and_(
+                    AgendamentoPagamentoModel.faturamento_id.isnot(None),
+                    FaturamentoModel.codigo_faturamento.ilike(f'%{cod}%')
+                )
+            )
+        
+        # Filtro por nota fiscal (busca no código do faturamento, referência ou detalhes JSON)
+        if filtros.get('nota_fiscal'):
+            nf = filtros['nota_fiscal'].strip()
+            query = query.filter(
+                or_(
+                    FaturamentoModel.codigo_faturamento.ilike(f'%{nf}%'),
+                    AgendamentoPagamentoModel.referencia.ilike(f'%{nf}%'),
+                    FaturamentoModel.detalhes_json.ilike(f'%{nf}%')
+                )
+            )
+        
+        # Filtro por descrição (lançamento avulso ou descrição do agendamento)
+        if filtros.get('descricao_avulso'):
+            desc = filtros['descricao_avulso'].strip()
+            query = query.filter(
+                or_(
+                    and_(
+                        AgendamentoPagamentoModel.lancamento_avulso_id.isnot(None),
+                        LancamentoAvulsoModel.descricao.ilike(f'%{desc}%')
+                    ),
+                    AgendamentoPagamentoModel.descricao.ilike(f'%{desc}%')
                 )
             )
         
@@ -1669,6 +1775,51 @@ class ContasAPARService:
                 )
             )
         
+        # Filtro por código de faturamento
+        if filtros.get('codigo_faturamento'):
+            cod = filtros['codigo_faturamento'].strip()
+            fats_por_codigo = db.session.query(FaturamentoModel.id).filter(
+                FaturamentoModel.codigo_faturamento.ilike(f'%{cod}%'),
+                FaturamentoModel.ativo == True,
+                FaturamentoModel.deletado == False
+            )
+            query = query.filter(
+                AgendamentoPagamentoModel.faturamento_id.in_(fats_por_codigo)
+            )
+        
+        # Filtro por nota fiscal (busca no código do faturamento, referência ou detalhes JSON)
+        if filtros.get('nota_fiscal'):
+            nf = filtros['nota_fiscal'].strip()
+            fats_com_nf = db.session.query(FaturamentoModel.id).filter(
+                FaturamentoModel.ativo == True,
+                FaturamentoModel.deletado == False,
+                or_(
+                    FaturamentoModel.codigo_faturamento.ilike(f'%{nf}%'),
+                    FaturamentoModel.detalhes_json.ilike(f'%{nf}%')
+                )
+            )
+            query = query.filter(
+                or_(
+                    AgendamentoPagamentoModel.faturamento_id.in_(fats_com_nf),
+                    AgendamentoPagamentoModel.referencia.ilike(f'%{nf}%')
+                )
+            )
+        
+        # Filtro por descrição (lançamento avulso ou descrição do agendamento)
+        if filtros.get('descricao_avulso'):
+            desc = filtros['descricao_avulso'].strip()
+            lavs_por_desc = db.session.query(LancamentoAvulsoModel.id).filter(
+                LancamentoAvulsoModel.descricao.ilike(f'%{desc}%'),
+                LancamentoAvulsoModel.ativo == True,
+                LancamentoAvulsoModel.deletado == False
+            )
+            query = query.filter(
+                or_(
+                    AgendamentoPagamentoModel.lancamento_avulso_id.in_(lavs_por_desc),
+                    AgendamentoPagamentoModel.descricao.ilike(f'%{desc}%')
+                )
+            )
+        
         resultado = []
         for ag in query.all():
             # Lógica de valor pago (igual SQL):
@@ -1793,6 +1944,51 @@ class ContasAPARService:
                 func.json_contains(
                     AgendamentoPagamentoModel.centros_custo_json,
                     json_lib.dumps({'centro': cc_id})
+                )
+            )
+        
+        # Filtro por código de faturamento
+        if filtros.get('codigo_faturamento'):
+            cod = filtros['codigo_faturamento'].strip()
+            fats_por_codigo = db.session.query(FaturamentoModel.id).filter(
+                FaturamentoModel.codigo_faturamento.ilike(f'%{cod}%'),
+                FaturamentoModel.ativo == True,
+                FaturamentoModel.deletado == False
+            )
+            query = query.filter(
+                AgendamentoPagamentoModel.faturamento_id.in_(fats_por_codigo)
+            )
+        
+        # Filtro por nota fiscal (busca no código do faturamento, referência ou detalhes JSON)
+        if filtros.get('nota_fiscal'):
+            nf = filtros['nota_fiscal'].strip()
+            fats_com_nf = db.session.query(FaturamentoModel.id).filter(
+                FaturamentoModel.ativo == True,
+                FaturamentoModel.deletado == False,
+                or_(
+                    FaturamentoModel.codigo_faturamento.ilike(f'%{nf}%'),
+                    FaturamentoModel.detalhes_json.ilike(f'%{nf}%')
+                )
+            )
+            query = query.filter(
+                or_(
+                    AgendamentoPagamentoModel.faturamento_id.in_(fats_com_nf),
+                    AgendamentoPagamentoModel.referencia.ilike(f'%{nf}%')
+                )
+            )
+        
+        # Filtro por descrição (lançamento avulso ou descrição do agendamento)
+        if filtros.get('descricao_avulso'):
+            desc = filtros['descricao_avulso'].strip()
+            lavs_por_desc = db.session.query(LancamentoAvulsoModel.id).filter(
+                LancamentoAvulsoModel.descricao.ilike(f'%{desc}%'),
+                LancamentoAvulsoModel.ativo == True,
+                LancamentoAvulsoModel.deletado == False
+            )
+            query = query.filter(
+                or_(
+                    AgendamentoPagamentoModel.lancamento_avulso_id.in_(lavs_por_desc),
+                    AgendamentoPagamentoModel.descricao.ilike(f'%{desc}%')
                 )
             )
         
