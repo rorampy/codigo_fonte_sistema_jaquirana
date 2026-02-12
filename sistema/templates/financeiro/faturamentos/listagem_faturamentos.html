@@ -154,6 +154,7 @@
                   <th style="text-align: center;">Cód. Faturamento</th>
                   <th style="text-align: center;">Data/Hora</th>
                   <th style="text-align: center;">Valor Bruto</th>
+                  <th style="text-align: center;">Peso (t)</th>
                   <th style="text-align: center;">Crédito Aplicado</th>
                   <th style="text-align: center;">Valor Total</th>
                   <!-- <th style="text-align: center;">Utilizou Crédito</th>-->
@@ -183,17 +184,22 @@
                   </td>
                   <td class="text-secondary text-center">
                     {% if faturamento.data_cadastro %}
-                    {{ faturamento.data_cadastro.strftime('%d/%m/%Y %H:%M') }}
+                    <span style="white-space: nowrap;">{{ faturamento.data_cadastro.strftime('%d/%m/%Y %H:%M') }}</span>
                     {% else %}
                     N/A
                     {% endif %}
                   </td>
                   <td class="text-secondary text-center">
                     {% if faturamento.valor_bruto_total %}
-                    {{ faturamento.valor_bruto_total | formatar_float_para_brl }}
+                    <span style="white-space: nowrap;">{{ faturamento.valor_bruto_total | formatar_float_para_brl }}</span>
                     {% else %}
                     -
                     {% endif %}
+                  </td>
+                  <td class="text-secondary text-center">
+                    <span id="peso-{{ faturamento.id }}" class="text-muted">
+                      <span class="peso-valor" style="white-space: nowrap;">-</span>
+                    </span>
                   </td>
                   <td class="text-secondary text-center">
                     {% if faturamento.valor_credito_aplicado %}
@@ -207,7 +213,7 @@
                   <td class="text-secondary text-center">
                     <span>
                       {% if faturamento.valor_total %}
-                      {{ faturamento.valor_total | formatar_float_para_brl }}
+                      <span style="white-space: nowrap;">{{ faturamento.valor_total | formatar_float_para_brl }}</span>
                       {% else %}
                       -
                       {% endif %}
@@ -225,212 +231,221 @@
                     {% endif %}
                   </td>
                   <td class="text-center">
-                    <div class="btn-list flex-nowrap justify-content-center">
-                      <button type="button" class="btn btn-icon btn-outline-primary" data-bs-toggle="tooltip"
-                        data-bs-placement="top" title="Visualizar detalhes" data-faturamento-id="{{ faturamento.id }}">
+                    <div class="dropdown">
+                      <button type="button" class="btn btn-icon btn-ghost-secondary" data-bs-toggle="dropdown" aria-expanded="false">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icons-tabler-outline icon-tabler-eye">
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-dots-vertical">
                           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
-                          <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                          <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                          <path d="M12 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                          <path d="M12 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
                         </svg>
                       </button>
-
-                      {% if faturamento.situacao_pagamento_id == 6 %}
-                      <!-- Botão para ver categorização (já categorizado) -->
-                      <button type="button" class="btn btn-icon btn-outline-dark" data-bs-toggle="modal"
-                        data-bs-target="#modal-categorizacao" onclick="carregarCategorizacao({{ faturamento.id }})"
-                        data-bs-toggle="tooltip" data-bs-placement="top" title="Visualizar Categorização">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icons-tabler-outline icon-tabler-check-circle">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-                          <path d="m9 12 2 2 4 -4" />
-                        </svg>
-                      </button>
-
-                      {% else %}
-                      {% if faturamento.situacao_pagamento_id == 7 %}
-                      <!-- Botão para categorizar (não categorizado) -->
-                      <a href="{{ url_for('categorizar_fatura', id=faturamento.id) }}"
-                        class="btn btn-icon btn-outline-orange" data-bs-toggle="tooltip" data-bs-placement="top"
-                        title="Categorizar Fatura">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icons-tabler-outline icon-tabler-category">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M4 4h6v6h-6z" />
-                          <path d="M14 4h6v6h-6z" />
-                          <path d="M4 14h6v6h-6z" />
-                          <path d="M17 17m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
-                        </svg>
-                      </a>
-                      {%endif%}
-                      {% endif %}
-                      <button type="button" class="btn btn-icon btn-outline-success" data-bs-toggle="tooltip"
-                        data-bs-placement="top" title="Copiar dados bancários"
-                        onclick="copiarDadosBancariosFaturamento({{ faturamento.id }})">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icons-tabler-outline icon-tabler-credit-card">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
-                          <path d="M3 10l18 0" />
-                          <path d="M7 15l.01 0" />
-                          <path d="M11 15l2 0" />
-                        </svg>
-                      </button>
-                      <button type="button" class="btn btn-icon btn-outline-danger" data-bs-toggle="tooltip"
-                        data-bs-placement="top" title="Exportar para PDF"
-                        onclick="abrirModalExportarPDF({{ faturamento.id }})">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icons-tabler-outline icon-tabler-pdf">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M10 8v8h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-2z" />
-                          <path d="M3 12h2a2 2 0 1 0 0 -4h-2v8" />
-                          <path d="M17 12h3" />
-                          <path d="M21 8h-4v8" />
-                        </svg>
-                      </button>
-
-                      <button type="button" class="btn btn-icon btn-outline-purple" data-bs-toggle="tooltip"
-                        data-bs-placement="top" title="Exportar como Imagem"
-                        onclick="abrirModalExportarImagem({{ faturamento.id }})">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icons-tabler-outline icon-tabler-photo-scan">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M15 8h.01" />
-                          <path d="M6 13l2.644 -2.644a1.21 1.21 0 0 1 1.712 0l3.644 3.644" />
-                          <path d="M13 13l1.644 -1.644a1.21 1.21 0 0 1 1.712 0l1.644 1.644" />
-                          <path d="M4 8v-2a2 2 0 0 1 2 -2h2" />
-                          <path d="M4 16v2a2 2 0 0 0 2 2h2" />
-                          <path d="M16 4h2a2 2 0 0 1 2 2v2" />
-                          <path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
-                        </svg>
-                      </button>
-                      {% if dados_corretos.get('situacaoFaturamento')|string != '8' %}
-                      <a href="#"
-                        class="btn btn-icon btn-outline-danger excluir"
-                        data-bs-toggle="modal" data-bs-target="#modal-desativar-{{faturamento.id}}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M4 7l16 0" />
-                          <path d="M10 11l0 6" />
-                          <path d="M14 11l0 6" />
-                          <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                          <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-                        </svg>
-                      </a>
-                      <div class="modal modal-blur fade" id="modal-desativar-{{faturamento.id}}" tabindex="-1"
-                        role="dialog" aria-hidden="true">
-                        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-                          <div class="modal-content">
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            <div class="modal-status bg-danger"></div>
-                            <div class="modal-body text-center py-4">
-                              <!-- Download SVG icon from http://tabler.io/icons/icon/alert-triangle -->
-                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
-                                <path d="M12 9v4" />
-                                <path
-                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
-                                <path d="M12 16h.01" />
-                              </svg>
-                              <div class="text-secondary">
-                                Você realmente deseja excluir este faturamento?
-                              </div>
-                            </div>
-                            <div class="modal-footer">
-                              <div class="w-100">
-                                <div class="row">
-                                  <div class="col">
-                                    <a href="#" class="btn btn-3 w-100" data-bs-dismiss="modal">
-                                      Fechar
-                                    </a>
-                                  </div>
-                                  <div class="col">
-                                    <a href="{{url_for('excluir_faturamento_a_pagar', faturamento_id=faturamento.id)}}"
-                                      class="btn btn-danger btn-4 w-100">
-                                      Excluir
-                                    </a>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                      <div class="dropdown-menu dropdown-menu-end">
+                        <button type="button" class="dropdown-item" data-faturamento-id="{{ faturamento.id }}">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon dropdown-item-icon">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                            <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                          </svg>
+                          Visualizar detalhes
+                        </button>
+                        {% if faturamento.situacao_pagamento_id == 6 %}
+                        <button type="button" class="dropdown-item" data-bs-toggle="modal"
+                          data-bs-target="#modal-categorizacao" onclick="carregarCategorizacao({{ faturamento.id }})">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon dropdown-item-icon">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                            <path d="m9 12 2 2 4 -4" />
+                          </svg>
+                          Visualizar Categorização
+                        </button>
+                        {% elif faturamento.situacao_pagamento_id == 7 %}
+                        <a class="dropdown-item" href="{{ url_for('categorizar_fatura', id=faturamento.id) }}">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon dropdown-item-icon">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 4h6v6h-6z" />
+                            <path d="M14 4h6v6h-6z" />
+                            <path d="M4 14h6v6h-6z" />
+                            <path d="M17 17m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                          </svg>
+                          Categorizar Fatura
+                        </a>
+                        {% endif %}
+                        <button type="button" class="dropdown-item" onclick="copiarDadosBancariosFaturamento({{ faturamento.id }})">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon dropdown-item-icon">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
+                            <path d="M3 10l18 0" />
+                            <path d="M7 15l.01 0" />
+                            <path d="M11 15l2 0" />
+                          </svg>
+                          Copiar dados bancários
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button type="button" class="dropdown-item" onclick="abrirModalExportarPDF({{ faturamento.id }})">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon dropdown-item-icon">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M10 8v8h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-2z" />
+                            <path d="M3 12h2a2 2 0 1 0 0 -4h-2v8" />
+                            <path d="M17 12h3" />
+                            <path d="M21 8h-4v8" />
+                          </svg>
+                          Exportar PDF
+                        </button>
+                        <button type="button" class="dropdown-item" onclick="abrirModalExportarImagem({{ faturamento.id }})">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon dropdown-item-icon">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M15 8h.01" />
+                            <path d="M6 13l2.644 -2.644a1.21 1.21 0 0 1 1.712 0l3.644 3.644" />
+                            <path d="M13 13l1.644 -1.644a1.21 1.21 0 0 1 1.712 0l1.644 1.644" />
+                            <path d="M4 8v-2a2 2 0 0 1 2 -2h2" />
+                            <path d="M4 16v2a2 2 0 0 0 2 2h2" />
+                            <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+                            <path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
+                          </svg>
+                          Exportar Imagem
+                        </button>
+                        {% if dados_corretos.get('situacaoFaturamento')|string != '8' %}
+                        <div class="dropdown-divider"></div>
+                        <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal"
+                          data-bs-target="#modal-desativar-{{faturamento.id}}">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon dropdown-item-icon text-danger">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 7l16 0" />
+                            <path d="M10 11l0 6" />
+                            <path d="M14 11l0 6" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                          </svg>
+                          Excluir
+                        </button>
+                        {% endif %}
+                        {% if dados_corretos.get('situacaoFaturamento')|string == '8' %}
+                        <div class="dropdown-divider"></div>
+                        <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal"
+                          data-bs-target="#modal-reverter-conciliacao-{{ faturamento.id }}">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon dropdown-item-icon text-danger">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M9 14l-4 -4l4 -4" />
+                            <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
+                          </svg>
+                          Reverter Conciliação
+                        </button>
+                        {% endif %}
                       </div>
-                      {% endif %}
-                      {% if dados_corretos.get('situacaoFaturamento')|string == '8' %}
-                      <button type="button" class="btn btn-icon btn-outline-danger" data-bs-toggle="modal"
-                        data-bs-target="#modal-reverter-conciliacao-{{ faturamento.id }}" title="Reverter Conciliação">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M9 14l-4 -4l4 -4" />
-                          <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
-                        </svg>
-                      </button>
-                      <!-- Modal de Confirmação para Reverter Conciliação -->
-                      <div class="modal modal-blur fade" id="modal-reverter-conciliacao-{{ faturamento.id }}" tabindex="-1"
-                        role="dialog" aria-hidden="true">
-                        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-                          <div class="modal-content">
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            <div class="modal-status bg-warning"></div>
-                            <div class="modal-body text-center py-4">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="icon mb-2 text-warning icon-lg">
-                                <path d="M12 9v4" />
-                                <path
-                                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
-                                <path d="M12 16h.01" />
-                              </svg>
-                              <h3 class="mb-2">Reverter Conciliação</h3>
-                              <div class="text-secondary">
-                                <p class="mb-2">Você realmente deseja reverter a conciliação do faturamento <strong>{{ faturamento.codigo_faturamento }}</strong>?</p>
-                                <small class="text-muted">
-                                  Esta ação irá:
-                                  <ul class="text-start mt-2" style="font-size: 12px;">
-                                    <li>Desvincular da transação OFX</li>
-                                    <li>Retornar para status "Pendente"</li>
-                                    <li>Remover movimentações financeiras</li>
-                                    <li>Reembolsar créditos/adiantamentos (se houver)</li>
-                                  </ul>
-                                </small>
-                              </div>
-                            </div>
-                            <div class="modal-footer">
-                              <div class="w-100">
-                                <div class="row">
-                                  <div class="col">
-                                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">
-                                      Cancelar
-                                    </button>
-                                  </div>
-                                  <div class="col">
-                                    <button type="button" class="btn btn-warning w-100"
-                                      onclick="confirmarReverterConciliacao({{ faturamento.id }})">
-                                      Confirmar
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      {% endif %}
                     </div>
+                    <!-- Modais de confirmação -->
+                    {% if dados_corretos.get('situacaoFaturamento')|string != '8' %}
+                    <div class="modal modal-blur fade" id="modal-desativar-{{faturamento.id}}" tabindex="-1"
+                      role="dialog" aria-hidden="true">
+                      <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          <div class="modal-status bg-danger"></div>
+                          <div class="modal-body text-center py-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
+                              <path d="M12 9v4" />
+                              <path
+                                d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                              <path d="M12 16h.01" />
+                            </svg>
+                            <div class="text-secondary">
+                              Você realmente deseja excluir este faturamento?
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <div class="w-100">
+                              <div class="row">
+                                <div class="col">
+                                  <a href="#" class="btn btn-3 w-100" data-bs-dismiss="modal">
+                                    Fechar
+                                  </a>
+                                </div>
+                                <div class="col">
+                                  <a href="{{url_for('excluir_faturamento_a_pagar', faturamento_id=faturamento.id)}}"
+                                    class="btn btn-danger btn-4 w-100">
+                                    Excluir
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {% endif %}
+                    {% if dados_corretos.get('situacaoFaturamento')|string == '8' %}
+                    <div class="modal modal-blur fade" id="modal-reverter-conciliacao-{{ faturamento.id }}"
+                      tabindex="-1" role="dialog" aria-hidden="true">
+                      <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          <div class="modal-status bg-warning"></div>
+                          <div class="modal-body text-center py-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round" class="icon mb-2 text-warning icon-lg">
+                              <path d="M12 9v4" />
+                              <path
+                                d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                              <path d="M12 16h.01" />
+                            </svg>
+                            <h3 class="mb-2">Reverter Conciliação</h3>
+                            <div class="text-secondary">
+                              <p class="mb-2">Você realmente deseja reverter a conciliação do faturamento <strong>{{
+                                  faturamento.codigo_faturamento }}</strong>?</p>
+                              <small class="text-muted">
+                                Esta ação irá:
+                                <ul class="text-start mt-2" style="font-size: 12px;">
+                                  <li>Desvincular da transação OFX</li>
+                                  <li>Retornar para status "Pendente"</li>
+                                  <li>Remover movimentações financeiras</li>
+                                  <li>Reembolsar créditos/adiantamentos (se houver)</li>
+                                </ul>
+                              </small>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <div class="w-100">
+                              <div class="row">
+                                <div class="col">
+                                  <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">
+                                    Cancelar
+                                  </button>
+                                </div>
+                                <div class="col">
+                                  <button type="button" class="btn btn-warning w-100"
+                                    onclick="confirmarReverterConciliacao({{ faturamento.id }})">
+                                    Confirmar
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {% endif %}
                   </td>
                 </tr>
                 {% endfor %}
@@ -850,9 +865,12 @@
 
     // Carregar beneficiários para cada faturamento
     carregarBeneficiariosFaturamentos();
-    
+
     // Carregar clientes para cada faturamento
     carregarClientesFaturamentos();
+
+    // Carregar peso total para cada faturamento
+    carregarPesosFaturamentos();
   });
 
   // ===== FUNÇÃO PARA CARREGAR BENEFICIÁRIOS =====
@@ -870,6 +888,77 @@
       const faturamentoId = elemento.id.replace('cliente-', '');
       carregarClienteFaturamento(faturamentoId);
     });
+  }
+
+  // ===== FUNÇÃO PARA CARREGAR PESO TOTAL =====
+  function carregarPesosFaturamentos() {
+    document.querySelectorAll('[id^="peso-"]').forEach(elemento => {
+      const faturamentoId = elemento.id.replace('peso-', '');
+      carregarPesoFaturamento(faturamentoId);
+    });
+  }
+
+  function carregarPesoFaturamento(faturamentoId) {
+    fetch(`/financeiro/faturamentos/detalhes/${faturamentoId}`)
+      .then(response => response.text())
+      .then(text => {
+        try {
+          const data = JSON.parse(text);
+          processarPeso(faturamentoId, data);
+        } catch (e) {
+          console.error(`Erro ao parsear JSON do peso ${faturamentoId}:`, e);
+        }
+      })
+      .catch(error => {
+        console.error(`Erro ao carregar peso ${faturamentoId}:`, error);
+      });
+  }
+
+  function processarPeso(faturamentoId, data) {
+    const elemento = document.getElementById(`peso-${faturamentoId}`);
+    const pesoElemento = elemento.querySelector('.peso-valor');
+
+    let pesoTotal = 0.0;
+
+    // Somar peso_ticket de fornecedores
+    if (data.fornecedores && data.fornecedores.length > 0) {
+      data.fornecedores.forEach(item => {
+        const peso = parseFloat(item.peso_ticket);
+        if (!isNaN(peso)) pesoTotal += peso;
+      });
+    }
+
+    // Somar peso_ticket de transportadoras
+    if (data.transportadoras && data.transportadoras.length > 0) {
+      data.transportadoras.forEach(item => {
+        const peso = parseFloat(item.peso_ticket);
+        if (!isNaN(peso)) pesoTotal += peso;
+      });
+    }
+
+    // Somar peso_ticket de extratores
+    if (data.extratores && data.extratores.length > 0) {
+      data.extratores.forEach(item => {
+        const peso = parseFloat(item.peso_ticket);
+        if (!isNaN(peso)) pesoTotal += peso;
+      });
+    }
+
+    // Somar peso_ticket de comissionados
+    if (data.comissionados && data.comissionados.length > 0) {
+      data.comissionados.forEach(item => {
+        const peso = parseFloat(item.peso_ticket);
+        if (!isNaN(peso)) pesoTotal += peso;
+      });
+    }
+
+    if (pesoTotal > 0) {
+      pesoElemento.textContent = pesoTotal.toFixed(2) + ' t';
+      pesoElemento.classList.remove('text-muted');
+      pesoElemento.style.fontWeight = 'bold';
+    } else {
+      pesoElemento.textContent = '-';
+    }
   }
 
   function carregarClienteFaturamento(faturamentoId) {
