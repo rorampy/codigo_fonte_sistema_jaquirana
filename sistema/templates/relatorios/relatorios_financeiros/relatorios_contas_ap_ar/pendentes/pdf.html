@@ -1,138 +1,428 @@
-{% include 'relatorios/estrutura/style.html' %}
-<style>
-  .card-section .card { flex: 1 1 30%; }
-</style>
-<div class="page-wrapper">
-  <div class="page body">
-    <div class="container">
-      <div class="watermark">
-        <img src="{{logo_path}}" alt="Jaquirana Extração Watermark" />
-      </div>
+<!DOCTYPE html>
+<html>
 
-      <div class="content">
-        {# --- Cabeçalho --- #}
-        <div class="header no-break">
-          <img src="{{logo_path}}" alt="Logo Jaquirana Extração" />
-          <div class="system-info">
-            <div><strong>Sistema de Gestão Jaquirana</strong></div>
-            <div><strong>Versão</strong> {{changelog.versao}}</div>
-            <div><strong>Data:</strong> {{changelog.data_lancamento}}</div>
-          </div>
-        </div>
+<head>
+  <meta charset="UTF-8">
+  <title>{{ titulo_relatorio }}</title>
+  <style>
+    @page {
+      size: landscape;
+      margin: 15mm;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      margin: 20px;
+      color: #333;
+      line-height: 1.3;
+    }
 
-        <div class="relatorio-title">{{ titulo_relatorio }}</div>
+    .header {
+      border-bottom: 2px solid #1c5f20;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+    }
 
-        {# --- Filtros aplicados (contextuais) --- #}
-        {% set ar_pendentes = (direcao == 'ar') %}
+    .header table {
+      width: 100%;
+      border: none;
+    }
 
-        {% if dados_corretos %}
-        <div class="filtros-container no-break">
-          <div class="filtros-title">Filtros Aplicados</div>
-          <div class="filtros-grid">
-            <div class="filtro-item">
-              <span class="filtro-label">Data Início:</span>
-              <span class="filtro-valor">
-                {{ dados_corretos.get('dataInicio', '') | converte_data_para_datetime_converte_data_brl if dados_corretos.get('dataInicio') else 'Sem filtro' }}
-              </span>
-            </div>
-            <div class="filtro-item">
-              <span class="filtro-label">Data Fim:</span>
-              <span class="filtro-valor">
-                {{ dados_corretos.get('dataFim', '') | converte_data_para_datetime_converte_data_brl if dados_corretos.get('dataFim') else 'Sem filtro' }}
-              </span>
-            </div>
-            {% if not ar_pendentes %}
-            <div class="filtro-item">
-              <span class="filtro-label">Plano de Contas:</span>
-              <span class="filtro-valor">{{ dados_corretos.get('plano_contas_nome', 'Todos') }}</span>
-            </div>
-            {% endif %}
-            <div class="filtro-item">
-              <span class="filtro-label">Situação:</span>
-              <span class="filtro-valor">{{ dados_corretos.get('situacao_nome', 'Todas') }}</span>
-            </div>
-          </div>
-        </div>
-        {% endif %}
+    .header img {
+      width: 100px;
+    }
 
-        {# --- Dados --- #}
-        {% if registros %}
+    .system-info {
+      text-align: right;
+      font-size: 10px;
+      color: #666;
+    }
 
-        {# Cards resumo #}
-        <div class="section-title no-break">Resumo</div>
-        <div class="card-section no-break">
-          <div class="card">
-            <div class="card-title">Total de Títulos</div>
-            <div style="font-size: 18px; font-weight: bold; color: #1e5631;">
-              {{ totais.quantidade }}
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Valor Original</div>
-            <div style="font-size: 18px; font-weight: bold; color: #1e5631;">
-              {{ totais.total_original_100 | formatar_float_para_brl }}
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Saldo Pendente</div>
-            <div style="font-size: 18px; font-weight: bold; color: #c92a2a;">
-              {{ totais.total_saldo_100 | formatar_float_para_brl }}
-            </div>
-          </div>
-        </div>
+    .relatorio-title {
+      text-align: center;
+      font-size: 16px;
+      color: #1c5f20;
+      font-weight: bold;
+      margin: 15px 0;
+      text-transform: uppercase;
+    }
 
-        {# Tabela detalhada #}
-        <div class="section-title no-break" style="margin-top: 20px;">Detalhamento</div>
-        <table>
-          <thead>
-            <tr>
-              <th class="text-center">Código</th>
-              <th class="text-center">{{ label_entidade }}</th>
-              <th class="text-center">Descrição</th>
-              <th class="text-center">Emissão</th>
-              <th class="text-center">Vencimento</th>
-              <th class="text-center">Valor Original</th>
-              <th class="text-center">Saldo</th>
-              <th class="text-center">Atraso</th>
-              <th class="text-center">Situação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for item in registros %}
-            <tr>
-              <td class="text-center">{{ item.codigo_faturamento }}</td>
-              <td class="text-center">{{ item.pessoa_nome }}</td>
-              <td class="text-center">{{ item.descricao | truncate(35, True, '…') }}</td>
-              <td class="text-center">{{ item.data_emissao | formatar_data_para_brl if item.data_emissao else '-' }}</td>
-              <td class="text-center">{{ item.data_vencimento | formatar_data_para_brl if item.data_vencimento else '-' }}</td>
-              <td class="text-center">{{ item.valor_original_100 | formatar_float_para_brl }}</td>
-              <td class="text-center" style="color: #c92a2a; font-weight: 600;">{{ item.saldo_100 | formatar_float_para_brl }}</td>
-              <td class="text-center">
-                {% if item.dias_atraso and item.dias_atraso > 0 %}
-                  <span class="badge bg-danger-lt p-2">{{ item.dias_atraso }}d</span>
-                {% else %}
-                  <span class="badge bg-green-lt p-2">Em dia</span>
-                {% endif %}
-              </td>
-              <td class="text-center">{{ item.situacao }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+    .info-box {
+      background-color: #f8f9fa;
+      padding: 10px 15px;
+      margin: 10px 0 20px 0;
+      border-radius: 4px;
+      border: 1px solid #dee2e6;
+      font-size: 10px;
+    }
 
-        {% else %}
-        <div style="text-align: center; padding: 50px 0;">
-          <h3 style="color: #666;">Nenhum registro encontrado</h3>
-          <p style="color: #999;">Não há títulos pendentes para a data de referência selecionada.</p>
-        </div>
-        {% endif %}
+    .info-box strong {
+      color: #1c5f20;
+    }
 
-        {# --- Rodapé --- #}
-        <div class="footer">
-          <p><strong>Jaquirana Extração &copy; 2025</strong> - Todos os direitos reservados</p>
-          <p><strong>Sistema de Gestão Jaquirana</strong></p>
-        </div>
-      </div>
-    </div>
+    /* Tabela de Resumo Geral */
+    .resumo-geral {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 25px;
+    }
+
+    .resumo-geral th {
+      background-color: #1c5f20;
+      color: white;
+      padding: 8px;
+      font-size: 11px;
+    }
+
+    .resumo-geral td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 11px;
+    }
+
+    .resumo-geral .valor-destaque {
+      color: #1c5f20;
+      font-weight: bold;
+    }
+
+    .resumo-geral .total-row td {
+      background-color: #1c5f20 !important;
+      color: white !important;
+      font-weight: bold;
+    }
+
+    /* Tabela de Faturamento */
+    .faturamento-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      border: 1px solid #1c5f20;
+      page-break-inside: avoid;
+    }
+
+    .faturamento-header {
+      background-color: #1c5f20;
+      color: white;
+    }
+
+    .faturamento-header td {
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      border: none;
+    }
+
+    .faturamento-header .badge {
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      margin-left: 10px;
+    }
+
+    .badge-atraso {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .badge-prazo {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .badge-hoje {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .faturamento-info {
+      background-color: #e8f5e8;
+    }
+
+    .faturamento-info td {
+      padding: 6px 10px;
+      font-size: 10px;
+      border: 1px solid #cde7cd;
+      text-align: center;
+    }
+
+    .faturamento-info strong {
+      color: #1c5f20;
+    }
+
+    .cargas-header th {
+      background-color: #2e7d32;
+      color: white;
+      padding: 6px 8px;
+      font-size: 10px;
+      text-align: center;
+      border: 1px solid #1c5f20;
+    }
+
+    .carga-row td {
+      padding: 5px 8px;
+      font-size: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+
+    .carga-row:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .carga-row .valor {
+      color: #1c5f20;
+      font-weight: bold;
+    }
+
+    .tipo-fornecedor { color: black }
+    .tipo-transportadora { color: black }
+    .tipo-extrator { color: black }
+    .tipo-comissionado { color: black }
+
+    .saldo-row td {
+      background-color: #1c5f20 !important;
+      color: white !important;
+      padding: 8px 10px;
+      font-size: 11px;
+      font-weight: bold;
+      border: none;
+    }
+
+    .saldo-row .valor-saldo {
+      color: #ffeb3b !important;
+      font-size: 12px;
+    }
+
+    .lancamento-avulso td {
+      background-color: #f8f9fa;
+      padding: 15px;
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      border: 1px dashed #ccc;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 9px;
+      color: #777;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+
+    .no-border td, .no-border th {
+      border: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <table class="no-border">
+      <tr>
+        <td style="width: 150px; border: none;">
+          <img src="{{ logo_path }}" alt="Logo Jaquirana Extração" />
+        </td>
+        <td class="system-info" style="border: none;">
+          <div><strong>Sistema de Gestão Jaquirana</strong></div>
+          <div><strong>Relatório gerado em:</strong> {{ data_geracao }}</div>
+        </td>
+      </tr>
+    </table>
   </div>
-</div>
+
+  <div class="relatorio-title">{{ titulo_relatorio }}</div>
+
+  <!-- Filtros Aplicados -->
+  {% if dados_corretos %}
+  <div class="info-box">
+    <strong>Vencimento até:</strong> {{ dados_corretos.get('dataFim', '') | converte_data_para_datetime_converte_data_brl if dados_corretos.get('dataFim') else 'Sem filtro' }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>{{ label_entidade }}:</strong> {{ dados_corretos.get('pessoa_nome', 'Todos') }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Situação:</strong> {{ dados_corretos.get('situacao_nome', 'Categorizado / Parc. Conciliado') }}
+  </div>
+  {% endif %}
+
+  <!-- Resumo Geral -->
+  <table class="resumo-geral">
+    <thead>
+      <tr>
+        <th style="text-align: left; width: 70%;">Descrição</th>
+        <th style="text-align: center; width: 30%;">Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: left;">Total de Títulos</td>
+        <td class="valor-destaque" style="text-align: center;">{{ totais.quantidade }}</td>
+      </tr>
+      <tr>
+        <td style="text-align: left;">Valor Original Total</td>
+        <td class="valor-destaque" style="text-align: center;">{{ totais.total_original_100 | formatar_float_para_brl }}</td>
+      </tr>
+      <tr class="total-row">
+        <td style="text-align: left;">SALDO PENDENTE TOTAL</td>
+        <td style="text-align: center;">{{ totais.total_saldo_100 | formatar_float_para_brl }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Detalhamento por Faturamento -->
+  {% if direcao == 'ap' and grupos %}
+  
+  {% for grupo in grupos %}
+  <table class="faturamento-table">
+    <!-- Linha Cabeçalho do Faturamento -->
+    <tr class="faturamento-header">
+      <td colspan="8">
+        {{ grupo.codigo_faturamento }} - {{ grupo.pessoa_nome | truncate(50, True, '...') }}
+      </td>
+    </tr>
+    
+    <!-- Linha Info do Faturamento -->
+    <tr class="faturamento-info">
+      <td colspan="2"><strong>Tipo:</strong> {{ grupo.tipo_operacao }}</td>
+      <td><strong>Títulos:</strong> {{ grupo.qtd_agendamentos }}</td>
+      <td colspan="2"><strong>Vencimento:</strong> {{ grupo.data_vencimento_mais_antiga | formatar_data_para_brl if grupo.data_vencimento_mais_antiga else '-' }}</td>
+      <td colspan="3"><strong>Data Fat:</strong> {{ grupo.data_faturamento | formatar_data_para_brl if grupo.data_faturamento else '-' }}</td>
+    </tr>
+
+    {% if grupo.detalhes_cargas %}
+    {% set detalhes = grupo.detalhes_cargas %}
+    {% set total_cargas = (detalhes.fornecedores|length if detalhes.fornecedores else 0) + (detalhes.transportadoras|length if detalhes.transportadoras else 0) + (detalhes.extratores|length if detalhes.extratores else 0) + (detalhes.comissionados|length if detalhes.comissionados else 0) %}
+    
+    {% if total_cargas > 0 %}
+    <!-- Cabeçalho das Cargas -->
+    <tr class="cargas-header">
+      <th>Data</th>
+      <th>Tipo</th>
+      <th>Entidade</th>
+      <th>Cliente</th>
+      <th>Produto/Bitola</th>
+      <th>NF</th>
+      <th>Peso</th>
+      <th>Valor</th>
+    </tr>
+
+    <!-- Fornecedores -->
+    {% for f in detalhes.fornecedores %}
+    <tr class="carga-row">
+      <td>{{ f.data_entrega or '-' }}</td>
+      <td class="tipo-fornecedor"><strong>Fornecedor</strong></td>
+      <td style="text-align: left;">{{ f.fornecedor_identificacao | truncate(25, True, '...') or '-' }}</td>
+      <td>{{ f.cliente | truncate(15, True, '...') or '-' }}</td>
+      <td>{{ f.produto or '-' }} | {{ f.bitola or '-' }}</td>
+      <td>{{ f.nota_fiscal or '-' }}</td>
+      <td>{{ f.peso_ticket or '-' }}</td>
+      <td class="valor">{{ f.valor_faturado | formatar_float_para_brl or '-' }}</td>
+    </tr>
+    {% endfor %}
+
+    <!-- Transportadoras -->
+    {% for t in detalhes.transportadoras %}
+    <tr class="carga-row">
+      <td>{{ t.data_entrega or '-' }}</td>
+      <td class="tipo-transportadora"><strong>Transp.</strong></td>
+      <td style="text-align: left;">{{ (t.transportadora_identificacao or t.nome) | truncate(25, True, '...') or '-' }}</td>
+      <td>{{ t.cliente | truncate(15, True, '...') or '-' }}</td>
+      <td>{{ t.produto or '-' }} | {{ t.bitola or '-' }}</td>
+      <td>{{ t.nota_fiscal or '-' }}</td>
+      <td>{{ t.peso_ticket or '-' }}</td>
+      <td class="valor">{{ t.valor_faturado | formatar_float_para_brl or '-' }}</td>
+    </tr>
+    {% endfor %}
+
+    <!-- Extratores -->
+    {% for e in detalhes.extratores %}
+    <tr class="carga-row">
+      <td>{{ e.data_entrega or '-' }}</td>
+      <td class="tipo-extrator"><strong>Extrator</strong></td>
+      <td style="text-align: left;">{{ e.extrator_identificacao | truncate(25, True, '...') or '-' }}</td>
+      <td>{{ e.cliente | truncate(15, True, '...') or '-' }}</td>
+      <td>{{ e.produto or '-' }} | {{ e.bitola or '-' }}</td>
+      <td>{{ e.nota_fiscal or '-' }}</td>
+      <td>{{ e.peso_ticket or '-' }}</td>
+      <td class="valor">{{ e.valor_faturado | formatar_float_para_brl or '-' }}</td>
+    </tr>
+    {% endfor %}
+
+    <!-- Comissionados -->
+    {% for c in detalhes.comissionados %}
+    <tr class="carga-row">
+      <td>{{ c.data_entrega or '-' }}</td>
+      <td class="tipo-comissionado"><strong>Comiss.</strong></td>
+      <td style="text-align: left;">{{ c.comissionado_identificacao | truncate(25, True, '...') or '-' }}</td>
+      <td>{{ c.cliente | truncate(15, True, '...') or '-' }}</td>
+      <td>{{ c.produto or '-' }} | {{ c.bitola or '-' }}</td>
+      <td>{{ c.nota_fiscal or '-' }}</td>
+      <td>{{ c.peso_ticket or '-' }}</td>
+      <td class="valor">{{ c.valor_faturado | formatar_float_para_brl or '-' }}</td>
+    </tr>
+    {% endfor %}
+    {% endif %}
+    {% endif %}
+
+    {% if grupo.lancamento_descricao and not grupo.detalhes_cargas %}
+    <tr class="lancamento-avulso">
+      <td colspan="8"><strong>Lançamento Avulso:</strong> {{ grupo.lancamento_descricao }}</td>
+    </tr>
+    {% endif %}
+
+    <!-- Linha de Saldo Pendente -->
+    <tr class="saldo-row">
+      <td colspan="6" style="text-align: left;">SALDO PENDENTE</td>
+      <td colspan="2" class="valor-saldo" style="text-align: right;">{{ grupo.total_pendente_100 | formatar_float_para_brl }}</td>
+    </tr>
+  </table>
+  {% endfor %}
+
+  {% elif registros %}
+  <!-- Fallback para AR ou quando não há grupos -->
+  <table class="faturamento-table">
+    <tr class="cargas-header">
+      <th>Código</th>
+      <th>{{ label_entidade }}</th>
+      <th>Descrição</th>
+      <th>Emissão</th>
+      <th>Vencimento</th>
+      <th>Valor Original</th>
+      <th>Saldo</th>
+      <th>Situação</th>
+    </tr>
+    {% for item in registros %}
+    <tr class="carga-row">
+      <td>{{ item.codigo_faturamento }}</td>
+      <td style="text-align: left;">{{ item.pessoa_nome | truncate(30, True, '...') }}</td>
+      <td>{{ item.descricao | truncate(20, True, '...') }}</td>
+      <td>{{ item.data_emissao | formatar_data_para_brl if item.data_emissao else '-' }}</td>
+      <td>{{ item.data_vencimento | formatar_data_para_brl if item.data_vencimento else '-' }}</td>
+      <td class="valor">{{ item.valor_original_100 | formatar_float_para_brl }}</td>
+      <td style="color: #c92a2a; font-weight: bold;">{{ item.saldo_100 | formatar_float_para_brl }}</td>
+      <td>{{ item.situacao }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="saldo-row">
+      <td colspan="6" style="text-align: left;">SALDO PENDENTE TOTAL</td>
+      <td colspan="2" class="valor-saldo" style="text-align: right;">{{ totais.total_saldo_100 | formatar_float_para_brl }}</td>
+    </tr>
+  </table>
+
+  {% else %}
+  <div style="text-align: center; padding: 50px 0;">
+    <h3 style="color: #666;">Nenhum registro encontrado</h3>
+    <p style="color: #999;">Não há títulos pendentes para os filtros selecionados.</p>
+  </div>
+  {% endif %}
+
+  <!-- Footer -->
+  <div class="footer">
+    <p><strong>Jaquirana Extração &copy; 2025</strong> - Todos os direitos reservados</p>
+    <p><strong>Sistema de Gestão Jaquirana</strong></p>
+  </div>
+</body>
+
+</html>

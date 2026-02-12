@@ -633,6 +633,159 @@ class ContasAPARService:
         resultado.sort(key=lambda x: (x.get('data_vencimento') or date.min))
         return resultado
 
+    @staticmethod
+    def _obter_pendentes_ap_novo(filtros):
+        """
+        NOVA LÓGICA AP Pendentes (validada em SQL):
+        - Somente Agendamentos com situação 6 (Categorizado) ou 10 (Parcialmente Conciliado)
+        - Filtro por data_vencimento <= data_fim
+        - Valor pendente = valor_total_100 - valor_conciliado_100 (quando conciliação parcial)
+        - Inclui agendamentos de Faturamentos (direcao_financeira=2) e Lancamentos Avulsos (tipo_movimentacao=2)
+        """
+        from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
+        
+        filtros = filtros or {}
+        SITUACOES_PENDENTES_AP = [6, 10]  # 6=Categorizado, 10=Parcialmente Conciliado
+        resultado = []
+        hoje = date.today()
+        
+        # Query base: agendamentos ativos nas situações 6 e 10
+        query = (
+            db.session.query(AgendamentoPagamentoModel)
+            .outerjoin(
+                FaturamentoModel,
+                AgendamentoPagamentoModel.faturamento_id == FaturamentoModel.id,
+            )
+            .outerjoin(
+                LancamentoAvulsoModel,
+                AgendamentoPagamentoModel.lancamento_avulso_id == LancamentoAvulsoModel.id,
+            )
+            .filter(
+                AgendamentoPagamentoModel.ativo == True,
+                AgendamentoPagamentoModel.deletado == False,
+                AgendamentoPagamentoModel.situacao_pagamento_id.in_(SITUACOES_PENDENTES_AP),
+                # Filtro de direção: AP (despesa)
+                or_(
+                    and_(
+                        AgendamentoPagamentoModel.faturamento_id.isnot(None),
+                        FaturamentoModel.direcao_financeira == DIRECAO_AP,
+                        FaturamentoModel.ativo == True,
+                        FaturamentoModel.deletado == False,
+                    ),
+                    and_(
+                        AgendamentoPagamentoModel.lancamento_avulso_id.isnot(None),
+                        LancamentoAvulsoModel.tipo_movimentacao == DIRECAO_AP,
+                        LancamentoAvulsoModel.ativo == True,
+                        LancamentoAvulsoModel.deletado == False,
+                    ),
+                ),
+            )
+        )
+        
+        # Filtro por data de vencimento (até a data_fim)
+        if filtros.get('data_fim'):
+            data_fim = date.fromisoformat(filtros['data_fim']) if isinstance(filtros['data_fim'], str) else filtros['data_fim']
+            query = query.filter(AgendamentoPagamentoModel.data_vencimento <= data_fim)
+        
+        # Filtro por pessoa (fornecedor)
+        if filtros.get('pessoa_id'):
+            query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
+        
+        # Filtro por situação específica
+        if filtros.get('situacao_id'):
+            sit_id = int(filtros['situacao_id'])
+            if sit_id in SITUACOES_PENDENTES_AP:
+                query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == sit_id)
+        
+        # Filtro por plano de contas (categorias_json)
+        if filtros.get('plano_contas_id'):
+            pc_id = int(filtros['plano_contas_id'])
+            query = query.filter(
+                func.json_contains(
+                    AgendamentoPagamentoModel.categorias_json,
+                    json_lib.dumps({'categoria_id': pc_id})
+                )
+            )
+        
+        # Filtro por centro de custo
+        if filtros.get('centro_custo_id'):
+            cc_id = str(filtros['centro_custo_id'])
+            query = query.filter(
+                func.json_contains(
+                    AgendamentoPagamentoModel.centros_custo_json,
+                    json_lib.dumps({'centro': cc_id})
+                )
+            )
+        
+        # Processar resultados
+        for ag in query.all():
+            # Calcular valor pendente
+            valor_total = ag.valor_total_100 or 0
+            valor_conciliado = ag.valor_conciliado_100 or 0
+            
+            # Se conciliação parcial, o pendente é a diferença
+            if ag.conciliacao_parcial and valor_conciliado > 0:
+                valor_pendente = valor_total - valor_conciliado
+            else:
+                valor_pendente = valor_total
+            
+            # Obter código do faturamento ou lançamento avulso
+            fat = None
+            lav = None
+            if ag.faturamento_id:
+                fat = FaturamentoModel.query.get(ag.faturamento_id)
+            if ag.lancamento_avulso_id:
+                lav = LancamentoAvulsoModel.query.get(ag.lancamento_avulso_id)
+            
+            if fat:
+                codigo = fat.codigo_faturamento
+                origem_tipo = 'Faturamento'
+            elif lav:
+                codigo = f'LA-{ag.lancamento_avulso_id}'
+                origem_tipo = 'Lançamento Avulso'
+            else:
+                codigo = f'AG-{ag.id}'
+                origem_tipo = 'Agendamento'
+            
+            pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
+            situacao_nome = ag.situacao.situacao if ag.situacao else 'Sem situação'
+            
+            # Dias de atraso
+            vencimento = ag.data_vencimento or ag.data_cadastro
+            dias_atraso = 0
+            if vencimento and vencimento < hoje:
+                dias_atraso = (hoje - vencimento).days
+            
+            resultado.append({
+                'id': ag.id,
+                'faturamento_id': ag.faturamento_id,
+                'lancamento_avulso_id': ag.lancamento_avulso_id,
+                'codigo_faturamento': codigo,
+                'tipo_operacao': origem_tipo,
+                'descricao': ag.descricao or codigo,
+                'pessoa_nome': pessoa.identificacao if pessoa else '-',
+                'pessoa_id': ag.pessoa_financeiro_id,
+                'data_emissao': ag.data_competencia or ag.data_cadastro,
+                'data_vencimento': vencimento,
+                'data_competencia': ag.data_competencia,
+                'data_pagamento': None,
+                'valor_original_100': valor_total,
+                'valor_pago_100': valor_conciliado,
+                'saldo_100': valor_pendente,
+                'situacao': situacao_nome,
+                'situacao_id': ag.situacao_pagamento_id,
+                'centro_custo': ContasAPARService._extrair_centros_custo(ag.centros_custo_json),
+                'plano_contas': ContasAPARService._extrair_plano_contas(ag.categorias_json),
+                'referencia_agendamento': ag.referencia or '-',
+                'parcelas': [],
+                'dias_atraso': dias_atraso,
+                'conciliacao_parcial': ag.conciliacao_parcial or False,
+            })
+        
+        # Ordenar por data de vencimento (mais antigo primeiro - maior atraso)
+        resultado.sort(key=lambda x: (x.get('data_vencimento') or date.min))
+        return resultado
+
     # --------------------------------------------------------------------- #
     #  SERIALIZAÇÃO — VENDAS ENTREGUES (AR)
     # --------------------------------------------------------------------- #
@@ -1285,10 +1438,10 @@ class ContasAPARService:
 
     @staticmethod
     def obter_pendentes(direcao_str, filtros=None):
-        """Títulos pendentes filtrados por período. AP usa tabelas operacionais, AR usa RegistroOperacional."""
+        """Títulos pendentes filtrados por período. AP usa nova lógica (agendamentos 6/10), AR usa RegistroOperacional."""
         filtros = filtros or {}
         if direcao_str == 'ap':
-            return ContasAPARService._obter_pendentes_ap(filtros)
+            return ContasAPARService._obter_pendentes_ap_novo(filtros)
         return ContasAPARService._obter_pendentes_ar(filtros)
 
     # --------------------------------------------------------------------- #
@@ -1374,3 +1527,299 @@ class ContasAPARService:
                 'Situação': r['situacao'],
             })
         return dados
+
+    @staticmethod
+    def preparar_dados_excel_pendentes_agrupado(grupos):
+        """
+        Converte grupos de AP Pendentes em lista de dicts para Excel.
+        Cada carga vira uma linha, com informações do faturamento pai.
+        """
+        dados = []
+        
+        for grupo in grupos:
+            codigo_fat = grupo.get('codigo_faturamento', '-')
+            pessoa_nome = grupo.get('pessoa_nome', '-')
+            tipo_operacao = grupo.get('tipo_operacao', '-')
+            data_vencimento = grupo.get('data_vencimento_mais_antiga')
+            dias_atraso = grupo.get('maior_atraso', 0)
+            saldo_pendente = round((grupo.get('total_pendente_100') or 0) / 100, 2)
+            data_faturamento = grupo.get('data_faturamento')
+            
+            detalhes = grupo.get('detalhes_cargas')
+            lancamento_descricao = grupo.get('lancamento_descricao')
+            
+            if detalhes:
+                # Adicionar fornecedores
+                for f in detalhes.get('fornecedores', []):
+                    dados.append({
+                        'Faturamento': codigo_fat,
+                        'Beneficiário': pessoa_nome,
+                        'Tipo Operação': tipo_operacao,
+                        'Tipo Carga': 'Fornecedor',
+                        'Entidade': f.get('fornecedor_identificacao', '-'),
+                        'Cliente': f.get('cliente', '-'),
+                        'Data Entrega': f.get('data_entrega', '-'),
+                        'Produto': f.get('produto', '-'),
+                        'Bitola': f.get('bitola', '-'),
+                        'NF': f.get('nota_fiscal', '-'),
+                        'Peso (Ton.)': f.get('peso_ticket', '-'),
+                        'Preço Unit.': round((f.get('preco_custo') or 0) / 100, 2),
+                        'Valor Bruto': round((f.get('valor_bruto') or 0) / 100, 2),
+                        'Valor Final': round((f.get('valor_faturado') or 0) / 100, 2),
+                        'Data Vencimento': data_vencimento.strftime('%d/%m/%Y') if data_vencimento else '-',
+                        'Dias Atraso': dias_atraso,
+                        'Saldo Pendente': saldo_pendente,
+                        'Data Faturamento': data_faturamento.strftime('%d/%m/%Y') if data_faturamento else '-',
+                    })
+                
+                # Adicionar transportadoras
+                for t in detalhes.get('transportadoras', []):
+                    dados.append({
+                        'Faturamento': codigo_fat,
+                        'Beneficiário': pessoa_nome,
+                        'Tipo Operação': tipo_operacao,
+                        'Tipo Carga': 'Transportadora',
+                        'Entidade': t.get('transportadora_identificacao') or t.get('nome', '-'),
+                        'Cliente': t.get('cliente', '-'),
+                        'Data Entrega': t.get('data_entrega', '-'),
+                        'Produto': t.get('produto', '-'),
+                        'Bitola': t.get('bitola', '-'),
+                        'NF': t.get('nota_fiscal', '-'),
+                        'Peso (Ton.)': t.get('peso_ticket', '-'),
+                        'Preço Unit.': round((t.get('preco_custo') or 0) / 100, 2),
+                        'Valor Bruto': round((t.get('valor_bruto') or 0) / 100, 2),
+                        'Valor Final': round((t.get('valor_faturado') or 0) / 100, 2),
+                        'Data Vencimento': data_vencimento.strftime('%d/%m/%Y') if data_vencimento else '-',
+                        'Dias Atraso': dias_atraso,
+                        'Saldo Pendente': saldo_pendente,
+                        'Data Faturamento': data_faturamento.strftime('%d/%m/%Y') if data_faturamento else '-',
+                    })
+                
+                # Adicionar extratores
+                for e in detalhes.get('extratores', []):
+                    dados.append({
+                        'Faturamento': codigo_fat,
+                        'Beneficiário': pessoa_nome,
+                        'Tipo Operação': tipo_operacao,
+                        'Tipo Carga': 'Extrator',
+                        'Entidade': e.get('extrator_identificacao', '-'),
+                        'Cliente': e.get('cliente', '-'),
+                        'Data Entrega': e.get('data_entrega', '-'),
+                        'Produto': e.get('produto', '-'),
+                        'Bitola': e.get('bitola', '-'),
+                        'NF': e.get('nota_fiscal', '-'),
+                        'Peso (Ton.)': e.get('peso_ticket', '-'),
+                        'Preço Unit.': round((e.get('preco_custo') or 0) / 100, 2),
+                        'Valor Bruto': round((e.get('valor_bruto') or 0) / 100, 2),
+                        'Valor Final': round((e.get('valor_faturado') or 0) / 100, 2),
+                        'Data Vencimento': data_vencimento.strftime('%d/%m/%Y') if data_vencimento else '-',
+                        'Dias Atraso': dias_atraso,
+                        'Saldo Pendente': saldo_pendente,
+                        'Data Faturamento': data_faturamento.strftime('%d/%m/%Y') if data_faturamento else '-',
+                    })
+                
+                # Adicionar comissionados
+                for c in detalhes.get('comissionados', []):
+                    dados.append({
+                        'Faturamento': codigo_fat,
+                        'Beneficiário': pessoa_nome,
+                        'Tipo Operação': tipo_operacao,
+                        'Tipo Carga': 'Comissionado',
+                        'Entidade': c.get('comissionado_identificacao', '-'),
+                        'Cliente': c.get('cliente', '-'),
+                        'Data Entrega': c.get('data_entrega', '-'),
+                        'Produto': c.get('produto', '-'),
+                        'Bitola': c.get('bitola', '-'),
+                        'NF': c.get('nota_fiscal', '-'),
+                        'Peso (Ton.)': c.get('peso_ticket', '-'),
+                        'Preço Unit.': round((c.get('preco_custo') or 0) / 100, 2),
+                        'Valor Bruto': round((c.get('valor_bruto') or 0) / 100, 2),
+                        'Valor Final': round((c.get('valor_faturado') or 0) / 100, 2),
+                        'Data Vencimento': data_vencimento.strftime('%d/%m/%Y') if data_vencimento else '-',
+                        'Dias Atraso': dias_atraso,
+                        'Saldo Pendente': saldo_pendente,
+                        'Data Faturamento': data_faturamento.strftime('%d/%m/%Y') if data_faturamento else '-',
+                    })
+                    
+            elif lancamento_descricao:
+                # Lançamento avulso - uma linha só
+                dados.append({
+                    'Faturamento': codigo_fat,
+                    'Beneficiário': pessoa_nome,
+                    'Tipo Operação': tipo_operacao,
+                    'Tipo Carga': 'Lançamento Avulso',
+                    'Entidade': '-',
+                    'Cliente': '-',
+                    'Data Entrega': '-',
+                    'Produto': lancamento_descricao[:50] if lancamento_descricao else '-',
+                    'Bitola': '-',
+                    'NF': '-',
+                    'Peso (Ton.)': '-',
+                    'Preço Unit.': 0,
+                    'Valor Bruto': saldo_pendente,
+                    'Valor Final': saldo_pendente,
+                    'Data Vencimento': data_vencimento.strftime('%d/%m/%Y') if data_vencimento else '-',
+                    'Dias Atraso': dias_atraso,
+                    'Saldo Pendente': saldo_pendente,
+                    'Data Faturamento': data_faturamento.strftime('%d/%m/%Y') if data_faturamento else '-',
+                })
+            else:
+                # Sem detalhes - uma linha resumida
+                dados.append({
+                    'Faturamento': codigo_fat,
+                    'Beneficiário': pessoa_nome,
+                    'Tipo Operação': tipo_operacao,
+                    'Tipo Carga': '-',
+                    'Entidade': '-',
+                    'Cliente': '-',
+                    'Data Entrega': '-',
+                    'Produto': '-',
+                    'Bitola': '-',
+                    'NF': '-',
+                    'Peso (Ton.)': '-',
+                    'Preço Unit.': 0,
+                    'Valor Bruto': saldo_pendente,
+                    'Valor Final': saldo_pendente,
+                    'Data Vencimento': data_vencimento.strftime('%d/%m/%Y') if data_vencimento else '-',
+                    'Dias Atraso': dias_atraso,
+                    'Saldo Pendente': saldo_pendente,
+                    'Data Faturamento': data_faturamento.strftime('%d/%m/%Y') if data_faturamento else '-',
+                })
+        
+        return dados
+
+    # --------------------------------------------------------------------- #
+    #  AGRUPAMENTO — AP PENDENTES POR FATURAMENTO
+    # --------------------------------------------------------------------- #
+
+    @staticmethod
+    def agrupar_pendentes_por_faturamento(registros):
+        """
+        Agrupa registros de AP Pendentes por faturamento/lançamento avulso.
+        Inclui detalhes das cargas (fornecedores, transportadoras, etc.) para faturamentos.
+        
+        Estrutura de cada grupo:
+        {
+            'codigo_faturamento': str,
+            'faturamento_id': int ou None,
+            'lancamento_avulso_id': int ou None,
+            'tipo_operacao': str,
+            'pessoa_nome': str,
+            'pessoa_id': int ou None,
+            'total_original_100': int,
+            'total_pendente_100': int,
+            'qtd_agendamentos': int,
+            'maior_atraso': int,
+            'data_vencimento_mais_antiga': date,
+            'agendamentos': list[dict],
+            'detalhes_cargas': dict (para faturamentos),
+            'lancamento_descricao': str (para lançamentos avulsos)
+        }
+        """
+        from collections import defaultdict
+        
+        grupos_dict = defaultdict(lambda: {
+            'codigo_faturamento': None,
+            'faturamento_id': None,
+            'lancamento_avulso_id': None,
+            'tipo_operacao': None,
+            'pessoa_nome': '-',
+            'pessoa_id': None,
+            'total_original_100': 0,
+            'total_pendente_100': 0,
+            'qtd_agendamentos': 0,
+            'maior_atraso': 0,
+            'data_vencimento_mais_antiga': None,
+            'agendamentos': [],
+            'detalhes_cargas': None,
+            'lancamento_descricao': None,
+            'valor_bruto_total': 0,
+            'valor_credito_aplicado': 0,
+            'data_faturamento': None,
+        })
+        
+        # Cache de faturamentos e lançamentos já carregados
+        faturamentos_cache = {}
+        lancamentos_cache = {}
+        
+        for reg in registros:
+            # Chave de agrupamento: codigo_faturamento
+            chave = reg.get('codigo_faturamento', f"AG-{reg.get('id')}")
+            grupo = grupos_dict[chave]
+            
+            # Preencher dados do grupo (apenas na primeira ocorrência)
+            if grupo['codigo_faturamento'] is None:
+                grupo['codigo_faturamento'] = chave
+                grupo['faturamento_id'] = reg.get('faturamento_id')
+                grupo['lancamento_avulso_id'] = reg.get('lancamento_avulso_id')
+                grupo['tipo_operacao'] = reg.get('tipo_operacao')
+                grupo['pessoa_nome'] = reg.get('pessoa_nome', '-')
+                grupo['pessoa_id'] = reg.get('pessoa_id')
+                
+                # Buscar detalhes do faturamento
+                if reg.get('faturamento_id'):
+                    fat_id = reg.get('faturamento_id')
+                    if fat_id not in faturamentos_cache:
+                        fat = FaturamentoModel.query.get(fat_id)
+                        if fat:
+                            faturamentos_cache[fat_id] = {
+                                'detalhes': fat.obter_detalhes(),
+                                'valor_bruto_total': fat.valor_bruto_total or fat.valor_total,
+                                'valor_credito_aplicado': fat.valor_credito_aplicado or 0,
+                                'data_cadastro': fat.data_cadastro,
+                            }
+                    
+                    if fat_id in faturamentos_cache:
+                        grupo['detalhes_cargas'] = faturamentos_cache[fat_id]['detalhes']
+                        grupo['valor_bruto_total'] = faturamentos_cache[fat_id]['valor_bruto_total']
+                        grupo['valor_credito_aplicado'] = faturamentos_cache[fat_id]['valor_credito_aplicado']
+                        grupo['data_faturamento'] = faturamentos_cache[fat_id]['data_cadastro']
+                
+                # Buscar detalhes do lançamento avulso
+                elif reg.get('lancamento_avulso_id'):
+                    lav_id = reg.get('lancamento_avulso_id')
+                    if lav_id not in lancamentos_cache:
+                        lav = LancamentoAvulsoModel.query.get(lav_id)
+                        if lav:
+                            lancamentos_cache[lav_id] = {
+                                'descricao': lav.descricao,
+                                'data_cadastro': lav.data_cadastro,
+                            }
+                    
+                    if lav_id in lancamentos_cache:
+                        grupo['lancamento_descricao'] = lancamentos_cache[lav_id]['descricao']
+                        grupo['data_faturamento'] = lancamentos_cache[lav_id]['data_cadastro']
+            
+            # Acumular totais
+            grupo['total_original_100'] += reg.get('valor_original_100', 0)
+            grupo['total_pendente_100'] += reg.get('saldo_100', 0)
+            grupo['qtd_agendamentos'] += 1
+            
+            # Atualizar maior atraso
+            dias_atraso = reg.get('dias_atraso', 0)
+            if dias_atraso > grupo['maior_atraso']:
+                grupo['maior_atraso'] = dias_atraso
+            
+            # Atualizar data de vencimento mais antiga
+            data_venc = reg.get('data_vencimento')
+            if data_venc:
+                if grupo['data_vencimento_mais_antiga'] is None or data_venc < grupo['data_vencimento_mais_antiga']:
+                    grupo['data_vencimento_mais_antiga'] = data_venc
+            
+            # Adicionar agendamento à lista
+            grupo['agendamentos'].append(reg)
+        
+        # Converter para lista e ordenar por maior atraso (maior primeiro)
+        grupos_lista = list(grupos_dict.values())
+        grupos_lista.sort(key=lambda g: (g['maior_atraso']), reverse=True)
+        
+        return grupos_lista
+
+    @staticmethod
+    def obter_pendentes_agrupados(direcao_str, filtros=None):
+        """Retorna pendentes agrupados por faturamento (para AP) ou cliente (para AR)."""
+        registros = ContasAPARService.obter_pendentes(direcao_str, filtros)
+        if direcao_str == 'ap':
+            return ContasAPARService.agrupar_pendentes_por_faturamento(registros)
+        # Para AR, por enquanto retorna sem agrupamento
+        return registros

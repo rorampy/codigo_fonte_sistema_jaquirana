@@ -145,7 +145,457 @@
       <div class="col-12">
         <div class="card">
           <div class="card-body p-0">
-            {% if registros %}
+            {% if direcao == 'ap' and grupos %}
+            {# ========== ACCORDION AGRUPADO POR FATURAMENTO (AP) ========== #}
+            <div class="accordion" id="pendentesAccordion">
+              {% for grupo in grupos %}
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-fat-{{ loop.index }}">
+                  <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" 
+                          type="button" 
+                          data-bs-toggle="collapse"
+                          data-bs-target="#collapse-fat-{{ loop.index }}" 
+                          aria-expanded="{% if loop.first %}true{% else %}false{% endif %}"
+                          style="padding: 0.75rem 1rem;">
+                    <div class="d-flex align-items-center justify-content-between w-100">
+                      {# Lado Esquerdo - Informações principais #}
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        {# Código do Faturamento #}
+                        <span class="badge bg-azure-lt px-2 py-1" style="font-size: 0.8rem; font-weight: 600;">
+                          {{ grupo.codigo_faturamento }}
+                        </span>
+                        
+                        {# Separador #}
+                        <span class="text-muted" style="opacity: 0.3;">|</span>
+                        
+                        {# Fornecedor/Pessoa #}
+                        <span class="d-flex align-items-center gap-1" style="font-weight: 500; color: #333;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                            <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                          </svg>
+                          {{ grupo.pessoa_nome | truncate(30, True, '...') }}
+                        </span>
+                        
+                        {# Separador #}
+                        <span class="text-muted" style="opacity: 0.3;">|</span>
+                        
+                        {# Tipo Operação #}
+                        <span class="badge" style="background: #f1f5f9; color: #64748b; font-weight: 500; font-size: 0.75rem;">
+                          {{ grupo.tipo_operacao }}
+                        </span>
+                        
+                        {# Separador #}
+                        <span class="text-muted" style="opacity: 0.3;">|</span>
+                        
+                        {# Data Vencimento #}
+                        {% if grupo.data_vencimento_mais_antiga %}
+                        <span class="d-flex align-items-center gap-1" style="font-size: 0.8rem; color: #666;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
+                            <path d="M16 3v4" />
+                            <path d="M8 3v4" />
+                            <path d="M4 11h16" />
+                          </svg>
+                          {{ grupo.data_vencimento_mais_antiga | formatar_data_para_brl }}
+                        </span>
+                        
+                        {# Separador #}
+                        <span class="text-muted" style="opacity: 0.3;">|</span>
+                        {% endif %}
+                        
+                        {# Dias de Atraso #}
+                        {% if grupo.maior_atraso > 0 %}
+                        <span class="badge d-flex align-items-center gap-1" style="background: #fee2e2; color: #dc2626; font-weight: 500; font-size: 0.75rem; border: 1px solid #fecaca;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 9v4" />
+                            <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                            <path d="M12 16h.01" />
+                          </svg>
+                          {{ grupo.maior_atraso }} dias
+                        </span>
+                        {% elif grupo.maior_atraso == 0 %}
+                        <span class="badge" style="background: #fef3c7; color: #d97706; font-weight: 500; font-size: 0.75rem;">Vence hoje</span>
+                        {% else %}
+                        <span class="badge" style="background: #d1fae5; color: #059669; font-weight: 500; font-size: 0.75rem;">No prazo</span>
+                        {% endif %}
+                      </div>
+                      
+                      {# Lado Direito - Valor #}
+                      <div class="ms-3 me-2">
+                        <span style="font-size: 0.95rem; font-weight: 600; color: #dc2626; white-space: nowrap;">
+                          {{ grupo.total_pendente_100 | formatar_float_para_brl }}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                </h2>
+                <div id="collapse-fat-{{ loop.index }}"
+                  class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                  data-bs-parent="#pendentesAccordion">
+                  <div class="accordion-body p-3">
+                    
+                    {# ========== DETALHES DAS CARGAS (FATURAMENTO) ========== #}
+                    {% if grupo.detalhes_cargas %}
+                      {% set detalhes = grupo.detalhes_cargas %}
+                      
+                      {# Seção Fornecedores #}
+                      {% if detalhes.fornecedores %}
+                      {% set fornecedores_agrupados = {} %}
+                      {% for fornecedor in detalhes.fornecedores %}
+                        {% set identificacao = fornecedor.fornecedor_identificacao %}
+                        {% if identificacao not in fornecedores_agrupados %}
+                          {% set _ = fornecedores_agrupados.update({identificacao: []}) %}
+                        {% endif %}
+                        {% set _ = fornecedores_agrupados[identificacao].append(fornecedor) %}
+                      {% endfor %}
+                      
+                      {% for identificacao, cargas_fornecedor in fornecedores_agrupados.items() %}
+                      <div class="card mb-3 shadow-sm" style="border-radius: 8px; border: 1px solid #e3e6f0;">
+                        <div class="card-header py-2" style="background: #f8f9fa;">
+                          <div class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2 text-primary">
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                              <path d="M8 9l5 5v7h-5v-4m0 4h-5v-7l5 -5m1 1v-6a1 1 0 0 1 1 -1h10a1 1 0 0 1 1 1v17h-8" />
+                            </svg>
+                            <span class="fw-bold">Fornecedor: {{ identificacao }}</span>
+                            <span class="badge bg-primary-lt ms-2">{{ cargas_fornecedor|length }} registro(s)</span>
+                          </div>
+                        </div>
+                        <div class="card-body p-0">
+                          <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                              <thead style="background: #f8f9fa;">
+                                <tr>
+                                  <th class="text-center">Data Entrega</th>
+                                  <th class="text-center">Cliente</th>
+                                  <th class="text-center">Produto | Bitola</th>
+                                  <th class="text-center">NF</th>
+                                  <th class="text-center">Peso (Ton.)</th>
+                                  <th class="text-center">Preço/Ton</th>
+                                  <th class="text-center">Valor Bruto</th>
+                                  <th class="text-center">Valor Final</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for fornecedor in cargas_fornecedor %}
+                                <tr>
+                                  <td class="text-center">{{ fornecedor.data_entrega }}</td>
+                                  <td class="text-center">{{ fornecedor.cliente or '-' }}</td>
+                                  <td class="text-center">{{ fornecedor.produto }} | {{ fornecedor.bitola }}</td>
+                                  <td class="text-center">{{ fornecedor.nota_fiscal }}</td>
+                                  <td class="text-center">{{ fornecedor.peso_ticket }}</td>
+                                  <td class="text-center">{{ fornecedor.preco_custo | formatar_float_para_brl }}</td>
+                                  <td class="text-center">{{ fornecedor.valor_bruto | formatar_float_para_brl }}</td>
+                                  <td class="text-center">
+                                    <span class="badge bg-green-lt">{{ fornecedor.valor_faturado | formatar_float_para_brl }}</span>
+                                  </td>
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                      {% endfor %}
+                      {% endif %}
+                      
+                      {# Seção Transportadoras #}
+                      {% if detalhes.transportadoras %}
+                      {% set transportadoras_agrupadas = {} %}
+                      {% for transportadora in detalhes.transportadoras %}
+                        {% set identificacao = transportadora.nome %}
+                        {% if identificacao not in transportadoras_agrupadas %}
+                          {% set _ = transportadoras_agrupadas.update({identificacao: []}) %}
+                        {% endif %}
+                        {% set _ = transportadoras_agrupadas[identificacao].append(transportadora) %}
+                      {% endfor %}
+                      
+                      {% for identificacao, cargas_transportadora in transportadoras_agrupadas.items() %}
+                      <div class="card mb-3 shadow-sm" style="border-radius: 8px; border: 1px solid #e3e6f0;">
+                        <div class="card-header py-2" style="background: #f8f9fa;">
+                          <div class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2 text-info">
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                              <path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                              <path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                              <path d="M5 17h-2v-4m-1 -8h11v12m0 -8h4l2 2v4h-2" />
+                            </svg>
+                            <span class="fw-bold">Transportadora: {{ identificacao }}</span>
+                            <span class="badge bg-info-lt ms-2">{{ cargas_transportadora|length }} registro(s)</span>
+                          </div>
+                        </div>
+                        <div class="card-body p-0">
+                          <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                              <thead style="background: #f8f9fa;">
+                                <tr>
+                                  <th class="text-center">Data Entrega</th>
+                                  <th class="text-center">Cliente</th>
+                                  <th class="text-center">Produto | Bitola</th>
+                                  <th class="text-center">NF</th>
+                                  <th class="text-center">Peso (Ton.)</th>
+                                  <th class="text-center">Preço Frete</th>
+                                  <th class="text-center">Valor Bruto</th>
+                                  <th class="text-center">Valor Final</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for transportadora in cargas_transportadora %}
+                                <tr>
+                                  <td class="text-center">{{ transportadora.data_entrega }}</td>
+                                  <td class="text-center">{{ transportadora.cliente or '-' }}</td>
+                                  <td class="text-center">{{ transportadora.produto }} | {{ transportadora.bitola }}</td>
+                                  <td class="text-center">{{ transportadora.nota_fiscal }}</td>
+                                  <td class="text-center">{{ transportadora.peso_ticket }}</td>
+                                  <td class="text-center">{{ transportadora.preco_custo | formatar_float_para_brl }}</td>
+                                  <td class="text-center">{{ transportadora.valor_bruto | formatar_float_para_brl }}</td>
+                                  <td class="text-center">
+                                    <span class="badge bg-green-lt">{{ transportadora.valor_faturado | formatar_float_para_brl }}</span>
+                                  </td>
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                      {% endfor %}
+                      {% endif %}
+                      
+                      {# Seção Extratores #}
+                      {% if detalhes.extratores %}
+                      {% set extratores_agrupados = {} %}
+                      {% for extrator in detalhes.extratores %}
+                        {% set identificacao = extrator.extrator_identificacao %}
+                        {% if identificacao not in extratores_agrupados %}
+                          {% set _ = extratores_agrupados.update({identificacao: []}) %}
+                        {% endif %}
+                        {% set _ = extratores_agrupados[identificacao].append(extrator) %}
+                      {% endfor %}
+                      
+                      {% for identificacao, cargas_extrator in extratores_agrupados.items() %}
+                      <div class="card mb-3 shadow-sm" style="border-radius: 8px; border: 1px solid #e3e6f0;">
+                        <div class="card-header py-2" style="background: #f8f9fa;">
+                          <div class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2 text-warning">
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                              <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                              <path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                              <path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855" />
+                            </svg>
+                            <span class="fw-bold">Extrator: {{ identificacao }}</span>
+                            <span class="badge bg-warning-lt ms-2">{{ cargas_extrator|length }} registro(s)</span>
+                          </div>
+                        </div>
+                        <div class="card-body p-0">
+                          <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                              <thead style="background: #f8f9fa;">
+                                <tr>
+                                  <th class="text-center">Data Entrega</th>
+                                  <th class="text-center">Cliente</th>
+                                  <th class="text-center">Produto | Bitola</th>
+                                  <th class="text-center">NF</th>
+                                  <th class="text-center">Peso (Ton.)</th>
+                                  <th class="text-center">Preço Extração</th>
+                                  <th class="text-center">Valor Bruto</th>
+                                  <th class="text-center">Valor Final</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for extrator in cargas_extrator %}
+                                <tr>
+                                  <td class="text-center">{{ extrator.data_entrega }}</td>
+                                  <td class="text-center">{{ extrator.cliente or '-' }}</td>
+                                  <td class="text-center">{{ extrator.produto }} | {{ extrator.bitola }}</td>
+                                  <td class="text-center">{{ extrator.nota_fiscal }}</td>
+                                  <td class="text-center">{{ extrator.peso_ticket }}</td>
+                                  <td class="text-center">{{ extrator.preco_custo | formatar_float_para_brl }}</td>
+                                  <td class="text-center">{{ extrator.valor_bruto | formatar_float_para_brl }}</td>
+                                  <td class="text-center">
+                                    <span class="badge bg-green-lt">{{ extrator.valor_faturado | formatar_float_para_brl }}</span>
+                                  </td>
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                      {% endfor %}
+                      {% endif %}
+                      
+                      {# Seção Comissionados #}
+                      {% if detalhes.comissionados %}
+                      {% set comissionados_agrupados = {} %}
+                      {% for comissionado in detalhes.comissionados %}
+                        {% set identificacao = comissionado.comissionado_identificacao %}
+                        {% if identificacao not in comissionados_agrupados %}
+                          {% set _ = comissionados_agrupados.update({identificacao: []}) %}
+                        {% endif %}
+                        {% set _ = comissionados_agrupados[identificacao].append(comissionado) %}
+                      {% endfor %}
+                      
+                      {% for identificacao, cargas_comissionado in comissionados_agrupados.items() %}
+                      <div class="card mb-3 shadow-sm" style="border-radius: 8px; border: 1px solid #e3e6f0;">
+                        <div class="card-header py-2" style="background: #f8f9fa;">
+                          <div class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2 text-success">
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                              <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                              <path d="M12 3v3m0 12v3" />
+                            </svg>
+                            <span class="fw-bold">Comissionado: {{ identificacao }}</span>
+                            <span class="badge bg-success-lt ms-2">{{ cargas_comissionado|length }} registro(s)</span>
+                          </div>
+                        </div>
+                        <div class="card-body p-0">
+                          <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                              <thead style="background: #f8f9fa;">
+                                <tr>
+                                  <th class="text-center">Data Entrega</th>
+                                  <th class="text-center">Cliente</th>
+                                  <th class="text-center">Produto | Bitola</th>
+                                  <th class="text-center">NF</th>
+                                  <th class="text-center">Peso (Ton.)</th>
+                                  <th class="text-center">Preço Comissão</th>
+                                  <th class="text-center">Valor Bruto</th>
+                                  <th class="text-center">Valor Final</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for comissionado in cargas_comissionado %}
+                                <tr>
+                                  <td class="text-center">{{ comissionado.data_entrega }}</td>
+                                  <td class="text-center">{{ comissionado.cliente or '-' }}</td>
+                                  <td class="text-center">{{ comissionado.produto }} | {{ comissionado.bitola }}</td>
+                                  <td class="text-center">{{ comissionado.nota_fiscal }}</td>
+                                  <td class="text-center">{{ comissionado.peso_ticket }}</td>
+                                  <td class="text-center">{{ comissionado.preco_custo | formatar_float_para_brl }}</td>
+                                  <td class="text-center">{{ comissionado.valor_bruto | formatar_float_para_brl }}</td>
+                                  <td class="text-center">
+                                    <span class="badge bg-green-lt">{{ comissionado.valor_faturado | formatar_float_para_brl }}</span>
+                                  </td>
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                      {% endfor %}
+                      {% endif %}
+                      
+                      {# Rodapé com totais do faturamento #}
+                      <div class="d-flex justify-content-around align-items-center p-3 bg-light rounded mt-3">
+                        <div class="text-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success mb-1">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                            <path d="M12 3v3m0 12v3" />
+                          </svg>
+                          <div class="small text-muted">Valor Bruto</div>
+                          <div class="fw-bold">{{ grupo.valor_bruto_total | formatar_float_para_brl }}</div>
+                        </div>
+                        <div class="text-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-info mb-1">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                            <path d="M12 7v5l3 3" />
+                          </svg>
+                          <div class="small text-muted">Crédito Aplicado</div>
+                          <div class="fw-bold">{{ grupo.valor_credito_aplicado | formatar_float_para_brl }}</div>
+                        </div>
+                        <div class="text-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary mb-1">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+                            <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" />
+                            <path d="M9 14l2 2l4 -4" />
+                          </svg>
+                          <div class="small text-muted">Valor Final</div>
+                          <div class="fw-bold">{{ grupo.total_original_100 | formatar_float_para_brl }}</div>
+                        </div>
+                        <div class="text-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-danger mb-1">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
+                            <path d="M16 3v4" />
+                            <path d="M8 3v4" />
+                            <path d="M4 11h16" />
+                          </svg>
+                          <div class="small text-muted">Saldo Pendente</div>
+                          <div class="fw-bold text-danger">{{ grupo.total_pendente_100 | formatar_float_para_brl }}</div>
+                        </div>
+                        <div class="text-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-1">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
+                            <path d="M16 3v4" />
+                            <path d="M8 3v4" />
+                            <path d="M4 11h16" />
+                            <path d="M11 15h1" />
+                          </svg>
+                          <div class="small text-muted">Data</div>
+                          <div class="fw-bold">{{ grupo.data_faturamento | formatar_data_para_brl if grupo.data_faturamento else '-' }}</div>
+                        </div>
+                      </div>
+                    
+                    {# ========== LANÇAMENTO AVULSO ========== #}
+                    {% elif grupo.lancamento_descricao %}
+                      <div class="card mb-3 shadow-sm" style="border-radius: 8px; border: 1px solid #e3e6f0;">
+                        <div class="card-header py-2" style="background: #f8f9fa;">
+                          <div class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2 text-secondary">
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                              <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                              <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                              <path d="M9 17h6" />
+                              <path d="M9 13h6" />
+                            </svg>
+                            <span class="fw-bold">Lançamento Avulso</span>
+                          </div>
+                        </div>
+                        <div class="card-body">
+                          <p class="mb-2"><strong>Descrição:</strong> {{ grupo.lancamento_descricao }}</p>
+                          <p class="mb-0"><strong>Valor:</strong> 
+                            <span class="badge bg-red-lt p-2">{{ grupo.total_pendente_100 | formatar_float_para_brl }}</span>
+                          </p>
+                        </div>
+                      </div>
+                    
+                    {# ========== SEM DETALHES ========== #}
+                    {% else %}
+                      <div class="text-center text-muted p-4">
+                        <p class="mb-0">Detalhes não disponíveis para este registro.</p>
+                      </div>
+                    {% endif %}
+                    
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% elif registros %}
+            {# ========== TABELA SIMPLES (AR ou fallback) ========== #}
             <div class="table-responsive">
               <table class="table table-vcenter table-hover table-striped">
                 <thead class="bg-light">
@@ -159,8 +609,6 @@
                     <th class="text-center">Saldo Pendente</th>
                     <th class="text-center">Dias Atraso</th>
                     <th class="text-center">Situação</th>
-                    <!-- <th class="text-center">Plano de Contas</th>
-                    <th class="text-center">Centro de Custo</th> -->
                   </tr>
                 </thead>
                 <tbody>
@@ -195,8 +643,6 @@
                     <td class="text-center">
                       <span class="badge badge-outline text-orange">{{ item.situacao }}</span>
                     </td>
-                    <!-- <td class="text-center">{{ item.plano_contas }}</td>
-                    <td class="text-center">{{ item.centro_custo }}</td> -->
                   </tr>
                   {% endfor %}
                 </tbody>
