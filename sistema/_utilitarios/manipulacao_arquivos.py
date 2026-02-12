@@ -538,6 +538,34 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
+                # Cargas a Receber (Clientes) - AR
+                for car in detalhes.get('cargas_a_receber', []):
+                    peso = float(car.get('peso_ticket') or 0) if car.get('peso_ticket') else 0
+                    valor = (car.get('valor_faturado') or 0) / 100
+                    total_peso += peso
+                    total_valor += valor
+                    cargas_count += 1
+                    
+                    ws.cell(row=row, column=1, value=car.get('data_entrega', '-')).font = font_normal
+                    ws.cell(row=row, column=2, value='Cliente').font = font_normal
+                    ws.cell(row=row, column=3, value=(car.get('cliente') or '-')[:30]).font = font_normal
+                    ws.cell(row=row, column=4, value='-').font = font_normal
+                    ws.cell(row=row, column=5, value=car.get('produto', '-')).font = font_normal
+                    ws.cell(row=row, column=6, value=car.get('bitola', '-')).font = font_normal
+                    ws.cell(row=row, column=7, value=car.get('nota_fiscal', '-')).font = font_normal
+                    ws.cell(row=row, column=8, value=car.get('peso_ticket', '-')).font = font_normal
+                    preco_cell = ws.cell(row=row, column=9, value=(car.get('preco_custo') or 0) / 100)
+                    preco_cell.number_format = '#,##0.00'
+                    preco_cell.font = font_normal
+                    valor_cell = ws.cell(row=row, column=10, value=valor)
+                    valor_cell.number_format = '#,##0.00'
+                    valor_cell.font = font_valor
+                    
+                    for col in range(1, num_colunas + 1):
+                        ws.cell(row=row, column=col).alignment = align_center
+                        ws.cell(row=row, column=col).border = borda_fina
+                    row += 1
+                
                 # Linha de subtotal do grupo
                 ws.cell(row=row, column=1, value=f'Subtotal ({cargas_count} cargas)').font = font_subtotal
                 ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)

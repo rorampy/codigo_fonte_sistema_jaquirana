@@ -271,8 +271,8 @@
     </tbody>
   </table>
 
-  <!-- Detalhamento por Faturamento -->
-  {% if direcao == 'ap' and grupos %}
+  <!-- Detalhamento por Faturamento (AP e AR) -->
+  {% if grupos %}
   
   {% for grupo in grupos %}
   <table class="faturamento-table">
@@ -293,7 +293,7 @@
 
     {% if grupo.detalhes_cargas %}
     {% set detalhes = grupo.detalhes_cargas %}
-    {% set total_cargas = (detalhes.fornecedores|length if detalhes.fornecedores else 0) + (detalhes.transportadoras|length if detalhes.transportadoras else 0) + (detalhes.extratores|length if detalhes.extratores else 0) + (detalhes.comissionados|length if detalhes.comissionados else 0) %}
+    {% set total_cargas = (detalhes.fornecedores|length if detalhes.fornecedores else 0) + (detalhes.transportadoras|length if detalhes.transportadoras else 0) + (detalhes.extratores|length if detalhes.extratores else 0) + (detalhes.comissionados|length if detalhes.comissionados else 0) + (detalhes.cargas_a_receber|length if detalhes.cargas_a_receber else 0) %}
     
     {% if total_cargas > 0 %}
     <!-- Cabeçalho das Cargas -->
@@ -361,6 +361,20 @@
       <td>{{ c.nota_fiscal or '-' }}</td>
       <td>{{ c.peso_ticket or '-' }}</td>
       <td class="valor">{{ c.valor_faturado | formatar_float_para_brl or '-' }}</td>
+    </tr>
+    {% endfor %}
+
+    <!-- Cargas a Receber (Clientes) -->
+    {% for car in detalhes.cargas_a_receber %}
+    <tr class="carga-row">
+      <td>{{ car.data_entrega or '-' }}</td>
+      <td class="tipo-fornecedor"><strong>Cliente</strong></td>
+      <td style="text-align: left;">{{ car.cliente | truncate(25, True, '...') or '-' }}</td>
+      <td>-</td>
+      <td>{{ car.produto or '-' }} | {{ car.bitola or '-' }}</td>
+      <td>{{ car.nota_fiscal or '-' }}</td>
+      <td>{{ car.peso_ticket or '-' }}</td>
+      <td class="valor">{{ car.valor_faturado | formatar_float_para_brl or '-' }}</td>
     </tr>
     {% endfor %}
     {% endif %}

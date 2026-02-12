@@ -786,6 +786,159 @@ class ContasAPARService:
         resultado.sort(key=lambda x: (x.get('data_vencimento') or date.min))
         return resultado
 
+    @staticmethod
+    def _obter_pendentes_ar_novo(filtros):
+        """
+        NOVA LÓGICA AR Pendentes (igual AP, mas com direção AR=1):
+        - Somente Agendamentos com situação 6 (Categorizado) ou 10 (Parcialmente Conciliado)
+        - Filtro por data_vencimento <= data_fim
+        - Valor pendente = valor_total_100 - valor_conciliado_100 (quando conciliação parcial)
+        - Inclui agendamentos de Faturamentos (direcao_financeira=1) e Lancamentos Avulsos (tipo_movimentacao=1)
+        """
+        from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
+        
+        filtros = filtros or {}
+        SITUACOES_PENDENTES_AR = [6, 10]  # 6=Categorizado, 10=Parcialmente Conciliado
+        resultado = []
+        hoje = date.today()
+        
+        # Query base: agendamentos ativos nas situações 6 e 10
+        query = (
+            db.session.query(AgendamentoPagamentoModel)
+            .outerjoin(
+                FaturamentoModel,
+                AgendamentoPagamentoModel.faturamento_id == FaturamentoModel.id,
+            )
+            .outerjoin(
+                LancamentoAvulsoModel,
+                AgendamentoPagamentoModel.lancamento_avulso_id == LancamentoAvulsoModel.id,
+            )
+            .filter(
+                AgendamentoPagamentoModel.ativo == True,
+                AgendamentoPagamentoModel.deletado == False,
+                AgendamentoPagamentoModel.situacao_pagamento_id.in_(SITUACOES_PENDENTES_AR),
+                # Filtro de direção: AR (receita)
+                or_(
+                    and_(
+                        AgendamentoPagamentoModel.faturamento_id.isnot(None),
+                        FaturamentoModel.direcao_financeira == DIRECAO_AR,
+                        FaturamentoModel.ativo == True,
+                        FaturamentoModel.deletado == False,
+                    ),
+                    and_(
+                        AgendamentoPagamentoModel.lancamento_avulso_id.isnot(None),
+                        LancamentoAvulsoModel.tipo_movimentacao == DIRECAO_AR,
+                        LancamentoAvulsoModel.ativo == True,
+                        LancamentoAvulsoModel.deletado == False,
+                    ),
+                ),
+            )
+        )
+        
+        # Filtro por data de vencimento (até a data_fim)
+        if filtros.get('data_fim'):
+            data_fim = date.fromisoformat(filtros['data_fim']) if isinstance(filtros['data_fim'], str) else filtros['data_fim']
+            query = query.filter(AgendamentoPagamentoModel.data_vencimento <= data_fim)
+        
+        # Filtro por pessoa (cliente)
+        if filtros.get('pessoa_id'):
+            query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
+        
+        # Filtro por situação específica
+        if filtros.get('situacao_id'):
+            sit_id = int(filtros['situacao_id'])
+            if sit_id in SITUACOES_PENDENTES_AR:
+                query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == sit_id)
+        
+        # Filtro por plano de contas (categorias_json)
+        if filtros.get('plano_contas_id'):
+            pc_id = int(filtros['plano_contas_id'])
+            query = query.filter(
+                func.json_contains(
+                    AgendamentoPagamentoModel.categorias_json,
+                    json_lib.dumps({'categoria_id': pc_id})
+                )
+            )
+        
+        # Filtro por centro de custo
+        if filtros.get('centro_custo_id'):
+            cc_id = str(filtros['centro_custo_id'])
+            query = query.filter(
+                func.json_contains(
+                    AgendamentoPagamentoModel.centros_custo_json,
+                    json_lib.dumps({'centro': cc_id})
+                )
+            )
+        
+        # Processar resultados
+        for ag in query.all():
+            # Calcular valor pendente
+            valor_total = ag.valor_total_100 or 0
+            valor_conciliado = ag.valor_conciliado_100 or 0
+            
+            # Se conciliação parcial, o pendente é a diferença
+            if ag.conciliacao_parcial and valor_conciliado > 0:
+                valor_pendente = valor_total - valor_conciliado
+            else:
+                valor_pendente = valor_total
+            
+            # Obter código do faturamento ou lançamento avulso
+            fat = None
+            lav = None
+            if ag.faturamento_id:
+                fat = FaturamentoModel.query.get(ag.faturamento_id)
+            if ag.lancamento_avulso_id:
+                lav = LancamentoAvulsoModel.query.get(ag.lancamento_avulso_id)
+            
+            if fat:
+                codigo = fat.codigo_faturamento
+                origem_tipo = 'Faturamento'
+            elif lav:
+                codigo = f'LA-{ag.lancamento_avulso_id}'
+                origem_tipo = 'Lançamento Avulso'
+            else:
+                codigo = f'AG-{ag.id}'
+                origem_tipo = 'Agendamento'
+            
+            pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
+            situacao_nome = ag.situacao.situacao if ag.situacao else 'Sem situação'
+            
+            # Dias de atraso
+            vencimento = ag.data_vencimento or ag.data_cadastro
+            dias_atraso = 0
+            if vencimento and vencimento < hoje:
+                dias_atraso = (hoje - vencimento).days
+            
+            resultado.append({
+                'id': ag.id,
+                'faturamento_id': ag.faturamento_id,
+                'lancamento_avulso_id': ag.lancamento_avulso_id,
+                'codigo_faturamento': codigo,
+                'tipo_operacao': origem_tipo,
+                'descricao': ag.descricao or codigo,
+                'pessoa_nome': pessoa.identificacao if pessoa else '-',
+                'pessoa_id': ag.pessoa_financeiro_id,
+                'data_emissao': ag.data_competencia or ag.data_cadastro,
+                'data_vencimento': vencimento,
+                'data_competencia': ag.data_competencia,
+                'data_pagamento': None,
+                'valor_original_100': valor_total,
+                'valor_pago_100': valor_conciliado,
+                'saldo_100': valor_pendente,
+                'situacao': situacao_nome,
+                'situacao_id': ag.situacao_pagamento_id,
+                'centro_custo': ContasAPARService._extrair_centros_custo(ag.centros_custo_json),
+                'plano_contas': ContasAPARService._extrair_plano_contas(ag.categorias_json),
+                'referencia_agendamento': ag.referencia or '-',
+                'parcelas': [],
+                'dias_atraso': dias_atraso,
+                'conciliacao_parcial': ag.conciliacao_parcial or False,
+            })
+        
+        # Ordenar por data de vencimento (mais antigo primeiro - maior atraso)
+        resultado.sort(key=lambda x: (x.get('data_vencimento') or date.min))
+        return resultado
+
     # --------------------------------------------------------------------- #
     #  SERIALIZAÇÃO — VENDAS ENTREGUES (AR)
     # --------------------------------------------------------------------- #
@@ -1602,11 +1755,11 @@ class ContasAPARService:
 
     @staticmethod
     def obter_pendentes(direcao_str, filtros=None):
-        """Títulos pendentes filtrados por período. AP usa nova lógica (agendamentos 6/10), AR usa RegistroOperacional."""
+        """Títulos pendentes filtrados por período. AP e AR usam nova lógica (agendamentos 6/10)."""
         filtros = filtros or {}
         if direcao_str == 'ap':
             return ContasAPARService._obter_pendentes_ap_novo(filtros)
-        return ContasAPARService._obter_pendentes_ar(filtros)
+        return ContasAPARService._obter_pendentes_ar_novo(filtros)
 
     # --------------------------------------------------------------------- #
     #  TOTALIZADORES
@@ -1981,12 +2134,10 @@ class ContasAPARService:
 
     @staticmethod
     def obter_pendentes_agrupados(direcao_str, filtros=None):
-        """Retorna pendentes agrupados por faturamento (para AP) ou cliente (para AR)."""
+        """Retorna pendentes agrupados por faturamento (para AP e AR)."""
         registros = ContasAPARService.obter_pendentes(direcao_str, filtros)
-        if direcao_str == 'ap':
-            return ContasAPARService.agrupar_pendentes_por_faturamento(registros)
-        # Para AR, por enquanto retorna sem agrupamento
-        return registros
+        # Agora tanto AP quanto AR usam agrupamento por faturamento
+        return ContasAPARService.agrupar_pendentes_por_faturamento(registros)
 
     # --------------------------------------------------------------------- #
     #  AGRUPAMENTO — AP BAIXAS (PAGAMENTOS) POR FATURAMENTO

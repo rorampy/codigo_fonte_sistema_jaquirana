@@ -145,8 +145,8 @@
       <div class="col-12">
         <div class="card">
           <div class="card-body p-0">
-            {% if direcao == 'ap' and grupos %}
-            {# ========== ACCORDION AGRUPADO POR FATURAMENTO (AP) ========== #}
+            {% if grupos %}
+            {# ========== ACCORDION AGRUPADO POR FATURAMENTO (AP e AR) ========== #}
             <div class="accordion" id="pendentesAccordion">
               {% for grupo in grupos %}
               <div class="accordion-item">
@@ -487,6 +487,67 @@
                                   <td class="text-center">{{ comissionado.valor_bruto | formatar_float_para_brl }}</td>
                                   <td class="text-center">
                                     <span class="badge bg-green-lt">{{ comissionado.valor_faturado | formatar_float_para_brl }}</span>
+                                  </td>
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                      {% endfor %}
+                      {% endif %}
+                      
+                      {# Seção Clientes (AR - Cargas a Receber) #}
+                      {% if detalhes.cargas_a_receber %}
+                      {% set clientes_agrupados = {} %}
+                      {% for carga in detalhes.cargas_a_receber %}
+                        {% set identificacao = carga.cliente or '-' %}
+                        {% if identificacao not in clientes_agrupados %}
+                          {% set _ = clientes_agrupados.update({identificacao: []}) %}
+                        {% endif %}
+                        {% set _ = clientes_agrupados[identificacao].append(carga) %}
+                      {% endfor %}
+                      
+                      {% for identificacao, cargas_cliente in clientes_agrupados.items() %}
+                      <div class="card mb-3 shadow-sm" style="border-radius: 8px; border: 1px solid #e3e6f0;">
+                        <div class="card-header py-2" style="background: #f8f9fa;">
+                          <div class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2 text-primary">
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                              <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                              <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                            </svg>
+                            <span class="fw-bold">Cliente: {{ identificacao }}</span>
+                            <span class="badge bg-primary-lt ms-2">{{ cargas_cliente|length }} registro(s)</span>
+                          </div>
+                        </div>
+                        <div class="card-body p-0">
+                          <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                              <thead style="background: #f8f9fa;">
+                                <tr>
+                                  <th class="text-center">Data Entrega</th>
+                                  <th class="text-center">Produto | Bitola</th>
+                                  <th class="text-center">NF</th>
+                                  <th class="text-center">Peso (Ton.)</th>
+                                  <th class="text-center">Preço Venda</th>
+                                  <th class="text-center">Valor Bruto</th>
+                                  <th class="text-center">Valor Final</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for carga in cargas_cliente %}
+                                <tr>
+                                  <td class="text-center">{{ carga.data_entrega }}</td>
+                                  <td class="text-center">{{ carga.produto }} | {{ carga.bitola }}</td>
+                                  <td class="text-center">{{ carga.nota_fiscal }}</td>
+                                  <td class="text-center">{{ carga.peso_ticket }}</td>
+                                  <td class="text-center">{{ carga.preco_custo | formatar_float_para_brl }}</td>
+                                  <td class="text-center">{{ carga.valor_bruto | formatar_float_para_brl }}</td>
+                                  <td class="text-center">
+                                    <span class="badge bg-azure-lt">{{ carga.valor_faturado | formatar_float_para_brl }}</span>
                                   </td>
                                 </tr>
                                 {% endfor %}
