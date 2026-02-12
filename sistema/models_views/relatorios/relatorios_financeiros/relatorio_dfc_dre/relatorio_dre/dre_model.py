@@ -253,6 +253,14 @@ class DREModel:
             filtro_op = config['filtro_operacional']
             
             try:
+                # Tratamento especial para NFs Complementares (1.01.03)
+                # Inclui emitidas + não emitidas (Ticket > NF)
+                if codigo == '1.01.03':
+                    total = cls._calcular_nf_complementares_total(data_inicio, data_fim)
+                    if total > 0:
+                        valores[codigo] = total
+                    continue
+                
                 query = Model.query.filter(
                     Model.ativo == True,
                     Model.deletado == False,
@@ -275,6 +283,86 @@ class DREModel:
                 print(f"[DRE] Erro ao buscar {codigo}: {e}")
         
         return valores
+    
+    @classmethod
+    def _calcular_nf_complementares_total(cls, data_inicio, data_fim):
+        """
+        Calcula o valor total de NFs Complementares (emitidas + não emitidas).
+        
+        - EMITIDAS: valor_total_nota_100 da tabela fin_nf_complementar
+        - NÃO EMITIDAS: (peso_ticket - peso_nf) * preco_un da tabela re_registro_operacional
+          onde Ticket > NF e status_emissao_nf_complementar_id IS NULL ou = 2
+        
+        Returns:
+            int: valor total em centavos
+        """
+        from sistema import db
+        from sqlalchemy import func
+        
+        total = 0
+        
+        try:
+            # 1. NFs Complementares EMITIDAS (fin_nf_complementar)
+            query_emitidas = NfComplementarModel.query.filter(
+                NfComplementarModel.ativo == True,
+                NfComplementarModel.deletado == False,
+                NfComplementarModel.cliente_id.isnot(None),
+                NfComplementarModel.destinatario_data_emissao.isnot(None)
+            )
+            
+            if data_inicio:
+                query_emitidas = query_emitidas.filter(
+                    NfComplementarModel.destinatario_data_emissao >= data_inicio
+                )
+            if data_fim:
+                query_emitidas = query_emitidas.filter(
+                    NfComplementarModel.destinatario_data_emissao <= data_fim
+                )
+            
+            emitidas = query_emitidas.all()
+            total_emitidas = sum(r.valor_total_nota_100 or 0 for r in emitidas)
+            
+            # 2. NFs Complementares NÃO EMITIDAS (re_registro_operacional)
+            # Fórmula: (peso_liquido_ticket - peso_ton_nf) * preco_un_nf
+            # Apenas quando Ticket > NF (diferença positiva = receita a cobrar)
+            query_nao_emitidas = RegistroOperacionalModel.query.filter(
+                RegistroOperacionalModel.ativo == True,
+                RegistroOperacionalModel.deletado == False,
+                RegistroOperacionalModel.solicitacao_nf_id.isnot(None),
+                RegistroOperacionalModel.peso_ton_nf.isnot(None),
+                RegistroOperacionalModel.peso_liquido_ticket.isnot(None),
+                RegistroOperacionalModel.preco_un_nf > 0,
+                # Apenas não emitidas (status NULL ou 2)
+                db.or_(
+                    RegistroOperacionalModel.status_emissao_nf_complementar_id.is_(None),
+                    RegistroOperacionalModel.status_emissao_nf_complementar_id == 2
+                ),
+                # Apenas quando Ticket > NF (receita a cobrar)
+                RegistroOperacionalModel.peso_liquido_ticket > RegistroOperacionalModel.peso_ton_nf
+            )
+            
+            if data_inicio:
+                query_nao_emitidas = query_nao_emitidas.filter(
+                    RegistroOperacionalModel.data_entrega_ticket >= data_inicio
+                )
+            if data_fim:
+                query_nao_emitidas = query_nao_emitidas.filter(
+                    RegistroOperacionalModel.data_entrega_ticket <= data_fim
+                )
+            
+            nao_emitidas = query_nao_emitidas.all()
+            total_nao_emitidas = 0
+            for r in nao_emitidas:
+                diferenca = (r.peso_liquido_ticket or 0) - (r.peso_ton_nf or 0)
+                valor = round(diferenca * (r.preco_un_nf or 0))
+                total_nao_emitidas += valor
+            
+            total = total_emitidas + total_nao_emitidas
+            
+        except Exception as e:
+            print(f"[DRE] Erro ao calcular NF Complementares: {e}")
+        
+        return total
     
     @classmethod
     def _organizar_estrutura_dre(cls, valores):
