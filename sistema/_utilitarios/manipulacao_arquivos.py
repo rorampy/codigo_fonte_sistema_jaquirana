@@ -604,3 +604,285 @@ class ManipulacaoArquivos:
         resposta.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         
         return resposta
+
+    @staticmethod
+    def exportar_excel_agrupado_ap_pagamentos(grupos, nome_arquivo, titulo_planilha='AP - Pagamentos'):
+        """
+        Gera um Excel com agrupamento visual por faturamento para AP Pagamentos.
+        Similar ao de pendentes mas mostra valor pago ao invés de saldo pendente.
+        """
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Dados'
+        
+        # Estilos
+        verde_escuro = '1E5631'
+        verde_claro = 'E8F5E8'
+        azul_escuro = '1565C0'
+        verde_pago = '2B8A3E'
+        amarelo_parcial = 'D97706'
+        cinza = 'F5F5F5'
+        
+        font_titulo = Font(name='Segoe UI', size=14, bold=True, color='FFFFFF')
+        fill_titulo = PatternFill(start_color=verde_escuro, end_color=verde_escuro, fill_type='solid')
+        
+        font_grupo = Font(name='Segoe UI', size=11, bold=True, color='FFFFFF')
+        fill_grupo = PatternFill(start_color=verde_escuro, end_color=verde_escuro, fill_type='solid')
+        
+        font_header = Font(name='Segoe UI', size=10, bold=True, color=verde_escuro)
+        fill_header = PatternFill(start_color=verde_claro, end_color=verde_claro, fill_type='solid')
+        
+        font_normal = Font(name='Segoe UI', size=10, color='333333')
+        font_valor = Font(name='Segoe UI', size=10, bold=True, color=verde_escuro)
+        font_pago = Font(name='Segoe UI', size=10, bold=True, color=verde_pago)
+        font_parcial = Font(name='Segoe UI', size=10, bold=True, color=amarelo_parcial)
+        
+        font_subtotal = Font(name='Segoe UI', size=10, bold=True, color=verde_escuro)
+        fill_subtotal = PatternFill(start_color=verde_claro, end_color=verde_claro, fill_type='solid')
+        
+        align_center = Alignment(horizontal='center', vertical='center')
+        align_left = Alignment(horizontal='left', vertical='center')
+        align_right = Alignment(horizontal='right', vertical='center')
+        
+        borda_fina = Border(bottom=Side(style='thin', color='DDDDDD'))
+        borda_grupo = Border(bottom=Side(style='medium', color=verde_escuro))
+        
+        # Colunas das cargas
+        colunas_cargas = ['Data', 'Tipo', 'Entidade', 'Cliente', 'Produto', 'Bitola', 'NF', 'Peso (Ton)', 'Preço', 'Valor Final']
+        num_colunas = len(colunas_cargas)
+        
+        # Título do relatório (linha 1)
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_colunas)
+        celula_titulo = ws.cell(row=1, column=1, value=titulo_planilha)
+        celula_titulo.font = font_titulo
+        celula_titulo.fill = fill_titulo
+        celula_titulo.alignment = align_center
+        ws.row_dimensions[1].height = 30
+        
+        row = 3  # Começa na linha 3
+        
+        total_geral_pago = 0
+        
+        for grupo in grupos:
+            codigo_fat = grupo.get('codigo_faturamento', '-')
+            pessoa_nome = grupo.get('pessoa_nome', '-')
+            tipo_operacao = grupo.get('tipo_operacao', '-')
+            data_pagamento = grupo.get('data_pagamento_mais_recente')
+            total_pago = (grupo.get('total_pago_100') or 0) / 100
+            data_faturamento = grupo.get('data_faturamento')
+            tem_parcial = grupo.get('tem_parcial', False)
+            
+            total_geral_pago += total_pago
+            
+            # Status
+            status = 'Pago Parcialmente' if tem_parcial else 'Pago'
+            
+            # Linha do grupo (faturamento)
+            ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas)
+            info_grupo = f'{codigo_fat} - {pessoa_nome[:40]} | {tipo_operacao} | {status} | Pag: {data_pagamento.strftime("%d/%m/%Y") if data_pagamento else "-"} | Total: R$ {total_pago:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+            celula_grupo = ws.cell(row=row, column=1, value=info_grupo)
+            celula_grupo.font = font_grupo
+            celula_grupo.fill = fill_grupo
+            celula_grupo.alignment = align_left
+            ws.row_dimensions[row].height = 25
+            row += 1
+            
+            detalhes = grupo.get('detalhes_cargas')
+            
+            if detalhes:
+                # Cabeçalho das cargas
+                for col_idx, col_name in enumerate(colunas_cargas):
+                    cell = ws.cell(row=row, column=col_idx + 1, value=col_name)
+                    cell.font = font_header
+                    cell.fill = fill_header
+                    cell.alignment = align_center
+                    cell.border = borda_fina
+                ws.row_dimensions[row].height = 22
+                row += 1
+                
+                cargas_count = 0
+                total_peso = 0
+                total_valor = 0
+                
+                # Fornecedores
+                for f in detalhes.get('fornecedores', []):
+                    peso = float(f.get('peso_ticket') or 0) if f.get('peso_ticket') else 0
+                    valor = (f.get('valor_faturado') or 0) / 100
+                    total_peso += peso
+                    total_valor += valor
+                    cargas_count += 1
+                    
+                    ws.cell(row=row, column=1, value=f.get('data_entrega', '-')).font = font_normal
+                    ws.cell(row=row, column=2, value='Fornecedor').font = font_normal
+                    ws.cell(row=row, column=3, value=(f.get('fornecedor_identificacao') or '-')[:30]).font = font_normal
+                    ws.cell(row=row, column=4, value=(f.get('cliente') or '-')[:20]).font = font_normal
+                    ws.cell(row=row, column=5, value=f.get('produto', '-')).font = font_normal
+                    ws.cell(row=row, column=6, value=f.get('bitola', '-')).font = font_normal
+                    ws.cell(row=row, column=7, value=f.get('nota_fiscal', '-')).font = font_normal
+                    ws.cell(row=row, column=8, value=f.get('peso_ticket', '-')).font = font_normal
+                    preco_cell = ws.cell(row=row, column=9, value=(f.get('preco_custo') or 0) / 100)
+                    preco_cell.number_format = '#,##0.00'
+                    preco_cell.font = font_normal
+                    valor_cell = ws.cell(row=row, column=10, value=valor)
+                    valor_cell.number_format = '#,##0.00'
+                    valor_cell.font = font_valor
+                    
+                    for col in range(1, num_colunas + 1):
+                        ws.cell(row=row, column=col).alignment = align_center
+                        ws.cell(row=row, column=col).border = borda_fina
+                    row += 1
+                
+                # Transportadoras
+                for t in detalhes.get('transportadoras', []):
+                    peso = float(t.get('peso_ticket') or 0) if t.get('peso_ticket') else 0
+                    valor = (t.get('valor_faturado') or 0) / 100
+                    total_peso += peso
+                    total_valor += valor
+                    cargas_count += 1
+                    
+                    ws.cell(row=row, column=1, value=t.get('data_entrega', '-')).font = font_normal
+                    ws.cell(row=row, column=2, value='Transportadora').font = font_normal
+                    ws.cell(row=row, column=3, value=(t.get('transportadora_identificacao') or t.get('nome') or '-')[:30]).font = font_normal
+                    ws.cell(row=row, column=4, value=(t.get('cliente') or '-')[:20]).font = font_normal
+                    ws.cell(row=row, column=5, value=t.get('produto', '-')).font = font_normal
+                    ws.cell(row=row, column=6, value=t.get('bitola', '-')).font = font_normal
+                    ws.cell(row=row, column=7, value=t.get('nota_fiscal', '-')).font = font_normal
+                    ws.cell(row=row, column=8, value=t.get('peso_ticket', '-')).font = font_normal
+                    preco_cell = ws.cell(row=row, column=9, value=(t.get('preco_custo') or 0) / 100)
+                    preco_cell.number_format = '#,##0.00'
+                    preco_cell.font = font_normal
+                    valor_cell = ws.cell(row=row, column=10, value=valor)
+                    valor_cell.number_format = '#,##0.00'
+                    valor_cell.font = font_valor
+                    
+                    for col in range(1, num_colunas + 1):
+                        ws.cell(row=row, column=col).alignment = align_center
+                        ws.cell(row=row, column=col).border = borda_fina
+                    row += 1
+                
+                # Extratores
+                for e in detalhes.get('extratores', []):
+                    peso = float(e.get('peso_ticket') or 0) if e.get('peso_ticket') else 0
+                    valor = (e.get('valor_faturado') or 0) / 100
+                    total_peso += peso
+                    total_valor += valor
+                    cargas_count += 1
+                    
+                    ws.cell(row=row, column=1, value=e.get('data_entrega', '-')).font = font_normal
+                    ws.cell(row=row, column=2, value='Extrator').font = font_normal
+                    ws.cell(row=row, column=3, value=(e.get('extrator_identificacao') or '-')[:30]).font = font_normal
+                    ws.cell(row=row, column=4, value=(e.get('cliente') or '-')[:20]).font = font_normal
+                    ws.cell(row=row, column=5, value=e.get('produto', '-')).font = font_normal
+                    ws.cell(row=row, column=6, value=e.get('bitola', '-')).font = font_normal
+                    ws.cell(row=row, column=7, value=e.get('nota_fiscal', '-')).font = font_normal
+                    ws.cell(row=row, column=8, value=e.get('peso_ticket', '-')).font = font_normal
+                    preco_cell = ws.cell(row=row, column=9, value=(e.get('preco_custo') or 0) / 100)
+                    preco_cell.number_format = '#,##0.00'
+                    preco_cell.font = font_normal
+                    valor_cell = ws.cell(row=row, column=10, value=valor)
+                    valor_cell.number_format = '#,##0.00'
+                    valor_cell.font = font_valor
+                    
+                    for col in range(1, num_colunas + 1):
+                        ws.cell(row=row, column=col).alignment = align_center
+                        ws.cell(row=row, column=col).border = borda_fina
+                    row += 1
+                
+                # Comissionados
+                for c in detalhes.get('comissionados', []):
+                    peso = float(c.get('peso_ticket') or 0) if c.get('peso_ticket') else 0
+                    valor = (c.get('valor_faturado') or 0) / 100
+                    total_peso += peso
+                    total_valor += valor
+                    cargas_count += 1
+                    
+                    ws.cell(row=row, column=1, value=c.get('data_entrega', '-')).font = font_normal
+                    ws.cell(row=row, column=2, value='Comissionado').font = font_normal
+                    ws.cell(row=row, column=3, value=(c.get('comissionado_identificacao') or '-')[:30]).font = font_normal
+                    ws.cell(row=row, column=4, value=(c.get('cliente') or '-')[:20]).font = font_normal
+                    ws.cell(row=row, column=5, value=c.get('produto', '-')).font = font_normal
+                    ws.cell(row=row, column=6, value=c.get('bitola', '-')).font = font_normal
+                    ws.cell(row=row, column=7, value=c.get('nota_fiscal', '-')).font = font_normal
+                    ws.cell(row=row, column=8, value=c.get('peso_ticket', '-')).font = font_normal
+                    preco_cell = ws.cell(row=row, column=9, value=(c.get('preco_custo') or 0) / 100)
+                    preco_cell.number_format = '#,##0.00'
+                    preco_cell.font = font_normal
+                    valor_cell = ws.cell(row=row, column=10, value=valor)
+                    valor_cell.number_format = '#,##0.00'
+                    valor_cell.font = font_valor
+                    
+                    for col in range(1, num_colunas + 1):
+                        ws.cell(row=row, column=col).alignment = align_center
+                        ws.cell(row=row, column=col).border = borda_fina
+                    row += 1
+                
+                # Linha de subtotal do grupo
+                ws.cell(row=row, column=1, value=f'Subtotal ({cargas_count} cargas)').font = font_subtotal
+                ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
+                peso_cell = ws.cell(row=row, column=8, value=total_peso)
+                peso_cell.font = font_subtotal
+                peso_cell.number_format = '#,##0.00'
+                ws.cell(row=row, column=9, value='').font = font_subtotal
+                pago_cell = ws.cell(row=row, column=10, value=total_pago)
+                pago_cell.font = font_parcial if tem_parcial else font_pago
+                pago_cell.number_format = '#,##0.00'
+                
+                for col in range(1, num_colunas + 1):
+                    ws.cell(row=row, column=col).fill = fill_subtotal
+                    ws.cell(row=row, column=col).alignment = align_center
+                    ws.cell(row=row, column=col).border = borda_grupo
+                ws.cell(row=row, column=1).alignment = align_left
+                ws.row_dimensions[row].height = 22
+                row += 1
+            
+            else:
+                # Lançamento avulso ou sem detalhes
+                descricao = grupo.get('lancamento_descricao', 'Detalhes não disponíveis')
+                ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas - 1)
+                ws.cell(row=row, column=1, value=f'Lançamento: {descricao}').font = font_normal
+                pago_cell = ws.cell(row=row, column=num_colunas, value=total_pago)
+                pago_cell.font = font_parcial if tem_parcial else font_pago
+                pago_cell.number_format = '#,##0.00'
+                for col in range(1, num_colunas + 1):
+                    ws.cell(row=row, column=col).border = borda_fina
+                row += 1
+            
+            row += 1  # Linha em branco entre grupos
+        
+        # Linha de TOTAL GERAL
+        row += 1
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas - 1)
+        total_cell = ws.cell(row=row, column=1, value='TOTAL GERAL - VALOR PAGO')
+        total_cell.font = Font(name='Segoe UI', size=12, bold=True, color='FFFFFF')
+        total_cell.fill = PatternFill(start_color=verde_escuro, end_color=verde_escuro, fill_type='solid')
+        total_cell.alignment = align_center
+        
+        valor_total_cell = ws.cell(row=row, column=num_colunas, value=total_geral_pago)
+        valor_total_cell.font = Font(name='Segoe UI', size=12, bold=True, color='FFFFFF')
+        valor_total_cell.fill = PatternFill(start_color=verde_escuro, end_color=verde_escuro, fill_type='solid')
+        valor_total_cell.number_format = '#,##0.00'
+        valor_total_cell.alignment = align_center
+        ws.row_dimensions[row].height = 28
+        
+        # Ajustar largura das colunas
+        larguras = [12, 14, 30, 20, 12, 12, 10, 12, 12, 14]
+        for col_idx, largura in enumerate(larguras):
+            col_letter = get_column_letter(col_idx + 1)
+            ws.column_dimensions[col_letter].width = largura
+        
+        # Congelar primeira linha
+        ws.freeze_panes = 'A2'
+        
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        resposta = make_response(output.read())
+        resposta.headers['Content-Disposition'] = f'attachment; filename={nome_arquivo}.xlsx'
+        resposta.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        
+        return resposta

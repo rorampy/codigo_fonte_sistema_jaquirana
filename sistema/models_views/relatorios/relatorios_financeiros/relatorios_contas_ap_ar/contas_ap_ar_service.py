@@ -38,7 +38,7 @@ from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado
 DIRECAO_AP = 2
 DIRECAO_AR = 1
 SITUACOES_PENDENTES = [5, 6, 7]
-SITUACOES_LIQUIDADAS = [8, 9]
+SITUACOES_LIQUIDADAS = [8, 9, 10]  # 8=Liquidado, 9=Liquidado Parcial, 10=Conciliado
 SITUACOES_RECEBIDAS_AR = [3, 8, 9]
 SITUACAO_VENDA_PENDENTE = 2
 SITUACAO_VENDA_RECEBIDA = 3
@@ -1325,16 +1325,45 @@ class ContasAPARService:
     def _obter_baixas_agendamentos(filtros, tipo_categoria, direcao='ap', plano_contas_id_filtro=None, ids_excluir=None):
         """Busca pagamentos via categorias_json (situação liquidada/recebida)."""
         from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
+        from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
+        from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
         
         ids_excluir = ids_excluir or set()
         
-        # Query: situações liquidadas (AP: 8,9 | AR: 3,8,9)
+        # Query: situações liquidadas (AP: 8,9,10 | AR: 3,8,9)
         situacoes_filtro = SITUACOES_RECEBIDAS_AR if direcao == 'ar' else SITUACOES_LIQUIDADAS
+        
+        # Direção financeira: AP=2 (saída), AR=1 (entrada)
+        direcao_financeira = 2 if direcao == 'ap' else 1
+        
         query = AgendamentoPagamentoModel.query.filter(
             AgendamentoPagamentoModel.ativo == True,
             AgendamentoPagamentoModel.deletado == False,
             AgendamentoPagamentoModel.situacao_pagamento_id.in_(situacoes_filtro),
             AgendamentoPagamentoModel.categorias_json.isnot(None)
+        )
+        
+        # Filtro por direção financeira (faturamento ou lançamento avulso)
+        # Subquery para faturamentos válidos
+        faturamentos_validos = db.session.query(FaturamentoModel.id).filter(
+            FaturamentoModel.direcao_financeira == direcao_financeira,
+            FaturamentoModel.ativo == True,
+            FaturamentoModel.deletado == False
+        ).subquery()
+        
+        # Subquery para lançamentos avulsos válidos
+        lancamentos_validos = db.session.query(LancamentoAvulsoModel.id).filter(
+            LancamentoAvulsoModel.tipo_movimentacao == direcao_financeira,
+            LancamentoAvulsoModel.ativo == True,
+            LancamentoAvulsoModel.deletado == False
+        ).subquery()
+        
+        # Filtrar: faturamento válido OU lançamento avulso válido
+        query = query.filter(
+            or_(
+                AgendamentoPagamentoModel.faturamento_id.in_(faturamentos_validos),
+                AgendamentoPagamentoModel.lancamento_avulso_id.in_(lancamentos_validos)
+            )
         )
         
         # Filtro por período (data_competencia)
@@ -1365,9 +1394,17 @@ class ContasAPARService:
         for ag in query.all():
             try:
                 categorias = json_lib.loads(ag.categorias_json) if isinstance(ag.categorias_json, str) else ag.categorias_json
+                
+                # Lógica de valor pago considerando conciliação parcial
+                # Se conciliacao_parcial = 1 e valor_conciliado existe, usa valor_conciliado
+                # Senão, usa valor_total (pagamento total)
+                if ag.conciliacao_parcial and ag.valor_conciliado_100 is not None:
+                    valor_pago = ag.valor_conciliado_100
+                else:
+                    valor_pago = ag.valor_total_100 or 0
+                
                 for cat_info in categorias or []:
                     cat_id = cat_info.get('categoria_id')
-                    valor = cat_info.get('valor', 0)
                     
                     if plano_contas_id_filtro and cat_id != plano_contas_id_filtro:
                         continue
@@ -1386,16 +1423,18 @@ class ContasAPARService:
                     resultado.append({
                         'id': ag.id,
                         'codigo_faturamento': codigo,
+                        'faturamento_id': ag.faturamento_id,
+                        'lancamento_avulso_id': ag.lancamento_avulso_id,
                         'tipo_operacao': cat.nome,
                         'descricao': ag.descricao or cat.nome,
                         'pessoa_nome': pessoa.identificacao if pessoa else '-',
                         'pessoa_id': ag.pessoa_financeiro_id,
                         'data_emissao': ag.data_competencia or ag.data_cadastro,
                         'data_vencimento': ag.data_vencimento or ag.data_cadastro,
-                        'data_pagamento': ag.data_alteracao,
-                        'valor_original_100': valor,
-                        'valor_pago_100': valor,
-                        'saldo_100': 0,
+                        'data_pagamento': ag.data_competencia or ag.data_alteracao,
+                        'valor_original_100': ag.valor_total_100 or 0,
+                        'valor_pago_100': valor_pago,
+                        'saldo_100': (ag.valor_total_100 or 0) - valor_pago,
                         'situacao': ag.situacao.situacao if ag.situacao else 'Sem situação',
                         'situacao_id': ag.situacao_pagamento_id,
                         'centro_custo': ContasAPARService._extrair_centros_custo(ag.centros_custo_json),
@@ -1409,28 +1448,153 @@ class ContasAPARService:
 
     @staticmethod
     def obter_baixas(direcao_str, filtros=None):
-        """Pagamentos no período - mesma lógica do DRE, situação 8 ou 9."""
+        """Pagamentos no período - busca TODOS os agendamentos liquidados."""
+        filtros = filtros or {}
+        
+        # Para AP, usar nova lógica que busca todos os agendamentos
+        if direcao_str == 'ap':
+            return ContasAPARService._obter_pagamentos_ap(filtros)
+        
+        # Para AR, manter lógica antiga
         from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
         
-        filtros = filtros or {}
         plano_contas_id = filtros.get('plano_contas_id')
-        categorias_map = CATEGORIAS_AUTOMATICAS_AP if direcao_str == 'ap' else CATEGORIAS_AUTOMATICAS_AR
-        tipo_categoria = 2 if direcao_str == 'ap' else 1
+        categorias_map = CATEGORIAS_AUTOMATICAS_AR
+        tipo_categoria = 1
         resultado = []
         
-        # Filtro por plano de contas específico
         if plano_contas_id:
             codigo = ContasAPARService._obter_codigo_plano_contas(plano_contas_id)
             if codigo and codigo in categorias_map:
                 return ContasAPARService._obter_baixas_tabela_operacional(codigo, categorias_map[codigo], filtros, direcao_str)
             return ContasAPARService._obter_baixas_agendamentos(filtros, tipo_categoria, direcao_str, plano_contas_id_filtro=int(plano_contas_id))
         
-        # Buscar tudo: tabelas operacionais + agendamentos
         for codigo, config in categorias_map.items():
             resultado.extend(ContasAPARService._obter_baixas_tabela_operacional(codigo, config, filtros, direcao_str))
         
         ids_excluir = ContasAPARService._obter_ids_categorias_automaticas(categorias_map)
         resultado.extend(ContasAPARService._obter_baixas_agendamentos(filtros, tipo_categoria, direcao_str, ids_excluir=ids_excluir))
+        
+        resultado.sort(key=lambda x: (x.get('data_pagamento') or x.get('data_emissao') or date.min), reverse=True)
+        return resultado
+
+    @staticmethod
+    def _obter_pagamentos_ap(filtros):
+        """
+        Busca TODOS os pagamentos de AP (Contas a Pagar) no período.
+        Query equivalente à SQL fornecida pelo usuário.
+        """
+        from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
+        from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
+        
+        # Subquery para faturamentos válidos (AP = direcao_financeira = 2)
+        faturamentos_validos = db.session.query(FaturamentoModel.id).filter(
+            FaturamentoModel.direcao_financeira == DIRECAO_AP,
+            FaturamentoModel.ativo == True,
+            FaturamentoModel.deletado == False
+        ).subquery()
+        
+        # Subquery para lançamentos avulsos válidos (AP = tipo_movimentacao = 2)
+        lancamentos_validos = db.session.query(LancamentoAvulsoModel.id).filter(
+            LancamentoAvulsoModel.tipo_movimentacao == DIRECAO_AP,
+            LancamentoAvulsoModel.ativo == True,
+            LancamentoAvulsoModel.deletado == False
+        ).subquery()
+        
+        # Query principal: TODOS os agendamentos liquidados
+        query = AgendamentoPagamentoModel.query.filter(
+            AgendamentoPagamentoModel.ativo == True,
+            AgendamentoPagamentoModel.deletado == False,
+            AgendamentoPagamentoModel.situacao_pagamento_id.in_(SITUACOES_LIQUIDADAS),
+            or_(
+                AgendamentoPagamentoModel.faturamento_id.in_(faturamentos_validos),
+                AgendamentoPagamentoModel.lancamento_avulso_id.in_(lancamentos_validos)
+            )
+        )
+        
+        # Filtro por período (data_competencia)
+        if filtros.get('data_inicio'):
+            query = query.filter(AgendamentoPagamentoModel.data_competencia >= filtros['data_inicio'])
+        if filtros.get('data_fim'):
+            query = query.filter(AgendamentoPagamentoModel.data_competencia <= filtros['data_fim'])
+        
+        # Filtro por situação específica
+        if filtros.get('situacao_id'):
+            query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == int(filtros['situacao_id']))
+        
+        # Filtro por pessoa
+        if filtros.get('pessoa_id'):
+            query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
+        
+        # Filtro por centro de custo
+        if filtros.get('centro_custo_id'):
+            cc_id = str(filtros['centro_custo_id'])
+            query = query.filter(
+                func.json_contains(
+                    AgendamentoPagamentoModel.centros_custo_json,
+                    json_lib.dumps({'centro': cc_id})
+                )
+            )
+        
+        resultado = []
+        for ag in query.all():
+            # Lógica de valor pago (igual SQL):
+            # Se conciliacao_parcial = 1 e valor_conciliado existe, usa valor_conciliado
+            # Senão, usa valor_total (pagamento total)
+            if ag.conciliacao_parcial and ag.valor_conciliado_100 is not None:
+                valor_pago = ag.valor_conciliado_100
+            else:
+                valor_pago = ag.valor_total_100 or 0
+            
+            # Obter descrição/tipo operação
+            tipo_operacao = 'Pagamento'
+            descricao = ag.descricao or 'Pagamento'
+            plano_contas = '-'
+            
+            # Tentar obter plano de contas do categorias_json
+            if ag.categorias_json:
+                try:
+                    categorias = json_lib.loads(ag.categorias_json) if isinstance(ag.categorias_json, str) else ag.categorias_json
+                    if categorias and len(categorias) > 0:
+                        from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
+                        cat_id = categorias[0].get('categoria_id')
+                        if cat_id:
+                            cat = PlanoContaModel.query.get(cat_id)
+                            if cat:
+                                tipo_operacao = cat.nome
+                                plano_contas = f'{cat.codigo} - {cat.nome}'
+                except (json_lib.JSONDecodeError, TypeError):
+                    pass
+            
+            # Código identificador
+            codigo = ag.referencia if ag.referencia else f'LAN-{ag.id}'
+            
+            # Pessoa
+            pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
+            
+            resultado.append({
+                'id': ag.id,
+                'codigo_faturamento': codigo,
+                'faturamento_id': ag.faturamento_id,
+                'lancamento_avulso_id': ag.lancamento_avulso_id,
+                'tipo_operacao': tipo_operacao,
+                'descricao': descricao,
+                'pessoa_nome': pessoa.identificacao if pessoa else '-',
+                'pessoa_id': ag.pessoa_financeiro_id,
+                'data_emissao': ag.data_competencia or ag.data_cadastro,
+                'data_vencimento': ag.data_vencimento or ag.data_cadastro,
+                'data_pagamento': ag.data_competencia or ag.data_alteracao,
+                'valor_original_100': ag.valor_total_100 or 0,
+                'valor_pago_100': valor_pago,
+                'saldo_100': (ag.valor_total_100 or 0) - valor_pago,
+                'situacao': ag.situacao.situacao if ag.situacao else 'Sem situação',
+                'situacao_id': ag.situacao_pagamento_id,
+                'centro_custo': ContasAPARService._extrair_centros_custo(ag.centros_custo_json),
+                'plano_contas': plano_contas,
+                'referencia_agendamento': ag.referencia or '-',
+                'parcelas': [],
+                'conciliacao_parcial': ag.conciliacao_parcial or False,
+            })
         
         # Ordenar por data (mais recente primeiro)
         resultado.sort(key=lambda x: (x.get('data_pagamento') or x.get('data_emissao') or date.min), reverse=True)
@@ -1821,5 +1985,154 @@ class ContasAPARService:
         registros = ContasAPARService.obter_pendentes(direcao_str, filtros)
         if direcao_str == 'ap':
             return ContasAPARService.agrupar_pendentes_por_faturamento(registros)
+        # Para AR, por enquanto retorna sem agrupamento
+        return registros
+
+    # --------------------------------------------------------------------- #
+    #  AGRUPAMENTO — AP BAIXAS (PAGAMENTOS) POR FATURAMENTO
+    # --------------------------------------------------------------------- #
+
+    @staticmethod
+    def agrupar_baixas_por_faturamento(registros):
+        """
+        Agrupa registros de AP Pagamentos (baixas) por faturamento/lançamento avulso.
+        Similar ao agrupar_pendentes_por_faturamento mas para pagamentos já realizados.
+        
+        Estrutura de cada grupo:
+        {
+            'codigo_faturamento': str,
+            'faturamento_id': int ou None,
+            'lancamento_avulso_id': int ou None,
+            'tipo_operacao': str,
+            'pessoa_nome': str,
+            'pessoa_id': int ou None,
+            'total_original_100': int,
+            'total_pago_100': int,
+            'qtd_agendamentos': int,
+            'data_pagamento_mais_recente': date,
+            'agendamentos': list[dict],
+            'detalhes_cargas': dict (para faturamentos),
+            'lancamento_descricao': str (para lançamentos avulsos),
+            'valor_bruto_total': int,
+            'data_faturamento': date,
+        }
+        """
+        from collections import defaultdict
+        
+        grupos_dict = defaultdict(lambda: {
+            'codigo_faturamento': None,
+            'faturamento_id': None,
+            'lancamento_avulso_id': None,
+            'tipo_operacao': None,
+            'pessoa_nome': '-',
+            'pessoa_id': None,
+            'total_original_100': 0,
+            'total_pago_100': 0,
+            'qtd_agendamentos': 0,
+            'data_pagamento_mais_recente': None,
+            'agendamentos': [],
+            'detalhes_cargas': None,
+            'lancamento_descricao': None,
+            'valor_bruto_total': 0,
+            'data_faturamento': None,
+            'tem_parcial': False,
+        })
+        
+        # Cache de faturamentos e lançamentos já carregados
+        faturamentos_cache = {}
+        lancamentos_cache = {}
+        
+        for reg in registros:
+            # Chave de agrupamento: faturamento_id ou lancamento_avulso_id
+            fat_id = reg.get('faturamento_id')
+            lav_id = reg.get('lancamento_avulso_id')
+            
+            if fat_id:
+                chave = f"FAT-{fat_id}"
+            elif lav_id:
+                chave = f"LAV-{lav_id}"
+            else:
+                chave = f"AG-{reg.get('id')}"
+            
+            grupo = grupos_dict[chave]
+            
+            # Preencher dados do grupo (apenas na primeira ocorrência)
+            if grupo['codigo_faturamento'] is None:
+                grupo['faturamento_id'] = fat_id
+                grupo['lancamento_avulso_id'] = lav_id
+                grupo['tipo_operacao'] = reg.get('tipo_operacao')
+                grupo['pessoa_nome'] = reg.get('pessoa_nome', '-')
+                grupo['pessoa_id'] = reg.get('pessoa_id')
+                
+                # Buscar detalhes do faturamento
+                if fat_id:
+                    if fat_id not in faturamentos_cache:
+                        fat = FaturamentoModel.query.get(fat_id)
+                        if fat:
+                            faturamentos_cache[fat_id] = {
+                                'codigo': fat.codigo_faturamento or f'FAT-{fat_id}',
+                                'detalhes': fat.obter_detalhes(),
+                                'valor_bruto_total': fat.valor_bruto_total or fat.valor_total,
+                                'data_cadastro': fat.data_cadastro,
+                            }
+                    
+                    if fat_id in faturamentos_cache:
+                        grupo['codigo_faturamento'] = faturamentos_cache[fat_id]['codigo']
+                        grupo['detalhes_cargas'] = faturamentos_cache[fat_id]['detalhes']
+                        grupo['valor_bruto_total'] = faturamentos_cache[fat_id]['valor_bruto_total']
+                        grupo['data_faturamento'] = faturamentos_cache[fat_id]['data_cadastro']
+                    else:
+                        grupo['codigo_faturamento'] = f'FAT-{fat_id}'
+                
+                # Buscar detalhes do lançamento avulso
+                elif lav_id:
+                    if lav_id not in lancamentos_cache:
+                        lav = LancamentoAvulsoModel.query.get(lav_id)
+                        if lav:
+                            lancamentos_cache[lav_id] = {
+                                'descricao': lav.descricao,
+                                'data_cadastro': lav.data_cadastro,
+                            }
+                    
+                    if lav_id in lancamentos_cache:
+                        grupo['codigo_faturamento'] = f'LAN-{lav_id}'
+                        grupo['lancamento_descricao'] = lancamentos_cache[lav_id]['descricao']
+                        grupo['data_faturamento'] = lancamentos_cache[lav_id]['data_cadastro']
+                    else:
+                        grupo['codigo_faturamento'] = f'LAN-{lav_id}'
+                
+                else:
+                    grupo['codigo_faturamento'] = reg.get('codigo_faturamento', f"AG-{reg.get('id')}")
+            
+            # Acumular totais
+            grupo['total_original_100'] += reg.get('valor_original_100', 0)
+            grupo['total_pago_100'] += reg.get('valor_pago_100', 0)
+            grupo['qtd_agendamentos'] += 1
+            
+            # Detectar se tem pago parcial
+            if reg.get('conciliacao_parcial'):
+                grupo['tem_parcial'] = True
+            
+            # Atualizar data de pagamento mais recente
+            data_pag = reg.get('data_pagamento')
+            if data_pag:
+                if grupo['data_pagamento_mais_recente'] is None or data_pag > grupo['data_pagamento_mais_recente']:
+                    grupo['data_pagamento_mais_recente'] = data_pag
+            
+            # Adicionar agendamento à lista
+            grupo['agendamentos'].append(reg)
+        
+        # Converter para lista e ordenar por data de pagamento (mais recente primeiro)
+        grupos_lista = list(grupos_dict.values())
+        grupos_lista.sort(key=lambda g: (g['data_pagamento_mais_recente'] or date.min), reverse=True)
+        
+        return grupos_lista
+
+    @staticmethod
+    def obter_baixas_agrupados(direcao_str, filtros=None):
+        """Retorna baixas (pagamentos) agrupados por faturamento (para AP)."""
+        registros = ContasAPARService.obter_baixas(direcao_str, filtros)
+        if direcao_str == 'ap':
+            return ContasAPARService.agrupar_baixas_por_faturamento(registros)
         # Para AR, por enquanto retorna sem agrupamento
         return registros
