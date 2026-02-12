@@ -261,14 +261,14 @@
         <td class="valor-destaque" style="text-align: center;">{{ totais.total_original_100 | formatar_float_para_brl }}</td>
       </tr>
       <tr class="total-row">
-        <td style="text-align: left;">TOTAL PAGO</td>
+        <td style="text-align: left;">TOTAL {{ 'PAGO' if direcao == 'ap' else 'RECEBIDO' }}</td>
         <td style="text-align: center;">{{ totais.total_pago_100 | formatar_float_para_brl }}</td>
       </tr>
     </tbody>
   </table>
 
   <!-- Detalhamento por Faturamento -->
-  {% if direcao == 'ap' and grupos %}
+  {% if grupos %}
   
   {% for grupo in grupos %}
   <table class="faturamento-table">
@@ -277,9 +277,9 @@
       <td colspan="8">
         {{ grupo.codigo_faturamento }} - {{ grupo.pessoa_nome | truncate(50, True, '...') }}
         {% if grupo.tem_parcial %}
-        <span class="badge badge-parcial">Pago Parcialmente</span>
+        <span class="badge badge-parcial">{{ 'Pago Parcialmente' if direcao == 'ap' else 'Recebido Parcialmente' }}</span>
         {% else %}
-        <span class="badge badge-pago">Pago</span>
+        <span class="badge badge-pago">{{ 'Pago' if direcao == 'ap' else 'Recebido' }}</span>
         {% endif %}
       </td>
     </tr>
@@ -288,13 +288,13 @@
     <tr class="faturamento-info">
       <td colspan="2"><strong>Tipo:</strong> {{ grupo.tipo_operacao }}</td>
       <td><strong>Títulos:</strong> {{ grupo.qtd_agendamentos }}</td>
-      <td colspan="2"><strong>Data Pag:</strong> {{ grupo.data_pagamento_mais_recente | formatar_data_para_brl if grupo.data_pagamento_mais_recente else '-' }}</td>
+      <td colspan="2"><strong>Data {{ 'Pag' if direcao == 'ap' else 'Rec' }}:</strong> {{ grupo.data_pagamento_mais_recente | formatar_data_para_brl if grupo.data_pagamento_mais_recente else '-' }}</td>
       <td colspan="3"><strong>Data Fat:</strong> {{ grupo.data_faturamento | formatar_data_para_brl if grupo.data_faturamento else '-' }}</td>
     </tr>
 
     {% if grupo.detalhes_cargas %}
     {% set detalhes = grupo.detalhes_cargas %}
-    {% set total_cargas = (detalhes.fornecedores|length if detalhes.fornecedores else 0) + (detalhes.transportadoras|length if detalhes.transportadoras else 0) + (detalhes.extratores|length if detalhes.extratores else 0) + (detalhes.comissionados|length if detalhes.comissionados else 0) %}
+    {% set total_cargas = (detalhes.fornecedores|length if detalhes.fornecedores else 0) + (detalhes.transportadoras|length if detalhes.transportadoras else 0) + (detalhes.extratores|length if detalhes.extratores else 0) + (detalhes.comissionados|length if detalhes.comissionados else 0) + (detalhes.cargas_a_receber|length if detalhes.cargas_a_receber else 0) %}
     
     {% if total_cargas > 0 %}
     <!-- Cabeçalho das Cargas -->
@@ -364,6 +364,20 @@
       <td class="valor">{{ c.valor_faturado | formatar_float_para_brl or '-' }}</td>
     </tr>
     {% endfor %}
+
+    <!-- Cargas a Receber (Clientes) -->
+    {% for car in detalhes.cargas_a_receber %}
+    <tr class="carga-row">
+      <td>{{ car.data_entrega or '-' }}</td>
+      <td class="tipo-fornecedor"><strong>Cliente</strong></td>
+      <td style="text-align: left;">{{ car.cliente | truncate(25, True, '...') or '-' }}</td>
+      <td>-</td>
+      <td>{{ car.produto or '-' }} | {{ car.bitola or '-' }}</td>
+      <td>{{ car.nota_fiscal or '-' }}</td>
+      <td>{{ car.peso_ticket or '-' }}</td>
+      <td class="valor">{{ car.valor_faturado | formatar_float_para_brl or '-' }}</td>
+    </tr>
+    {% endfor %}
     {% endif %}
     {% endif %}
 
@@ -373,25 +387,25 @@
     </tr>
     {% endif %}
 
-    <!-- Linha de Total Pago -->
+    <!-- Linha de Total {{ 'Pago' if direcao == 'ap' else 'Recebido' }} -->
     <tr class="total-row">
-      <td colspan="6" style="text-align: left;">TOTAL PAGO</td>
+      <td colspan="6" style="text-align: left;">TOTAL {{ 'PAGO' if direcao == 'ap' else 'RECEBIDO' }}</td>
       <td colspan="2" class="valor-total" style="text-align: right;">{{ grupo.total_pago_100 | formatar_float_para_brl }}</td>
     </tr>
   </table>
   {% endfor %}
 
   {% elif registros %}
-  <!-- Fallback para AR ou quando não há grupos -->
+  <!-- Fallback quando não há grupos -->
   <table class="faturamento-table">
     <tr class="cargas-header">
       <th>Código</th>
       <th>{{ label_entidade }}</th>
       <th>Descrição</th>
       <th>Vencimento</th>
-      <th>Pagamento</th>
+      <th>{{ 'Pagamento' if direcao == 'ap' else 'Recebimento' }}</th>
       <th>Valor Original</th>
-      <th>Valor Pago</th>
+      <th>Valor {{ 'Pago' if direcao == 'ap' else 'Recebido' }}</th>
       <th>Situação</th>
     </tr>
     {% for item in registros %}
@@ -407,7 +421,7 @@
     </tr>
     {% endfor %}
     <tr class="total-row">
-      <td colspan="6" style="text-align: left;">TOTAL PAGO</td>
+      <td colspan="6" style="text-align: left;">TOTAL {{ 'PAGO' if direcao == 'ap' else 'RECEBIDO' }}</td>
       <td colspan="2" class="valor-total" style="text-align: right;">{{ totais.total_pago_100 | formatar_float_para_brl }}</td>
     </tr>
   </table>

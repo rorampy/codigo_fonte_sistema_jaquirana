@@ -634,10 +634,11 @@ class ManipulacaoArquivos:
         return resposta
 
     @staticmethod
-    def exportar_excel_agrupado_ap_pagamentos(grupos, nome_arquivo, titulo_planilha='AP - Pagamentos'):
+    def exportar_excel_agrupado_ap_pagamentos(grupos, nome_arquivo, titulo_planilha='AP - Pagamentos', direcao='ap'):
         """
-        Gera um Excel com agrupamento visual por faturamento para AP Pagamentos.
+        Gera um Excel com agrupamento visual por faturamento para AP Pagamentos ou AR Recebimentos.
         Similar ao de pendentes mas mostra valor pago ao invés de saldo pendente.
+        Para AR, remove a coluna Cliente.
         """
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -679,8 +680,23 @@ class ManipulacaoArquivos:
         borda_fina = Border(bottom=Side(style='thin', color='DDDDDD'))
         borda_grupo = Border(bottom=Side(style='medium', color=verde_escuro))
         
-        # Colunas das cargas
-        colunas_cargas = ['Data', 'Tipo', 'Entidade', 'Cliente', 'Produto', 'Bitola', 'NF', 'Peso (Ton)', 'Preço', 'Valor Final']
+        # Colunas das cargas - AR não tem coluna Cliente
+        if direcao == 'ar':
+            colunas_cargas = ['Data', 'Tipo', 'Entidade', 'Produto', 'Bitola', 'NF', 'Peso (Ton)', 'Preço', 'Valor Final']
+            col_produto = 4
+            col_bitola = 5
+            col_nf = 6
+            col_peso = 7
+            col_preco = 8
+            col_valor = 9
+        else:
+            colunas_cargas = ['Data', 'Tipo', 'Entidade', 'Cliente', 'Produto', 'Bitola', 'NF', 'Peso (Ton)', 'Preço', 'Valor Final']
+            col_produto = 5
+            col_bitola = 6
+            col_nf = 7
+            col_peso = 8
+            col_preco = 9
+            col_valor = 10
         num_colunas = len(colunas_cargas)
         
         # Título do relatório (linha 1)
@@ -707,11 +723,12 @@ class ManipulacaoArquivos:
             total_geral_pago += total_pago
             
             # Status
-            status = 'Pago Parcialmente' if tem_parcial else 'Pago'
+            status = 'Pago Parcialmente' if tem_parcial else ('Pago' if direcao == 'ap' else 'Recebido')
+            label_data = 'Pag' if direcao == 'ap' else 'Rec'
             
             # Linha do grupo (faturamento)
             ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas)
-            info_grupo = f'{codigo_fat} - {pessoa_nome[:40]} | {tipo_operacao} | {status} | Pag: {data_pagamento.strftime("%d/%m/%Y") if data_pagamento else "-"} | Total: R$ {total_pago:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+            info_grupo = f'{codigo_fat} - {pessoa_nome[:40]} | {tipo_operacao} | {status} | {label_data}: {data_pagamento.strftime("%d/%m/%Y") if data_pagamento else "-"} | Total: R$ {total_pago:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
             celula_grupo = ws.cell(row=row, column=1, value=info_grupo)
             celula_grupo.font = font_grupo
             celula_grupo.fill = fill_grupo
@@ -848,14 +865,42 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
+                # Cargas a Receber (Clientes) - AR
+                for car in detalhes.get('cargas_a_receber', []):
+                    peso = float(car.get('peso_ticket') or 0) if car.get('peso_ticket') else 0
+                    valor = (car.get('valor_faturado') or 0) / 100
+                    total_peso += peso
+                    total_valor += valor
+                    cargas_count += 1
+                    
+                    ws.cell(row=row, column=1, value=car.get('data_entrega', '-')).font = font_normal
+                    ws.cell(row=row, column=2, value='Cliente').font = font_normal
+                    ws.cell(row=row, column=3, value=(car.get('cliente') or '-')[:30]).font = font_normal
+                    # AR não tem coluna Cliente separada, usa índices dinâmicos
+                    ws.cell(row=row, column=col_produto, value=car.get('produto', '-')).font = font_normal
+                    ws.cell(row=row, column=col_bitola, value=car.get('bitola', '-')).font = font_normal
+                    ws.cell(row=row, column=col_nf, value=car.get('nota_fiscal', '-')).font = font_normal
+                    ws.cell(row=row, column=col_peso, value=car.get('peso_ticket', '-')).font = font_normal
+                    preco_cell = ws.cell(row=row, column=col_preco, value=(car.get('preco_custo') or 0) / 100)
+                    preco_cell.number_format = '#,##0.00'
+                    preco_cell.font = font_normal
+                    valor_cell = ws.cell(row=row, column=col_valor, value=valor)
+                    valor_cell.number_format = '#,##0.00'
+                    valor_cell.font = font_valor
+                    
+                    for col in range(1, num_colunas + 1):
+                        ws.cell(row=row, column=col).alignment = align_center
+                        ws.cell(row=row, column=col).border = borda_fina
+                    row += 1
+                
                 # Linha de subtotal do grupo
                 ws.cell(row=row, column=1, value=f'Subtotal ({cargas_count} cargas)').font = font_subtotal
-                ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
-                peso_cell = ws.cell(row=row, column=8, value=total_peso)
+                ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=col_nf)
+                peso_cell = ws.cell(row=row, column=col_peso, value=total_peso)
                 peso_cell.font = font_subtotal
                 peso_cell.number_format = '#,##0.00'
-                ws.cell(row=row, column=9, value='').font = font_subtotal
-                pago_cell = ws.cell(row=row, column=10, value=total_pago)
+                ws.cell(row=row, column=col_preco, value='').font = font_subtotal
+                pago_cell = ws.cell(row=row, column=col_valor, value=total_pago)
                 pago_cell.font = font_parcial if tem_parcial else font_pago
                 pago_cell.number_format = '#,##0.00'
                 
@@ -884,7 +929,8 @@ class ManipulacaoArquivos:
         # Linha de TOTAL GERAL
         row += 1
         ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas - 1)
-        total_cell = ws.cell(row=row, column=1, value='TOTAL GERAL - VALOR PAGO')
+        label_total = 'TOTAL GERAL - VALOR PAGO' if direcao == 'ap' else 'TOTAL GERAL - VALOR RECEBIDO'
+        total_cell = ws.cell(row=row, column=1, value=label_total)
         total_cell.font = Font(name='Segoe UI', size=12, bold=True, color='FFFFFF')
         total_cell.fill = PatternFill(start_color=verde_escuro, end_color=verde_escuro, fill_type='solid')
         total_cell.alignment = align_center
@@ -897,7 +943,10 @@ class ManipulacaoArquivos:
         ws.row_dimensions[row].height = 28
         
         # Ajustar largura das colunas
-        larguras = [12, 14, 30, 20, 12, 12, 10, 12, 12, 14]
+        if direcao == 'ar':
+            larguras = [12, 14, 30, 12, 12, 10, 12, 12, 14]  # 9 colunas, sem Cliente
+        else:
+            larguras = [12, 14, 30, 20, 12, 12, 10, 12, 12, 14]  # 10 colunas
         for col_idx, largura in enumerate(larguras):
             col_letter = get_column_letter(col_idx + 1)
             ws.column_dimensions[col_letter].width = largura

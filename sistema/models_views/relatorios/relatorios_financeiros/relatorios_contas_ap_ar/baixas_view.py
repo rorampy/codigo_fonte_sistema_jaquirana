@@ -141,11 +141,13 @@ def relatorio_ap_pagamentos_excel():
 def relatorio_ar_recebimentos():
     filtros = _extrair_filtros()
     registros = ContasAPARService.obter_baixas('ar', filtros)
+    grupos = ContasAPARService.agrupar_baixas_por_faturamento(registros)
     totais = ContasAPARService.totalizar(registros)
 
     return render_template(
         'relatorios/relatorios_financeiros/relatorios_contas_ap_ar/baixas/listar.html',
         registros=registros,
+        grupos=grupos,
         totais=totais,
         direcao='ar',
         titulo_relatorio='AR – Recebimentos',
@@ -164,15 +166,18 @@ def relatorio_ar_recebimentos():
 def relatorio_ar_recebimentos_pdf():
     filtros = _extrair_filtros()
     registros = ContasAPARService.obter_baixas('ar', filtros)
+    grupos = ContasAPARService.agrupar_baixas_por_faturamento(registros)
     totais = ContasAPARService.totalizar(registros)
 
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
     logo_path = obter_url_absoluta_de_imagem('logo.png')
     data_hoje = datetime.now().strftime('%d-%m-%Y')
+    data_geracao = datetime.now().strftime('%d/%m/%Y %H:%M')
 
     html = render_template(
         'relatorios/relatorios_financeiros/relatorios_contas_ap_ar/baixas/pdf.html',
         registros=registros,
+        grupos=grupos,
         totais=totais,
         direcao='ar',
         titulo_relatorio='AR – Recebimentos',
@@ -182,6 +187,7 @@ def relatorio_ar_recebimentos_pdf():
         logo_path=logo_path,
         changelog=changelog,
         dados_corretos=request.form,
+        data_geracao=data_geracao,
     )
     return ManipulacaoArquivos.gerar_pdf_from_html(html, f'ar_recebimentos_{data_hoje}', 'Landscape', abrir_em_nova_aba=False)
 
@@ -192,17 +198,11 @@ def relatorio_ar_recebimentos_pdf():
 def relatorio_ar_recebimentos_excel():
     filtros = _extrair_filtros()
     registros = ContasAPARService.obter_baixas('ar', filtros)
-    totais = ContasAPARService.totalizar(registros)
-    dados = ContasAPARService.preparar_dados_excel_baixas(registros, 'ar')
+    grupos = ContasAPARService.agrupar_baixas_por_faturamento(registros)
     data_hoje = datetime.now().strftime('%d-%m-%Y')
-    return ManipulacaoArquivos.exportar_excel_formatado(
-        dados,
+    return ManipulacaoArquivos.exportar_excel_agrupado_ap_pagamentos(
+        grupos,
         f'ar_recebimentos_{data_hoje}',
         titulo_planilha='AR – Recebimentos',
-        colunas_monetarias=['Valor Original', 'Valor Recebido', 'Saldo'],
-        linha_totais={
-            'Valor Original': totais['total_original_100'] / 100,
-            'Valor Recebido': totais['total_pago_100'] / 100,
-            'Saldo': totais['total_saldo_100'] / 100,
-        },
+        direcao='ar'
     )

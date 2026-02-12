@@ -1601,35 +1601,15 @@ class ContasAPARService:
 
     @staticmethod
     def obter_baixas(direcao_str, filtros=None):
-        """Pagamentos no período - busca TODOS os agendamentos liquidados."""
+        """Pagamentos/Recebimentos no período - busca TODOS os agendamentos liquidados."""
         filtros = filtros or {}
         
         # Para AP, usar nova lógica que busca todos os agendamentos
         if direcao_str == 'ap':
             return ContasAPARService._obter_pagamentos_ap(filtros)
         
-        # Para AR, manter lógica antiga
-        from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
-        
-        plano_contas_id = filtros.get('plano_contas_id')
-        categorias_map = CATEGORIAS_AUTOMATICAS_AR
-        tipo_categoria = 1
-        resultado = []
-        
-        if plano_contas_id:
-            codigo = ContasAPARService._obter_codigo_plano_contas(plano_contas_id)
-            if codigo and codigo in categorias_map:
-                return ContasAPARService._obter_baixas_tabela_operacional(codigo, categorias_map[codigo], filtros, direcao_str)
-            return ContasAPARService._obter_baixas_agendamentos(filtros, tipo_categoria, direcao_str, plano_contas_id_filtro=int(plano_contas_id))
-        
-        for codigo, config in categorias_map.items():
-            resultado.extend(ContasAPARService._obter_baixas_tabela_operacional(codigo, config, filtros, direcao_str))
-        
-        ids_excluir = ContasAPARService._obter_ids_categorias_automaticas(categorias_map)
-        resultado.extend(ContasAPARService._obter_baixas_agendamentos(filtros, tipo_categoria, direcao_str, ids_excluir=ids_excluir))
-        
-        resultado.sort(key=lambda x: (x.get('data_pagamento') or x.get('data_emissao') or date.min), reverse=True)
-        return resultado
+        # Para AR, usar nova lógica que busca todos os agendamentos
+        return ContasAPARService._obter_recebimentos_ar(filtros)
 
     @staticmethod
     def _obter_pagamentos_ap(filtros):
@@ -1740,6 +1720,133 @@ class ContasAPARService:
                 'valor_original_100': ag.valor_total_100 or 0,
                 'valor_pago_100': valor_pago,
                 'saldo_100': (ag.valor_total_100 or 0) - valor_pago,
+                'situacao': ag.situacao.situacao if ag.situacao else 'Sem situação',
+                'situacao_id': ag.situacao_pagamento_id,
+                'centro_custo': ContasAPARService._extrair_centros_custo(ag.centros_custo_json),
+                'plano_contas': plano_contas,
+                'referencia_agendamento': ag.referencia or '-',
+                'parcelas': [],
+                'conciliacao_parcial': ag.conciliacao_parcial or False,
+            })
+        
+        # Ordenar por data (mais recente primeiro)
+        resultado.sort(key=lambda x: (x.get('data_pagamento') or x.get('data_emissao') or date.min), reverse=True)
+        return resultado
+
+    @staticmethod
+    def _obter_recebimentos_ar(filtros):
+        """
+        Busca TODOS os recebimentos de AR (Contas a Receber) no período.
+        Query equivalente à SQL fornecida pelo usuário.
+        
+        Situações: 8 (Liquidado), 9 (Liquidado Parcial), 10 (Conciliado)
+        Direção financeira: 1 (AR - Receita)
+        Valor: se conciliacao_parcial=1 e valor_conciliado existe, usa valor_conciliado, senão usa valor_total
+        """
+        from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
+        from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
+        
+        # Subquery para faturamentos válidos (AR = direcao_financeira = 1)
+        faturamentos_validos = db.session.query(FaturamentoModel.id).filter(
+            FaturamentoModel.direcao_financeira == DIRECAO_AR,
+            FaturamentoModel.ativo == True,
+            FaturamentoModel.deletado == False
+        ).subquery()
+        
+        # Subquery para lançamentos avulsos válidos (AR = tipo_movimentacao = 1)
+        lancamentos_validos = db.session.query(LancamentoAvulsoModel.id).filter(
+            LancamentoAvulsoModel.tipo_movimentacao == DIRECAO_AR,
+            LancamentoAvulsoModel.ativo == True,
+            LancamentoAvulsoModel.deletado == False
+        ).subquery()
+        
+        # Query principal: TODOS os agendamentos liquidados (situações 8, 9, 10)
+        query = AgendamentoPagamentoModel.query.filter(
+            AgendamentoPagamentoModel.ativo == True,
+            AgendamentoPagamentoModel.deletado == False,
+            AgendamentoPagamentoModel.situacao_pagamento_id.in_(SITUACOES_LIQUIDADAS),
+            AgendamentoPagamentoModel.categorias_json.isnot(None),
+            or_(
+                AgendamentoPagamentoModel.faturamento_id.in_(faturamentos_validos),
+                AgendamentoPagamentoModel.lancamento_avulso_id.in_(lancamentos_validos)
+            )
+        )
+        
+        # Filtro por período (data_competencia)
+        if filtros.get('data_inicio'):
+            query = query.filter(AgendamentoPagamentoModel.data_competencia >= filtros['data_inicio'])
+        if filtros.get('data_fim'):
+            query = query.filter(AgendamentoPagamentoModel.data_competencia <= filtros['data_fim'])
+        
+        # Filtro por situação específica
+        if filtros.get('situacao_id'):
+            query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == int(filtros['situacao_id']))
+        
+        # Filtro por pessoa (cliente)
+        if filtros.get('pessoa_id'):
+            query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
+        
+        # Filtro por centro de custo
+        if filtros.get('centro_custo_id'):
+            cc_id = str(filtros['centro_custo_id'])
+            query = query.filter(
+                func.json_contains(
+                    AgendamentoPagamentoModel.centros_custo_json,
+                    json_lib.dumps({'centro': cc_id})
+                )
+            )
+        
+        resultado = []
+        for ag in query.all():
+            # Lógica de valor recebido (igual SQL):
+            # Se conciliacao_parcial = 1 e valor_conciliado existe, usa valor_conciliado
+            # Senão, usa valor_total (recebimento total)
+            if ag.conciliacao_parcial and ag.valor_conciliado_100 is not None:
+                valor_recebido = ag.valor_conciliado_100
+            else:
+                valor_recebido = ag.valor_total_100 or 0
+            
+            # Obter descrição/tipo operação
+            tipo_operacao = 'Recebimento'
+            descricao = ag.descricao or 'Recebimento'
+            plano_contas = '-'
+            
+            # Tentar obter plano de contas do categorias_json
+            if ag.categorias_json:
+                try:
+                    categorias = json_lib.loads(ag.categorias_json) if isinstance(ag.categorias_json, str) else ag.categorias_json
+                    if categorias and len(categorias) > 0:
+                        from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
+                        cat_id = categorias[0].get('categoria_id')
+                        if cat_id:
+                            cat = PlanoContaModel.query.get(cat_id)
+                            if cat:
+                                tipo_operacao = cat.nome
+                                plano_contas = f'{cat.codigo} - {cat.nome}'
+                except (json_lib.JSONDecodeError, TypeError):
+                    pass
+            
+            # Código identificador
+            codigo = ag.referencia if ag.referencia else f'LAN-{ag.id}'
+            
+            # Pessoa (cliente)
+            pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
+            
+            resultado.append({
+                'id': ag.id,
+                'codigo_faturamento': codigo,
+                'faturamento_id': ag.faturamento_id,
+                'lancamento_avulso_id': ag.lancamento_avulso_id,
+                'tipo_operacao': tipo_operacao,
+                'descricao': descricao,
+                'pessoa_nome': pessoa.identificacao if pessoa else '-',
+                'pessoa_id': ag.pessoa_financeiro_id,
+                'data_emissao': ag.data_competencia or ag.data_cadastro,
+                'data_vencimento': ag.data_vencimento or ag.data_cadastro,
+                'data_pagamento': ag.data_competencia or ag.data_alteracao,  # data_recebimento
+                'valor_original_100': ag.valor_total_100 or 0,
+                'valor_pago_100': valor_recebido,  # valor_recebido
+                'saldo_100': (ag.valor_total_100 or 0) - valor_recebido,
                 'situacao': ag.situacao.situacao if ag.situacao else 'Sem situação',
                 'situacao_id': ag.situacao_pagamento_id,
                 'centro_custo': ContasAPARService._extrair_centros_custo(ag.centros_custo_json),
