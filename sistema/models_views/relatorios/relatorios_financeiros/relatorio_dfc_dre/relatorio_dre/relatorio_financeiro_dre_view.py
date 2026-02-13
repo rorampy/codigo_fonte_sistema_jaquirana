@@ -742,6 +742,62 @@ def dre_categoria_detalhes(categoria_id):
                             'lancamento_avulso_id': None,
                             'origem_automatica': True
                         })
+                    # Para categorias de custo/despesa operacional (2.01.01 a 2.01.04)
+                    elif categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
+                        valor = (registro.valor_total_a_pagar_100 or 0) / 100.0
+                        
+                        # Buscar beneficiário (fornecedor/transportadora/extrator/comissionado)
+                        beneficiario = 'Não informado'
+                        if hasattr(registro, 'fornecedor') and registro.fornecedor:
+                            beneficiario = registro.fornecedor.identificacao if hasattr(registro.fornecedor, 'identificacao') else str(registro.fornecedor)
+                        
+                        # Buscar informações da carga/solicitação
+                        observacoes = ''
+                        numero_nf = ''
+                        detalhes_obs = []
+                        
+                        if hasattr(registro, 'solicitacao') and registro.solicitacao:
+                            solicitacao = registro.solicitacao
+                            
+                            if hasattr(solicitacao, 'produto') and solicitacao.produto:
+                                detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
+                            
+                            if hasattr(solicitacao, 'bitola') and solicitacao.bitola:
+                                detalhes_obs.append(f"Bitola: {solicitacao.bitola.bitola}")
+                            
+                            if hasattr(solicitacao, 'cliente') and solicitacao.cliente:
+                                detalhes_obs.append(f"Cliente: {solicitacao.cliente.identificacao}")
+                            
+                            if hasattr(solicitacao, 'motorista') and solicitacao.motorista:
+                                detalhes_obs.append(f"Motorista: {solicitacao.motorista.nome_completo}")
+                            
+                            if hasattr(solicitacao, 'veiculo') and solicitacao.veiculo:
+                                detalhes_obs.append(f"Veículo: {solicitacao.veiculo.placa_veiculo}")
+                        
+                        if hasattr(registro, 'numero_nota_fiscal'):
+                            numero_nf = registro.numero_nota_fiscal or ''
+                        
+                        observacoes = ' • '.join(detalhes_obs)
+                        
+                        registros_categoria.append({
+                            'id': registro.id,
+                            'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y') if registro.data_entrega_ticket else '-',
+                            'valor': valor,
+                            'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                            'detalhamento': config['tipo'],
+                            'referencia': numero_nf or f"{config['tipo']}-{registro.id}",
+                            'descricao': observacoes,
+                            'beneficiario': beneficiario,
+                            'origem': config['origem'],
+                            'tipo_documento': config['tipo'],
+                            'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{registro.id}",
+                            'situacao_pagamento_id': registro.situacao_financeira_id if hasattr(registro, 'situacao_financeira_id') else None,
+                            'data_vencimento': None,
+                            'valor_total_original': valor,
+                            'faturamento_id': None,
+                            'lancamento_avulso_id': None,
+                            'origem_automatica': True
+                        })
                     # Para vendas NF Complementar (1.01.03)
                     elif categoria.codigo == '1.01.03':
                         valor = (registro.valor_total_nota_100 or 0) / 100.0
@@ -774,11 +830,15 @@ def dre_categoria_detalhes(categoria_id):
                         # Data de competência é a data de emissão
                         data_competencia = registro.destinatario_data_emissao or registro.data_cadastro
                         
+                        # NF Complementar emitida é sempre positiva (valor a receber)
+                        sinal_valor = 'positiva' if valor >= 0 else 'negativa'
+                        valor_fmt = f"+ {ValoresMonetarios.converter_float_brl_positivo(valor)}" if valor >= 0 else f"- {ValoresMonetarios.converter_float_brl_positivo(abs(valor))}"
+                        
                         registros_categoria.append({
                             'id': registro.id,
                             'data_competencia': data_competencia.strftime('%d/%m/%Y') if data_competencia else '-',
                             'valor': valor,
-                            'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                            'valor_formatado': valor_fmt,
                             'detalhamento': 'NF Complementar Emitida',
                             'referencia': numero_nf or f"NFC-{registro.id}",
                             'descricao': observacoes,
@@ -791,12 +851,14 @@ def dre_categoria_detalhes(categoria_id):
                             'valor_total_original': valor,
                             'faturamento_id': None,
                             'lancamento_avulso_id': None,
-                            'origem_automatica': True
+                            'origem_automatica': True,
+                            'tipo_nf_complementar': sinal_valor
                         })
                 
                 # Adicionar NFs Complementares NÃO EMITIDAS para categoria 1.01.03
                 if categoria.codigo == '1.01.03':
-                    # Buscar registros operacionais onde Ticket > NF e não foi emitida NF complementar
+                    # Buscar registros operacionais com diferença de peso e não emitida NF complementar
+                    # Inclui positivos (Ticket > NF) e negativos (NF > Ticket)
                     query_nao_emitidas = RegistroOperacionalModel.query.filter(
                         RegistroOperacionalModel.ativo == True,
                         RegistroOperacionalModel.deletado == False,
@@ -809,8 +871,8 @@ def dre_categoria_detalhes(categoria_id):
                             RegistroOperacionalModel.status_emissao_nf_complementar_id.is_(None),
                             RegistroOperacionalModel.status_emissao_nf_complementar_id == 2
                         ),
-                        # Apenas quando Ticket > NF (receita a cobrar)
-                        RegistroOperacionalModel.peso_liquido_ticket > RegistroOperacionalModel.peso_ton_nf
+                        # Todas as diferenças de peso (positivas e negativas)
+                        RegistroOperacionalModel.peso_liquido_ticket != RegistroOperacionalModel.peso_ton_nf
                     )
                     
                     if data_inicio:
@@ -842,7 +904,8 @@ def dre_categoria_detalhes(categoria_id):
                         
                         detalhes_obs.append(f"Peso NF: {reg.peso_ton_nf} Ton")
                         detalhes_obs.append(f"Peso Ticket: {reg.peso_liquido_ticket} Ton")
-                        detalhes_obs.append(f"Diferença: +{diferenca:.2f} Ton")
+                        sinal = '+' if diferenca > 0 else ''
+                        detalhes_obs.append(f"Diferença: {sinal}{diferenca:.2f} Ton")
                         
                         if reg.preco_un_nf:
                             detalhes_obs.append(f"Preço: R$ {reg.preco_un_nf/100:.2f}")
@@ -855,16 +918,20 @@ def dre_categoria_detalhes(categoria_id):
                         # Data de competência é a data de entrega do ticket
                         data_competencia = reg.data_entrega_ticket
                         
+                        # Determinar tipo: positiva (Ticket > NF) ou negativa (NF > Ticket)
+                        sinal_valor = 'positiva' if diferenca > 0 else 'negativa'
+                        valor_fmt = f"+ {ValoresMonetarios.converter_float_brl_positivo(abs(valor))}" if valor >= 0 else f"- {ValoresMonetarios.converter_float_brl_positivo(abs(valor))}"
+                        
                         registros_categoria.append({
                             'id': reg.id,
                             'data_competencia': data_competencia.strftime('%d/%m/%Y') if data_competencia else '-',
                             'valor': valor,
-                            'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
-                            'detalhamento': 'NF Complementar Não Emitida',
+                            'valor_formatado': valor_fmt,
+                            'detalhamento': f'NF Complementar Não Emitida ({"Positiva" if diferenca > 0 else "Negativa"})',
                             'referencia': numero_nf or f"REG-{reg.id}",
                             'descricao': observacoes,
                             'beneficiario': beneficiario,
-                            'origem': 'NF Complementar Não Emitida',
+                            'origem': f'NF Compl. Não Emitida ({"Positiva" if diferenca > 0 else "Negativa"})',
                             'tipo_documento': 'Pendente de Emissão',
                             'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{reg.id}",
                             'situacao_pagamento_id': None,
@@ -873,7 +940,8 @@ def dre_categoria_detalhes(categoria_id):
                             'faturamento_id': None,
                             'lancamento_avulso_id': None,
                             'origem_automatica': True,
-                            'nao_emitida': True
+                            'nao_emitida': True,
+                            'tipo_nf_complementar': sinal_valor
                         })
 
             # 3. BUSCAR FATURAMENTOS (para categorias de receita)
@@ -884,15 +952,39 @@ def dre_categoria_detalhes(categoria_id):
         # Códigos das categorias automáticas que permitem exportação
         categorias_automaticas = ['1.01.01', '1.01.03', '2.01.01', '2.01.02', '2.01.03', '2.01.04']
         
-        return jsonify({
+        # Subtotais para NF Complementar (1.01.03)
+        subtotais_nfc = None
+        if categoria.codigo == '1.01.03':
+            total_positivas = sum(r['valor'] for r in registros_categoria if r.get('tipo_nf_complementar') == 'positiva')
+            total_negativas = sum(r['valor'] for r in registros_categoria if r.get('tipo_nf_complementar') == 'negativa')
+            qtd_positivas = sum(1 for r in registros_categoria if r.get('tipo_nf_complementar') == 'positiva')
+            qtd_negativas = sum(1 for r in registros_categoria if r.get('tipo_nf_complementar') == 'negativa')
+            sinal_total = '+' if total >= 0 else '-'
+            subtotais_nfc = {
+                'total_positivas': total_positivas,
+                'total_positivas_fmt': f"+ {ValoresMonetarios.converter_float_brl_positivo(total_positivas)}",
+                'qtd_positivas': qtd_positivas,
+                'total_negativas': total_negativas,
+                'total_negativas_fmt': f"- {ValoresMonetarios.converter_float_brl_positivo(abs(total_negativas))}",
+                'qtd_negativas': qtd_negativas,
+                'total_liquido': total,
+                'total_liquido_fmt': f"{sinal_total} {ValoresMonetarios.converter_float_brl_positivo(abs(total))}",
+            }
+        
+        resposta = {
             'registros': registros_categoria,
             'total': total,
-            'total_formatado': ValoresMonetarios.converter_float_brl_positivo(total),
+            'total_formatado': ValoresMonetarios.converter_float_brl_positivo(abs(total)) if categoria.codigo == '1.01.03' else ValoresMonetarios.converter_float_brl_positivo(total),
             'quantidade': len(registros_categoria),
             'categoria_id': categoria_id,
             'categoria_codigo': categoria.codigo,
             'permite_exportacao': categoria.codigo in categorias_automaticas
-        })
+        }
+        
+        if subtotais_nfc:
+            resposta['subtotais_nfc'] = subtotais_nfc
+        
+        return jsonify(resposta)
         
     except Exception as e:
         print(f"Erro em dre_categoria_detalhes: {e}")
@@ -1008,6 +1100,11 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                 elif categoria.codigo == '1.01.03':
                     valor = (registro.valor_total_nota_100 or 0) / 100.0
                     
+                    # Determinar tipo (positiva/negativa)
+                    tipo_nfc = 'positiva' if valor >= 0 else 'negativa'
+                    sinal_valor = '+' if valor >= 0 else '-'
+                    valor_fmt = f"{sinal_valor} {ValoresMonetarios.converter_float_brl_positivo(abs(valor))}"
+                    
                     # Buscar cliente
                     beneficiario = 'Não informado'
                     if hasattr(registro, 'cliente') and registro.cliente:
@@ -1040,7 +1137,8 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                         'id': registro.id,
                         'data_competencia': data_competencia.strftime('%d/%m/%Y') if data_competencia else '-',
                         'valor': valor,
-                        'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                        'valor_formatado': valor_fmt,
+                        'tipo_nf_complementar': tipo_nfc,
                         'referencia': numero_nf or f"NFC-{registro.id}",
                         'descricao': observacoes,
                         'beneficiario': beneficiario,
@@ -1101,7 +1199,7 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                         RegistroOperacionalModel.status_emissao_nf_complementar_id.is_(None),
                         RegistroOperacionalModel.status_emissao_nf_complementar_id == 2
                     ),
-                    RegistroOperacionalModel.peso_liquido_ticket > RegistroOperacionalModel.peso_ton_nf,
+                    RegistroOperacionalModel.peso_liquido_ticket != RegistroOperacionalModel.peso_ton_nf,
                     RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
                     RegistroOperacionalModel.data_entrega_ticket <= data_fim
                 ).all()
@@ -1110,6 +1208,12 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                     diferenca = (reg.peso_liquido_ticket or 0) - (reg.peso_ton_nf or 0)
                     valor = round(diferenca * (reg.preco_un_nf or 0)) / 100.0
                     
+                    # Determinar tipo (positiva/negativa)
+                    tipo_nfc = 'positiva' if valor >= 0 else 'negativa'
+                    sinal_valor = '+' if valor >= 0 else '-'
+                    valor_fmt = f"{sinal_valor} {ValoresMonetarios.converter_float_brl_positivo(abs(valor))}"
+                    tipo_label = 'Positiva' if valor >= 0 else 'Negativa'
+                    
                     beneficiario = 'Não informado'
                     if hasattr(reg, 'solicitacao') and reg.solicitacao and hasattr(reg.solicitacao, 'cliente') and reg.solicitacao.cliente:
                         beneficiario = reg.solicitacao.cliente.identificacao
@@ -1117,10 +1221,11 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                         beneficiario = reg.destinatario_nome
                     
                     numero_nf = reg.numero_nota_fiscal or ''
+                    sinal = '+' if diferenca > 0 else ''
                     detalhes_obs = [
                         f"Peso NF: {reg.peso_ton_nf} Ton",
                         f"Peso Ticket: {reg.peso_liquido_ticket} Ton",
-                        f"Diferença: +{diferenca:.2f} Ton"
+                        f"Diferença: {sinal}{diferenca:.2f} Ton"
                     ]
                     if reg.preco_un_nf:
                         detalhes_obs.append(f"Preço: R$ {reg.preco_un_nf/100:.2f}")
@@ -1131,11 +1236,12 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                         'id': reg.id,
                         'data_competencia': reg.data_entrega_ticket.strftime('%d/%m/%Y') if reg.data_entrega_ticket else '-',
                         'valor': valor,
-                        'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                        'valor_formatado': valor_fmt,
+                        'tipo_nf_complementar': tipo_nfc,
                         'referencia': numero_nf or f"REG-{reg.id}",
                         'descricao': ' • '.join(detalhes_obs),
                         'beneficiario': beneficiario,
-                        'origem': 'NF Complementar Não Emitida',
+                        'origem': f'NF Compl. Não Emitida ({tipo_label})',
                         'tipo_documento': 'Pendente de Emissão',
                         'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{reg.id}"
                     })
@@ -1175,9 +1281,10 @@ def dre_categoria_detalhes_excel(categoria_id):
             return redirect(url_for('dre_analitico'))
         
         # Preparar dados para Excel
+        is_nfc = categoria.codigo == '1.01.03'
         dados_excel = []
         for reg in registros:
-            dados_excel.append({
+            linha = {
                 'Data': reg['data_competencia'],
                 'Documento': reg['codigo_documento'],
                 'Origem': reg['origem'],
@@ -1185,18 +1292,65 @@ def dre_categoria_detalhes_excel(categoria_id):
                 'Descrição': reg['descricao'].replace(' • ', ' | ') if reg['descricao'] else '',
                 'Referência': reg['referencia'],
                 'Valor (R$)': reg['valor']
-            })
+            }
+            if is_nfc:
+                tipo = reg.get('tipo_nf_complementar', '')
+                linha['Tipo'] = 'POSITIVA' if tipo == 'positiva' else ('NEGATIVA' if tipo == 'negativa' else '')
+                # Reordenar para Tipo ficar antes de Valor
+                linha_ordenada = {
+                    'Data': linha['Data'],
+                    'Documento': linha['Documento'],
+                    'Origem': linha['Origem'],
+                    'Beneficiário': linha['Beneficiário'],
+                    'Descrição': linha['Descrição'],
+                    'Referência': linha['Referência'],
+                    'Tipo': linha['Tipo'],
+                    'Valor (R$)': linha['Valor (R$)']
+                }
+                dados_excel.append(linha_ordenada)
+            else:
+                dados_excel.append(linha)
         
-        # Adicionar linha de total
-        dados_excel.append({
-            'Data': '',
-            'Documento': '',
-            'Origem': '',
-            'Beneficiário': '',
-            'Descrição': '',
-            'Referência': 'TOTAL',
-            'Valor (R$)': total
-        })
+        # Subtotais para NF Complementar
+        if is_nfc:
+            total_positivas = sum(r['valor'] for r in registros if r.get('tipo_nf_complementar') == 'positiva')
+            total_negativas = sum(r['valor'] for r in registros if r.get('tipo_nf_complementar') == 'negativa')
+            qtd_pos = sum(1 for r in registros if r.get('tipo_nf_complementar') == 'positiva')
+            qtd_neg = sum(1 for r in registros if r.get('tipo_nf_complementar') == 'negativa')
+            
+            # Linha em branco separadora
+            dados_excel.append({k: '' for k in dados_excel[0].keys()})
+            
+            # Subtotal Positivas
+            linha_pos = {k: '' for k in dados_excel[0].keys()}
+            linha_pos['Referência'] = f'SUBTOTAL POSITIVAS ({qtd_pos} registros)'
+            linha_pos['Tipo'] = 'POSITIVA'
+            linha_pos['Valor (R$)'] = total_positivas
+            dados_excel.append(linha_pos)
+            
+            # Subtotal Negativas
+            linha_neg = {k: '' for k in dados_excel[0].keys()}
+            linha_neg['Referência'] = f'SUBTOTAL NEGATIVAS ({qtd_neg} registros)'
+            linha_neg['Tipo'] = 'NEGATIVA'
+            linha_neg['Valor (R$)'] = total_negativas
+            dados_excel.append(linha_neg)
+            
+            # Total Líquido
+            linha_liq = {k: '' for k in dados_excel[0].keys()}
+            linha_liq['Referência'] = f'TOTAL LÍQUIDO ({len(registros)} registros)'
+            linha_liq['Valor (R$)'] = total
+            dados_excel.append(linha_liq)
+        else:
+            # Adicionar linha de total para categorias normais
+            dados_excel.append({
+                'Data': '',
+                'Documento': '',
+                'Origem': '',
+                'Beneficiário': '',
+                'Descrição': '',
+                'Referência': 'TOTAL',
+                'Valor (R$)': total
+            })
         
         nome_arquivo = f"DRE_Detalhes_{categoria.nome.replace(' ', '_')}_{data_inicio.strftime('%d%m%Y')}_{data_fim.strftime('%d%m%Y')}"
         
@@ -1238,18 +1392,40 @@ def dre_categoria_detalhes_pdf(categoria_id):
         # Obter logo para o PDF
         logo_path = obter_url_absoluta_de_imagem('logo.png')
         
+        # Calcular subtotais para NF Complementar
+        is_nfc = categoria.codigo == '1.01.03'
+        subtotais_nfc = None
+        if is_nfc:
+            total_positivas = sum(r['valor'] for r in registros if r.get('tipo_nf_complementar') == 'positiva')
+            total_negativas = sum(r['valor'] for r in registros if r.get('tipo_nf_complementar') == 'negativa')
+            qtd_positivas = sum(1 for r in registros if r.get('tipo_nf_complementar') == 'positiva')
+            qtd_negativas = sum(1 for r in registros if r.get('tipo_nf_complementar') == 'negativa')
+            sinal_total = '+' if total >= 0 else '-'
+            subtotais_nfc = {
+                'total_positivas': total_positivas,
+                'total_positivas_fmt': f"+ {ValoresMonetarios.converter_float_brl_positivo(total_positivas)}",
+                'qtd_positivas': qtd_positivas,
+                'total_negativas': total_negativas,
+                'total_negativas_fmt': f"- {ValoresMonetarios.converter_float_brl_positivo(abs(total_negativas))}",
+                'qtd_negativas': qtd_negativas,
+                'total_liquido': total,
+                'total_liquido_fmt': f"{sinal_total} {ValoresMonetarios.converter_float_brl_positivo(abs(total))}",
+            }
+        
         # Renderizar template PDF
         html = render_template(
             'relatorios/relatorios_financeiros/relatorio_dfc_dre/dre/dre_categoria_detalhes_pdf.html',
             categoria=categoria,
             registros=registros,
             total=total,
-            total_formatado=ValoresMonetarios.converter_float_brl_positivo(total),
+            total_formatado=ValoresMonetarios.converter_float_brl_positivo(abs(total)) if is_nfc else ValoresMonetarios.converter_float_brl_positivo(total),
             quantidade=len(registros),
             data_inicio=data_inicio,
             data_fim=data_fim,
             data_geracao=datetime.now(),
-            logo_path=logo_path
+            logo_path=logo_path,
+            is_nf_complementar=is_nfc,
+            subtotais_nfc=subtotais_nfc
         )
         
         nome_arquivo = f"DRE_Detalhes_{categoria.nome.replace(' ', '_')}_{data_inicio.strftime('%d%m%Y')}_{data_fim.strftime('%d%m%Y')}"

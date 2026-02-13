@@ -83,7 +83,7 @@ def excluir_receita_avulsa(id):
         agendamento = AgendamentoPagamentoModel.obter_agendamento_por_id(id)
         if not agendamento:
             flash(("Agendamento não encontrado!", "warning"))
-            return redirect(url_for("listagem_receita_avulsas"))
+            return redirect(url_for("listagem_receitas_avulsas"))
         
         # Buscar a despesa relacionada se existir
         receita_existente = None
@@ -186,7 +186,58 @@ def excluir_receita_avulsa(id):
                 
                 print(f"[EXCLUSAO] Conciliação revertida com sucesso para transação {transacao_conciliada.id}")
 
-            # Agora excluir o agendamento e a despesa se existir
+            # Reverter movimentações financeiras da liquidação (vinculadas via agendamento_id)
+            movimentacoes_liquidacao = MovimentacaoFinanceiraModel.query.filter(
+                MovimentacaoFinanceiraModel.agendamento_id == agendamento.id,
+                MovimentacaoFinanceiraModel.ativo == True,
+                MovimentacaoFinanceiraModel.deletado == False
+            ).all()
+
+            for movimentacao in movimentacoes_liquidacao:
+                print(f"[EXCLUSAO] Revertendo movimentação de liquidação {movimentacao.id} - tipo {movimentacao.tipo_movimentacao} - valor {movimentacao.valor_movimentacao_100}")
+                
+                if movimentacao.conta_bancaria_id:
+                    saldo_conta = SaldoMovimentacaoFinanceiraModel.query.filter(
+                        SaldoMovimentacaoFinanceiraModel.conta_bancaria_id == movimentacao.conta_bancaria_id,
+                        SaldoMovimentacaoFinanceiraModel.ativo == True,
+                        SaldoMovimentacaoFinanceiraModel.deletado == False
+                    ).first()
+                    
+                    if saldo_conta:
+                        valor_reversao = movimentacao.valor_movimentacao_100
+                        tipo_reversao = None
+                        
+                        # Se era entrada (tipo 1 - liquidação de receita), criar saída para reverter
+                        if movimentacao.tipo_movimentacao == 1:
+                            saldo_conta.valor_total_saldo_100 -= valor_reversao
+                            tipo_reversao = 2  # Saída para compensar a entrada
+                        # Se era saída (tipo 2), criar entrada para reverter
+                        elif movimentacao.tipo_movimentacao == 2:
+                            saldo_conta.valor_total_saldo_100 += valor_reversao
+                            tipo_reversao = 1  # Entrada para compensar a saída
+                        
+                        # Criar movimentação de reversão para aparecer na listagem
+                        if tipo_reversao:
+                            movimentacao_reversao = MovimentacaoFinanceiraModel(
+                                tipo_movimentacao=tipo_reversao,
+                                usuario_id=current_user.id,
+                                data_movimentacao=DataHora.obter_data_atual_padrao_en(),
+                                valor_movimentacao_100=valor_reversao,
+                                conta_bancaria_id=movimentacao.conta_bancaria_id,
+                                agendamento_id=None,
+                                observacao_movimentacao=f"Reversão de liquidação - Exclusão da receita {agendamento.descricao}"
+                            )
+                            db.session.add(movimentacao_reversao)
+                        
+                        saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
+                
+                # Desativar a movimentação original
+                movimentacao.ativo = False
+                movimentacao.deletado = True
+
+            liquidacao_revertida = len(movimentacoes_liquidacao) > 0
+
+            # Agora excluir o agendamento e a receita se existir
             agendamento.deletado = True
             agendamento.ativo = False
             
@@ -198,8 +249,12 @@ def excluir_receita_avulsa(id):
             db.session.commit()
 
             # Mensagem de sucesso diferenciada
-            if conciliacao_existe:
+            if conciliacao_existe and liquidacao_revertida:
+                flash(("Receita excluída com sucesso! A conciliação bancária e a liquidação foram revertidas automaticamente.", "success"))
+            elif conciliacao_existe:
                 flash(("Receita excluída com sucesso! A conciliação bancária foi revertida automaticamente.", "success"))
+            elif liquidacao_revertida:
+                flash(("Receita excluída com sucesso! A liquidação foi revertida e o saldo da conta foi ajustado.", "success"))
             else:
                 flash(("Receita excluída com sucesso!", "success"))
 

@@ -272,6 +272,7 @@ class ContasAPARService:
             'pessoa_id': ag.pessoa_financeiro_id,
             'data_emissao': ag.data_cadastro,
             'data_vencimento': ag.data_vencimento or ag.data_alteracao,
+            'data_competencia': ag.data_competencia,
             'data_pagamento': ag.data_alteracao,
             'valor_original_100': valor_original,
             'valor_pago_100': total_pago,
@@ -345,6 +346,45 @@ class ContasAPARService:
             return '-'
 
     # --------------------------------------------------------------------- #
+    #  HELPER — OBTER NOME DO EXTRATOR (busca robusta)
+    # --------------------------------------------------------------------- #
+
+    @staticmethod
+    def _obter_nome_extrator(reg):
+        """
+        Obtém o nome do extrator de um registro ExtratorPagarModel.
+        
+        Tenta primeiro via obter_extrator() (que filtra ativo/deletado na tabela de preço).
+        Se falhar, faz uma busca SEM filtrar ativo/deletado na tabela de preço,
+        pois o preço pode ter sido desativado mas o extrator continua válido.
+        
+        Returns:
+            str: Nome do extrator ou None se não encontrado
+        """
+        # Tentativa 1: método padrão do model (filtra ativo=True, deletado=False no preço)
+        if hasattr(reg, 'obter_extrator') and callable(reg.obter_extrator):
+            extrator = reg.obter_extrator()
+            if extrator and hasattr(extrator, 'identificacao'):
+                return extrator.identificacao
+
+        # Tentativa 2: busca SEM filtrar ativo/deletado na tabela de preço
+        if hasattr(reg, 'fornecedor_id') and reg.fornecedor_id and hasattr(reg, 'bitola_id') and reg.bitola_id:
+            from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_extracao_model import FornecedorPrecoCustoExtracaoModel
+            from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
+            
+            preco = FornecedorPrecoCustoExtracaoModel.query.filter(
+                FornecedorPrecoCustoExtracaoModel.fornecedor_id == reg.fornecedor_id,
+                FornecedorPrecoCustoExtracaoModel.bitola_id == reg.bitola_id,
+            ).first()
+            
+            if preco and preco.extrator_id:
+                extrator = ExtratorModel.query.get(preco.extrator_id)
+                if extrator and hasattr(extrator, 'identificacao'):
+                    return extrator.identificacao
+
+        return None
+
+    # --------------------------------------------------------------------- #
     #  SERIALIZAÇÃO — REGISTROS _A_PAGAR (AP)
     # --------------------------------------------------------------------- #
 
@@ -360,10 +400,13 @@ class ContasAPARService:
         # Identificação da entidade a pagar — varia por tipo
         if tipo_label == 'Frete' and hasattr(record, 'transportadora') and record.transportadora:
             pessoa_nome = record.transportadora.identificacao
+        elif tipo_label == 'Extrator':
+            nome_extrator = ContasAPARService._obter_nome_extrator(record)
+            pessoa_nome = nome_extrator or '-'
         elif tipo_label == 'Comissionado' and hasattr(record, 'comissionado') and record.comissionado:
             pessoa_nome = record.comissionado.identificacao
         else:
-            # Fornecedor e Extrator usam record.fornecedor
+            # Fornecedor genérico
             pessoa_nome = record.fornecedor.identificacao if record.fornecedor else '-'
 
         # Plano de contas (FK direto, não JSON)
@@ -386,6 +429,7 @@ class ContasAPARService:
             'pessoa_id': None,
             'data_emissao': record.data_cadastro,
             'data_vencimento': record.data_entrega_ticket or record.data_cadastro,
+            'data_competencia': None,
             'data_pagamento': record.data_liquidacao,
             'valor_original_100': valor,
             'valor_pago_100': 0,
@@ -486,13 +530,18 @@ class ContasAPARService:
                     elif hasattr(reg, 'destinatario_nome') and reg.destinatario_nome:
                         pessoa_nome = reg.destinatario_nome
                 else:
-                    # AP: priorizar fornecedor/transportadora/extrator/comissionado
-                    if hasattr(reg, 'fornecedor') and reg.fornecedor:
+                    # AP: priorizar entidade correta conforme tipo de categoria
+                    if codigo == '2.01.02' and hasattr(reg, 'transportadora') and reg.transportadora:
+                        pessoa_nome = reg.transportadora.identificacao
+                    elif codigo == '2.01.03':
+                        nome_extrator = ContasAPARService._obter_nome_extrator(reg)
+                        pessoa_nome = nome_extrator or ('-')
+                    elif codigo == '2.01.04' and hasattr(reg, 'comissionado') and reg.comissionado:
+                        pessoa_nome = reg.comissionado.identificacao
+                    elif hasattr(reg, 'fornecedor') and reg.fornecedor:
                         pessoa_nome = reg.fornecedor.identificacao
                     elif hasattr(reg, 'transportadora') and reg.transportadora:
                         pessoa_nome = reg.transportadora.identificacao
-                    elif hasattr(reg, 'extrator') and reg.extrator:
-                        pessoa_nome = reg.extrator.identificacao
                     elif hasattr(reg, 'comissionado') and reg.comissionado:
                         pessoa_nome = reg.comissionado.identificacao
 
@@ -536,6 +585,7 @@ class ContasAPARService:
                     'pessoa_id': None,
                     'data_emissao': data_emissao,
                     'data_vencimento': data_emissao,
+                    'data_competencia': None,
                     'data_pagamento': None,
                     'valor_original_100': valor,
                     'valor_pago_100': 0,
@@ -870,6 +920,9 @@ class ContasAPARService:
                 'conciliacao_parcial': ag.conciliacao_parcial or False,
             })
         
+        # Incluir NF Complementares pendentes (diferenças negativas = a pagar/creditar)
+        resultado.extend(ContasAPARService._obter_nf_complementares_pendentes_ap(filtros))
+
         # Ordenar por data de vencimento (mais antigo primeiro - maior atraso)
         resultado.sort(key=lambda x: (x.get('data_vencimento') or date.min))
         return resultado
@@ -1061,8 +1114,245 @@ class ContasAPARService:
                 'conciliacao_parcial': ag.conciliacao_parcial or False,
             })
         
+        # Incluir NF Complementares pendentes (emitidas + não emitidas com diferença positiva)
+        resultado.extend(ContasAPARService._obter_nf_complementares_pendentes_ar(filtros))
+
         # Ordenar por data de vencimento (mais antigo primeiro - maior atraso)
         resultado.sort(key=lambda x: (x.get('data_vencimento') or date.min))
+        return resultado
+
+    # --------------------------------------------------------------------- #
+    #  NF COMPLEMENTAR — PENDENTES (igual DRE 1.01.03)
+    # --------------------------------------------------------------------- #
+
+    @staticmethod
+    def _obter_nf_complementares_pendentes_ar(filtros):
+        """
+        NF Complementares pendentes para AR (a receber).
+        Mesma lógica do DRE (categoria 1.01.03):
+        1. NFs Complementares EMITIDAS (fin_nf_complementar) - pendentes de recebimento
+        2. NFs Complementares NÃO EMITIDAS (re_registro_operacional) - diferenças de peso
+           onde peso_liquido_ticket > peso_ton_nf (cliente deve pagar a mais)
+        """
+        resultado = []
+        hoje = date.today()
+        SITUACOES_NAO_PENDENTES = [8, 9, 10]
+
+        try:
+            # --- 1. NFs Complementares EMITIDAS pendentes ---
+            query_emitidas = NfComplementarModel.query.filter(
+                NfComplementarModel.ativo == True,
+                NfComplementarModel.deletado == False,
+                NfComplementarModel.cliente_id.isnot(None),
+                NfComplementarModel.destinatario_data_emissao.isnot(None),
+            )
+
+            # Excluir já liquidadas/conciliadas
+            query_emitidas = query_emitidas.filter(
+                or_(
+                    NfComplementarModel.situacao_financeira_id.is_(None),
+                    ~NfComplementarModel.situacao_financeira_id.in_(SITUACOES_NAO_PENDENTES)
+                )
+            )
+
+            if filtros.get('data_fim'):
+                data_fim = date.fromisoformat(filtros['data_fim']) if isinstance(filtros['data_fim'], str) else filtros['data_fim']
+                query_emitidas = query_emitidas.filter(NfComplementarModel.destinatario_data_emissao <= data_fim)
+
+            if filtros.get('pessoa_id'):
+                query_emitidas = query_emitidas.filter(NfComplementarModel.cliente_id == int(filtros['pessoa_id']))
+
+            if filtros.get('conta_bancaria_id'):
+                query_emitidas = query_emitidas.filter(NfComplementarModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
+
+            if filtros.get('nota_fiscal'):
+                nf = filtros['nota_fiscal'].strip()
+                query_emitidas = query_emitidas.filter(NfComplementarModel.numero_nota_fiscal.ilike(f'%{nf}%'))
+
+            for nfc in query_emitidas.all():
+                valor = nfc.valor_total_nota_100 or 0
+                if valor == 0:
+                    continue
+
+                vencimento = nfc.destinatario_data_emissao
+                dias_atraso = (hoje - vencimento).days if vencimento and vencimento < hoje else 0
+                pessoa_nome = nfc.cliente.identificacao if nfc.cliente else (nfc.destinatario_nome or '-')
+                situacao_nome = nfc.situacao.situacao if nfc.situacao else 'Pendente'
+
+                resultado.append({
+                    'id': nfc.id,
+                    'faturamento_id': None,
+                    'lancamento_avulso_id': None,
+                    'codigo_faturamento': f'NFC-{nfc.numero_nota_fiscal or nfc.id}',
+                    'tipo_operacao': 'NF Complementar',
+                    'descricao': f'NF Complementar Emitida - {nfc.numero_nota_fiscal or ""}',
+                    'pessoa_nome': pessoa_nome,
+                    'pessoa_id': nfc.cliente_id,
+                    'data_emissao': nfc.destinatario_data_emissao,
+                    'data_vencimento': nfc.destinatario_data_emissao,
+                    'data_competencia': nfc.destinatario_data_emissao,
+                    'data_pagamento': None,
+                    'valor_original_100': valor,
+                    'valor_pago_100': 0,
+                    'saldo_100': valor,
+                    'situacao': situacao_nome,
+                    'situacao_id': nfc.situacao_financeira_id,
+                    'centro_custo': '-',
+                    'plano_contas': '1.01.03 - Vendas de NFe Complementares',
+                    'referencia_agendamento': nfc.numero_nota_fiscal or '-',
+                    'parcelas': [],
+                    'dias_atraso': dias_atraso,
+                    'conciliacao_parcial': False,
+                    'is_nf_complementar': True,
+                })
+
+            # --- 2. NFs Complementares NÃO EMITIDAS (diferença positiva: Ticket > NF) ---
+            query_nao_emitidas = RegistroOperacionalModel.query.filter(
+                RegistroOperacionalModel.ativo == True,
+                RegistroOperacionalModel.deletado == False,
+                RegistroOperacionalModel.solicitacao_nf_id.isnot(None),
+                RegistroOperacionalModel.peso_ton_nf.isnot(None),
+                RegistroOperacionalModel.peso_liquido_ticket.isnot(None),
+                RegistroOperacionalModel.preco_un_nf > 0,
+                or_(
+                    RegistroOperacionalModel.status_emissao_nf_complementar_id.is_(None),
+                    RegistroOperacionalModel.status_emissao_nf_complementar_id == 2
+                ),
+                RegistroOperacionalModel.peso_liquido_ticket > RegistroOperacionalModel.peso_ton_nf,
+            )
+
+            if filtros.get('data_fim'):
+                data_fim = date.fromisoformat(filtros['data_fim']) if isinstance(filtros['data_fim'], str) else filtros['data_fim']
+                query_nao_emitidas = query_nao_emitidas.filter(RegistroOperacionalModel.data_entrega_ticket <= data_fim)
+
+            if filtros.get('pessoa_id'):
+                query_nao_emitidas = query_nao_emitidas.join(
+                    CargaModel, RegistroOperacionalModel.solicitacao_nf_id == CargaModel.id
+                ).filter(CargaModel.cliente_id == int(filtros['pessoa_id']))
+
+            for reg in query_nao_emitidas.all():
+                diferenca = (reg.peso_liquido_ticket or 0) - (reg.peso_ton_nf or 0)
+                valor = abs(round(diferenca * (reg.preco_un_nf or 0)))
+                if valor == 0:
+                    continue
+
+                carga = reg.solicitacao if hasattr(reg, 'solicitacao') else None
+                cliente = carga.cliente if carga else None
+                pessoa_nome = cliente.identificacao if cliente else '-'
+
+                vencimento = reg.data_entrega_ticket or reg.data_cadastro
+                dias_atraso = (hoje - vencimento).days if vencimento and vencimento < hoje else 0
+
+                resultado.append({
+                    'id': reg.id,
+                    'faturamento_id': None,
+                    'lancamento_avulso_id': None,
+                    'codigo_faturamento': f'NFC-NE-{reg.numero_nota_fiscal or reg.id}',
+                    'tipo_operacao': 'NF Complementar (Não Emitida)',
+                    'descricao': f'Dif. peso: {diferenca:+.3f} ton × R$ {(reg.preco_un_nf or 0)/100:.2f}',
+                    'pessoa_nome': pessoa_nome,
+                    'pessoa_id': cliente.id if cliente else None,
+                    'data_emissao': reg.data_entrega_ticket or reg.data_cadastro,
+                    'data_vencimento': reg.data_entrega_ticket or reg.data_cadastro,
+                    'data_competencia': reg.data_entrega_ticket,
+                    'data_pagamento': None,
+                    'valor_original_100': valor,
+                    'valor_pago_100': 0,
+                    'saldo_100': valor,
+                    'situacao': 'Pendente Emissão',
+                    'situacao_id': None,
+                    'centro_custo': '-',
+                    'plano_contas': '1.01.03 - Vendas de NFe Complementares',
+                    'referencia_agendamento': reg.numero_nota_fiscal or '-',
+                    'parcelas': [],
+                    'dias_atraso': dias_atraso,
+                    'conciliacao_parcial': False,
+                    'is_nf_complementar': True,
+                })
+
+        except Exception as e:
+            print(f"[ContasAPARService] Erro ao buscar NF Complementares pendentes AR: {e}")
+
+        return resultado
+
+    @staticmethod
+    def _obter_nf_complementares_pendentes_ap(filtros):
+        """
+        NF Complementares pendentes para AP (a pagar/creditar).
+        Diferenças de peso negativas (NF > Ticket): a empresa cobrou a mais
+        do cliente e precisa devolver/creditar.
+        Mesma lógica do DRE, mas filtrando apenas diferenças negativas.
+        """
+        resultado = []
+        hoje = date.today()
+
+        try:
+            query = RegistroOperacionalModel.query.filter(
+                RegistroOperacionalModel.ativo == True,
+                RegistroOperacionalModel.deletado == False,
+                RegistroOperacionalModel.solicitacao_nf_id.isnot(None),
+                RegistroOperacionalModel.peso_ton_nf.isnot(None),
+                RegistroOperacionalModel.peso_liquido_ticket.isnot(None),
+                RegistroOperacionalModel.preco_un_nf > 0,
+                or_(
+                    RegistroOperacionalModel.status_emissao_nf_complementar_id.is_(None),
+                    RegistroOperacionalModel.status_emissao_nf_complementar_id == 2
+                ),
+                RegistroOperacionalModel.peso_liquido_ticket < RegistroOperacionalModel.peso_ton_nf,
+            )
+
+            if filtros.get('data_fim'):
+                data_fim = date.fromisoformat(filtros['data_fim']) if isinstance(filtros['data_fim'], str) else filtros['data_fim']
+                query = query.filter(RegistroOperacionalModel.data_entrega_ticket <= data_fim)
+
+            if filtros.get('pessoa_id'):
+                query = query.join(
+                    CargaModel, RegistroOperacionalModel.solicitacao_nf_id == CargaModel.id
+                ).filter(CargaModel.cliente_id == int(filtros['pessoa_id']))
+
+            for reg in query.all():
+                diferenca = (reg.peso_liquido_ticket or 0) - (reg.peso_ton_nf or 0)
+                valor = abs(round(diferenca * (reg.preco_un_nf or 0)))
+                if valor == 0:
+                    continue
+
+                carga = reg.solicitacao if hasattr(reg, 'solicitacao') else None
+                cliente = carga.cliente if carga else None
+                pessoa_nome = cliente.identificacao if cliente else '-'
+
+                vencimento = reg.data_entrega_ticket or reg.data_cadastro
+                dias_atraso = (hoje - vencimento).days if vencimento and vencimento < hoje else 0
+
+                resultado.append({
+                    'id': reg.id,
+                    'faturamento_id': None,
+                    'lancamento_avulso_id': None,
+                    'codigo_faturamento': f'NFC-CR-{reg.numero_nota_fiscal or reg.id}',
+                    'tipo_operacao': 'NF Complementar (Crédito)',
+                    'descricao': f'Dif. peso: {diferenca:+.3f} ton × R$ {(reg.preco_un_nf or 0)/100:.2f}',
+                    'pessoa_nome': pessoa_nome,
+                    'pessoa_id': cliente.id if cliente else None,
+                    'data_emissao': reg.data_entrega_ticket or reg.data_cadastro,
+                    'data_vencimento': reg.data_entrega_ticket or reg.data_cadastro,
+                    'data_competencia': reg.data_entrega_ticket,
+                    'data_pagamento': None,
+                    'valor_original_100': valor,
+                    'valor_pago_100': 0,
+                    'saldo_100': valor,
+                    'situacao': 'Pendente Emissão',
+                    'situacao_id': None,
+                    'centro_custo': '-',
+                    'plano_contas': '1.01.03 - NFe Complementares (Crédito)',
+                    'referencia_agendamento': reg.numero_nota_fiscal or '-',
+                    'parcelas': [],
+                    'dias_atraso': dias_atraso,
+                    'conciliacao_parcial': False,
+                    'is_nf_complementar': True,
+                })
+
+        except Exception as e:
+            print(f"[ContasAPARService] Erro ao buscar NF Complementares pendentes AP: {e}")
+
         return resultado
 
     # --------------------------------------------------------------------- #
@@ -1250,6 +1540,7 @@ class ContasAPARService:
             for reg in registros:
                 valor = getattr(reg, campo_valor) or 0
                 data_emissao = getattr(reg, campo_data) if hasattr(reg, campo_data) else reg.data_cadastro
+                data_pagamento = getattr(reg, 'data_liquidacao', None) or data_emissao
 
                 # Identificar pessoa baseado na direção
                 pessoa_nome = '-'
@@ -1262,13 +1553,18 @@ class ContasAPARService:
                     elif hasattr(reg, 'destinatario_nome') and reg.destinatario_nome:
                         pessoa_nome = reg.destinatario_nome
                 else:
-                    # AP: priorizar fornecedor/transportadora/extrator/comissionado
-                    if hasattr(reg, 'fornecedor') and reg.fornecedor:
+                    # AP: priorizar entidade correta conforme tipo de categoria
+                    if codigo == '2.01.02' and hasattr(reg, 'transportadora') and reg.transportadora:
+                        pessoa_nome = reg.transportadora.identificacao
+                    elif codigo == '2.01.03':
+                        nome_extrator = ContasAPARService._obter_nome_extrator(reg)
+                        pessoa_nome = nome_extrator or '-'
+                    elif codigo == '2.01.04' and hasattr(reg, 'comissionado') and reg.comissionado:
+                        pessoa_nome = reg.comissionado.identificacao
+                    elif hasattr(reg, 'fornecedor') and reg.fornecedor:
                         pessoa_nome = reg.fornecedor.identificacao
                     elif hasattr(reg, 'transportadora') and reg.transportadora:
                         pessoa_nome = reg.transportadora.identificacao
-                    elif hasattr(reg, 'extrator') and reg.extrator:
-                        pessoa_nome = reg.extrator.identificacao
                     elif hasattr(reg, 'comissionado') and reg.comissionado:
                         pessoa_nome = reg.comissionado.identificacao
 
@@ -1306,6 +1602,7 @@ class ContasAPARService:
                     'pessoa_id': None,
                     'data_emissao': data_emissao,
                     'data_vencimento': data_emissao,
+                    'data_competencia': None,
                     'data_pagamento': getattr(reg, 'data_liquidacao', None),
                     'valor_original_100': valor,
                     'valor_pago_100': 0,
@@ -1441,6 +1738,7 @@ class ContasAPARService:
                         'pessoa_id': ag.pessoa_financeiro_id,
                         'data_emissao': ag.data_competencia or ag.data_cadastro,
                         'data_vencimento': ag.data_vencimento or ag.data_cadastro,
+                        'data_competencia': ag.data_competencia,
                         'data_pagamento': ag.data_alteracao,
                         'valor_original_100': valor,
                         'valor_pago_100': 0,
@@ -1547,13 +1845,18 @@ class ContasAPARService:
                     elif hasattr(reg, 'destinatario_nome') and reg.destinatario_nome:
                         pessoa_nome = reg.destinatario_nome
                 else:
-                    # AP: priorizar fornecedor/transportadora/extrator/comissionado
-                    if hasattr(reg, 'fornecedor') and reg.fornecedor:
+                    # AP: priorizar entidade correta conforme tipo de categoria
+                    if codigo == '2.01.02' and hasattr(reg, 'transportadora') and reg.transportadora:
+                        pessoa_nome = reg.transportadora.identificacao
+                    elif codigo == '2.01.03':
+                        nome_extrator = ContasAPARService._obter_nome_extrator(reg)
+                        pessoa_nome = nome_extrator or '-'
+                    elif codigo == '2.01.04' and hasattr(reg, 'comissionado') and reg.comissionado:
+                        pessoa_nome = reg.comissionado.identificacao
+                    elif hasattr(reg, 'fornecedor') and reg.fornecedor:
                         pessoa_nome = reg.fornecedor.identificacao
                     elif hasattr(reg, 'transportadora') and reg.transportadora:
                         pessoa_nome = reg.transportadora.identificacao
-                    elif hasattr(reg, 'extrator') and reg.extrator:
-                        pessoa_nome = reg.extrator.identificacao
                     elif hasattr(reg, 'comissionado') and reg.comissionado:
                         pessoa_nome = reg.comissionado.identificacao
 
@@ -1590,6 +1893,7 @@ class ContasAPARService:
                     'pessoa_id': None,
                     'data_emissao': data_emissao,
                     'data_vencimento': data_emissao,
+                    'data_competencia': None,
                     'data_pagamento': data_pagamento,
                     'valor_original_100': valor,
                     'valor_pago_100': valor,
@@ -1722,6 +2026,7 @@ class ContasAPARService:
                         'pessoa_id': ag.pessoa_financeiro_id,
                         'data_emissao': ag.data_competencia or ag.data_cadastro,
                         'data_vencimento': ag.data_vencimento or ag.data_cadastro,
+                        'data_competencia': ag.data_competencia,
                         'data_pagamento': ag.data_competencia or ag.data_alteracao,
                         'valor_original_100': ag.valor_total_100 or 0,
                         'valor_pago_100': valor_pago,
@@ -1903,6 +2208,7 @@ class ContasAPARService:
                 'pessoa_id': ag.pessoa_financeiro_id,
                 'data_emissao': ag.data_competencia or ag.data_cadastro,
                 'data_vencimento': ag.data_vencimento or ag.data_cadastro,
+                'data_competencia': ag.data_competencia,
                 'data_pagamento': ag.data_competencia or ag.data_alteracao,
                 'valor_original_100': ag.valor_total_100 or 0,
                 'valor_pago_100': valor_pago,
@@ -2079,6 +2385,7 @@ class ContasAPARService:
                 'pessoa_id': ag.pessoa_financeiro_id,
                 'data_emissao': ag.data_competencia or ag.data_cadastro,
                 'data_vencimento': ag.data_vencimento or ag.data_cadastro,
+                'data_competencia': ag.data_competencia,
                 'data_pagamento': ag.data_competencia or ag.data_alteracao,  # data_recebimento
                 'valor_original_100': ag.valor_total_100 or 0,
                 'valor_pago_100': valor_recebido,  # valor_recebido
@@ -2129,7 +2436,7 @@ class ContasAPARService:
     @staticmethod
     def preparar_dados_excel_emissoes(registros, direcao_str):
         """Converte registros de emissões em lista de dicts para Excel."""
-        label_entidade = 'Fornecedor' if direcao_str == 'ap' else 'Cliente'
+        label_entidade = 'Entidade' if direcao_str == 'ap' else 'Cliente'
         label_valor = 'Valor a Pagar' if direcao_str == 'ap' else 'Valor a Receber'
         dados = []
         for r in registros:
@@ -2139,6 +2446,7 @@ class ContasAPARService:
                 'Descrição': r['descricao'],
                 'Data Emissão': r['data_emissao'].strftime('%d/%m/%Y') if r['data_emissao'] else '-',
                 'Vencimento': r['data_vencimento'].strftime('%d/%m/%Y') if r['data_vencimento'] else '-',
+                'Data Competência': r['data_competencia'].strftime('%d/%m/%Y') if r.get('data_competencia') else '-',
                 label_valor: round((r['valor_original_100'] or 0) / 100, 2),
                 'Situação': r['situacao'],
                 'Plano de Contas': r['plano_contas'],
@@ -2149,7 +2457,7 @@ class ContasAPARService:
     @staticmethod
     def preparar_dados_excel_baixas(registros, direcao_str):
         """Converte registros de baixas em lista de dicts para Excel."""
-        label_entidade = 'Fornecedor' if direcao_str == 'ap' else 'Cliente'
+        label_entidade = 'Entidade' if direcao_str == 'ap' else 'Cliente'
         label_baixa = 'Data Pagamento' if direcao_str == 'ap' else 'Data Recebimento'
         label_valor_pago = 'Valor Pago' if direcao_str == 'ap' else 'Valor Recebido'
         dados = []
@@ -2160,6 +2468,7 @@ class ContasAPARService:
                 'Descrição': r['descricao'],
                 'Vencimento': r['data_vencimento'].strftime('%d/%m/%Y') if r['data_vencimento'] else '-',
                 label_baixa: r['data_pagamento'].strftime('%d/%m/%Y') if r['data_pagamento'] else '-',
+                'Data Competência': r['data_competencia'].strftime('%d/%m/%Y') if r.get('data_competencia') else '-',
                 'Valor Original': round((r['valor_original_100'] or 0) / 100, 2),
                 label_valor_pago: round((r['valor_pago_100'] or 0) / 100, 2),
                 'Saldo': round((r.get('saldo_100') or 0) / 100, 2),
@@ -2172,7 +2481,7 @@ class ContasAPARService:
     @staticmethod
     def preparar_dados_excel_pendentes(registros, direcao_str):
         """Converte registros de pendentes em lista de dicts para Excel."""
-        label_entidade = 'Fornecedor' if direcao_str == 'ap' else 'Cliente'
+        label_entidade = 'Entidade' if direcao_str == 'ap' else 'Cliente'
         dados = []
         for r in registros:
             dados.append({
@@ -2181,6 +2490,7 @@ class ContasAPARService:
                 'Descrição': r['descricao'],
                 'Data Emissão': r['data_emissao'].strftime('%d/%m/%Y') if r['data_emissao'] else '-',
                 'Vencimento': r['data_vencimento'].strftime('%d/%m/%Y') if r['data_vencimento'] else '-',
+                'Data Competência': r['data_competencia'].strftime('%d/%m/%Y') if r.get('data_competencia') else '-',
                 'Valor Original': round((r['valor_original_100'] or 0) / 100, 2),
                 'Saldo Pendente': round((r.get('saldo_100') or 0) / 100, 2),
                 'Dias Atraso': r.get('dias_atraso', 0),

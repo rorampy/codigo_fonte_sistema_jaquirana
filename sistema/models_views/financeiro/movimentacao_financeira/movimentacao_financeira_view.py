@@ -39,7 +39,6 @@ def inject_contas_bancarias():
 @requires_roles
 def movimentacoes_financeiras():
     conta_selecionada_id = request.args.get("conta_bancaria_id", type=int)
-
     stats_transacoes = ImportacaoOfx.obter_estatisticas_transacoes()
 
     transacoes_nao_conciliadas = stats_transacoes.get('nao_conciliadas', 0)

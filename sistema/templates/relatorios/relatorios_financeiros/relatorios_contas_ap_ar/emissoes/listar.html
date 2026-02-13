@@ -151,6 +151,7 @@
                     <th class="text-center">Descrição</th>
                     <th class="text-center">Data Emissão</th>
                     <th class="text-center">Vencimento</th>
+                    <th class="text-center">Data Competência</th>
                     <th class="text-center">{{ label_valor }}</th>
                     <th class="text-center">Situação</th>
                     <th class="text-center">Plano de Contas</th>
@@ -170,6 +171,9 @@
                     </td>
                     <td class="text-center">
                       {{ item.data_vencimento | formatar_data_para_brl if item.data_vencimento else '-' }}
+                    </td>
+                    <td class="text-center">
+                      {{ item.data_competencia | formatar_data_para_brl if item.data_competencia else '-' }}
                     </td>
                     <td class="text-center">
                       <span class="badge bg-green-lt p-2">{{ item.valor_original_100 | formatar_float_para_brl }}</span>

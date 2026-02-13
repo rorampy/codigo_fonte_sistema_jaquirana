@@ -585,9 +585,44 @@ class ManipulacaoArquivos:
                 ws.row_dimensions[row].height = 22
                 row += 1
             
+            elif grupo.get('agendamentos') and any(a.get('is_nf_complementar') for a in grupo.get('agendamentos', [])):
+                # NF Complementar - exibir detalhes dos agendamentos
+                # Cabeçalho
+                colunas_nfc = ['Código', 'Tipo', 'Descrição', 'Data', 'Situação']
+                for col_idx, col_name in enumerate(colunas_nfc):
+                    cell = ws.cell(row=row, column=col_idx + 1, value=col_name)
+                    cell.font = font_header
+                    cell.fill = fill_header
+                    cell.alignment = align_center
+                    cell.border = borda_fina
+                # Coluna de valor
+                cell = ws.cell(row=row, column=len(colunas_nfc) + 1, value='Valor')
+                cell.font = font_header
+                cell.fill = fill_header
+                cell.alignment = align_center
+                cell.border = borda_fina
+                ws.row_dimensions[row].height = 22
+                row += 1
+                
+                for item in grupo.get('agendamentos', []):
+                    ws.cell(row=row, column=1, value=item.get('codigo_faturamento', '-')).font = font_normal
+                    ws.cell(row=row, column=2, value=item.get('tipo_operacao', '-')).font = font_normal
+                    ws.cell(row=row, column=3, value=(item.get('descricao') or '-')[:40]).font = font_normal
+                    data_emissao = item.get('data_emissao')
+                    ws.cell(row=row, column=4, value=data_emissao.strftime('%d/%m/%Y') if data_emissao else '-').font = font_normal
+                    ws.cell(row=row, column=5, value=item.get('situacao', '-')).font = font_normal
+                    valor_item = (item.get('saldo_100') or 0) / 100
+                    valor_cell = ws.cell(row=row, column=6, value=valor_item)
+                    valor_cell.number_format = '#,##0.00'
+                    valor_cell.font = font_pendente
+                    for col in range(1, 7):
+                        ws.cell(row=row, column=col).alignment = align_center
+                        ws.cell(row=row, column=col).border = borda_fina
+                    row += 1
+            
             else:
                 # Lançamento avulso ou sem detalhes
-                descricao = grupo.get('lancamento_descricao', 'Detalhes não disponíveis')
+                descricao = grupo.get('lancamento_descricao') or 'Detalhes não disponíveis'
                 ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas - 1)
                 ws.cell(row=row, column=1, value=f'Lançamento: {descricao}').font = font_normal
                 saldo_cell = ws.cell(row=row, column=num_colunas, value=saldo_pendente)
@@ -912,9 +947,42 @@ class ManipulacaoArquivos:
                 ws.row_dimensions[row].height = 22
                 row += 1
             
+            elif grupo.get('agendamentos') and any(a.get('is_nf_complementar') for a in grupo.get('agendamentos', [])):
+                # NF Complementar - exibir detalhes dos agendamentos
+                colunas_nfc = ['Código', 'Tipo', 'Descrição', 'Data', 'Situação']
+                for col_idx, col_name in enumerate(colunas_nfc):
+                    cell = ws.cell(row=row, column=col_idx + 1, value=col_name)
+                    cell.font = font_header
+                    cell.fill = fill_header
+                    cell.alignment = align_center
+                    cell.border = borda_fina
+                cell = ws.cell(row=row, column=len(colunas_nfc) + 1, value='Valor')
+                cell.font = font_header
+                cell.fill = fill_header
+                cell.alignment = align_center
+                cell.border = borda_fina
+                ws.row_dimensions[row].height = 22
+                row += 1
+                
+                for item in grupo.get('agendamentos', []):
+                    ws.cell(row=row, column=1, value=item.get('codigo_faturamento', '-')).font = font_normal
+                    ws.cell(row=row, column=2, value=item.get('tipo_operacao', '-')).font = font_normal
+                    ws.cell(row=row, column=3, value=(item.get('descricao') or '-')[:40]).font = font_normal
+                    data_emissao = item.get('data_emissao')
+                    ws.cell(row=row, column=4, value=data_emissao.strftime('%d/%m/%Y') if data_emissao else '-').font = font_normal
+                    ws.cell(row=row, column=5, value=item.get('situacao', '-')).font = font_normal
+                    valor_item = (item.get('saldo_100') or 0) / 100
+                    valor_cell = ws.cell(row=row, column=6, value=valor_item)
+                    valor_cell.number_format = '#,##0.00'
+                    valor_cell.font = font_pago
+                    for col in range(1, 7):
+                        ws.cell(row=row, column=col).alignment = align_center
+                        ws.cell(row=row, column=col).border = borda_fina
+                    row += 1
+            
             else:
                 # Lançamento avulso ou sem detalhes
-                descricao = grupo.get('lancamento_descricao', 'Detalhes não disponíveis')
+                descricao = grupo.get('lancamento_descricao') or 'Detalhes não disponíveis'
                 ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas - 1)
                 ws.cell(row=row, column=1, value=f'Lançamento: {descricao}').font = font_normal
                 pago_cell = ws.cell(row=row, column=num_colunas, value=total_pago)

@@ -2085,11 +2085,13 @@ def conciliacao_contas_bancarias():
     # Obter estatísticas de transações da conta específica (ou geral se não houver conta)
     if conta_selecionada_id:
         stats_transacoes = ImportacaoOfx.obter_estatisticas_transacoes(conta_bancaria_id=conta_selecionada_id)
+
         # Verificar se há transações OFX não conciliadas para esta conta específica
         transacoes_conta = ImportacaoOfx.query.filter_by(
             conta_bancaria_id=conta_selecionada_id,
             conciliado=False,
-            ofx_deletada=False
+            ofx_deletada=False,
+            deletado=False
         ).count()
         transacoes_nao_conciliadas = transacoes_conta
     else:

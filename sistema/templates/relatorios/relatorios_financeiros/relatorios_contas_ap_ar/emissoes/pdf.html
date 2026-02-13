@@ -93,6 +93,7 @@
               <th class="text-center">Descrição</th>
               <th class="text-center">Emissão</th>
               <th class="text-center">Vencimento</th>
+              <th class="text-center">Dt. Competência</th>
               <th class="text-center">{{ label_valor }}</th>
               <th class="text-center">Situação</th>
             </tr>
@@ -105,6 +106,7 @@
               <td class="text-center">{{ item.descricao | truncate(35, True, '…') }}</td>
               <td class="text-center">{{ item.data_emissao | formatar_data_para_brl if item.data_emissao else '-' }}</td>
               <td class="text-center">{{ item.data_vencimento | formatar_data_para_brl if item.data_vencimento else '-' }}</td>
+              <td class="text-center">{{ item.data_competencia | formatar_data_para_brl if item.data_competencia else '-' }}</td>
               <td class="text-center">{{ item.valor_original_100 | formatar_float_para_brl }}</td>
               <td class="text-center">{{ item.situacao }}</td>
             </tr>

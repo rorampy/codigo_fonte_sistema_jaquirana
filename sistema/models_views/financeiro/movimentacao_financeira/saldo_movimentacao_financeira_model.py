@@ -48,8 +48,8 @@ class SaldoMovimentacaoFinanceiraModel(BaseModel):
         Se id_conta for informado, retorna o saldo da conta. Caso contrário, soma de todas as contas.
         """
         query = SaldoMovimentacaoFinanceiraModel.query.filter(
-            SaldoMovimentacaoFinanceiraModel.deletado == 0,
-            SaldoMovimentacaoFinanceiraModel.ativo   == 1,
+            SaldoMovimentacaoFinanceiraModel.deletado == False,
+            SaldoMovimentacaoFinanceiraModel.ativo == True,
         )
 
         if id_conta and id_conta != 0:

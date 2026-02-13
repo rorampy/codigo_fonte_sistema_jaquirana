@@ -675,6 +675,7 @@
                     <th class="text-center">Descrição</th>
                     <th class="text-center">Vencimento</th>
                     <th class="text-center">Data {{ 'Pagamento' if direcao == 'ap' else 'Recebimento' }}</th>
+                    <th class="text-center">Data Competência</th>
                     <th class="text-center">Valor Original</th>
                     <th class="text-center">Valor {{ 'Pago' if direcao == 'ap' else 'Recebido' }}</th>
                     <th class="text-center">Situação</th>
@@ -695,6 +696,9 @@
                     </td>
                     <td class="text-center text-primary">
                       {{ item.data_pagamento | formatar_data_para_brl if item.data_pagamento else '-' }}
+                    </td>
+                    <td class="text-center">
+                      {{ item.data_competencia | formatar_data_para_brl if item.data_competencia else '-' }}
                     </td>
                     <td class="text-center">
                       {{ item.valor_original_100 | formatar_float_para_brl }}

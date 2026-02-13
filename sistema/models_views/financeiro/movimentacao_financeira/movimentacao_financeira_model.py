@@ -181,7 +181,8 @@ class MovimentacaoFinanceiraModel(BaseModel):
         """
         # base da query: somente movimentações ativas
         query = MovimentacaoFinanceiraModel.query.filter(
-            MovimentacaoFinanceiraModel.ativo == True
+            MovimentacaoFinanceiraModel.ativo == True,
+            MovimentacaoFinanceiraModel.deletado == False
         )
 
         # se filtrou uma conta específica, aplica o filtro

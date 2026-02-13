@@ -254,10 +254,10 @@ class DREModel:
             
             try:
                 # Tratamento especial para NFs Complementares (1.01.03)
-                # Inclui emitidas + não emitidas (Ticket > NF)
+                # Inclui emitidas + não emitidas (positivas E negativas)
                 if codigo == '1.01.03':
                     total = cls._calcular_nf_complementares_total(data_inicio, data_fim)
-                    if total > 0:
+                    if total != 0:
                         valores[codigo] = total
                     continue
                 
@@ -291,10 +291,14 @@ class DREModel:
         
         - EMITIDAS: valor_total_nota_100 da tabela fin_nf_complementar
         - NÃO EMITIDAS: (peso_ticket - peso_nf) * preco_un da tabela re_registro_operacional
-          onde Ticket > NF e status_emissao_nf_complementar_id IS NULL ou = 2
+          para TODAS as diferenças de peso (positivas e negativas),
+          onde status_emissao_nf_complementar_id IS NULL ou = 2
+        
+        A diferença líquida entre valores positivos (Ticket > NF)
+        e negativos (NF > Ticket) compõe o valor real a receber do cliente.
         
         Returns:
-            int: valor total em centavos
+            int: valor total em centavos (pode ser positivo ou negativo)
         """
         from sistema import db
         from sqlalchemy import func
@@ -324,7 +328,10 @@ class DREModel:
             
             # 2. NFs Complementares NÃO EMITIDAS (re_registro_operacional)
             # Fórmula: (peso_liquido_ticket - peso_ton_nf) * preco_un_nf
-            # Apenas quando Ticket > NF (diferença positiva = receita a cobrar)
+            # Inclui TODAS as diferenças de peso (positivas e negativas):
+            #   - Positiva (Ticket > NF): receita complementar a cobrar do cliente
+            #   - Negativa (NF > Ticket): ajuste/crédito de receita ao cliente
+            # A diferença líquida (positivos - negativos) compõe o valor real a receber
             query_nao_emitidas = RegistroOperacionalModel.query.filter(
                 RegistroOperacionalModel.ativo == True,
                 RegistroOperacionalModel.deletado == False,
@@ -337,8 +344,8 @@ class DREModel:
                     RegistroOperacionalModel.status_emissao_nf_complementar_id.is_(None),
                     RegistroOperacionalModel.status_emissao_nf_complementar_id == 2
                 ),
-                # Apenas quando Ticket > NF (receita a cobrar)
-                RegistroOperacionalModel.peso_liquido_ticket > RegistroOperacionalModel.peso_ton_nf
+                # Todas as diferenças de peso (positivas e negativas)
+                RegistroOperacionalModel.peso_liquido_ticket != RegistroOperacionalModel.peso_ton_nf
             )
             
             if data_inicio:

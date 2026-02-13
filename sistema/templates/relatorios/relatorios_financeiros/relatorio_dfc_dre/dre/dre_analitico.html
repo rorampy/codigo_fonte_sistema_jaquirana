@@ -1150,6 +1150,37 @@
           </div>
         </div>
 
+        <!-- Subtotais NF Complementar (positivas/negativas) - visível somente para 1.01.03 -->
+        <div class="row mb-3" id="subtotaisNfComplementar" style="display: none;">
+          <div class="col-md-4">
+            <div class="card border-success">
+              <div class="card-body text-center py-2">
+                <h6 class="text-success mb-1">NF Complementares Positivas</h6>
+                <h5 class="mb-0 text-success" id="totalPositivas">-</h5>
+                <small class="text-muted" id="qtdPositivas">0 registros</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-danger">
+              <div class="card-body text-center py-2">
+                <h6 class="text-danger mb-1">NF Complementares Negativas</h6>
+                <h5 class="mb-0 text-danger" id="totalNegativas">-</h5>
+                <small class="text-muted" id="qtdNegativas">0 registros</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-primary">
+              <div class="card-body text-center py-2">
+                <h6 class="text-primary mb-1">Total Líquido</h6>
+                <h5 class="mb-0 text-primary" id="totalLiquido">-</h5>
+                <small class="text-muted" id="qtdTotal">0 registros</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="table-responsive" id="tabelaDetalhesContainer">
           <table class="table table-striped table-hover">
             <thead class="table-light">
@@ -1273,8 +1304,9 @@
     modalDataFim = dataFim;
     modalTemDados = false;
     
-    // Ocultar botões de exportação inicialmente
+    // Ocultar botões de exportação e subtotais inicialmente
     document.getElementById('botoesExportacao').style.display = 'none';
+    document.getElementById('subtotaisNfComplementar').style.display = 'none';
     
     // Mostrar modal
     const modal = new bootstrap.Modal(document.getElementById('modalDetalhesCategoria'));
@@ -1319,6 +1351,18 @@
           document.getElementById('botoesExportacao').style.display = 'block';
         }
 
+        // Mostrar subtotais NF Complementar se disponível
+        if (data.subtotais_nfc) {
+          const sub = data.subtotais_nfc;
+          document.getElementById('totalPositivas').textContent = sub.total_positivas_fmt;
+          document.getElementById('qtdPositivas').textContent = sub.qtd_positivas + ' registro(s)';
+          document.getElementById('totalNegativas').textContent = sub.total_negativas_fmt;
+          document.getElementById('qtdNegativas').textContent = sub.qtd_negativas + ' registro(s)';
+          document.getElementById('totalLiquido').textContent = sub.total_liquido_fmt;
+          document.getElementById('qtdTotal').textContent = data.quantidade + ' registro(s)';
+          document.getElementById('subtotaisNfComplementar').style.display = 'flex';
+        }
+
         // Preencher tabela
         const tbody = document.getElementById('tabelaDetalhes');
         tbody.innerHTML = '';
@@ -1329,6 +1373,13 @@
         } else {
           data.registros.forEach(registro => {
             const row = document.createElement('tr');
+            
+            // Estilizar linha conforme tipo NF Complementar
+            if (registro.tipo_nf_complementar === 'positiva') {
+              row.style.borderLeft = '3px solid #2fb344';
+            } else if (registro.tipo_nf_complementar === 'negativa') {
+              row.style.borderLeft = '3px solid #d63939';
+            }
             
             // Formatar descrição de forma mais clara
             let descricaoFormatada = '';
@@ -1361,7 +1412,7 @@
                 ${descricaoFormatada}
                 ${registro.referencia ? `<div class="small"><span class="badge bg-secondary-lt">Ref: ${registro.referencia}</span></div>` : ''}
               </td>
-              <td class="text-end fw-medium text-nowrap">${registro.valor_formatado}</td>
+              <td class="text-end fw-medium text-nowrap ${registro.tipo_nf_complementar === 'positiva' ? 'text-success' : (registro.tipo_nf_complementar === 'negativa' ? 'text-danger' : '')}">${registro.valor_formatado}</td>
             `;
             tbody.appendChild(row);
           });

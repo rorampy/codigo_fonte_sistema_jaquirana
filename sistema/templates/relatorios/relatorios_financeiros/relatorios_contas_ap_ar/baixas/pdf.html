@@ -406,6 +406,7 @@
       <th>Descrição</th>
       <th>Vencimento</th>
       <th>{{ 'Pagamento' if direcao == 'ap' else 'Recebimento' }}</th>
+      <th>Dt. Compet.</th>
       <th>Valor Original</th>
       <th>Valor {{ 'Pago' if direcao == 'ap' else 'Recebido' }}</th>
       <th>Situação</th>
@@ -417,13 +418,14 @@
       <td>{{ item.descricao | truncate(20, True, '...') }}</td>
       <td>{{ item.data_vencimento | formatar_data_para_brl if item.data_vencimento else '-' }}</td>
       <td>{{ item.data_pagamento | formatar_data_para_brl if item.data_pagamento else '-' }}</td>
+      <td>{{ item.data_competencia | formatar_data_para_brl if item.data_competencia else '-' }}</td>
       <td class="valor">{{ item.valor_original_100 | formatar_float_para_brl }}</td>
       <td style="color: #2b8a3e; font-weight: bold;">{{ item.valor_pago_100 | formatar_float_para_brl }}</td>
       <td>{{ item.situacao }}</td>
     </tr>
     {% endfor %}
     <tr class="total-row">
-      <td colspan="6" style="text-align: left;">TOTAL {{ 'PAGO' if direcao == 'ap' else 'RECEBIDO' }}</td>
+      <td colspan="7" style="text-align: left;">TOTAL {{ 'PAGO' if direcao == 'ap' else 'RECEBIDO' }}</td>
       <td colspan="2" class="valor-total" style="text-align: right;">{{ totais.total_pago_100 | formatar_float_para_brl }}</td>
     </tr>
   </table>

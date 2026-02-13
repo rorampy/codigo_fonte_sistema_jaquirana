@@ -135,6 +135,84 @@
     text-align: left;
     font-weight: 500;
   }
+
+  /* NF Complementar - Positiva/Negativa */
+  .row-positiva {
+    border-left: 4px solid #2fb344;
+  }
+  .row-positiva .valor-cell {
+    color: #2fb344 !important;
+  }
+  .row-negativa {
+    border-left: 4px solid #d63939;
+  }
+  .row-negativa .valor-cell {
+    color: #d63939 !important;
+  }
+  .badge-positiva {
+    display: inline-block;
+    background-color: #d5f5dc;
+    color: #2fb344;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .badge-negativa {
+    display: inline-block;
+    background-color: #fde0e0;
+    color: #d63939;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .subtotais-nfc {
+    margin: 15px 0;
+    border: none;
+  }
+  .subtotais-nfc td {
+    border: none !important;
+    padding: 8px 15px;
+  }
+  .card-subtotal {
+    border-radius: 8px;
+    padding: 10px 20px;
+    text-align: center;
+    min-width: 160px;
+  }
+  .card-subtotal.positiva {
+    background-color: #d5f5dc;
+    border-left: 4px solid #2fb344;
+  }
+  .card-subtotal.negativa {
+    background-color: #fde0e0;
+    border-left: 4px solid #d63939;
+  }
+  .card-subtotal.liquido {
+    background-color: #e0eaff;
+    border-left: 4px solid #206bc4;
+  }
+  .card-subtotal .sub-label {
+    font-size: 10px;
+    color: #666;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .card-subtotal .sub-value {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .card-subtotal.positiva .sub-value { color: #2fb344; }
+  .card-subtotal.negativa .sub-value { color: #d63939; }
+  .card-subtotal.liquido .sub-value { color: #206bc4; }
+  .card-subtotal .sub-qtd {
+    font-size: 10px;
+    color: #888;
+  }
 </style>
 
 <div class="page-wrapper">
@@ -175,6 +253,34 @@
         </div>
 
         <!-- Cards de Resumo -->
+        {% if is_nf_complementar and subtotais_nfc %}
+        <!-- Subtotais NF Complementar -->
+        <table class="subtotais-nfc" style="width: 100%; margin-bottom: 15px;">
+          <tr>
+            <td style="width: 33%; text-align: center;">
+              <div class="card-subtotal positiva" style="display: inline-block; width: 90%;">
+                <div class="sub-label">NF Complementares Positivas</div>
+                <div class="sub-value">{{ subtotais_nfc.total_positivas_fmt }}</div>
+                <div class="sub-qtd">{{ subtotais_nfc.qtd_positivas }} registro(s)</div>
+              </div>
+            </td>
+            <td style="width: 33%; text-align: center;">
+              <div class="card-subtotal negativa" style="display: inline-block; width: 90%;">
+                <div class="sub-label">NF Complementares Negativas</div>
+                <div class="sub-value">{{ subtotais_nfc.total_negativas_fmt }}</div>
+                <div class="sub-qtd">{{ subtotais_nfc.qtd_negativas }} registro(s)</div>
+              </div>
+            </td>
+            <td style="width: 33%; text-align: center;">
+              <div class="card-subtotal liquido" style="display: inline-block; width: 90%;">
+                <div class="sub-label">Total Líquido</div>
+                <div class="sub-value">{{ subtotais_nfc.total_liquido_fmt }}</div>
+                <div class="sub-qtd">{{ quantidade }} registro(s)</div>
+              </div>
+            </td>
+          </tr>
+        </table>
+        {% endif %}
         <!-- <table style="width: 100%; margin-bottom: 15px; border: none;">
           <tr>
             <td style="text-align: center; border: none; padding: 5px;">
@@ -201,12 +307,15 @@
               <th style="text-align: center;">Origem</th>
               <th style="text-align: center;">Beneficiário</th>
               <th style="text-align: center;">Detalhes da Operação</th>
+              {% if is_nf_complementar %}
+              <th style="text-align: center;">Tipo</th>
+              {% endif %}
               <th style="text-align: center;">Valor</th>
             </tr>
           </thead>
           <tbody>
             {% for reg in registros %}
-            <tr>
+            <tr class="{% if reg.tipo_nf_complementar == 'positiva' %}row-positiva{% elif reg.tipo_nf_complementar == 'negativa' %}row-negativa{% endif %}">
               <td style="text-align: center;">{{ reg.data_competencia }}</td>
               <td style="white-space: nowrap; text-align: center;">
                 <span class="badge-documento">{{ reg.codigo_documento }}</span>
@@ -227,13 +336,42 @@
                   <span class="referencia-badge">Ref: {{ reg.referencia }}</span>
                 {% endif %}
               </td>
+              {% if is_nf_complementar %}
+              <td style="text-align: center;">
+                {% if reg.tipo_nf_complementar == 'positiva' %}
+                  <span class="badge-positiva">POSITIVA</span>
+                {% elif reg.tipo_nf_complementar == 'negativa' %}
+                  <span class="badge-negativa">NEGATIVA</span>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              {% endif %}
               <td class="valor-cell" style="text-align: center;">{{ reg.valor_formatado }}</td>
             </tr>
             {% endfor %}
           </tbody>
           <tfoot>
+            {% if is_nf_complementar and subtotais_nfc %}
+            <tr style="background-color: #d5f5dc !important;">
+              <td colspan="{% if is_nf_complementar %}6{% else %}5{% endif %}" style="text-align: right; font-weight: 700; color: #2fb344; border-top: 1px solid #2fb344; padding: 8px 10px !important;">
+                SUBTOTAL POSITIVAS ({{ subtotais_nfc.qtd_positivas }} registros)
+              </td>
+              <td style="text-align: center; font-weight: 700; color: #2fb344; border-top: 1px solid #2fb344; font-size: 13px; padding: 8px 10px !important;">
+                {{ subtotais_nfc.total_positivas_fmt }}
+              </td>
+            </tr>
+            <tr style="background-color: #fde0e0 !important;">
+              <td colspan="{% if is_nf_complementar %}6{% else %}5{% endif %}" style="text-align: right; font-weight: 700; color: #d63939; padding: 8px 10px !important;">
+                SUBTOTAL NEGATIVAS ({{ subtotais_nfc.qtd_negativas }} registros)
+              </td>
+              <td style="text-align: center; font-weight: 700; color: #d63939; font-size: 13px; padding: 8px 10px !important;">
+                {{ subtotais_nfc.total_negativas_fmt }}
+              </td>
+            </tr>
+            {% endif %}
             <tr class="total-row">
-              <td colspan="5" style="text-align: right;">TOTAL ({{ quantidade }} registros)</td>
+              <td colspan="{% if is_nf_complementar %}6{% else %}5{% endif %}" style="text-align: right;">{% if is_nf_complementar %}TOTAL LÍQUIDO{% else %}TOTAL{% endif %} ({{ quantidade }} registros)</td>
               <td style="text-align: center;">{{ total_formatado }}</td>
             </tr>
           </tfoot>

@@ -388,6 +388,27 @@
     </tr>
     {% endif %}
 
+    {% if grupo.agendamentos and grupo.agendamentos[0].get('is_nf_complementar') and not grupo.detalhes_cargas %}
+    <tr class="cargas-header">
+      <th>Código</th>
+      <th colspan="2">Tipo</th>
+      <th>Descrição</th>
+      <th>Data</th>
+      <th>Situação</th>
+      <th colspan="2">Valor</th>
+    </tr>
+    {% for item in grupo.agendamentos %}
+    <tr class="carga-row">
+      <td>{{ item.codigo_faturamento }}</td>
+      <td colspan="2">{{ item.tipo_operacao }}</td>
+      <td>{{ item.descricao | truncate(35, True, '...') }}</td>
+      <td>{{ item.data_emissao | formatar_data_para_brl if item.data_emissao else '-' }}</td>
+      <td>{{ item.situacao }}</td>
+      <td colspan="2" class="valor">{{ item.saldo_100 | formatar_float_para_brl }}</td>
+    </tr>
+    {% endfor %}
+    {% endif %}
+
     <!-- Linha de Saldo Pendente -->
     <tr class="saldo-row">
       <td colspan="6" style="text-align: left;">SALDO PENDENTE</td>
