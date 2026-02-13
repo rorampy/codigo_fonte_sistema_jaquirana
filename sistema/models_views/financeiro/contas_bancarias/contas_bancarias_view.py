@@ -24,6 +24,7 @@ from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model im
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
 from sistema.models_views.financeiro.operacional.categorizar_fatura.parcela_categorizacao.parcela_categorizacao_model import ParcelaCategorizacaoModel
 from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
+from sistema.models_views.importacao_ofx.importacao_ofx_service import ImportacaoOfxService
 from sistema._utilitarios import *
 from datetime import datetime, date
 from sistema._utilitarios import *
@@ -211,7 +212,7 @@ def _obter_resumo_importacao(filtros):
     Returns:
         dict: Resumo com estatísticas da importação
     """
-    return ImportacaoOfx.obter_resumo_importacao(
+    return ImportacaoOfxService.obter_resumo_importacao(
         data_inicio=filtros['data_inicio'] if filtros['data_inicio'] else None,
         data_fim=filtros['data_fim'] if filtros['data_fim'] else None,
         batch_id=None,
@@ -301,7 +302,7 @@ def conciliacao_ofx(conta_id):
     """
     try:
         # Verificar se existe importação OFX
-        batch_id = session.get('current_batch_id') or ImportacaoOfx.obter_ultimo_batch_importacao(conta_bancaria_id=conta_id)
+        batch_id = session.get('current_batch_id') or ImportacaoOfxService.obter_ultimo_batch_importacao(conta_bancaria_id=conta_id)
         if not batch_id:
             flash(('Nenhum arquivo OFX foi importado. Importe um arquivo primeiro.', 'warning'))
             return redirect(url_for('importar_ofx'))
@@ -808,7 +809,8 @@ def processar_conciliacao_massa():
             tipo_conciliacao = 'AGENDAMENTO_MASSA_TOTAL' if transacao.esta_totalmente_utilizada else 'AGENDAMENTO_MASSA_PARCIAL'
         
         # Salvar dados da conciliação no formato JSON
-        sucesso_salvamento = transacao.salvar_dados_conciliacao(
+        sucesso_salvamento = ImportacaoOfxService.salvar_dados_conciliacao(
+            transacao=transacao,
             tipo_conciliacao=tipo_conciliacao,
             agendamentos_ids=agendamentos_ids,
             faturamentos_ids=faturamentos_conciliados,
@@ -1187,7 +1189,8 @@ def processar_conciliacao():
         if lancamento_avulso_id:
             lancamentos_avulsos_ids.append(lancamento_avulso_id)
         
-        sucesso_salvamento = transacao.salvar_dados_conciliacao(
+        sucesso_salvamento = ImportacaoOfxService.salvar_dados_conciliacao(
+            transacao=transacao,
             tipo_conciliacao='AGENDAMENTO_INDIVIDUAL_PARCIAL' if conciliacao_parcial else 'AGENDAMENTO',
             agendamentos_ids=[agendamento_id],
             faturamentos_ids=faturamentos_ids,
@@ -1508,7 +1511,8 @@ def processar_conciliacao_parcial():
         if lancamento_avulso_id:
             lancamentos_avulsos_ids.append(lancamento_avulso_id)
 
-        sucesso_salvamento = transacao.salvar_dados_conciliacao(
+        sucesso_salvamento = ImportacaoOfxService.salvar_dados_conciliacao(
+            transacao=transacao,
             tipo_conciliacao='AGENDAMENTO_PARCIAL',
             agendamentos_ids=[agendamento_id],
             faturamentos_ids=faturamentos_ids,
@@ -1942,7 +1946,8 @@ def salvar_nova_movimentacao():
         db.session.flush()
 
         # Marcar transação como conciliada
-        sucesso_salvamento = transacao.salvar_dados_conciliacao(
+        sucesso_salvamento = ImportacaoOfxService.salvar_dados_conciliacao(
+            transacao=transacao,
             tipo_conciliacao='NOVA_MOVIMENTACAO',
             agendamentos_ids=[agendamento.id],
             faturamentos_ids=[],
@@ -2047,7 +2052,7 @@ def reverter_conciliacao():
             }), 400
         
         # Reverter a conciliação
-        sucesso, mensagem = transacao.reverter_conciliacao()
+        sucesso, mensagem = ImportacaoOfxService.reverter_conciliacao(transacao)
         
         if sucesso:
             return jsonify({
@@ -2084,7 +2089,7 @@ def conciliacao_contas_bancarias():
 
     # Obter estatísticas de transações da conta específica (ou geral se não houver conta)
     if conta_selecionada_id:
-        stats_transacoes = ImportacaoOfx.obter_estatisticas_transacoes(conta_bancaria_id=conta_selecionada_id)
+        stats_transacoes = ImportacaoOfxService.obter_estatisticas_transacoes(conta_bancaria_id=conta_selecionada_id)
 
         # Verificar se há transações OFX não conciliadas para esta conta específica
         transacoes_conta = ImportacaoOfx.query.filter_by(
@@ -2095,7 +2100,7 @@ def conciliacao_contas_bancarias():
         ).count()
         transacoes_nao_conciliadas = transacoes_conta
     else:
-        stats_transacoes = ImportacaoOfx.obter_estatisticas_transacoes()
+        stats_transacoes = ImportacaoOfxService.obter_estatisticas_transacoes()
         transacoes_nao_conciliadas = stats_transacoes.get('nao_conciliadas', 0)
 
     movimentacoes = MovimentacaoFinanceiraModel.listagem_movimentacoes_financeiras_por_conta(conta_selecionada_id)
@@ -2142,7 +2147,7 @@ def conciliacao_contas_bancarias():
 @login_required
 @requires_roles
 def listagem_ofx():
-    batch_id = session.get('current_batch_id') or ImportacaoOfx.obter_ultimo_batch_importacao()
+    batch_id = session.get('current_batch_id') or ImportacaoOfxService.obter_ultimo_batch_importacao()
 
     if not batch_id:
         flash(('Nenhum arquivo OFX foi importado. Importe um arquivo primeiro.', 'warning'))
@@ -2199,7 +2204,7 @@ def listagem_ofx():
     total_paginas = (total_transacoes // por_pagina) + (1 if total_transacoes % por_pagina else 0)
     
     # Obter resumo e estrutura
-    resumo_bd = ImportacaoOfx.obter_resumo_importacao(
+    resumo_bd = ImportacaoOfxService.obter_resumo_importacao(
         data_inicio=filtro_data_inicio if filtro_data_inicio else None,
         data_fim=filtro_data_fim if filtro_data_fim else None,
         batch_id=None,

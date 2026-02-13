@@ -19,6 +19,7 @@ from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_view impo
 from sistema.models_views.configuracoes_gerais.categorizacao_fiscal.categorizacao_fiscal_view import inicializar_categorias_padrao_categorizacao_fiscal, obter_subcategorias_recursivo_categorizacao_fiscal
 from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import PontuacaoUsuarioModel
 from sistema.models_views.importacao_ofx.importacao_ofx_model import ImportacaoOfx
+from sistema.models_views.importacao_ofx.importacao_ofx_service import ImportacaoOfxService
 from sistema.models_views.importacao_ofx.importacao_ofx_view import limpar_dados_conciliacao
 from sistema.models_views.importacao_ofx.importacao_ofx_view import verificar_e_limpar_conciliacao_incorreta
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
@@ -39,7 +40,7 @@ def inject_contas_bancarias():
 @requires_roles
 def movimentacoes_financeiras():
     conta_selecionada_id = request.args.get("conta_bancaria_id", type=int)
-    stats_transacoes = ImportacaoOfx.obter_estatisticas_transacoes()
+    stats_transacoes = ImportacaoOfxService.obter_estatisticas_transacoes()
 
     transacoes_nao_conciliadas = stats_transacoes.get('nao_conciliadas', 0)
 

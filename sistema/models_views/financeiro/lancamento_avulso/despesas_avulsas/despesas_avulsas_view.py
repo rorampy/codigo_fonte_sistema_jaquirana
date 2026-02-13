@@ -488,12 +488,15 @@ def excluir_despesa_avulsa(id):
                 ImportacaoOfx.dados_conciliacao_json.contains(f'"agendamentos_ids": [{agendamento.id}]') |
                 ImportacaoOfx.dados_conciliacao_json.contains(f'"agendamentos_ids":[{agendamento.id}]')
             ).first()
-            print(transacao_conciliada.id)
+
             if transacao_conciliada:
                 conciliacao_existe = True
 
         # Iniciar transação de exclusão
         try:
+            # Rastrear IDs de movimentações já revertidas na conciliação para não duplicar
+            movimentacoes_ja_revertidas = set()
+
             # Se existe conciliação, reverter primeiro
             if conciliacao_existe and transacao_conciliada:
                 print(f"[EXCLUSAO] Revertendo conciliação da transação {transacao_conciliada.id}")
@@ -526,6 +529,7 @@ def excluir_despesa_avulsa(id):
                 # Reverter movimentações financeiras vinculadas
                 movimentacoes_ids = dados_conciliacao.get('movimentacoes_ids', [])
                 for mov_id in movimentacoes_ids:
+                    movimentacoes_ja_revertidas.add(mov_id)
                     movimentacao = MovimentacaoFinanceiraModel.query.get(mov_id)
                     if movimentacao:
                         # Reverter o impacto no saldo antes de excluir a movimentação
@@ -569,6 +573,62 @@ def excluir_despesa_avulsa(id):
                 
                 print(f"[EXCLUSAO] Conciliação revertida com sucesso para transação {transacao_conciliada.id}")
 
+            # Reverter movimentações financeiras da liquidação (vinculadas via agendamento_id)
+            movimentacoes_liquidacao = MovimentacaoFinanceiraModel.query.filter(
+                MovimentacaoFinanceiraModel.agendamento_id == agendamento.id,
+                MovimentacaoFinanceiraModel.ativo == True,
+                MovimentacaoFinanceiraModel.deletado == False
+            ).all()
+
+            for movimentacao in movimentacoes_liquidacao:
+                # Pular movimentações já revertidas no bloco de conciliação
+                if movimentacao.id in movimentacoes_ja_revertidas:
+                    print(f"[EXCLUSAO] Movimentação {movimentacao.id} já revertida na conciliação, pulando")
+                    continue
+
+                print(f"[EXCLUSAO] Revertendo movimentação de liquidação {movimentacao.id} - tipo {movimentacao.tipo_movimentacao} - valor {movimentacao.valor_movimentacao_100}")
+                
+                if movimentacao.conta_bancaria_id:
+                    saldo_conta = SaldoMovimentacaoFinanceiraModel.query.filter(
+                        SaldoMovimentacaoFinanceiraModel.conta_bancaria_id == movimentacao.conta_bancaria_id,
+                        SaldoMovimentacaoFinanceiraModel.ativo == True,
+                        SaldoMovimentacaoFinanceiraModel.deletado == False
+                    ).first()
+                    
+                    if saldo_conta:
+                        valor_reversao = movimentacao.valor_movimentacao_100
+                        tipo_reversao = None
+                        
+                        # Se era saída (tipo 2 - liquidação de despesa), criar entrada para reverter
+                        if movimentacao.tipo_movimentacao == 2:
+                            saldo_conta.valor_total_saldo_100 += valor_reversao
+                            tipo_reversao = 1  # Entrada para compensar a saída
+                        # Se era entrada (tipo 1), criar saída para reverter
+                        elif movimentacao.tipo_movimentacao == 1:
+                            saldo_conta.valor_total_saldo_100 -= valor_reversao
+                            tipo_reversao = 2  # Saída para compensar a entrada
+                        
+                        # Criar movimentação de reversão para aparecer na listagem
+                        if tipo_reversao:
+                            movimentacao_reversao = MovimentacaoFinanceiraModel(
+                                tipo_movimentacao=tipo_reversao,
+                                usuario_id=current_user.id,
+                                data_movimentacao=DataHora.obter_data_atual_padrao_en(),
+                                valor_movimentacao_100=valor_reversao,
+                                conta_bancaria_id=movimentacao.conta_bancaria_id,
+                                agendamento_id=None,
+                                observacao_movimentacao=f"Reversão de liquidação - Exclusão da despesa {agendamento.descricao}"
+                            )
+                            db.session.add(movimentacao_reversao)
+                        
+                        saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
+                
+                # Desativar a movimentação original
+                movimentacao.ativo = False
+                movimentacao.deletado = True
+
+            liquidacao_revertida = len(movimentacoes_liquidacao) > 0
+
             # Agora excluir o agendamento e a despesa se existir
             agendamento.deletado = True
             agendamento.ativo = False
@@ -581,8 +641,12 @@ def excluir_despesa_avulsa(id):
             db.session.commit()
 
             # Mensagem de sucesso diferenciada
-            if conciliacao_existe:
+            if conciliacao_existe and liquidacao_revertida:
+                flash(("Despesa excluída com sucesso! A conciliação bancária e a liquidação foram revertidas automaticamente.", "success"))
+            elif conciliacao_existe:
                 flash(("Despesa excluída com sucesso! A conciliação bancária foi revertida automaticamente.", "success"))
+            elif liquidacao_revertida:
+                flash(("Despesa excluída com sucesso! A liquidação foi revertida e o saldo da conta foi ajustado.", "success"))
             else:
                 flash(("Despesa excluída com sucesso!", "success"))
                 

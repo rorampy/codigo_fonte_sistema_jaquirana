@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from flask import render_template, request, redirect, url_for, flash, session
 from flask_login import login_required
 from sistema.models_views.importacao_ofx.importacao_ofx_model import ImportacaoOfx
+from sistema.models_views.importacao_ofx.importacao_ofx_service import ImportacaoOfxService
 from sistema.models_views.configuracoes_gerais.conta_bancaria.conta_bancaria_model import ContaBancariaModel
 from sistema._utilitarios import *
 
@@ -22,7 +23,7 @@ def importar_ofx():
     conta_bancaria_selecionada_id = request.args.get('conta_bancaria_id', type=int)
 
     # Obter dados para o template
-    stats_transacoes = ImportacaoOfx.obter_estatisticas_transacoes()
+    stats_transacoes = ImportacaoOfxService.obter_estatisticas_transacoes()
     contas_bancarias = ContaBancariaModel.obter_contas_bancarias_ativas()
     
     total_transacoes_existentes = stats_transacoes.get('total', 0)
@@ -144,7 +145,7 @@ def importar_ofx():
                             }
                             
                             # Gravar transações no banco de dados
-                            sucesso_bd, resultado = ImportacaoOfx.inserir_transacoes_lote(
+                            sucesso_bd, resultado = ImportacaoOfxService.inserir_transacoes_lote(
                                 transacoes_completas, 
                                 arquivo_info,
                                 conta_bancaria_id
@@ -164,7 +165,7 @@ def importar_ofx():
                                     ))
                                     return redirect(url_for('importar_ofx'))
                                 
-                                resumo_bd = ImportacaoOfx.obter_resumo_importacao(batch_id)
+                                resumo_bd = ImportacaoOfxService.obter_resumo_importacao(batch_id)
                                 
                                 if resumo_bd:
                                     total = resumo_bd.get('total_transacoes', 0)
@@ -346,7 +347,7 @@ def conciliar_transacao(transacao_id, tipo):
 def ignorar_movimentacao_ofx(id):
     """Rota para ignorar/deletar uma movimentação OFX com justificativa"""
     try:
-        transacao = ImportacaoOfx.obter_transacao_por_fitid(id)
+        transacao = ImportacaoOfxService.obter_transacao_por_fitid(id)
         justificativa = request.form.get('justificativa', '').strip()
         
         if not transacao:

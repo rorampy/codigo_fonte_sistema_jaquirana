@@ -112,6 +112,9 @@ def excluir_receita_avulsa(id):
 
         # Iniciar transação de exclusão
         try:
+            # Rastrear IDs de movimentações já revertidas na conciliação para não duplicar
+            movimentacoes_ja_revertidas = set()
+
             # Se existe conciliação, reverter primeiro
             if conciliacao_existe and transacao_conciliada:
                 print(f"[EXCLUSAO] Revertendo conciliação da transação {transacao_conciliada.id}")
@@ -144,6 +147,7 @@ def excluir_receita_avulsa(id):
                 # Reverter movimentações financeiras vinculadas
                 movimentacoes_ids = dados_conciliacao.get('movimentacoes_ids', [])
                 for mov_id in movimentacoes_ids:
+                    movimentacoes_ja_revertidas.add(mov_id)
                     movimentacao = MovimentacaoFinanceiraModel.query.get(mov_id)
                     if movimentacao:
                         # Reverter o impacto no saldo antes de excluir a movimentação
@@ -194,6 +198,11 @@ def excluir_receita_avulsa(id):
             ).all()
 
             for movimentacao in movimentacoes_liquidacao:
+                # Pular movimentações já revertidas no bloco de conciliação
+                if movimentacao.id in movimentacoes_ja_revertidas:
+                    print(f"[EXCLUSAO] Movimentação {movimentacao.id} já revertida na conciliação, pulando")
+                    continue
+
                 print(f"[EXCLUSAO] Revertendo movimentação de liquidação {movimentacao.id} - tipo {movimentacao.tipo_movimentacao} - valor {movimentacao.valor_movimentacao_100}")
                 
                 if movimentacao.conta_bancaria_id:
