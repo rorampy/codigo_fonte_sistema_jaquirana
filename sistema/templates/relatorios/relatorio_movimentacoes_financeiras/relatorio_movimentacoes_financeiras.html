@@ -2,10 +2,6 @@
 <div class="page-wrapper">
   <div class="page body">
     <div class="container">
-      <div class="watermark">
-        <img src="{{logo_path}}" alt="Jaquirana Extração Watermark" />
-      </div>
-
       <div class="content">
         <div class="header no-break">
           <img src="{{logo_path}}" alt="Logo Jaquirana Extração" />
@@ -21,45 +17,120 @@
           Financeiras</div>
 
         <!-- Filtros aplicados se existirem -->
-        {% if conta_label %}
+        {% if conta_label or data_inicio or data_fim %}
         <div class="dados-registro no-break">
           <div class="filtros-title">Filtros Aplicados</div>
           <div class="row">
             <div class="col-6 mb-2">
               <p>
-                <strong>Conta Bancária Selecionada:</strong>
+                <strong>Conta Bancária:</strong>
                 {{ conta_label }}
               </p>
             </div>
+            {% if data_inicio or data_fim %}
+            <div class="col-6 mb-2">
+              <p>
+                <strong>Período:</strong>
+                {% if data_inicio and data_fim %}
+                  {{ data_inicio.strftime('%d/%m/%Y') }} até {{ data_fim.strftime('%d/%m/%Y') }}
+                {% elif data_inicio %}
+                  A partir de {{ data_inicio.strftime('%d/%m/%Y') }}
+                {% elif data_fim %}
+                  Até {{ data_fim.strftime('%d/%m/%Y') }}
+                {% endif %}
+              </p>
+            </div>
+            {% endif %}
           </div>
         </div>
         {% endif %}
 
         <!-- Resumo Financeiro -->
-        <div class="section-title no-break">Resumo Financeiro</div>
-        <div class="card-section no-break">
-          <div class="card">
-            <div class="card-title">Saldo Atual</div>
-            <div
-              style="font-size: 18px; font-weight: bold; color: #1e5631;">
-              {{saldo_disponivel | formatar_float_para_brl}}
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Total Recebido</div>
-            <div
-              style="font-size: 18px; font-weight: bold; color: #2b8a3e;">
-              {{total_recebido | formatar_float_para_brl}}
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Total Pago</div>
-            <div
-              style="font-size: 18px; font-weight: bold; color: #c92a2a;">
-              {{valor_total_pago | formatar_float_para_brl}}
-            </div>
-          </div>
-        </div>
+        <!-- <div class="section-title no-break">Resumo Financeiro</div>
+        <table class="resumo-table no-break" style="margin-bottom: 20px;">
+          <tr>
+            <td style="width: 33%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
+              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Saldo Atual</div>
+              <div style="font-size: 18px; font-weight: bold; color: #1e5631;">
+                {{saldo_disponivel | formatar_float_para_brl}}
+              </div>
+            </td>
+            <td style="width: 5%;"></td>
+            <td style="width: 33%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
+              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Total Recebido</div>
+              <div style="font-size: 18px; font-weight: bold; color: #2b8a3e;">
+                {{total_recebido | formatar_float_para_brl}}
+              </div>
+            </td>
+            <td style="width: 5%;"></td>
+            <td style="width: 33%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
+              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Total Pago</div>
+              <div style="font-size: 18px; font-weight: bold; color: #c92a2a;">
+                {{valor_total_pago | formatar_float_para_brl}}
+              </div>
+            </td>
+          </tr>
+        </table> -->
+
+        
+        <!-- Totalizadores do Período -->
+        {% if totalizadores %}
+        <div class="section-title no-break">Totalizadores do Período</div>
+        <table class="resumo-table no-break" style="margin-bottom: 20px;">
+          <tr>
+            <td style="width: 24%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
+              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Quantidade</div>
+              <div style="font-size: 18px; font-weight: bold; color: #333;">
+                {{ totalizadores.qtd_movimentacoes }} movimentações
+              </div>
+            </td>
+            <td style="width: 2%;"></td>
+            <td style="width: 24%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
+              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Total Entradas</div>
+              <div style="font-size: 18px; font-weight: bold; color: #2b8a3e;">
+                + {{ totalizadores.total_entradas | formatar_float_para_brl }}
+              </div>
+            </td>
+            <td style="width: 2%;"></td>
+            <td style="width: 24%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
+              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Total Saídas</div>
+              <div style="font-size: 18px; font-weight: bold; color: #c92a2a;">
+                - {{ totalizadores.total_saidas | formatar_float_para_brl }}
+              </div>
+            </td>
+            <td style="width: 2%;"></td>
+            <td style="width: 24%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
+              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Saldo do Período</div>
+              <div style="font-size: 18px; font-weight: bold; color: {% if totalizadores.saldo_periodo >= 0 %}#2b8a3e{% else %}#c92a2a{% endif %};">
+                {{ totalizadores.saldo_periodo | formatar_float_para_brl }}
+              </div>
+            </td>
+          </tr>
+        </table>
+        {% if totalizadores.total_estornos > 0 or totalizadores.total_cancelamentos > 0 %}
+        <table class="resumo-table no-break" style="margin-bottom: 20px;">
+          <tr>
+            {% if totalizadores.total_cancelamentos > 0 %}
+            <td style="width: 48%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
+              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Total Cancelamentos</div>
+              <div style="font-size: 18px; font-weight: bold; color: #f76707;">
+                × {{ totalizadores.total_cancelamentos | formatar_float_para_brl }}
+              </div>
+            </td>
+            <td style="width: 4%;"></td>
+            {% endif %}
+            {% if totalizadores.total_estornos > 0 %}
+            <td style="width: 48%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
+              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Total Estornos</div>
+              <div style="font-size: 18px; font-weight: bold; color: #1971c2;">
+                ↺ {{ totalizadores.total_estornos | formatar_float_para_brl }}
+              </div>
+            </td>
+            {% endif %}
+          </tr>
+        </table>
+        {% endif %}
+        {% endif %}
 
         {% if movimentacoes %}
         <!-- Extrato Detalhado -->
@@ -70,6 +141,7 @@
           <thead>
             <tr>
               <th class="text-center">Data</th>
+              <th class="text-center">Conta Bancária</th>
               <th class="text-center">Tipo</th>
               <th class="text-center">Descrição</th>
               <th class="text-center">Valor</th>
@@ -81,6 +153,14 @@
             <tr>
               <td class="text-center">
                 {{ mov.data_movimentacao.strftime('%d/%m/%Y') }}
+              </td>
+
+              <td class="text-center">
+                {% if mov.conta_bancaria %}
+                  {{ mov.conta_bancaria.identificacao }}
+                {% else %}
+                  -
+                {% endif %}
               </td>
 
               <td class="text-center">
@@ -127,8 +207,12 @@
                     {% endif %}
                   {% elif mov.conciliacao_faturamento %}
                     Recebimento: {{ mov.conciliacao_faturamento.codigo_faturamento | truncate(25, True, '...') }}
-                  {% elif mov.agendamento and mov.agendamento.lancamento_avulso %}
-                    Receita avulsa: {{ mov.agendamento.lancamento_avulso.descricao | truncate(25, True, '...') }}
+                  {% elif mov.agendamento and mov.agendamento.situacao_pagamento_id == 9 %}
+                    Liquidação de receita: {{ mov.agendamento.descricao or mov.agendamento.referencia or 'Receita liquidada' }}
+                  {% elif mov.conciliacao_lancamento_avulso %}
+                    Receita avulsa: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(25, True, '...') }}
+                  {% elif mov.observacao_movimentacao %}
+                    {{ mov.observacao_movimentacao | truncate(40, True, '...') }}
                   {% else %}
                     Entrada
                   {% endif %}
@@ -157,22 +241,12 @@
                     {% else %}
                       Pagamento conciliado
                     {% endif %}
+                  {% elif mov.agendamento and mov.agendamento.situacao_pagamento_id == 9 %}
+                    Liquidação de despesa: {{ mov.agendamento.descricao or mov.agendamento.referencia or 'Despesa liquidada' }}
                   {% elif mov.conciliacao_lancamento_avulso %}
                     Despesa avulsa: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(25, True, '...') }}
-                  {% elif mov.credito_extrator %}
-                    Inclusão de crédito: Extrator {{ mov.credito_extrator.extrator.identificacao | truncate(20, True, '...') }}
-                  {% elif mov.credito_fornecedor %}
-                    Inclusão de crédito: Fornecedor {{ mov.credito_fornecedor.fornecedor.identificacao | truncate(20, True, '...') }}
-                  {% elif mov.credito_freteiro %}
-                    Inclusão de crédito: Freteiro {{ mov.credito_freteiro.transportadora.identificacao | truncate(20, True, '...') }}
-                  {% elif mov.fornecedor_pagamento %}
-                    Pagamento de fornecedor: {{ mov.fornecedor_pagamento.fornecedor.identificacao | truncate(20, True, '...') }}
-                  {% elif mov.freteiro_pagamento %}
-                    Pagamento freteiro: {{ mov.freteiro_pagamento.transportadora.identificacao | truncate(20, True, '...') }}
-                  {% elif mov.extrator_pagamento %}
-                    Pagamento extrator: {{ mov.extrator_pagamento.fornecedor.extrator.identificacao | truncate(20, True, '...') }}
-                  {% elif mov.comissionado_pagamento %}
-                    Pagamento comissionado: {{ mov.comissionado_pagamento.comissionado.identificacao | truncate(20, True, '...') }}
+                  {% elif mov.observacao_movimentacao %}
+                    {{ mov.observacao_movimentacao | truncate(40, True, '...') }}
                   {% else %}
                     Movimentação genérica
                   {% endif %}
@@ -210,66 +284,7 @@
               </td>
 
               <td class="text-center">
-                {% set valor = 0 %}
-
-                {% if mov.conciliacao_bancaria and mov.importacao_ofx and mov.valor_movimentacao_100 %}
-                {% set valor = mov.valor_movimentacao_100 %}
-                {% elif mov.recebimento %}
-                {% set valor =
-                mov.recebimento.valor_total_recebimento_100 or 0
-                %}
-                {% elif mov.credito_extrator %}
-                {% set valor =
-                mov.credito_extrator.valor_credito_100 or 0 %}
-                {% elif mov.credito_fornecedor %}
-                {% set valor =
-                mov.credito_fornecedor.valor_credito_100 or 0 %}
-                {% elif mov.credito_freteiro %}
-                {% set valor =
-                mov.credito_freteiro.valor_credito_100 or 0 %}
-                {% elif mov.fornecedor_pagamento %}
-                {% if mov.movimentacao_extra %}
-                {% set valor = mov.valor_movimentacao_100
-                or 0 %}
-                {% else %}
-                {% set valor =
-                mov.fornecedor_pagamento.valor_total_a_pagar_100
-                or 0 %}
-                {% endif %}
-                {% elif mov.freteiro_pagamento %}
-                {% if mov.movimentacao_extra %}
-                {% set valor = mov.valor_movimentacao_100
-                or 0 %}
-                {% else %}
-                {% set valor =
-                mov.freteiro_pagamento.valor_total_a_pagar_100
-                or 0 %}
-                {% endif %}
-                {% elif mov.extrator_pagamento %}
-                {% if mov.movimentacao_extra %}
-                {% set valor = mov.valor_movimentacao_100
-                or 0 %}
-                {% else %}
-                {% set valor =
-                mov.extrator_pagamento.valor_total_a_pagar_100
-                or 0 %}
-                {% endif %}
-                {% elif mov.comissionado_pagamento %}
-                {% if mov.movimentacao_extra %}
-                {% set valor = mov.valor_movimentacao_100
-                or 0 %}
-                {% else %}
-                {% set valor =
-                mov.comissionado_pagamento.valor_total_a_pagar_100
-                or 0 %}
-                {% endif %}
-                {% elif mov.conciliacao_lancamento_avulso %}
-                {% set valor =
-                mov.conciliacao_lancamento_avulso.valor_movimentacao_100
-                or 0 %}
-                {% else %}
-                {% set valor = 0 %}
-                {% endif %}
+                {% set valor = mov.valor_movimentacao_100 or 0 %}
 
                 {% if mov.tipo_movimentacao == 1 %}
                 <span class="badge bg-green-lt p-2">+ {{ valor |
@@ -307,14 +322,11 @@
             {% endfor %}
           </tbody>
         </table>
-
         {% else %}
         <!-- Estado vazio -->
         <div style="text-align: center; padding: 50px 0;">
-          <h3 style="color: #666;">Nenhuma movimentação
-            encontrada</h3>
-          <p style="color: #999;">Não há movimentações financeiras
-            disponíveis para os filtros selecionados.</p>
+          <h3 style="color: #666;">Nenhuma movimentação encontrada</h3>
+          <p style="color: #999;">Não há movimentações financeiras disponíveis para os filtros selecionados.</p>
         </div>
         {% endif %}
 
@@ -426,6 +438,19 @@
     border-collapse: collapse;
     margin-bottom: 20px;
     page-break-inside: auto;
+  }
+
+  table.resumo-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  table.resumo-table td {
+    border: none;
+  }
+
+  table.resumo-table tr {
+    background-color: transparent !important;
   }
   
   tr {

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from sistema import app, requires_roles, obter_url_absoluta_de_imagem
 from flask import render_template, request
 from flask_login import login_required
@@ -13,6 +13,42 @@ from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
 from sistema._utilitarios import *
 
 
+def _calcular_valor_movimentacao(mov):
+    """Calcula o valor de uma movimentação usando valor_movimentacao_100.
+    Alinhado com obter_valor_total_recebidos/obter_valor_total_saidas que fazem SUM(valor_movimentacao_100).
+    """
+    return mov.valor_movimentacao_100 or 0
+
+
+def _calcular_totalizadores(movimentacoes):
+    """Calcula totalizadores das movimentações."""
+    total_entradas = 0
+    total_saidas = 0
+    total_cancelamentos = 0
+    total_estornos = 0
+    qtd_movimentacoes = len(movimentacoes)
+
+    for mov in movimentacoes:
+        valor = _calcular_valor_movimentacao(mov)
+        if mov.tipo_movimentacao == 1:
+            total_entradas += valor
+        elif mov.tipo_movimentacao == 2:
+            total_saidas += valor
+        elif mov.tipo_movimentacao == 3:
+            total_cancelamentos += valor
+        elif mov.tipo_movimentacao in [4, 5]:
+            total_estornos += valor
+
+    return {
+        'total_entradas': total_entradas,
+        'total_saidas': total_saidas,
+        'total_cancelamentos': total_cancelamentos,
+        'total_estornos': total_estornos,
+        'saldo_periodo': total_entradas - total_saidas,
+        'qtd_movimentacoes': qtd_movimentacoes
+    }
+
+
 @app.route("/financeiro/movimentacoes-financeiras/exportar", methods=["GET"])
 @login_required
 @requires_roles
@@ -22,6 +58,23 @@ def exportar_movimentacaoes_financeiras():
     Usa os mesmos métodos da view principal para garantir consistência dos valores.
     """
     conta_selecionada_id = request.args.get("conta_bancaria_id", type=int)
+    data_inicio_str = request.args.get("data_inicio")
+    data_fim_str = request.args.get("data_fim")
+    
+    # Converter strings para date
+    data_inicio = None
+    data_fim = None
+    if data_inicio_str:
+        try:
+            data_inicio = date.fromisoformat(data_inicio_str)
+        except ValueError:
+            pass
+    if data_fim_str:
+        try:
+            data_fim = date.fromisoformat(data_fim_str)
+        except ValueError:
+            pass
+    
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
     data_hoje = datetime.now().strftime("%d-%m-%Y")
 
@@ -33,8 +86,15 @@ def exportar_movimentacaoes_financeiras():
         if conta_obj:
             conta_label = conta_obj.identificacao
 
-    # Obter movimentações (mesmos métodos da view principal)
-    movimentacoes = MovimentacaoFinanceiraModel.listagem_movimentacoes_financeiras_por_conta(conta_selecionada_id)
+    # Obter movimentações com filtro de período e ordenação decrescente
+    movimentacoes = MovimentacaoFinanceiraModel.listagem_movimentacoes_financeiras_relatorio(
+        conta_selecionada_id,
+        data_inicio,
+        data_fim
+    )
+    
+    # Calcular totalizadores do período
+    totalizadores = _calcular_totalizadores(movimentacoes)
     
     # Calcular saldo disponível
     # Quando "Todas as contas", soma apenas saldos de contas ATIVAS (igual à listagem de contas bancárias)
@@ -72,7 +132,10 @@ def exportar_movimentacaoes_financeiras():
         valor_total_pagar=valor_total_pagar,
         valor_total_pago=valor_total_pago,
         total_a_receber=total_a_receber,
-        total_recebido=total_recebido
+        total_recebido=total_recebido,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+        totalizadores=totalizadores
     )
 
     nome_arquivo_saida = f"movimentacoes_financeiras-{data_hoje}"

@@ -552,7 +552,8 @@
                     <a href="#" data-bs-toggle="modal" data-bs-target="#modal-cargas-receber" class="dropdown-item">
                       Relatório Cargas a Receber
                     </a>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#modal-cargas-gerais-cliente" class="dropdown-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#modal-cargas-gerais-cliente"
+                      class="dropdown-item">
                       Cargas Gerais por Clientes
                     </a>
                   </div>
@@ -749,6 +750,14 @@
         </div>
         <div class="modal-body">
           <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="dataInicio"><strong>Data Início:</strong></label>
+              <input type="date" id="dataInicio" name="data_inicio" class="form-control">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="dataFim"><strong>Data Fim:</strong></label>
+              <input type="date" id="dataFim" name="data_fim" class="form-control">
+            </div>
             <div class="col-md-12 mb-3">
               <!-- Seletor de empresa -->
               <label class="form-label" for="selectConta"><strong>Conta

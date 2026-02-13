@@ -200,6 +200,41 @@ class MovimentacaoFinanceiraModel(BaseModel):
 
         return movimentacoes
     
+    def listagem_movimentacoes_financeiras_relatorio(conta_id=None, data_inicio=None, data_fim=None):
+        """Lista movimentações para relatório com filtro de período e ordenação decrescente.
+        Inclui eager loading de todos os relacionamentos necessários para cálculo de valores.
+        """
+        from sqlalchemy.orm import joinedload
+        
+        query = MovimentacaoFinanceiraModel.query.filter(
+            MovimentacaoFinanceiraModel.ativo == True,
+            MovimentacaoFinanceiraModel.deletado == False
+        )
+
+        # Eager loading dos relacionamentos principais
+        query = query.options(
+            joinedload(MovimentacaoFinanceiraModel.conta_bancaria),
+            joinedload(MovimentacaoFinanceiraModel.importacao_ofx),
+            joinedload(MovimentacaoFinanceiraModel.conciliacao_lancamento_avulso),
+            joinedload(MovimentacaoFinanceiraModel.conciliacao_faturamento),
+            joinedload(MovimentacaoFinanceiraModel.agendamento)
+        )
+
+        if conta_id and conta_id != 0:
+            query = query.filter(MovimentacaoFinanceiraModel.conta_bancaria_id == conta_id)
+
+        if data_inicio:
+            query = query.filter(MovimentacaoFinanceiraModel.data_movimentacao >= data_inicio)
+        if data_fim:
+            query = query.filter(MovimentacaoFinanceiraModel.data_movimentacao <= data_fim)
+
+        movimentacoes = query.order_by(
+            desc(MovimentacaoFinanceiraModel.data_movimentacao),
+            desc(MovimentacaoFinanceiraModel.id)
+        ).all()
+
+        return movimentacoes
+    
     def obter_movimentacoes_por_id(id):
         """
         Retorna uma movimentação financeira específica pelo ID
