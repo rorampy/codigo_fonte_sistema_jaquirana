@@ -46,11 +46,14 @@ class DespesaAvulsaListagem {
      * Inicializa TomSelect para selects
      */
     inicializarTomSelect() {
-        document.querySelectorAll('select.form-select').forEach(function (select) {
-            new TomSelect(select, {
-                create: false,
-                allowEmptyOption: false,
-            });
+        // Inicializar TomSelect apenas em selects FORA de modais
+        document.querySelectorAll('select.form-select:not(.modal-select)').forEach(function (select) {
+            if (!select.closest('.modal')) {
+                new TomSelect(select, {
+                    create: false,
+                    allowEmptyOption: false,
+                });
+            }
         });
     }
 
@@ -391,6 +394,21 @@ class DespesaAvulsaListagem {
         if (novoCardFooter && cardFooterAtual) {
             cardFooterAtual.innerHTML = novoCardFooter.innerHTML;
         }
+
+        // Substituir containers de modais para que os botões apontem para modais válidos
+        const idsModais = [
+            'container-modais-faturamento',
+            'container-modais-excluir',
+            'container-modais-lancamento',
+            'container-modais-liquidacao'
+        ];
+        idsModais.forEach(id => {
+            const novoContainer = documento.getElementById(id);
+            const containerAtual = document.getElementById(id);
+            if (novoContainer && containerAtual) {
+                containerAtual.innerHTML = novoContainer.innerHTML;
+            }
+        });
 
         // Re-bind elementos e eventos (checkboxes etc.)
         this.reconectarAposAtualizacao();

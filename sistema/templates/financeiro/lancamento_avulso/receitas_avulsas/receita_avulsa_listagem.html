@@ -196,7 +196,7 @@
                 <td class="d-flex justify-content-center">
                   <div class="btn-list flex-nowrap">
                     <!-- Botão para visualizar detalhes -->
-                    {% if agendamento.faturamento_id %}
+                    {% if agendamento.faturamento_id and agendamento.faturamento %}
                     <button class="btn btn-icon btn-outline-primary" data-bs-toggle="modal"
                       data-bs-target="#modal-faturamento-{{ agendamento.faturamento_id }}" data-bs-placement="top"
                       title="Visualizar Faturamento">
@@ -208,7 +208,7 @@
                         <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
                       </svg>
                     </button>
-                    {% elif agendamento.lancamento_avulso_id %}
+                    {% elif agendamento.lancamento_avulso_id and agendamento.lancamento_avulso %}
                     <button class="btn btn-icon btn-outline-primary" data-bs-toggle="modal"
                       data-bs-target="#modal-lancamento-{{ agendamento.lancamento_avulso_id }}" data-bs-placement="top"
                       title="Visualizar Lançamento Avulso">
@@ -390,6 +390,7 @@
     </div>
   </div>
 
+  <div id="container-modais-faturamento">
   <!-- Modais para Faturamentos -->
   {% for agendamento in agendamentos %}
   {% if agendamento.faturamento_id and agendamento.faturamento %}
@@ -642,7 +643,9 @@
   </div>
   {% endif %}
   {% endfor %}
+  </div>
 
+  <div id="container-modais-lancamento">
   <!-- Modais para Lançamentos Avulsos -->
   {% for agendamento in agendamentos %}
   {% if agendamento.lancamento_avulso_id and agendamento.lancamento_avulso %}
@@ -834,9 +837,11 @@
   </div>
   {% endif %}
   {% endfor %}
+  </div>
 
+  <div id="container-modais-excluir">
     {% for agendamento in agendamentos %}
-  <div class="modal modal-blur fade" id="modal-excluir-{{ agendamento.id }}" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+  <div class="modal modal-blur fade" id="modal-excluir-{{ agendamento.id }}" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-status bg-danger"></div>
@@ -874,7 +879,9 @@
     </div>
   </div>
   {% endfor %}
+  </div>
 
+  <div id="container-modais-liquidacao">
   <!-- Modais para Liquidação -->
   {% for agendamento in agendamentos %}
   <div class="modal modal-blur fade" id="modal-liquidacao-{{ agendamento.id }}" tabindex="-1" role="dialog"
@@ -963,7 +970,7 @@
               <div class="row g-4">
                 <div class="col-md-12 mb-3">
                   <label class="form-label">Selecionar Conta Bancária</label>
-                  <select class="form-select" name="conta_bancaria_id" id="selectConta">
+                  <select class="form-select modal-select" name="conta_bancaria_id" id="selectConta-{{ agendamento.id }}">
                     <option value="">Todas as contas</option>
                     {% for conta in contas_bancarias %}
                     <option value="{{ conta.id }}" {% if conta_selecionada_id==conta.id %}selected{% endif %}>
@@ -1002,6 +1009,7 @@
     </div>
   </div>
   {% endfor %}
+  </div>
 
   {% include 'estrutura/footer.html' %}
 
