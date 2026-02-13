@@ -90,6 +90,10 @@
         {% set situacao_selecionada = situacoes | selectattr('id', 'equalto', dados_corretos.get('situacaoId') | int) | first %}
         {% set _ = filtros_ativos.append({'param': 'situacaoId', 'label': 'Situação', 'valor': situacao_selecionada.situacao if situacao_selecionada else dados_corretos.get('situacaoId')}) %}
       {% endif %}
+      {% if dados_corretos.get('contaBancariaId') %}
+        {% set conta_selecionada = contas_bancarias | selectattr('id', 'equalto', dados_corretos.get('contaBancariaId') | int) | first %}
+        {% set _ = filtros_ativos.append({'param': 'contaBancariaId', 'label': 'Banco', 'valor': (conta_selecionada.identificacao ~ ' - ' ~ conta_selecionada.nome_banco) if conta_selecionada else dados_corretos.get('contaBancariaId')}) %}
+      {% endif %}
 
       {% if filtros_ativos %}
       <div class="card mb-3 border-0 shadow-sm" style="background: linear-gradient(135deg, #f8fafc 0%, #e8f4f8 100%);">

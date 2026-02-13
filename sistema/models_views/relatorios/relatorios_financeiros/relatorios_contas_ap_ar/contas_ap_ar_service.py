@@ -214,6 +214,10 @@ class ContasAPARService:
                     )
                 )
 
+        # Filtro por conta bancária (banco de destino do pagamento/recebimento)
+        if filtros.get('conta_bancaria_id'):
+            query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
+
         return query
 
     @staticmethod
@@ -460,6 +464,10 @@ class ContasAPARService:
                     elif hasattr(Model, 'comissionado_id'):
                         query = query.filter(Model.comissionado_id == int(pessoa_id))
 
+            # Filtro por conta bancária (se a tabela operacional tiver esse campo)
+            if filtros.get('conta_bancaria_id') and hasattr(Model, 'conta_bancaria_id'):
+                query = query.filter(Model.conta_bancaria_id == int(filtros['conta_bancaria_id']))
+
             registros = query.order_by(getattr(Model, campo_data).asc()).all()
 
             resultado = []
@@ -587,6 +595,10 @@ class ContasAPARService:
                     json_lib.dumps({'centro': cc_id})
                 )
             )
+        
+        # Filtro por conta bancária
+        if filtros.get('conta_bancaria_id'):
+            query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
         resultado = []
         hoje = date.today()
@@ -754,6 +766,10 @@ class ContasAPARService:
                     json_lib.dumps({'centro': cc_id})
                 )
             )
+        
+        # Filtro por conta bancária
+        if filtros.get('conta_bancaria_id'):
+            query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
         # Filtro por código de faturamento
         if filtros.get('codigo_faturamento'):
@@ -941,6 +957,10 @@ class ContasAPARService:
                     json_lib.dumps({'centro': cc_id})
                 )
             )
+        
+        # Filtro por conta bancária
+        if filtros.get('conta_bancaria_id'):
+            query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
         # Filtro por código de faturamento
         if filtros.get('codigo_faturamento'):
@@ -1220,6 +1240,10 @@ class ContasAPARService:
                     elif hasattr(Model, 'comissionado_id'):
                         query = query.filter(Model.comissionado_id == int(pessoa_id))
 
+            # Filtro por conta bancária (se a tabela operacional tiver esse campo)
+            if filtros.get('conta_bancaria_id') and hasattr(Model, 'conta_bancaria_id'):
+                query = query.filter(Model.conta_bancaria_id == int(filtros['conta_bancaria_id']))
+
             registros = query.order_by(getattr(Model, campo_data).desc()).all()
 
             resultado = []
@@ -1378,6 +1402,10 @@ class ContasAPARService:
                     json_lib.dumps({'centro': cc_id})
                 )
             )
+        
+        # Filtro por conta bancária
+        if filtros.get('conta_bancaria_id'):
+            query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
         resultado = []
         for ag in query.all():
@@ -1649,6 +1677,10 @@ class ContasAPARService:
                 )
             )
         
+        # Filtro por conta bancária
+        if filtros.get('conta_bancaria_id'):
+            query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
+        
         resultado = []
         for ag in query.all():
             try:
@@ -1819,6 +1851,10 @@ class ContasAPARService:
                     AgendamentoPagamentoModel.descricao.ilike(f'%{desc}%')
                 )
             )
+        
+        # Filtro por conta bancária
+        if filtros.get('conta_bancaria_id'):
+            query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
         resultado = []
         for ag in query.all():
@@ -1991,6 +2027,10 @@ class ContasAPARService:
                     AgendamentoPagamentoModel.descricao.ilike(f'%{desc}%')
                 )
             )
+        
+        # Filtro por conta bancária
+        if filtros.get('conta_bancaria_id'):
+            query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
         resultado = []
         for ag in query.all():

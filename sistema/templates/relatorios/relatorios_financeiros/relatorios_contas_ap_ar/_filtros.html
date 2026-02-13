@@ -7,6 +7,7 @@
     - planos_contas    : lista de PlanoContaModel
     - centros_custo    : lista de CentroCustoModel
     - situacoes        : lista de SituacaoPagamentoModel
+    - contas_bancarias : lista de ContaBancariaModel
     - label_entidade   : "Fornecedor" ou "Cliente"
     - tipo_relatorio   : "emissoes", "baixas" ou "pendentes"
     - direcao          : "ap" ou "ar"
@@ -118,6 +119,19 @@
             </div>
             {% endif %}
 
+            {# --- Conta Bancária (filtro por banco de pagamento/recebimento) --- #}
+            <div class="col-md-6">
+              <label class="form-label">Conta Bancária</label>
+              <select id="filtro-conta-bancaria" name="contaBancariaId" class="form-select">
+                <option value="">Todas</option>
+                {% for cb in contas_bancarias %}
+                <option value="{{ cb.id }}" {% if dados_corretos.get('contaBancariaId') == cb.id|string %}selected{% endif %}>
+                  {{ cb.identificacao }} - {{ cb.nome_banco }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
           </div>
         </div>
 
@@ -153,7 +167,8 @@
       'filtro-pessoa',
       'filtro-plano-contas',
       'filtro-centro-custo',
-      'filtro-situacao'
+      'filtro-situacao',
+      'filtro-conta-bancaria'
     ];
 
     selectIds.forEach(function (id) {

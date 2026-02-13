@@ -22,6 +22,7 @@ from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model im
 from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
 from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
+from sistema.models_views.configuracoes_gerais.conta_bancaria.conta_bancaria_model import ContaBancariaModel
 
 from .contas_ap_ar_service import ContasAPARService
 
@@ -43,6 +44,7 @@ def _extrair_filtros():
         'codigo_faturamento': source.get('codigoFaturamento') or None,
         'nota_fiscal': source.get('notaFiscal') or None,
         'descricao_avulso': source.get('descricaoAvulso') or None,
+        'conta_bancaria_id': source.get('contaBancariaId') or None,
     }
 
 
@@ -56,6 +58,7 @@ def _contexto_base(direcao='ap'):
         'planos_contas': PlanoContaModel.listar_todos_planos(),
         'centros_custo': CentroCustoModel.obter_centro_custos_ativos(),
         'situacoes': SituacaoPagamentoModel.listar_status(),
+        'contas_bancarias': ContaBancariaModel.obter_contas_bancarias_ativas(),
     }
 
 
