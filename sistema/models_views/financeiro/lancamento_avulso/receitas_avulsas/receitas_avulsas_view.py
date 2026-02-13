@@ -246,7 +246,7 @@ def cadastrar_receita_avulsa():
     
     # Inicializar e carregar plano de contas para receitas (tipo 1)
     inicializar_categorias_padrao()
-    estrutura_plano_contas = obter_estrutura_com_folhas([1])  # 1 = Receitas
+    estrutura_plano_contas = obter_estrutura_com_folhas([1, 3])  # 1 = Receitas
 
     try:
         
