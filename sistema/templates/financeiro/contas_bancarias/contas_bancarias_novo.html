@@ -24,7 +24,7 @@
                 {% endif %}
               {% endfor %}
             {% endif %}
-            <a href="{% if transacoes_nao_conciliadas > 0 and conta_id_para_link %}{{ url_for('conciliacao_ofx', conta_id=conta_id_para_link) }}{% else %}{{ url_for('importar_ofx') }}{% if conta_id_para_link %}?conta_bancaria_id={{ conta_id_para_link }}{% endif %}{% endif %}"
+            <a href="{% if conta_id_para_link %}{{ url_for('conciliacao_ofx', conta_id=conta_id_para_link) }}{% else %}{{ url_for('importar_ofx') }}{% endif %}"
               class="btn btn-madeireira">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -35,7 +35,7 @@
                 <path d="M9 15h6" />
                 <path d="M12.5 17.5l2.5 -2.5l-2.5 -2.5" />
               </svg>
-              {%if transacoes_nao_conciliadas > 0%}Conciliar{%else%}Importar{%endif%} OFX
+              Conciliar OFX
             </a>
           </div>
         </div>
