@@ -139,5 +139,5 @@ def exportar_movimentacaoes_financeiras():
     )
 
     nome_arquivo_saida = f"movimentacoes_financeiras-{data_hoje}"
-    resposta = ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo_saida)
+    resposta = ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo_saida, 'Landscape')
     return resposta
