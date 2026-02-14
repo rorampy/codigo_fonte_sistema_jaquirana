@@ -153,7 +153,7 @@ def coletar_pendentes_frete():
             'Valor Final':       centavos_para_reais(r.valor_total_a_pagar_100),
             'Adiantamento':      centavos_para_reais(adiantamento),
             'Líquido a Pagar':   centavos_para_reais(liquido),
-            'Valor Restante':    Decimal('0.00'),
+            'Valor Restante':    Decimal('0.00') if r.situacao_pagamento_id == SITUACAO_CONCILIADO else centavos_para_reais(liquido),
             'Plano de Contas':   '',
         })
     return linhas
@@ -190,7 +190,7 @@ def coletar_pendentes_fornecedor():
             'Valor Final':       centavos_para_reais(r.valor_total_a_pagar_100),
             'Adiantamento':      centavos_para_reais(adiantamento),
             'Líquido a Pagar':   centavos_para_reais(liquido),
-            'Valor Restante':    Decimal('0.00'),
+            'Valor Restante':    Decimal('0.00') if r.situacao_pagamento_id == SITUACAO_CONCILIADO else centavos_para_reais(liquido),
             'Plano de Contas':   '',
         })
     return linhas
@@ -238,7 +238,7 @@ def coletar_pendentes_extrator():
             'Valor Final':       centavos_para_reais(r.valor_total_a_pagar_100),
             'Adiantamento':      centavos_para_reais(adiantamento),
             'Líquido a Pagar':   centavos_para_reais(liquido),
-            'Valor Restante':    Decimal('0.00'),
+            'Valor Restante':    Decimal('0.00') if r.situacao_pagamento_id == SITUACAO_CONCILIADO else centavos_para_reais(liquido),
             'Plano de Contas':   '',
         })
     return linhas
@@ -277,7 +277,7 @@ def coletar_pendentes_comissionado():
             'Valor Final':       centavos_para_reais(r.valor_total_a_pagar_100),
             'Adiantamento':      centavos_para_reais(adiantamento),
             'Líquido a Pagar':   centavos_para_reais(liquido),
-            'Valor Restante':    Decimal('0.00'),
+            'Valor Restante':    Decimal('0.00') if r.situacao_pagamento_id == SITUACAO_CONCILIADO else centavos_para_reais(liquido),
             'Plano de Contas':   '',
         })
     return linhas
@@ -465,7 +465,7 @@ def coletar_faturados_nao_categorizados():
                     'Valor Final':       centavos_para_reais(valor_faturado),
                     'Adiantamento':      centavos_para_reais(adiantamento),
                     'Líquido a Pagar':   centavos_para_reais(liquido_item),
-                    'Valor Restante':    Decimal('0.00'),
+                    'Valor Restante':    Decimal('0.00') if fat.situacao_pagamento_id == SITUACAO_CONCILIADO else centavos_para_reais(liquido_item),
                     'Plano de Contas':   '',  # Ainda não categorizado
                 })
 
@@ -519,17 +519,12 @@ def coletar_lancamentos_avulsos_despesa_pendentes():
         plano_contas = extrair_plano_contas_json(ag.categorias_json)
         entidade = ag.pessoa_financeiro.identificacao if ag.pessoa_financeiro else ''
 
-        # Determinar valores conforme situação
+        # Determinar valores
         valor_total = ag.valor_total_100 or 0
         valor_conciliado_ag = ag.valor_conciliado_100 or 0
 
-        if ag.situacao_pagamento_id == SITUACAO_CONCILIADO:
-            adiantamento_ag = valor_total
-        elif ag.situacao_pagamento_id == SITUACAO_PARCIALMENTE_CONCILIADO:
-            adiantamento_ag = valor_conciliado_ag
-        else:
-            adiantamento_ag = 0
-
+        # Adiantamento = somente créditos reais (lançamentos avulsos não possuem)
+        adiantamento_ag = 0
         liquido_ag = valor_total
 
         # Valor restante (quanto falta conciliar)
@@ -597,19 +592,14 @@ def coletar_agendamentos():
         situacao_nome = NOME_SITUACOES.get(ag.situacao_pagamento_id, str(ag.situacao_pagamento_id))
         plano_contas = extrair_plano_contas_json(ag.categorias_json)
 
-        # Determinar valores conforme situação
+        # Determinar valores
         valor_total = ag.valor_total_100 or 0
         valor_conciliado_ag = ag.valor_conciliado_100 or 0
 
-        # Adiantamento a nível de agendamento (para registros sem detalhes de carga)
-        if ag.situacao_pagamento_id == SITUACAO_CONCILIADO:
-            adiantamento_ag = valor_total  # Totalmente pago
-        elif ag.situacao_pagamento_id == SITUACAO_PARCIALMENTE_CONCILIADO:
-            adiantamento_ag = valor_conciliado_ag
-        else:
-            adiantamento_ag = 0
+        # Adiantamento = somente créditos reais (não inclui valor já pago/conciliado)
+        adiantamento_ag = 0
 
-        # Líquido = valor total (o que precisa ser pago)
+        # Líquido = valor total menos adiantamentos (neste nível, o próprio valor total)
         liquido_ag = valor_total
 
         # Valor restante (quanto falta conciliar)
