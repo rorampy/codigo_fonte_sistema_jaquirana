@@ -323,6 +323,7 @@ def dre_categoria_detalhes(categoria_id):
             return jsonify({'error': 'Categoria não encontrada'}), 404
         
         # Buscar registros da categoria no período com joins para obter dados completos
+        # Status: 6=Categorizado, 8=Conciliado, 9=Liquidado, 10=Parcialmente Conciliado
         registros = db.session.query(AgendamentoPagamentoModel)\
             .outerjoin(FaturamentoModel, AgendamentoPagamentoModel.faturamento_id == FaturamentoModel.id)\
             .outerjoin(LancamentoAvulsoModel, AgendamentoPagamentoModel.lancamento_avulso_id == LancamentoAvulsoModel.id)\
@@ -330,7 +331,7 @@ def dre_categoria_detalhes(categoria_id):
             .filter(
                 AgendamentoPagamentoModel.ativo == True,
                 AgendamentoPagamentoModel.deletado == False,
-                AgendamentoPagamentoModel.situacao_pagamento_id.in_([6, 8, 9]),
+                AgendamentoPagamentoModel.situacao_pagamento_id.in_([6, 8, 9, 10]),
                 AgendamentoPagamentoModel.data_competencia >= data_inicio,
                 AgendamentoPagamentoModel.data_competencia <= data_fim
             ).all()
@@ -584,6 +585,12 @@ def dre_categoria_detalhes(categoria_id):
                                 if categoria.codigo == '2.01.04' and origem in ['Despesa Avulsa', 'Faturamento de Carga']:
                                     continue
                                 
+                                # Verificar categorização incompleta
+                                valor_total_agd = registro.valor_total_100 or 0
+                                total_categorizado = sum(c.get('valor', 0) for c in (categorias or []) if isinstance(c, dict))
+                                categorizacao_incompleta = abs(valor_total_agd - total_categorizado) > 1
+                                valor_nao_categorizado = (valor_total_agd - total_categorizado) / 100.0 if categorizacao_incompleta else 0
+                                
                                 registros_categoria.append({
                                     'id': registro.id,
                                     'data_competencia': registro.data_competencia.strftime('%d/%m/%Y'),
@@ -601,7 +608,9 @@ def dre_categoria_detalhes(categoria_id):
                                     'data_vencimento': registro.data_vencimento.strftime('%d/%m/%Y') if registro.data_vencimento else None,
                                     'valor_total_original': registro.valor_total_100 / 100 if registro.valor_total_100 else 0,
                                     'faturamento_id': registro.faturamento_id,
-                                    'lancamento_avulso_id': registro.lancamento_avulso_id
+                                    'lancamento_avulso_id': registro.lancamento_avulso_id,
+                                    'categorizacao_incompleta': categorizacao_incompleta,
+                                    'valor_nao_categorizado': valor_nao_categorizado
                                 })
                 except (json.JSONDecodeError, TypeError):
                     continue
@@ -971,6 +980,10 @@ def dre_categoria_detalhes(categoria_id):
                 'total_liquido_fmt': f"{sinal_total} {ValoresMonetarios.converter_float_brl_positivo(abs(total))}",
             }
         
+        # Detectar registros com categorização incompleta
+        registros_incompletos = [r for r in registros_categoria if r.get('categorizacao_incompleta')]
+        total_nao_categorizado = sum(r.get('valor_nao_categorizado', 0) for r in registros_incompletos)
+        
         resposta = {
             'registros': registros_categoria,
             'total': total,
@@ -978,7 +991,13 @@ def dre_categoria_detalhes(categoria_id):
             'quantidade': len(registros_categoria),
             'categoria_id': categoria_id,
             'categoria_codigo': categoria.codigo,
-            'permite_exportacao': categoria.codigo in categorias_automaticas
+            'permite_exportacao': categoria.codigo in categorias_automaticas,
+            'categorizacao_incompleta': {
+                'tem_incompletos': len(registros_incompletos) > 0,
+                'quantidade': len(registros_incompletos),
+                'total_nao_categorizado': total_nao_categorizado,
+                'total_nao_categorizado_fmt': ValoresMonetarios.converter_float_brl_positivo(total_nao_categorizado)
+            } if registros_incompletos else None
         }
         
         if subtotais_nfc:
@@ -1245,6 +1264,72 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                         'tipo_documento': 'Pendente de Emissão',
                         'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{reg.id}"
                     })
+        
+        # Para categorias NÃO automáticas, buscar agendamentos categorizados
+        if categoria.codigo not in mapeamento_a_pagar:
+            # Status: 6=Categorizado, 8=Conciliado, 9=Liquidado, 10=Parcialmente Conciliado
+            agendamentos = AgendamentoPagamentoModel.query.filter(
+                AgendamentoPagamentoModel.ativo == True,
+                AgendamentoPagamentoModel.deletado == False,
+                AgendamentoPagamentoModel.situacao_pagamento_id.in_([6, 8, 9, 10]),
+                AgendamentoPagamentoModel.data_competencia >= data_inicio,
+                AgendamentoPagamentoModel.data_competencia <= data_fim
+            ).all()
+            
+            for agendamento in agendamentos:
+                if not agendamento.categorias_json:
+                    continue
+                
+                try:
+                    categorias_agd = json.loads(agendamento.categorias_json) if isinstance(agendamento.categorias_json, str) else agendamento.categorias_json
+                    
+                    if not isinstance(categorias_agd, list):
+                        continue
+                    
+                    for cat_info in categorias_agd:
+                        if not isinstance(cat_info, dict) or cat_info.get('categoria_id') != categoria_id:
+                            continue
+                        
+                        valor = float(cat_info.get('valor', 0)) / 100.0
+                        
+                        # Determinar origem
+                        origem = 'Sistema'
+                        beneficiario = 'Não informado'
+                        observacoes = agendamento.descricao or ''
+                        codigo_documento = f'AGD-{agendamento.id}'
+                        
+                        if agendamento.lancamento_avulso:
+                            lancamento = agendamento.lancamento_avulso
+                            origem = 'Receita Avulsa' if lancamento.tipo_movimentacao == 1 else 'Despesa Avulsa'
+                            codigo_documento = f'LAN-{lancamento.id}'
+                            observacoes = lancamento.descricao or ''
+                        elif agendamento.faturamento:
+                            faturamento = agendamento.faturamento
+                            codigo_documento = faturamento.codigo_faturamento
+                            if faturamento.tipo_operacao == 1:
+                                origem = 'Faturamento de Carga'
+                            elif faturamento.tipo_operacao == 2:
+                                origem = 'Receita Avulsa' if faturamento.direcao_financeira == 1 else 'Despesa Avulsa'
+                            elif faturamento.tipo_operacao == 3:
+                                origem = 'Controle de Crédito'
+                        
+                        if agendamento.pessoa_financeiro:
+                            beneficiario = agendamento.pessoa_financeiro.identificacao
+                        
+                        registros_categoria.append({
+                            'id': agendamento.id,
+                            'data_competencia': agendamento.data_competencia.strftime('%d/%m/%Y'),
+                            'valor': valor,
+                            'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                            'referencia': cat_info.get('referencia', codigo_documento),
+                            'descricao': observacoes,
+                            'beneficiario': beneficiario,
+                            'origem': origem,
+                            'tipo_documento': 'Agendamento',
+                            'codigo_documento': codigo_documento
+                        })
+                except (json.JSONDecodeError, TypeError):
+                    continue
         
         total = sum(reg['valor'] for reg in registros_categoria)
         return categoria, registros_categoria, total, data_inicio, data_fim, None

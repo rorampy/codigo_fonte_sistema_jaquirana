@@ -195,10 +195,12 @@ class DREModel:
                 }
         
         # 3. Buscar valores dos agendamentos categorizados (exceto categorias automáticas)
+        # Status: 6=Categorizado, 8=Conciliado, 9=Liquidado, 10=Parcialmente Conciliado
+        # DRE é regime de competência: o valor categorizado entra independente do status de pagamento
         agendamentos = AgendamentoPagamentoModel.query.filter(
             AgendamentoPagamentoModel.ativo == True,
             AgendamentoPagamentoModel.deletado == False,
-            AgendamentoPagamentoModel.situacao_pagamento_id.in_([6, 8, 9]),
+            AgendamentoPagamentoModel.situacao_pagamento_id.in_([6, 8, 9, 10]),
             AgendamentoPagamentoModel.data_competencia >= data_inicio,
             AgendamentoPagamentoModel.data_competencia <= data_fim
         ).all()
@@ -213,6 +215,10 @@ class DREModel:
                 for cat_info in categorias or []:
                     cat_id = cat_info.get('categoria_id')
                     valor = cat_info.get('valor', 0)
+                    
+                    # Pular categorias sem ID válido
+                    if not cat_id:
+                        continue
                     
                     # Pular categorias automáticas
                     if cat_id in ids_automaticas:
@@ -490,9 +496,9 @@ class DREModel:
         if codigo.startswith('2.'):
             return 'despesas_operacionais'
         
-        # 1.xx que não está mapeado = receitas outras
+        # 1.xx que não está mapeado = receitas não-operacionais
         if codigo.startswith('1.'):
-            return 'receitas_outras'
+            return 'receitas_nao_operacionais'
         
         return 'outros'
     

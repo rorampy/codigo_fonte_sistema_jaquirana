@@ -199,20 +199,20 @@
                     {% if mov.recebimentos_massa is defined and mov.recebimentos_massa|length > 0 %}
                       Recebimento cliente ({{ mov.recebimentos_massa|length }} transações)
                     {% elif mov.conciliacao_faturamento %}
-                      Recebimento: {{ mov.conciliacao_faturamento.codigo_faturamento | truncate(25, True, '...') }}
+                      Recebimento: {{ mov.conciliacao_faturamento.codigo_faturamento | truncate(100, True, '...') }}
                     {% elif mov.conciliacao_lancamento_avulso %}
-                      Receita extra conciliada: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(25, True, '...') }}
+                      Receita extra conciliada: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(100, True, '...') }}
                     {% else %}
                       Receita extra conciliada
                     {% endif %}
                   {% elif mov.conciliacao_faturamento %}
-                    Recebimento: {{ mov.conciliacao_faturamento.codigo_faturamento | truncate(25, True, '...') }}
+                    Recebimento: {{ mov.conciliacao_faturamento.codigo_faturamento | truncate(100, True, '...') }}
                   {% elif mov.agendamento and mov.agendamento.situacao_pagamento_id == 9 %}
                     Liquidação de receita: {{ mov.agendamento.descricao or mov.agendamento.referencia or 'Receita liquidada' }}
                   {% elif mov.conciliacao_lancamento_avulso %}
-                    Receita avulsa: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(25, True, '...') }}
+                    Receita avulsa: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(100, True, '...') }}
                   {% elif mov.observacao_movimentacao %}
-                    {{ mov.observacao_movimentacao | truncate(40, True, '...') }}
+                    {{ mov.observacao_movimentacao | truncate(100, True, '...') }}
                   {% else %}
                     Entrada
                   {% endif %}
@@ -229,24 +229,24 @@
                     {% elif mov.comissionados_pagos_massa is defined and mov.comissionados_pagos_massa|length > 0 %}
                       Pagamento comissionado ({{ mov.comissionados_pagos_massa|length }} transações)
                     {% elif mov.conciliacao_lancamento_avulso %}
-                      Despesa extra conciliada: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(25, True, '...') }}
+                      Despesa extra conciliada: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(100, True, '...') }}
                     {% elif mov.fornecedor_pagamento %}
-                      Pagamento de fornecedor: {{ mov.fornecedor_pagamento.fornecedor.identificacao | truncate(20, True, '...') }}
+                      Pagamento de fornecedor: {{ mov.fornecedor_pagamento.fornecedor.identificacao | truncate(100, True, '...') }}
                     {% elif mov.freteiro_pagamento %}
-                      Pagamento freteiro: {{ mov.freteiro_pagamento.transportadora.identificacao | truncate(20, True, '...') }}
+                      Pagamento freteiro: {{ mov.freteiro_pagamento.transportadora.identificacao | truncate(100, True, '...') }}
                     {% elif mov.extrator_pagamento %}
-                      Pagamento extrator: {{ mov.extrator_pagamento.fornecedor.extrator.identificacao | truncate(20, True, '...') }}
+                      Pagamento extrator: {{ mov.extrator_pagamento.fornecedor.extrator.identificacao | truncate(100, True, '...') }}
                     {% elif mov.comissionado_pagamento %}
-                      Pagamento comissionado: {{ mov.comissionado_pagamento.comissionado.identificacao | truncate(20, True, '...') }}
+                      Pagamento comissionado: {{ mov.comissionado_pagamento.comissionado.identificacao | truncate(100, True, '...') }}
                     {% else %}
                       Pagamento conciliado
                     {% endif %}
                   {% elif mov.agendamento and mov.agendamento.situacao_pagamento_id == 9 %}
                     Liquidação de despesa: {{ mov.agendamento.descricao or mov.agendamento.referencia or 'Despesa liquidada' }}
                   {% elif mov.conciliacao_lancamento_avulso %}
-                    Despesa avulsa: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(25, True, '...') }}
+                    Despesa avulsa: {{ mov.conciliacao_lancamento_avulso.descricao | truncate(100, True, '...') }}
                   {% elif mov.observacao_movimentacao %}
-                    {{ mov.observacao_movimentacao | truncate(40, True, '...') }}
+                    {{ mov.observacao_movimentacao | truncate(100, True, '...') }}
                   {% else %}
                     Movimentação genérica
                   {% endif %}

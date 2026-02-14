@@ -1181,6 +1181,20 @@
           </div>
         </div>
 
+        <!-- Alerta de Categorização Incompleta -->
+        <div class="alert alert-warning d-flex align-items-start" id="alertaCategorizacaoIncompleta" style="display: none !important;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2 mt-1 flex-shrink-0">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <div>
+            <strong>Categorização Incompleta</strong>
+            <div class="mt-1" id="alertaCategorizacaoTexto"></div>
+          </div>
+        </div>
+
         <div class="table-responsive" id="tabelaDetalhesContainer">
           <table class="table table-striped table-hover">
             <thead class="table-light">
@@ -1307,6 +1321,8 @@
     // Ocultar botões de exportação e subtotais inicialmente
     document.getElementById('botoesExportacao').style.display = 'none';
     document.getElementById('subtotaisNfComplementar').style.display = 'none';
+    document.getElementById('alertaCategorizacaoIncompleta').style.display = 'none';
+    document.getElementById('alertaCategorizacaoIncompleta').style.cssText = 'display: none !important;';
     
     // Mostrar modal
     const modal = new bootstrap.Modal(document.getElementById('modalDetalhesCategoria'));
@@ -1363,6 +1379,18 @@
           document.getElementById('subtotaisNfComplementar').style.display = 'flex';
         }
 
+        // Mostrar alerta de categorização incompleta se houver
+        if (data.categorizacao_incompleta && data.categorizacao_incompleta.tem_incompletos) {
+          const alerta = document.getElementById('alertaCategorizacaoIncompleta');
+          const textoAlerta = document.getElementById('alertaCategorizacaoTexto');
+          const info = data.categorizacao_incompleta;
+          textoAlerta.innerHTML = `<span>${info.quantidade} registro(s) com categorização parcial. ` +
+            `Valor total não categorizado: <strong>R$ ${info.total_nao_categorizado_fmt}</strong>.</span>` +
+            `<br><small class="text-muted">Os lançamentos destacados em amarelo possuem valor total maior que o valor categorizado nesta conta. ` +
+            `Acesse o fluxo financeiro para completar a categorização.</small>`;
+          alerta.style.cssText = 'display: flex !important;';
+        }
+
         // Preencher tabela
         const tbody = document.getElementById('tabelaDetalhes');
         tbody.innerHTML = '';
@@ -1379,6 +1407,13 @@
               row.style.borderLeft = '3px solid #2fb344';
             } else if (registro.tipo_nf_complementar === 'negativa') {
               row.style.borderLeft = '3px solid #d63939';
+            }
+            
+            // Destacar linhas com categorização incompleta
+            if (registro.categorizacao_incompleta) {
+              row.style.backgroundColor = '#fff3cd';
+              row.style.borderLeft = '3px solid #f59f00';
+              row.title = `Categorização incompleta: R$ ${new Intl.NumberFormat('pt-BR', {minimumFractionDigits: 2}).format(registro.valor_nao_categorizado)} não categorizado(s) do total de R$ ${new Intl.NumberFormat('pt-BR', {minimumFractionDigits: 2}).format(registro.valor_total_original)}`;
             }
             
             // Formatar descrição de forma mais clara
@@ -1412,7 +1447,10 @@
                 ${descricaoFormatada}
                 ${registro.referencia ? `<div class="small"><span class="badge bg-secondary-lt">Ref: ${registro.referencia}</span></div>` : ''}
               </td>
-              <td class="text-end fw-medium text-nowrap ${registro.tipo_nf_complementar === 'positiva' ? 'text-success' : (registro.tipo_nf_complementar === 'negativa' ? 'text-danger' : '')}">${registro.valor_formatado}</td>
+              <td class="text-end fw-medium text-nowrap ${registro.tipo_nf_complementar === 'positiva' ? 'text-success' : (registro.tipo_nf_complementar === 'negativa' ? 'text-danger' : '')}">
+                ${registro.valor_formatado}
+                ${registro.categorizacao_incompleta ? `<div class="small text-warning" style="font-size: 0.7rem;">de R$ ${new Intl.NumberFormat('pt-BR', {minimumFractionDigits: 2}).format(registro.valor_total_original)}</div>` : ''}
+              </td>
             `;
             tbody.appendChild(row);
           });
