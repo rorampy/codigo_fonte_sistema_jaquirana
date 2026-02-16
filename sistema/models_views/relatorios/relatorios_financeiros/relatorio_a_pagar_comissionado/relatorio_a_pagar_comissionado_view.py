@@ -285,14 +285,14 @@ def preparar_dados_excel_comissionado(registros):
                     registro_op = item.get("registro_operacional")
                     if registro_op and registro_op.peso_liquido_ticket:
                         toneladas = float(registro_op.peso_liquido_ticket)
-                        peso_ticket = f"{toneladas:.2f} Ton."
+                        peso_ticket = f"{toneladas:.2f}".replace('.', ',') + " Ton."
                         total_produto_toneladas += toneladas
                 except (KeyError, AttributeError):
                     peso_ticket = "Sem peso"
                 
                 preco_comissao = "-"
                 if registro.preco_custo_bitola_100:
-                    preco_comissao = f"R$ {(registro.preco_custo_bitola_100 / 100):,.2f}"
+                    preco_comissao = f"R$ {(registro.preco_custo_bitola_100 / 100):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
                 
                 valor_pagar_num = 0.0
                 if registro.valor_total_a_pagar_100:
@@ -311,7 +311,7 @@ def preparar_dados_excel_comissionado(registros):
                     "Produto/Bitola": produto_bitola,
                     "Peso Ticket": peso_ticket,
                     "Preço Comissão (Ton.)": preco_comissao,
-                    "A pagar comissionado": f"R$ {valor_pagar_num:,.2f}" if valor_pagar_num > 0 else "-",
+                    "A pagar comissionado": f"R$ {valor_pagar_num:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.') if valor_pagar_num > 0 else "-",
                     "Status pagamento": status,
                 })
             
@@ -326,9 +326,9 @@ def preparar_dados_excel_comissionado(registros):
                 "Transportadora": "",
                 "Fornecedor": "",
                 "Produto/Bitola": "",
-                "Peso Ticket": f"{total_produto_toneladas:.2f} Ton.",
+                "Peso Ticket": f"{total_produto_toneladas:.2f} Ton.".replace('.', ','),
                 "Preço Comissão (Ton.)": "",
-                "A pagar comissionado": f"R$ {total_produto_valor:,.2f}",
+                "A pagar comissionado": f"R$ {total_produto_valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
                 "Status pagamento": "",
             })
         
@@ -343,9 +343,9 @@ def preparar_dados_excel_comissionado(registros):
             "Transportadora": "",
             "Fornecedor": "",
             "Produto/Bitola": "",
-            "Peso Ticket": f"{total_comissionado_toneladas:.2f} Ton.",
+            "Peso Ticket": f"{total_comissionado_toneladas:.2f} Ton.".replace('.', ','),
             "Preço Comissão (Ton.)": "",
-            "A pagar comissionado": f"R$ {total_comissionado_valor:,.2f}",
+            "A pagar comissionado": f"R$ {total_comissionado_valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "Status pagamento": "",
         })
         
@@ -370,9 +370,9 @@ def preparar_dados_excel_comissionado(registros):
             "Transportadora": "",
             "Fornecedor": "",
             "Produto/Bitola": "",
-            "Peso Ticket": f"{total_geral_toneladas:.2f} Ton.",
+            "Peso Ticket": f"{total_geral_toneladas:.2f} Ton.".replace('.', ','),
             "Preço Comissão (Ton.)": "",
-            "A pagar comissionado": f"R$ {total_geral_valor:,.2f}",
+            "A pagar comissionado": f"R$ {total_geral_valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "Status pagamento": "",
         })
     

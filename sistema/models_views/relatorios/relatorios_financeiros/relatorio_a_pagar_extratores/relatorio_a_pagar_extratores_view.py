@@ -253,13 +253,13 @@ def preparar_dados_excel_extrator(registros):
                 toneladas = 0.0
                 if registro_op and registro_op.peso_liquido_ticket:
                     toneladas = float(registro_op.peso_liquido_ticket)
-                    peso_ticket = f"{toneladas:.2f} Ton."
+                    peso_ticket = f"{toneladas:.2f}".replace('.', ',') + " Ton."
                     total_produto_toneladas += toneladas
                 
                 # Formatar preço extração
                 preco_extracao = "-"
                 if registro.preco_custo_bitola_100:
-                    preco_extracao = f"R$ {(registro.preco_custo_bitola_100 / 100):,.2f}"
+                    preco_extracao = f"R$ {(registro.preco_custo_bitola_100 / 100):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
                 
                 # Calcular valor
                 valor_pagar_num = 0.0
@@ -277,7 +277,7 @@ def preparar_dados_excel_extrator(registros):
                     "Produto/Bitola": produto_bitola,
                     "Peso Ticket": peso_ticket,
                     "Preço Extração (Ton.)": preco_extracao,
-                    "A pagar extrator": f"R$ {valor_pagar_num:,.2f}" if valor_pagar_num > 0 else "-",
+                    "A pagar extrator": f"R$ {valor_pagar_num:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.') if valor_pagar_num > 0 else "-",
                     "Status pagamento": status,
                 })
             
@@ -290,9 +290,9 @@ def preparar_dados_excel_extrator(registros):
                 dados_excel.append({
                     "Extrator": "", "Data Entrega": "", "Transportadora": "", "Fornecedor": "",
                     "Produto/Bitola": "", 
-                    "Peso Ticket": f"TOTAL PRODUTO: {total_produto_toneladas:.2f} Ton.", 
+                    "Peso Ticket": f"TOTAL PRODUTO: {total_produto_toneladas:.2f} Ton.".replace('.', ','), 
                     "Preço Extração (Ton.)": "",
-                    "A pagar extrator": f"R$ {total_produto_valor:,.2f}", 
+                    "A pagar extrator": f"R$ {total_produto_valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'), 
                     "Status pagamento": "",
                 })
             
@@ -308,9 +308,9 @@ def preparar_dados_excel_extrator(registros):
             dados_excel.append({
                 "Extrator": "", "Data Entrega": "", "Transportadora": "", "Fornecedor": "",
                 "Produto/Bitola": "", 
-                "Peso Ticket": f"TOTAL EXTRATOR: {total_extrator_toneladas:.2f} Ton.", 
+                "Peso Ticket": f"TOTAL EXTRATOR: {total_extrator_toneladas:.2f} Ton.".replace('.', ','), 
                 "Preço Extração (Ton.)": "",
-                "A pagar extrator": f"R$ {total_extrator_valor:,.2f}", 
+                "A pagar extrator": f"R$ {total_extrator_valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'), 
                 "Status pagamento": "",
             })
         
@@ -322,9 +322,9 @@ def preparar_dados_excel_extrator(registros):
         dados_excel.append({
             "Extrator": "", "Data Entrega": "", "Transportadora": "", "Fornecedor": "",
             "Produto/Bitola": "", 
-            "Peso Ticket": f"TOTAL GERAL: {total_geral_toneladas:.2f} Ton.", 
+            "Peso Ticket": f"TOTAL GERAL: {total_geral_toneladas:.2f} Ton.".replace('.', ','), 
             "Preço Extração (Ton.)": "",
-            "A pagar extrator": f"R$ {total_geral_valor:,.2f}", 
+            "A pagar extrator": f"R$ {total_geral_valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'), 
             "Status pagamento": "",
         })
 

@@ -320,10 +320,72 @@ class FaturamentoModel(BaseModel):
         Returns:
             list: Lista de objetos FaturamentoModel que atendem aos critérios de filtro.
         """
+        # Caso especial: Não Categorizado (situacao_id = 7) com filtro de beneficiário
+        # Nesse caso, não há AgendamentoPagamentoModel, então devemos buscar nos detalhes do faturamento
+        if beneficiario and situacao_id == 7:
+            from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
+            
+            # Buscar a pessoa e seus vínculos
+            pessoa = PessoaFinanceiroModel.obter_pessoa_por_id(beneficiario)
+            if not pessoa or not pessoa.vinculos_operacionais:
+                # Se não tem vínculos, retornar vazio
+                return []
+            
+            # Extrair IDs dos vínculos operacionais
+            vinculos = pessoa.vinculos_operacionais
+            ids_vinculados = {
+                'fornecedor': vinculos.get('fornecedor', []) if vinculos else [],
+                'transportadora': vinculos.get('transportadora', []) if vinculos else [],
+                'extrator': vinculos.get('extrator', []) if vinculos else [],
+                'comissionado': vinculos.get('comissionado', []) if vinculos else []
+            }
+            
+            # Buscar todos os faturamentos não categorizados
+            faturamentos = FaturamentoModel.query.filter(
+                FaturamentoModel.ativo == True,
+                FaturamentoModel.deletado == False,
+                FaturamentoModel.tipo_operacao == 1,
+                FaturamentoModel.direcao_financeira == 2,
+                FaturamentoModel.situacao_pagamento_id == 7
+            ).order_by(desc(FaturamentoModel.data_cadastro)).all()
+            
+            # Filtrar em Python os que contêm os IDs vinculados nos detalhes
+            faturamentos_filtrados = []
+            for fat in faturamentos:
+                detalhes = fat.obter_detalhes()
+                
+                # Verificar se algum fornecedor está vinculado
+                for fornecedor in detalhes.get('fornecedores', []):
+                    if fornecedor.get('fornecedor_id') in ids_vinculados['fornecedor']:
+                        faturamentos_filtrados.append(fat)
+                        break
+                else:
+                    # Verificar transportadoras
+                    for transportadora in detalhes.get('transportadoras', []):
+                        if transportadora.get('transportadora_id') in ids_vinculados['transportadora']:
+                            faturamentos_filtrados.append(fat)
+                            break
+                    else:
+                        # Verificar extratores
+                        for extrator in detalhes.get('extratores', []):
+                            if extrator.get('extrator_id') in ids_vinculados['extrator']:
+                                faturamentos_filtrados.append(fat)
+                                break
+                        else:
+                            # Verificar comissionados
+                            for comissionado in detalhes.get('comissionados', []):
+                                if comissionado.get('comissionado_id') in ids_vinculados['comissionado']:
+                                    faturamentos_filtrados.append(fat)
+                                    break
+            
+            return faturamentos_filtrados
+        
+        # Lógica normal para outros casos
         query = FaturamentoModel.query
 
         if beneficiario:
-            query = query.join(AgendamentoPagamentoModel).filter(
+            # Usar outerjoin para incluir faturamentos sem categorização quando não há filtro específico
+            query = query.outerjoin(AgendamentoPagamentoModel).filter(
                 AgendamentoPagamentoModel.pessoa_financeiro_id == beneficiario
             )
 
