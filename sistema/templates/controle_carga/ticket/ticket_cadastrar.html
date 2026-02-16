@@ -178,6 +178,15 @@
                           {% endif %}
                         </div>
                       </div>
+
+                      <!-- Extrator vinculado ao fornecedor (carregado via AJAX) -->
+                      <div class="col-12" id="grupo-extrator-ticket" style="display: none;">
+                        <label class="form-label">Extrator (quem fez o corte)</label>
+                        <select name="extratorTicket" id="extratorTicket" class="form-select">
+                          <option value="" selected>Selecione o extrator...</option>
+                        </select>
+                        <small class="text-muted">Selecione o extrator responsável pelo corte desta carga.</small>
+                      </div>
                     </div>
                   </div>
 
@@ -734,14 +743,50 @@
   document.addEventListener('DOMContentLoaded', function () {
     const fornecedorSelect = document.querySelector('#fornecedorIdentificacao');
     if (fornecedorSelect) {
-      new TomSelect(fornecedorSelect, {
+      const tomSelectFornecedor = new TomSelect(fornecedorSelect, {
         create: false,
         allowEmptyOption: false,
         sortField: {
           field: "text",
           direction: "asc"
+        },
+        onChange: function(value) {
+          carregarExtratoresFornecedor(value);
         }
       });
+    }
+
+    // Carregar extratores vinculados ao fornecedor selecionado via AJAX
+    function carregarExtratoresFornecedor(fornecedorId) {
+      const grupoExtrator = document.getElementById('grupo-extrator-ticket');
+      const selectExtrator = document.getElementById('extratorTicket');
+
+      if (!fornecedorId || fornecedorId === '' || fornecedorId === '0') {
+        grupoExtrator.style.display = 'none';
+        selectExtrator.innerHTML = '<option value="" selected>Selecione o extrator...</option>';
+        return;
+      }
+
+      fetch('/api/extratores-fornecedor/' + fornecedorId)
+        .then(response => response.json())
+        .then(data => {
+          selectExtrator.innerHTML = '<option value="" selected>Selecione o extrator...</option>';
+          if (data.success && data.extratores.length > 0) {
+            data.extratores.forEach(function(ext) {
+              const option = document.createElement('option');
+              option.value = ext.id;
+              option.textContent = ext.identificacao;
+              selectExtrator.appendChild(option);
+            });
+            grupoExtrator.style.display = 'block';
+          } else {
+            grupoExtrator.style.display = 'none';
+          }
+        })
+        .catch(error => {
+          console.error('Erro ao carregar extratores:', error);
+          grupoExtrator.style.display = 'none';
+        });
     }
 
     // Verifica se há dados extraídos no sessionStorage (vindo da listagem)

@@ -30,6 +30,15 @@ class ExtratorPagarModel(BaseModel):
         "FornecedorCadastroModel",
         backref=db.backref("fin_extrator_a_pagar_fornecedor", lazy=True),
     )
+    
+    extrator_id = db.Column(
+        db.Integer, db.ForeignKey("ext_extrator.id"), nullable=True
+    )
+    extrator = db.relationship(
+        "ExtratorModel",
+        backref=db.backref("fin_extrator_a_pagar_extrator", lazy=True),
+    )
+    
     bitola_id = db.Column(db.Integer, db.ForeignKey("z_sys_bitola.id"), nullable=False)
     bitola = db.relationship(
         "BitolaModel", backref=db.backref("fin_extrator_a_pagar_bitola", lazy=True)
@@ -98,6 +107,7 @@ class ExtratorPagarModel(BaseModel):
         bitola_id,
         preco_custo_bitola_100,
         valor_total_a_pagar_100,
+        extrator_id=None,
         incompleto=None,
         data_entrega_ticket=None,
         situacao_pagamento_id=None,
@@ -116,6 +126,7 @@ class ExtratorPagarModel(BaseModel):
     ):
         self.solicitacao_id = solicitacao_id
         self.fornecedor_id = fornecedor_id
+        self.extrator_id = extrator_id
         self.bitola_id = bitola_id
         self.data_entrega_ticket = data_entrega_ticket
         self.data_liquidacao = data_liquidacao

@@ -1,0 +1,153 @@
+{% extends 'estrutura/base.html' %}
+{% block conteudo %}
+{% include 'estrutura/header.html' %}
+<div class="page-wrapper">
+  <!-- Page header -->
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">
+            Fornecedor
+          </div>
+          <h2 class="page-title">
+            Extratores Vinculados
+          </h2>
+        </div>
+        <div class="col-12 col-md-auto ms-auto d-print-none">
+          <div class="d-flex gap-2">
+            <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-filtro">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+              </svg>
+              Filtrar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+    <div class="container-xl">
+
+      {% include 'estrutura/mensagens_flash.html' %}
+
+      <div class="col-12">
+        <div class="card">
+
+          <!-- Tabela -->
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th style="text-align: center;">Fornecedor</th>
+                  <th style="text-align: center;">Documento</th>
+                  <th style="text-align: center;">Extratores Vinculados</th>
+                  <th style="text-align: center;">Qtd.</th>
+                  <th class="w-1" style="text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in dados_fornecedores %}
+                <tr>
+                  <td class="text-secondary" style="text-align: center;">
+                    {{ item.fornecedor.identificacao[:50] }}
+                    {% if item.fornecedor.identificacao | length > 50 %}...{% endif %}
+                  </td>
+                  <td class="text-secondary {% if item.fornecedor.fatura_via_cpf %}cpfMask{% else %}cnpjMask{% endif %}"
+                    style="text-align: center;">
+                    {{ item.fornecedor.numero_documento }}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    {% if item.extratores %}
+                      {% for nome in item.extratores %}
+                        <span class="badge bg-blue-lt me-1 mb-1">{{ nome }}</span>
+                      {% endfor %}
+                    {% else %}
+                      <span class="text-muted">Nenhum extrator vinculado</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary" style="text-align: center;">
+                    <span class="badge {% if item.qtd_extratores > 0 %}bg-green-lt{% else %}bg-yellow-lt{% endif %}">
+                      {{ item.qtd_extratores }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="btn-list flex-nowrap">
+                      <a href="{{ url_for('gerenciar_fornecedor_extratores', fornecedor_id=item.fornecedor.id) }}"
+                        class="btn btn-icon btn-outline-primary"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Gerenciar extratores">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-settings">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.066 2.573c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.573 1.066c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.066 -2.573c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                          <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                        </svg>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+                {% if not dados_fornecedores %}
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-4">
+                    Nenhum fornecedor com custo de extração encontrado.
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Filtro -->
+  <div class="modal modal-blur fade" id="modal-filtro" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
+      <form action="{{ url_for('listar_fornecedor_extratores') }}" method="GET">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Filtrar Fornecedores</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label class="form-label">Identificação do Fornecedor</label>
+                <input type="text" name="identificacao" class="form-control"
+                  value="{{ dados_corretos.get('identificacao', '') }}" placeholder="Nome ou razão social">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a href="{{ url_for('listar_fornecedor_extratores') }}" class="btn btn-link link-secondary btn-3">
+              Limpar Filtros
+            </a>
+            <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-2">
+                <path d="M12 5l0 14" />
+                <path d="M5 12l14 0" />
+              </svg>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'estrutura/footer.html' %}
+</div>
+
+{% endblock conteudo %}

@@ -16,6 +16,7 @@ from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema.models_views.controle_carga.nf_complementar.nf_entrada_model import NfEntradaModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
+from sistema.models_views.gerenciar.fornecedor.fornecedor_extrator_model import FornecedorExtratorModel
 from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
 from sistema._utilitarios import *
 import os
@@ -124,6 +125,10 @@ def cadastrar_ticket(id):
             )
             db.session.add(fornecedorPagamento)
 
+            # Capturar extrator selecionado no formulário (se houver)
+            extrator_ticket_id = request.form.get("extratorTicket", "")
+            extrator_id_para_pagar = int(extrator_ticket_id) if extrator_ticket_id and extrator_ticket_id.strip() else None
+
             extratorPagamento = ExtratorPagarModel(
                 solicitacao_id=solicitacao.id,
                 fornecedor_id=fornecedor_id,
@@ -133,6 +138,7 @@ def cadastrar_ticket(id):
                 valor_total_a_pagar_100=valorTotalExtrator,
                 data_entrega_ticket=dataEntregaTicket,
                 incompleto=origemIncompleta,
+                extrator_id=extrator_id_para_pagar,
             )
             db.session.add(extratorPagamento)
 
@@ -535,6 +541,10 @@ def editar_ticket(id):
                     )
                     db.session.add(fornecedorPagamento)
 
+                # Capturar extrator selecionado no formulário (se houver)
+                extrator_ticket_id_edicao = request.form.get("extratorTicket", "")
+                extrator_id_para_pagar_edicao = int(extrator_ticket_id_edicao) if extrator_ticket_id_edicao and extrator_ticket_id_edicao.strip() else None
+
                 extrator_existente = ExtratorPagarModel.query.filter_by(
                     solicitacao_id=registro.solicitacao.id
                 ).first()
@@ -551,6 +561,7 @@ def editar_ticket(id):
                     extrator_existente.incompleto = origemIncompleta
                     extrator_existente.data_entrega_ticket = dataEntregaTicket
                     extrator_existente.situacao_pagamento_id = 2
+                    extrator_existente.extrator_id = extrator_id_para_pagar_edicao
                 else:
                     extratorPagamento = ExtratorPagarModel(
                         solicitacao_id=registro.solicitacao.id,
@@ -561,6 +572,7 @@ def editar_ticket(id):
                         valor_total_a_pagar_100=int(valorTotalExtrator),
                         data_entrega_ticket=dataEntregaTicket,
                         incompleto=False,
+                        extrator_id=extrator_id_para_pagar_edicao,
                     )
                     db.session.add(extratorPagamento)
 

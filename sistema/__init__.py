@@ -483,6 +483,8 @@ from sistema.models_views.gerenciar.fornecedor import fornecedor_preco_custo_bit
 from sistema.models_views.gerenciar.fornecedor import fornecedor_preco_custo_extracao_model
 from sistema.models_views.gerenciar.fornecedor import fornecedor_madeira_posta_preco_bitola_model
 from sistema.models_views.gerenciar.fornecedor import fornecedor_conta_bancaria_model
+from sistema.models_views.gerenciar.fornecedor import fornecedor_extrator_model
+from sistema.models_views.gerenciar.fornecedor import fornecedor_extrator_view
 from sistema.models_views.parametros.produto_bitola import produto_bitola_model
 
 from sistema.models_views.gerenciar.motorista import motorista_model
