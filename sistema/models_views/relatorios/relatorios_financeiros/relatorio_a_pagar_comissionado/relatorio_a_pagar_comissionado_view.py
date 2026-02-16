@@ -14,6 +14,69 @@ from sistema._utilitarios import ManipulacaoArquivos
 # FUNÇÕES AUXILIARES
 # ============================================================================
 
+def calcular_totalizadores_comissionado(registros):
+    """
+    Calcula totalizadores por comissionado e geral.
+    
+    Args:
+        registros (list): Lista de registros
+        
+    Returns:
+        dict: {
+            'por_comissionado': {comissionado_id: {toneladas: float, valor_100: int}},
+            'geral': {toneladas: float, valor_100: int},
+            'quantidade_comissionados': int
+        }
+    """
+    totalizadores = {
+        'por_comissionado': {},
+        'geral': {'toneladas': 0.0, 'valor_100': 0},
+        'quantidade_comissionados': 0
+    }
+    
+    if not registros:
+        return totalizadores
+    
+    comissionados_unicos = set()
+    
+    for item in registros:
+        # Identificar comissionado
+        comissionado_obj = item.get('comissionado')
+        comissionado_id = comissionado_obj.identificacao if comissionado_obj else 'Sem comissionado'
+        comissionados_unicos.add(comissionado_id)
+        
+        # Inicializar totalizador do comissionado se não existir
+        if comissionado_id not in totalizadores['por_comissionado']:
+            totalizadores['por_comissionado'][comissionado_id] = {
+                'toneladas': 0.0,
+                'valor_100': 0
+            }
+        
+        # Obter toneladas
+        registro_op = item.get('registro_operacional')
+        toneladas = 0.0
+        if registro_op and registro_op.peso_liquido_ticket:
+            toneladas = float(registro_op.peso_liquido_ticket)
+        
+        # Obter valor
+        registro = item.get('registro')
+        valor_100 = 0
+        if registro and registro.valor_total_a_pagar_100:
+            valor_100 = int(registro.valor_total_a_pagar_100)
+        
+        # Acumular no comissionado
+        totalizadores['por_comissionado'][comissionado_id]['toneladas'] += toneladas
+        totalizadores['por_comissionado'][comissionado_id]['valor_100'] += valor_100
+        
+        # Acumular no geral
+        totalizadores['geral']['toneladas'] += toneladas
+        totalizadores['geral']['valor_100'] += valor_100
+    
+    totalizadores['quantidade_comissionados'] = len(comissionados_unicos)
+    
+    return totalizadores
+
+
 def obter_filtros_comissionado(filtros_source):
     """
     Extrai e processa os filtros do request (form ou args).
@@ -144,7 +207,8 @@ def preparar_dados_excel_comissionado(registros):
             
         registros_por_comissionado[comissionado_id][produto].append(item)
 
-    total_geral = 0
+    total_geral_toneladas = 0.0
+    total_geral_valor = 0.0
     
     for comissionado_id in sorted(registros_por_comissionado.keys()):
         produtos_comissionado = registros_por_comissionado[comissionado_id]
@@ -161,7 +225,8 @@ def preparar_dados_excel_comissionado(registros):
             "Status pagamento": "",
         })
         
-        total_comissionado = 0
+        total_comissionado_toneladas = 0.0
+        total_comissionado_valor = 0.0
         
         for produto in sorted(produtos_comissionado.keys()):
             registros_produto = produtos_comissionado[produto]
@@ -178,7 +243,8 @@ def preparar_dados_excel_comissionado(registros):
                 "Status pagamento": "",
             })
             
-            total_produto = 0
+            total_produto_toneladas = 0.0
+            total_produto_valor = 0.0
             
             for item in registros_produto:
                 registro = item["registro"]
@@ -213,25 +279,25 @@ def preparar_dados_excel_comissionado(registros):
                 
                 produto_bitola = f"{produto_nome} | {bitola_nome}" if produto_nome != "-" or bitola_nome != "-" else "-"
                 
-                peso_ticket = "-"
+                peso_ticket = "Sem peso"
+                toneladas = 0.0
                 try:
                     registro_op = item.get("registro_operacional")
                     if registro_op and registro_op.peso_liquido_ticket:
-                        peso_ticket = f"{registro_op.peso_liquido_ticket}"
-                    else:
-                        peso_ticket = "Sem peso"
+                        toneladas = float(registro_op.peso_liquido_ticket)
+                        peso_ticket = f"{toneladas:.2f} Ton."
+                        total_produto_toneladas += toneladas
                 except (KeyError, AttributeError):
                     peso_ticket = "Sem peso"
                 
                 preco_comissao = "-"
                 if registro.preco_custo_bitola_100:
-                    preco_comissao = f"{(registro.preco_custo_bitola_100 / 100):,.2f}"
+                    preco_comissao = f"R$ {(registro.preco_custo_bitola_100 / 100):,.2f}"
                 
-                valor_pagar_num = 0
+                valor_pagar_num = 0.0
                 if registro.valor_total_a_pagar_100:
                     valor_pagar_num = registro.valor_total_a_pagar_100 / 100
-                
-                total_produto += valor_pagar_num
+                    total_produto_valor += valor_pagar_num
                 
                 status = "Pendente"
                 if registro.situacao:
@@ -245,35 +311,41 @@ def preparar_dados_excel_comissionado(registros):
                     "Produto/Bitola": produto_bitola,
                     "Peso Ticket": peso_ticket,
                     "Preço Comissão (Ton.)": preco_comissao,
-                    "A pagar comissionado": f"{valor_pagar_num:,.2f}" if valor_pagar_num > 0 else "-",
+                    "A pagar comissionado": f"R$ {valor_pagar_num:,.2f}" if valor_pagar_num > 0 else "-",
                     "Status pagamento": status,
                 })
             
-            # Total por produto
+            # Acumular totais do comissionado
+            total_comissionado_toneladas += total_produto_toneladas
+            total_comissionado_valor += total_produto_valor
+            
+            # Total por produto (com toneladas)
             dados_excel.append({
                 "Comissionado": f"    SUBTOTAL {produto}:",
                 "Data Entrega": "",
                 "Transportadora": "",
                 "Fornecedor": "",
                 "Produto/Bitola": "",
-                "Peso Ticket": "",
+                "Peso Ticket": f"{total_produto_toneladas:.2f} Ton.",
                 "Preço Comissão (Ton.)": "",
-                "A pagar comissionado": f"{total_produto:,.2f}",
+                "A pagar comissionado": f"R$ {total_produto_valor:,.2f}",
                 "Status pagamento": "",
             })
-            
-            total_comissionado += total_produto
         
-        # Total por comissionado
+        # Acumular totais gerais
+        total_geral_toneladas += total_comissionado_toneladas
+        total_geral_valor += total_comissionado_valor
+        
+        # Total por comissionado (com toneladas)
         dados_excel.append({
             "Comissionado": f"TOTAL {comissionado_id.upper()}:",
             "Data Entrega": "",
             "Transportadora": "",
             "Fornecedor": "",
             "Produto/Bitola": "",
-            "Peso Ticket": "",
+            "Peso Ticket": f"{total_comissionado_toneladas:.2f} Ton.",
             "Preço Comissão (Ton.)": "",
-            "A pagar comissionado": f"{total_comissionado:,.2f}",
+            "A pagar comissionado": f"R$ {total_comissionado_valor:,.2f}",
             "Status pagamento": "",
         })
         
@@ -289,21 +361,20 @@ def preparar_dados_excel_comissionado(registros):
             "A pagar comissionado": "",
             "Status pagamento": "",
         })
-        
-        total_geral += total_comissionado
     
-    # Total geral
-    dados_excel.append({
-        "Comissionado": "TOTAL GERAL:",
-        "Data Entrega": "",
-        "Transportadora": "",
-        "Fornecedor": "",
-        "Produto/Bitola": "",
-        "Peso Ticket": "",
-        "Preço Comissão (Ton.)": "",
-        "A pagar comissionado": f"{total_geral:,.2f}",
-        "Status pagamento": "",
-    })
+    # Total geral (apenas se houver mais de 1 comissionado)
+    if len(registros_por_comissionado) > 1:
+        dados_excel.append({
+            "Comissionado": "TOTAL GERAL:",
+            "Data Entrega": "",
+            "Transportadora": "",
+            "Fornecedor": "",
+            "Produto/Bitola": "",
+            "Peso Ticket": f"{total_geral_toneladas:.2f} Ton.",
+            "Preço Comissão (Ton.)": "",
+            "A pagar comissionado": f"R$ {total_geral_valor:,.2f}",
+            "Status pagamento": "",
+        })
     
     return dados_excel
 
@@ -328,6 +399,7 @@ def relatorio_a_pagar_comissionados():
     dados_corretos = filtros_source
     
     registros = buscar_registros_comissionado(filtros_source)
+    totalizadores = calcular_totalizadores_comissionado(registros)
 
     return render_template(
         "relatorios/relatorios_financeiros/relatorio_a_pagar_comissionado/relatorio_a_pagar_comissionado.html",
@@ -336,6 +408,7 @@ def relatorio_a_pagar_comissionados():
         produtos=produtos,
         statusPagamentos=statusPagamentos,
         dados_corretos=dados_corretos,
+        totalizadores=totalizadores,
     )
 
 
@@ -354,6 +427,7 @@ def relatorio_a_pagar_comissionados_exportar_pdf():
     dados_corretos = filtros_source
     
     registros = buscar_registros_comissionado(filtros_source)
+    totalizadores = calcular_totalizadores_comissionado(registros)
     
     logo_path = obter_url_absoluta_de_imagem("logo.png")
     html = render_template(
@@ -362,7 +436,8 @@ def relatorio_a_pagar_comissionados_exportar_pdf():
         changelog=changelog,
         dataHoje=dataHoje,
         dados_corretos=dados_corretos,
-        registros=registros
+        registros=registros,
+        totalizadores=totalizadores
     )
 
     nome_arquivo_saida = f"relacao_comissionados_a_pagar_{dataHoje}"

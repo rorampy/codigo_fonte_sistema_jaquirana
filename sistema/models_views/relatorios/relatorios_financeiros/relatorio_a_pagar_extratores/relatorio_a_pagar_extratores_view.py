@@ -14,6 +14,69 @@ from sistema._utilitarios import ManipulacaoArquivos
 # FUNÇÕES AUXILIARES
 # ============================================================================
 
+def calcular_totalizadores_extrator(registros):
+    """
+    Calcula totalizadores por extrator e geral.
+    
+    Args:
+        registros (list): Lista de registros
+        
+    Returns:
+        dict: {
+            'por_extrator': {extrator_id: {toneladas: float, valor_100: int}},
+            'geral': {toneladas: float, valor_100: int},
+            'quantidade_extratores': int
+        }
+    """
+    totalizadores = {
+        'por_extrator': {},
+        'geral': {'toneladas': 0.0, 'valor_100': 0},
+        'quantidade_extratores': 0
+    }
+    
+    if not registros:
+        return totalizadores
+    
+    extratores_unicos = set()
+    
+    for item in registros:
+        # Identificar extrator
+        extrator_obj = item.get('extrator')
+        extrator_id = extrator_obj.identificacao if extrator_obj else 'Sem extrator'
+        extratores_unicos.add(extrator_id)
+        
+        # Inicializar totalizador do extrator se não existir
+        if extrator_id not in totalizadores['por_extrator']:
+            totalizadores['por_extrator'][extrator_id] = {
+                'toneladas': 0.0,
+                'valor_100': 0
+            }
+        
+        # Obter toneladas
+        registro_op = item.get('registro_operacional')
+        toneladas = 0.0
+        if registro_op and registro_op.peso_liquido_ticket:
+            toneladas = float(registro_op.peso_liquido_ticket)
+        
+        # Obter valor
+        registro = item.get('registro')
+        valor_100 = 0
+        if registro and registro.valor_total_a_pagar_100:
+            valor_100 = int(registro.valor_total_a_pagar_100)
+        
+        # Acumular no extrator
+        totalizadores['por_extrator'][extrator_id]['toneladas'] += toneladas
+        totalizadores['por_extrator'][extrator_id]['valor_100'] += valor_100
+        
+        # Acumular no geral
+        totalizadores['geral']['toneladas'] += toneladas
+        totalizadores['geral']['valor_100'] += valor_100
+    
+    totalizadores['quantidade_extratores'] = len(extratores_unicos)
+    
+    return totalizadores
+
+
 def obter_filtros_extrator():
     """
     Extrai os filtros do request (GET ou POST).
@@ -116,6 +179,10 @@ def preparar_dados_excel_extrator(registros):
             
         registros_por_extrator[extrator_id][produto].append(item)
 
+    # Totalizadores gerais
+    total_geral_toneladas = 0.0
+    total_geral_valor = 0.0
+    
     # Gerar linhas do Excel
     for extrator_id in sorted(registros_por_extrator.keys()):
         produtos_extrator = registros_por_extrator[extrator_id]
@@ -128,7 +195,8 @@ def preparar_dados_excel_extrator(registros):
             "A pagar extrator": "", "Status pagamento": "",
         })
         
-        total_extrator = 0
+        total_extrator_toneladas = 0.0
+        total_extrator_valor = 0.0
         
         for produto in sorted(produtos_extrator.keys()):
             registros_produto = produtos_extrator[produto]
@@ -141,7 +209,8 @@ def preparar_dados_excel_extrator(registros):
                 "A pagar extrator": "", "Status pagamento": "",
             })
             
-            total_produto = 0
+            total_produto_toneladas = 0.0
+            total_produto_valor = 0.0
             
             for item in registros_produto:
                 registro = item["registro"]
@@ -181,20 +250,22 @@ def preparar_dados_excel_extrator(registros):
                 
                 # Formatar peso
                 peso_ticket = "Sem peso"
+                toneladas = 0.0
                 if registro_op and registro_op.peso_liquido_ticket:
-                    peso_ticket = f"{registro_op.peso_liquido_ticket}"
+                    toneladas = float(registro_op.peso_liquido_ticket)
+                    peso_ticket = f"{toneladas:.2f} Ton."
+                    total_produto_toneladas += toneladas
                 
                 # Formatar preço extração
                 preco_extracao = "-"
                 if registro.preco_custo_bitola_100:
-                    preco_extracao = f"{(registro.preco_custo_bitola_100 / 100):,.2f}"
+                    preco_extracao = f"R$ {(registro.preco_custo_bitola_100 / 100):,.2f}"
                 
                 # Calcular valor
-                valor_pagar_num = 0
+                valor_pagar_num = 0.0
                 if registro.valor_total_a_pagar_100:
                     valor_pagar_num = registro.valor_total_a_pagar_100 / 100
-                    total_produto += valor_pagar_num
-                    total_extrator += valor_pagar_num
+                    total_produto_valor += valor_pagar_num
                 
                 status = registro.situacao.situacao if registro.situacao else "Pendente"
                 
@@ -210,27 +281,52 @@ def preparar_dados_excel_extrator(registros):
                     "Status pagamento": status,
                 })
             
-            # Total do produto
-            if registros_produto and total_produto > 0:
+            # Acumular totais do extrator
+            total_extrator_toneladas += total_produto_toneladas
+            total_extrator_valor += total_produto_valor
+            
+            # Total do produto (com toneladas)
+            if registros_produto and (total_produto_toneladas > 0 or total_produto_valor > 0):
                 dados_excel.append({
                     "Extrator": "", "Data Entrega": "", "Transportadora": "", "Fornecedor": "",
-                    "Produto/Bitola": "", "Peso Ticket": "", "Preço Extração (Ton.)": "",
-                    "A pagar extrator": f"TOTAL PRODUTO: R$ {total_produto:,.2f}", "Status pagamento": "",
+                    "Produto/Bitola": "", 
+                    "Peso Ticket": f"TOTAL PRODUTO: {total_produto_toneladas:.2f} Ton.", 
+                    "Preço Extração (Ton.)": "",
+                    "A pagar extrator": f"R$ {total_produto_valor:,.2f}", 
+                    "Status pagamento": "",
                 })
             
             # Linha em branco após produto
             dados_excel.append({k: "" for k in ["Extrator", "Data Entrega", "Transportadora", "Fornecedor", "Produto/Bitola", "Peso Ticket", "Preço Extração (Ton.)", "A pagar extrator", "Status pagamento"]})
         
-        # Total do extrator
-        if total_extrator > 0:
+        # Acumular totais gerais
+        total_geral_toneladas += total_extrator_toneladas
+        total_geral_valor += total_extrator_valor
+        
+        # Total do extrator (com toneladas)
+        if total_extrator_toneladas > 0 or total_extrator_valor > 0:
             dados_excel.append({
                 "Extrator": "", "Data Entrega": "", "Transportadora": "", "Fornecedor": "",
-                "Produto/Bitola": "", "Peso Ticket": "", "Preço Extração (Ton.)": "",
-                "A pagar extrator": f"TOTAL EXTRATOR: R$ {total_extrator:,.2f}", "Status pagamento": "",
+                "Produto/Bitola": "", 
+                "Peso Ticket": f"TOTAL EXTRATOR: {total_extrator_toneladas:.2f} Ton.", 
+                "Preço Extração (Ton.)": "",
+                "A pagar extrator": f"R$ {total_extrator_valor:,.2f}", 
+                "Status pagamento": "",
             })
         
         # Linha em branco após extrator
         dados_excel.append({k: "" for k in ["Extrator", "Data Entrega", "Transportadora", "Fornecedor", "Produto/Bitola", "Peso Ticket", "Preço Extração (Ton.)", "A pagar extrator", "Status pagamento"]})
+
+    # Total geral (apenas se houver mais de 1 extrator)
+    if len(registros_por_extrator) > 1 and (total_geral_toneladas > 0 or total_geral_valor > 0):
+        dados_excel.append({
+            "Extrator": "", "Data Entrega": "", "Transportadora": "", "Fornecedor": "",
+            "Produto/Bitola": "", 
+            "Peso Ticket": f"TOTAL GERAL: {total_geral_toneladas:.2f} Ton.", 
+            "Preço Extração (Ton.)": "",
+            "A pagar extrator": f"R$ {total_geral_valor:,.2f}", 
+            "Status pagamento": "",
+        })
 
     return dados_excel
 
@@ -253,6 +349,7 @@ def relatorio_a_pagar_extratores():
     # Obter filtros e dados
     filtros = obter_filtros_extrator()
     registros = buscar_registros_extrator(filtros)
+    totalizadores = calcular_totalizadores_extrator(registros)
     
     return render_template(
         "relatorios/relatorios_financeiros/relatorio_a_pagar_extrator/relatorio_a_pagar_extrator.html",
@@ -261,6 +358,7 @@ def relatorio_a_pagar_extratores():
         produtos=produtos,
         statusPagamentos=statusPagamentos,
         dados_corretos=request.args,
+        totalizadores=totalizadores,
     )
 
 
@@ -277,6 +375,7 @@ def relatorio_a_pagar_extratores_exportar_pdf():
     # Obter filtros e dados
     filtros = obter_filtros_extrator()
     registros = buscar_registros_extrator(filtros)
+    totalizadores = calcular_totalizadores_extrator(registros)
     
     logo_path = obter_url_absoluta_de_imagem("logo.png")
     html = render_template(
@@ -285,7 +384,8 @@ def relatorio_a_pagar_extratores_exportar_pdf():
         changelog=changelog,
         dataHoje=dataHoje,
         dados_corretos=request.form,
-        registros=registros
+        registros=registros,
+        totalizadores=totalizadores
     )
 
     nome_arquivo_saida = f"relacao_extratores_a_pagar_{dataHoje}"

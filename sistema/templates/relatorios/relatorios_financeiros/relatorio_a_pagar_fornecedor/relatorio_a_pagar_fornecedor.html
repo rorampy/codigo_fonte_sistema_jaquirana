@@ -130,6 +130,7 @@
                                 <th class="text-center">Placa/Motorista</th>
                                 <th class="text-center">Transportadora</th>
                                 <th class="text-center">Bitola</th>
+                                <th class="text-center">Preço/Ton</th>
                                 <th class="text-center">Peso Ticket</th>
                                 <th class="text-center">Número NF</th>
                                 <th class="text-center">A pagar fornecedor</th>
@@ -162,8 +163,11 @@
                                   truncate(15, True, '...') if
                                   item.registro.solicitacao.bitola.bitola else
                                   '-' }}</td>
-                                <td class="text-center">{% if
-                                  item.registro_operacional.peso_liquido_ticket
+                                <td class="text-center">{% if                                  item.registro.preco_custo_bitola_100 %}<span class="badge bg-cyan-lt p-2">{{  
+                                    item.registro.preco_custo_bitola_100 |
+                                    formatar_float_para_brl }}</span>{% else
+                                  %}-{% endif %}</td>
+                                <td class="text-center">{% if                                  item.registro_operacional.peso_liquido_ticket
                                   %}<span class="badge bg-primary-lt p-2">{{
                                     item.registro_operacional.peso_liquido_ticket
                                     }} Ton.</span>{% else %}<span class="badge bg-secondary-lt p-2">Sem
@@ -202,11 +206,44 @@
                       </div>
                     </div>
                     {% endfor %}
+                    
+                    <!-- Totalizador do Fornecedor -->
+                    {% if totalizadores and totalizadores.por_fornecedor and origem in totalizadores.por_fornecedor %}
+                    <div class="p-3 bg-light border-top">
+                      <div class="d-flex justify-content-end align-items-center gap-3">
+                        <strong class="text-muted">TOTAL {{ origem|upper }}:</strong>
+                        <span class="badge bg-primary-lt p-2" style="font-size: 14px;">
+                          {{ "%.2f"|format(totalizadores.por_fornecedor[origem].toneladas)|replace('.', ',') }} Ton.
+                        </span>
+                        <span class="badge bg-green-lt p-2" style="font-size: 14px;">
+                          {{ totalizadores.por_fornecedor[origem].valor_100 | formatar_float_para_brl }}
+                        </span>
+                      </div>
+                    </div>
+                    {% endif %}
                   </div>
                 </div>
               </div>
               {% endfor %}
             </div>
+            
+            <!-- Totalizador Geral (somente se houver mais de um fornecedor) -->
+            {% if totalizadores and totalizadores.quantidade_fornecedores > 1 %}
+            <div class="card mt-3">
+              <div class="card-body p-3" style="background-color: #1e3a5f;">
+                <div class="d-flex justify-content-end align-items-center gap-3">
+                  <strong class="text-white">TOTAL GERAL:</strong>
+                  <span class="badge bg-primary-lt p-2" style="font-size: 16px;">
+                    {{ "%.2f"|format(totalizadores.geral.toneladas)|replace('.', ',') }} Ton.
+                  </span>
+                  <span class="badge bg-green-lt p-2" style="font-size: 16px;">
+                    {{ totalizadores.geral.valor_100 | formatar_float_para_brl }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            
             {% else %}
             <div class="area-info-card"
               style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">

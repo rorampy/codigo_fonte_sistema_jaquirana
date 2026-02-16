@@ -97,6 +97,8 @@
                 Entrega</th>
               <th class="text-center">Fornecedor</th>
               <th class="text-center">Bitola</th>
+              <th class="text-center">Preço/Ton</th>
+              <th class="text-center">Peso Ticket</th>
               <th class="text-center">Número NF</th>
               <th class="text-center">A pagar frete</th>
               <th class="text-center">Status pagamento</th>
@@ -130,6 +132,8 @@
                 truncate(15, True, '...') }}
                 {% else %}-{% endif %}
               </td>
+              <td class="text-center">{% if item.registro.preco_custo_bitola_100 %}<span class="badge bg-cyan-lt p-2">{{ item.registro.preco_custo_bitola_100 | formatar_float_para_brl }}</span>{% else %}-{% endif %}</td>
+              <td class="text-center">{% if item.registro_operacional.peso_liquido_ticket %}<span class="badge bg-primary-lt p-2">{{ item.registro_operacional.peso_liquido_ticket }} Ton.</span>{% else %}<span class="badge bg-secondary-lt p-2">Sem peso</span>{% endif %}</td>
               <td class="text-center">
                 <span class="badge bg-orange-lt p-2">
                   {% if item.registro_operacional.estorno_nf%}
@@ -187,8 +191,58 @@
           </tbody>
         </table>
         {% endfor %}
+        
+        <!-- Totalizador da Transportadora -->
+        {% if totalizadores and totalizadores.por_transportadora and cliente_group.grouper in totalizadores.por_transportadora %}
+        <table style="margin-top: 5px;">
+          <tbody>
+            <tr style="background-color: #e9ecef; font-weight: bold;">
+              <td class="text-center" colspan="4" style="text-align: right; font-weight: bold;">
+                TOTAL {{ cliente_group.grouper|upper }}:
+              </td>
+              <td class="text-center">
+                <span class="badge bg-primary-lt p-2" style="font-size: 14px;">
+                  {{ "%.2f"|format(totalizadores.por_transportadora[cliente_group.grouper].toneladas)|replace('.', ',') }} Ton.
+                </span>
+              </td>
+              <td class="text-center"></td>
+              <td class="text-center">
+                <span class="badge bg-green-lt p-2" style="font-size: 14px;">
+                  {{ totalizadores.por_transportadora[cliente_group.grouper].valor_100 | formatar_float_para_brl }}
+                </span>
+              </td>
+              <td class="text-center" colspan="3"></td>
+            </tr>
+          </tbody>
+        </table>
+        {% endif %}
 
         {% endfor %}
+        
+        <!-- Totalizador Geral (somente se houver mais de uma transportadora) -->
+        {% if totalizadores and totalizadores.quantidade_transportadoras > 1 %}
+        <table style="margin-top: 20px;">
+          <tbody>
+            <tr style="background-color: #1e3a5f; color: white; font-weight: bold;">
+              <td class="text-center" colspan="4" style="text-align: right; font-weight: bold; color: white;">
+                TOTAL GERAL:
+              </td>
+              <td class="text-center">
+                <span class="badge bg-primary-lt p-2" style="font-size: 14px;">
+                  {{ "%.2f"|format(totalizadores.geral.toneladas)|replace('.', ',') }} Ton.
+                </span>
+              </td>
+              <td class="text-center"></td>
+              <td class="text-center">
+                <span class="badge bg-green-lt p-2" style="font-size: 14px;">
+                  {{ totalizadores.geral.valor_100 | formatar_float_para_brl }}
+                </span>
+              </td>
+              <td class="text-center" colspan="3"></td>
+            </tr>
+          </tbody>
+        </table>
+        {% endif %}
 
         {% else %}
         <!-- Estado vazio -->

@@ -160,8 +160,58 @@
           </tbody>
         </table>
         {% endfor %}
+        
+        <!-- Totalizador do Extrator como linha de tabela -->
+        {% if totalizadores and totalizadores.por_extrator and cliente_group.grouper in totalizadores.por_extrator %}
+        <table style="margin-top: 5px;">
+          <tbody>
+            <tr style="background-color: #e9ecef; font-weight: bold;">
+              <td class="text-center" colspan="4" style="text-align: right; font-weight: bold;">
+                TOTAL {{ cliente_group.grouper|upper }}:
+              </td>
+              <td class="text-center">
+                <span class="badge bg-primary-lt p-2" style="font-size: 14px;">
+                  {{ "%.2f"|format(totalizadores.por_extrator[cliente_group.grouper].toneladas)|replace('.', ',') }} Ton.
+                </span>
+              </td>
+              <td class="text-center"></td>
+              <td class="text-center">
+                <span class="badge bg-green-lt p-2" style="font-size: 14px;">
+                  {{ totalizadores.por_extrator[cliente_group.grouper].valor_100 | formatar_float_para_brl }}
+                </span>
+              </td>
+              <td class="text-center"></td>
+            </tr>
+          </tbody>
+        </table>
+        {% endif %}
 
         {% endfor %}
+        
+        <!-- Totalizador Geral como linha de tabela (somente se houver mais de um extrator) -->
+        {% if totalizadores and totalizadores.quantidade_extratores > 1 %}
+        <table style="margin-top: 20px;">
+          <tbody>
+            <tr style="background-color: #1e3a5f; color: white; font-weight: bold;">
+              <td class="text-center" colspan="4" style="text-align: right; font-weight: bold; color: white;">
+                TOTAL GERAL:
+              </td>
+              <td class="text-center">
+                <span class="badge bg-primary-lt p-2" style="font-size: 14px;">
+                  {{ "%.2f"|format(totalizadores.geral.toneladas)|replace('.', ',') }} Ton.
+                </span>
+              </td>
+              <td class="text-center"></td>
+              <td class="text-center">
+                <span class="badge bg-green-lt p-2" style="font-size: 14px;">
+                  {{ totalizadores.geral.valor_100 | formatar_float_para_brl }}
+                </span>
+              </td>
+              <td class="text-center"></td>
+            </tr>
+          </tbody>
+        </table>
+        {% endif %}
 
         {% else %}
         <!-- Estado vazio -->

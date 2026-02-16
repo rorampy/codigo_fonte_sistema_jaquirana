@@ -133,6 +133,8 @@
                                 <th class="text-center text-primary">Data Entrega</th>
                                 <th class="text-center">Fornecedor</th>
                                 <th class="text-center">Bitola</th>
+                                <th class="text-center">Preço/Ton</th>
+                                <th class="text-center">Peso Ticket</th>
                                 <th class="text-center">Número NF</th>
                                 <th class="text-center">A pagar frete</th>
                                 <th class="text-center">Status pagamento</th>
@@ -158,6 +160,17 @@
                                   {{ item.registro.solicitacao.bitola.bitola | truncate(15, True, '...') }}
                                   {% else %}-{% endif %}
                                 </td>
+                                <td class="text-center">{% if
+                                  item.registro.preco_custo_bitola_100 %}<span class="badge bg-cyan-lt p-2">{{  
+                                    item.registro.preco_custo_bitola_100 |
+                                    formatar_float_para_brl }}</span>{% else
+                                  %}-{% endif %}</td>
+                                <td class="text-center">{% if
+                                  item.registro_operacional.peso_liquido_ticket
+                                  %}<span class="badge bg-primary-lt p-2">{{  
+                                    item.registro_operacional.peso_liquido_ticket
+                                    }} Ton.</span>{% else %}<span class="badge bg-secondary-lt p-2">Sem
+                                    peso</span>{% endif %}</td>
                                 <td class="text-center">
                                   <span class="badge bg-orange-lt p-2">
                                     {% if item.registro_operacional.estorno_nf%}
@@ -209,11 +222,44 @@
                       </div>
                     </div>
                     {% endfor %}
+                    
+                    <!-- Totalizador da Transportadora -->
+                    {% if totalizadores and totalizadores.por_transportadora and origem in totalizadores.por_transportadora %}
+                    <div class="p-3 bg-light border-top">
+                      <div class="d-flex justify-content-end align-items-center gap-3">
+                        <strong class="text-muted">TOTAL {{ origem|upper }}:</strong>
+                        <span class="badge bg-primary-lt p-2" style="font-size: 14px;">
+                          {{ "%.2f"|format(totalizadores.por_transportadora[origem].toneladas)|replace('.', ',') }} Ton.
+                        </span>
+                        <span class="badge bg-green-lt p-2" style="font-size: 14px;">
+                          {{ totalizadores.por_transportadora[origem].valor_100 | formatar_float_para_brl }}
+                        </span>
+                      </div>
+                    </div>
+                    {% endif %}
                   </div>
                 </div>
               </div>
               {% endfor %}
             </div>
+            
+            <!-- Totalizador Geral (somente se houver mais de uma transportadora) -->
+            {% if totalizadores and totalizadores.quantidade_transportadoras > 1 %}
+            <div class="card mt-3">
+              <div class="card-body p-3" style="background-color: #1e3a5f;">
+                <div class="d-flex justify-content-end align-items-center gap-3">
+                  <strong class="text-white">TOTAL GERAL:</strong>
+                  <span class="badge bg-primary-lt p-2" style="font-size: 16px;">
+                    {{ "%.2f"|format(totalizadores.geral.toneladas)|replace('.', ',') }} Ton.
+                  </span>
+                  <span class="badge bg-green-lt p-2" style="font-size: 16px;">
+                    {{ totalizadores.geral.valor_100 | formatar_float_para_brl }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            
             {% else %}
             <!-- mensagem de nenhum dado -->
             <div class="area-info-card"
