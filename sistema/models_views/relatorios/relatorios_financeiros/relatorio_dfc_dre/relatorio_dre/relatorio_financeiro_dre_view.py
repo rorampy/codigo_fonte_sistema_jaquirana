@@ -661,242 +661,28 @@ def dre_categoria_detalhes(categoria_id):
             if config:
                 Model = config['model']
                 
-                # Buscar registros da tabela 'a pagar' ou registro operacional
-                # NF Complementar usa destinatario_data_emissao ao invés de data_entrega_ticket
+                # NF Complementar (1.01.03): buscar SEMPRE título a título via RegistroOperacionalModel
+                # usando data_entrega_ticket como competência (independente do status de emissão)
                 if categoria.codigo == '1.01.03':
-                    query_a_pagar = Model.query.filter(
-                        Model.ativo == True,
-                        Model.deletado == False,
-                        Model.destinatario_data_emissao.isnot(None)
-                    )
-                else:
-                    query_a_pagar = Model.query.filter(
-                        Model.ativo == True,
-                        Model.deletado == False,
-                        Model.data_entrega_ticket.isnot(None)
-                    )
-                
-                # Para Fornecedores (2.01.01), Fretes (2.01.02), Extração (2.01.03), Comissão (2.01.04) e Vendas (1.01.01),
-                # filtrar apenas operações vinculadas a cargas (excluir "Despesas Avulsas", "Faturamento de Carga" e "Receitas Avulsas")
-                if categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
-                    query_a_pagar = query_a_pagar.filter(Model.solicitacao_id.isnot(None))
-                elif categoria.codigo == '1.01.01':
-                    query_a_pagar = query_a_pagar.filter(Model.solicitacao_nf_id.isnot(None))
-                elif categoria.codigo == '1.01.03':
-                    query_a_pagar = query_a_pagar.filter(Model.cliente_id.isnot(None))
-                
-                # Para NF Complementar, usar destinatario_data_emissao como campo de data
-                if categoria.codigo == '1.01.03':
-                    if data_inicio:
-                        query_a_pagar = query_a_pagar.filter(Model.destinatario_data_emissao >= data_inicio)
-                    if data_fim:
-                        query_a_pagar = query_a_pagar.filter(Model.destinatario_data_emissao <= data_fim)
-                else:
-                    if data_inicio:
-                        query_a_pagar = query_a_pagar.filter(Model.data_entrega_ticket >= data_inicio)
-                    if data_fim:
-                        query_a_pagar = query_a_pagar.filter(Model.data_entrega_ticket <= data_fim)
-                
-                registros_a_pagar = query_a_pagar.all()
-                
-                # Adicionar registros formatados
-                for registro in registros_a_pagar:
-                    # Para vendas NF Padrão (1.01.01)
-                    if categoria.codigo == '1.01.01':
-                        valor = (registro.valor_total_nota_100 or 0) / 100.0
-                        
-                        # Buscar cliente (destinatário)
-                        beneficiario = registro.destinatario_nome or 'Não informado'
-                        
-                        # Buscar informações da carga/solicitação
-                        observacoes = ''
-                        numero_nf = registro.numero_nota_fiscal or ''
-                        if hasattr(registro, 'solicitacao') and registro.solicitacao:
-                            solicitacao = registro.solicitacao
-                            detalhes_obs = []
-                            
-                            if hasattr(solicitacao, 'produto') and solicitacao.produto:
-                                detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
-                            
-                            if hasattr(solicitacao, 'bitola') and solicitacao.bitola:
-                                detalhes_obs.append(f"Bitola: {solicitacao.bitola.bitola}")
-                            
-                            if hasattr(solicitacao, 'cliente') and solicitacao.cliente:
-                                beneficiario = solicitacao.cliente.identificacao
-                            
-                            if hasattr(solicitacao, 'motorista') and solicitacao.motorista:
-                                detalhes_obs.append(f"Motorista: {solicitacao.motorista.nome_completo}")
-                            
-                            if hasattr(solicitacao, 'veiculo') and solicitacao.veiculo:
-                                detalhes_obs.append(f"Veículo: {solicitacao.veiculo.placa_veiculo}")
-                            
-                            observacoes = ' • '.join(detalhes_obs)
-                        
-                        registros_categoria.append({
-                            'id': registro.id,
-                            'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y'),
-                            'valor': valor,
-                            'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
-                            'detalhamento': config['tipo'],
-                            'referencia': numero_nf or f"{config['tipo']}-{registro.id}",
-                            'descricao': observacoes,
-                            'beneficiario': beneficiario,
-                            'origem': config['origem'],
-                            'tipo_documento': 'Nota Fiscal',
-                            'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{registro.id}",
-                            'situacao_pagamento_id': registro.situacao_financeira_id if hasattr(registro, 'situacao_financeira_id') else None,
-                            'data_vencimento': None,
-                            'valor_total_original': valor,
-                            'faturamento_id': None,
-                            'lancamento_avulso_id': None,
-                            'origem_automatica': True
-                        })
-                    # Para categorias de custo/despesa operacional (2.01.01 a 2.01.04)
-                    elif categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
-                        valor = (registro.valor_total_a_pagar_100 or 0) / 100.0
-                        
-                        # Buscar beneficiário (fornecedor/transportadora/extrator/comissionado)
-                        beneficiario = 'Não informado'
-                        if hasattr(registro, 'fornecedor') and registro.fornecedor:
-                            beneficiario = registro.fornecedor.identificacao if hasattr(registro.fornecedor, 'identificacao') else str(registro.fornecedor)
-                        
-                        # Buscar informações da carga/solicitação
-                        observacoes = ''
-                        numero_nf = ''
-                        detalhes_obs = []
-                        
-                        if hasattr(registro, 'solicitacao') and registro.solicitacao:
-                            solicitacao = registro.solicitacao
-                            
-                            if hasattr(solicitacao, 'produto') and solicitacao.produto:
-                                detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
-                            
-                            if hasattr(solicitacao, 'bitola') and solicitacao.bitola:
-                                detalhes_obs.append(f"Bitola: {solicitacao.bitola.bitola}")
-                            
-                            if hasattr(solicitacao, 'cliente') and solicitacao.cliente:
-                                detalhes_obs.append(f"Cliente: {solicitacao.cliente.identificacao}")
-                            
-                            if hasattr(solicitacao, 'motorista') and solicitacao.motorista:
-                                detalhes_obs.append(f"Motorista: {solicitacao.motorista.nome_completo}")
-                            
-                            if hasattr(solicitacao, 'veiculo') and solicitacao.veiculo:
-                                detalhes_obs.append(f"Veículo: {solicitacao.veiculo.placa_veiculo}")
-                        
-                        if hasattr(registro, 'numero_nota_fiscal'):
-                            numero_nf = registro.numero_nota_fiscal or ''
-                        
-                        observacoes = ' • '.join(detalhes_obs)
-                        
-                        registros_categoria.append({
-                            'id': registro.id,
-                            'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y') if registro.data_entrega_ticket else '-',
-                            'valor': valor,
-                            'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
-                            'detalhamento': config['tipo'],
-                            'referencia': numero_nf or f"{config['tipo']}-{registro.id}",
-                            'descricao': observacoes,
-                            'beneficiario': beneficiario,
-                            'origem': config['origem'],
-                            'tipo_documento': config['tipo'],
-                            'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{registro.id}",
-                            'situacao_pagamento_id': registro.situacao_financeira_id if hasattr(registro, 'situacao_financeira_id') else None,
-                            'data_vencimento': None,
-                            'valor_total_original': valor,
-                            'faturamento_id': None,
-                            'lancamento_avulso_id': None,
-                            'origem_automatica': True
-                        })
-                    # Para vendas NF Complementar (1.01.03)
-                    elif categoria.codigo == '1.01.03':
-                        valor = (registro.valor_total_nota_100 or 0) / 100.0
-                        
-                        # Buscar cliente
-                        beneficiario = 'Não informado'
-                        if hasattr(registro, 'cliente') and registro.cliente:
-                            beneficiario = registro.cliente.identificacao
-                        elif registro.destinatario_nome:
-                            beneficiario = registro.destinatario_nome
-                        
-                        # Informações da NF Complementar
-                        numero_nf = registro.numero_nota_fiscal or ''
-                        detalhes_obs = []
-                        
-                        if registro.peso_ton_nf:
-                            detalhes_obs.append(f"Peso: {registro.peso_ton_nf} Ton")
-                        
-                        if registro.destinatario_cnpj_cpf:
-                            detalhes_obs.append(f"CNPJ/CPF: {registro.destinatario_cnpj_cpf}")
-                        
-                        if registro.placa_nf:
-                            detalhes_obs.append(f"Placa: {registro.placa_nf}")
-                        
-                        if registro.motorista_nf:
-                            detalhes_obs.append(f"Motorista: {registro.motorista_nf}")
-                        
-                        observacoes = ' • '.join(detalhes_obs)
-                        
-                        # Data de competência é a data de emissão
-                        data_competencia = registro.destinatario_data_emissao or registro.data_cadastro
-                        
-                        # NF Complementar emitida é sempre positiva (valor a receber)
-                        sinal_valor = 'positiva' if valor >= 0 else 'negativa'
-                        valor_fmt = f"+ {ValoresMonetarios.converter_float_brl_positivo(valor)}" if valor >= 0 else f"- {ValoresMonetarios.converter_float_brl_positivo(abs(valor))}"
-                        
-                        registros_categoria.append({
-                            'id': registro.id,
-                            'data_competencia': data_competencia.strftime('%d/%m/%Y') if data_competencia else '-',
-                            'valor': valor,
-                            'valor_formatado': valor_fmt,
-                            'detalhamento': 'NF Complementar Emitida',
-                            'referencia': numero_nf or f"NFC-{registro.id}",
-                            'descricao': observacoes,
-                            'beneficiario': beneficiario,
-                            'origem': 'NF Complementar Emitida',
-                            'tipo_documento': 'NF Complementar',
-                            'codigo_documento': f"NFC-{numero_nf}" if numero_nf else f"NFC-{registro.id}",
-                            'situacao_pagamento_id': registro.situacao_financeira_id if hasattr(registro, 'situacao_financeira_id') else None,
-                            'data_vencimento': None,
-                            'valor_total_original': valor,
-                            'faturamento_id': None,
-                            'lancamento_avulso_id': None,
-                            'origem_automatica': True,
-                            'tipo_nf_complementar': sinal_valor
-                        })
-                
-                # Adicionar NFs Complementares NÃO EMITIDAS para categoria 1.01.03
-                if categoria.codigo == '1.01.03':
-                    # Buscar registros operacionais com diferença de peso e não emitida NF complementar
-                    # Inclui positivos (Ticket > NF) e negativos (NF > Ticket)
-                    query_nao_emitidas = RegistroOperacionalModel.query.filter(
+                    query_nfc = RegistroOperacionalModel.query.filter(
                         RegistroOperacionalModel.ativo == True,
                         RegistroOperacionalModel.deletado == False,
                         RegistroOperacionalModel.solicitacao_nf_id.isnot(None),
                         RegistroOperacionalModel.peso_ton_nf.isnot(None),
                         RegistroOperacionalModel.peso_liquido_ticket.isnot(None),
                         RegistroOperacionalModel.preco_un_nf > 0,
-                        # Apenas não emitidas (status NULL ou 2)
-                        db.or_(
-                            RegistroOperacionalModel.status_emissao_nf_complementar_id.is_(None),
-                            RegistroOperacionalModel.status_emissao_nf_complementar_id == 2
-                        ),
-                        # Todas as diferenças de peso (positivas e negativas)
+                        RegistroOperacionalModel.data_entrega_ticket.isnot(None),
                         RegistroOperacionalModel.peso_liquido_ticket != RegistroOperacionalModel.peso_ton_nf
                     )
                     
                     if data_inicio:
-                        query_nao_emitidas = query_nao_emitidas.filter(
-                            RegistroOperacionalModel.data_entrega_ticket >= data_inicio
-                        )
+                        query_nfc = query_nfc.filter(RegistroOperacionalModel.data_entrega_ticket >= data_inicio)
                     if data_fim:
-                        query_nao_emitidas = query_nao_emitidas.filter(
-                            RegistroOperacionalModel.data_entrega_ticket <= data_fim
-                        )
+                        query_nfc = query_nfc.filter(RegistroOperacionalModel.data_entrega_ticket <= data_fim)
                     
-                    registros_nao_emitidas = query_nao_emitidas.all()
+                    registros_nfc = query_nfc.all()
                     
-                    for reg in registros_nao_emitidas:
-                        # Calcular valor: (peso_ticket - peso_nf) * preco_un
+                    for reg in registros_nfc:
                         diferenca = (reg.peso_liquido_ticket or 0) - (reg.peso_ton_nf or 0)
                         valor = round(diferenca * (reg.preco_un_nf or 0)) / 100.0
                         
@@ -922,26 +708,32 @@ def dre_categoria_detalhes(categoria_id):
                         if reg.placa_ticket:
                             detalhes_obs.append(f"Placa: {reg.placa_ticket}")
                         
+                        # Indicar se NF Complementar já foi emitida
+                        is_emitida = reg.status_emissao_nf_complementar_id == 1
+                        if is_emitida:
+                            detalhes_obs.append("NF Compl. Emitida")
+                        
                         observacoes = ' • '.join(detalhes_obs)
                         
-                        # Data de competência é a data de entrega do ticket
                         data_competencia = reg.data_entrega_ticket
                         
-                        # Determinar tipo: positiva (Ticket > NF) ou negativa (NF > Ticket)
                         sinal_valor = 'positiva' if diferenca > 0 else 'negativa'
                         valor_fmt = f"+ {ValoresMonetarios.converter_float_brl_positivo(abs(valor))}" if valor >= 0 else f"- {ValoresMonetarios.converter_float_brl_positivo(abs(valor))}"
+                        
+                        tipo_label = 'Positiva' if diferenca > 0 else 'Negativa'
+                        status_label = 'Emitida' if is_emitida else 'Não Emitida'
                         
                         registros_categoria.append({
                             'id': reg.id,
                             'data_competencia': data_competencia.strftime('%d/%m/%Y') if data_competencia else '-',
                             'valor': valor,
                             'valor_formatado': valor_fmt,
-                            'detalhamento': f'NF Complementar Não Emitida ({"Positiva" if diferenca > 0 else "Negativa"})',
+                            'detalhamento': f'NF Complementar {status_label} ({tipo_label})',
                             'referencia': numero_nf or f"REG-{reg.id}",
                             'descricao': observacoes,
                             'beneficiario': beneficiario,
-                            'origem': f'NF Compl. Não Emitida ({"Positiva" if diferenca > 0 else "Negativa"})',
-                            'tipo_documento': 'Pendente de Emissão',
+                            'origem': f'NF Compl. {status_label} ({tipo_label})',
+                            'tipo_documento': 'NF Complementar' if is_emitida else 'Pendente de Emissão',
                             'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{reg.id}",
                             'situacao_pagamento_id': None,
                             'data_vencimento': None,
@@ -949,11 +741,137 @@ def dre_categoria_detalhes(categoria_id):
                             'faturamento_id': None,
                             'lancamento_avulso_id': None,
                             'origem_automatica': True,
-                            'nao_emitida': True,
+                            'nao_emitida': not is_emitida,
                             'tipo_nf_complementar': sinal_valor
                         })
+                else:
+                    # Para demais categorias (Vendas, Fornecedores, Fretes, etc.)
+                    query_a_pagar = Model.query.filter(
+                        Model.ativo == True,
+                        Model.deletado == False,
+                        Model.data_entrega_ticket.isnot(None)
+                    )
+                
+                    if categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
+                        query_a_pagar = query_a_pagar.filter(Model.solicitacao_id.isnot(None))
+                    elif categoria.codigo == '1.01.01':
+                        query_a_pagar = query_a_pagar.filter(Model.solicitacao_nf_id.isnot(None))
+                    
+                    if data_inicio:
+                        query_a_pagar = query_a_pagar.filter(Model.data_entrega_ticket >= data_inicio)
+                    if data_fim:
+                        query_a_pagar = query_a_pagar.filter(Model.data_entrega_ticket <= data_fim)
+                    
+                    registros_a_pagar = query_a_pagar.all()
+                    
+                    for registro in registros_a_pagar:
+                        # Para vendas NF Padrão (1.01.01)
+                        if categoria.codigo == '1.01.01':
+                            valor = (registro.valor_total_nota_100 or 0) / 100.0
+                            
+                            beneficiario = registro.destinatario_nome or 'Não informado'
+                            
+                            observacoes = ''
+                            numero_nf = registro.numero_nota_fiscal or ''
+                            if hasattr(registro, 'solicitacao') and registro.solicitacao:
+                                solicitacao = registro.solicitacao
+                                detalhes_obs = []
+                                
+                                if hasattr(solicitacao, 'produto') and solicitacao.produto:
+                                    detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
+                                
+                                if hasattr(solicitacao, 'bitola') and solicitacao.bitola:
+                                    detalhes_obs.append(f"Bitola: {solicitacao.bitola.bitola}")
+                                
+                                if hasattr(solicitacao, 'cliente') and solicitacao.cliente:
+                                    beneficiario = solicitacao.cliente.identificacao
+                                
+                                if hasattr(solicitacao, 'motorista') and solicitacao.motorista:
+                                    detalhes_obs.append(f"Motorista: {solicitacao.motorista.nome_completo}")
+                                
+                                if hasattr(solicitacao, 'veiculo') and solicitacao.veiculo:
+                                    detalhes_obs.append(f"Veículo: {solicitacao.veiculo.placa_veiculo}")
+                                
+                                observacoes = ' • '.join(detalhes_obs)
+                            
+                            registros_categoria.append({
+                                'id': registro.id,
+                                'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y'),
+                                'valor': valor,
+                                'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                                'detalhamento': config['tipo'],
+                                'referencia': numero_nf or f"{config['tipo']}-{registro.id}",
+                                'descricao': observacoes,
+                                'beneficiario': beneficiario,
+                                'origem': config['origem'],
+                                'tipo_documento': 'Nota Fiscal',
+                                'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{registro.id}",
+                                'situacao_pagamento_id': registro.situacao_financeira_id if hasattr(registro, 'situacao_financeira_id') else None,
+                                'data_vencimento': None,
+                                'valor_total_original': valor,
+                                'faturamento_id': None,
+                                'lancamento_avulso_id': None,
+                                'origem_automatica': True
+                            })
+                        # Para categorias de custo/despesa operacional (2.01.01 a 2.01.04)
+                        elif categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
+                            valor = (registro.valor_total_a_pagar_100 or 0) / 100.0
+                            
+                            beneficiario = 'Não informado'
+                            if hasattr(registro, 'fornecedor') and registro.fornecedor:
+                                beneficiario = registro.fornecedor.identificacao if hasattr(registro.fornecedor, 'identificacao') else str(registro.fornecedor)
+                            
+                            observacoes = ''
+                            numero_nf = ''
+                            detalhes_obs = []
+                            
+                            if hasattr(registro, 'solicitacao') and registro.solicitacao:
+                                solicitacao = registro.solicitacao
+                                
+                                if hasattr(solicitacao, 'produto') and solicitacao.produto:
+                                    detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
+                                
+                                if hasattr(solicitacao, 'bitola') and solicitacao.bitola:
+                                    detalhes_obs.append(f"Bitola: {solicitacao.bitola.bitola}")
+                                
+                                if hasattr(solicitacao, 'cliente') and solicitacao.cliente:
+                                    detalhes_obs.append(f"Cliente: {solicitacao.cliente.identificacao}")
+                                
+                                if hasattr(solicitacao, 'motorista') and solicitacao.motorista:
+                                    detalhes_obs.append(f"Motorista: {solicitacao.motorista.nome_completo}")
+                                
+                                if hasattr(solicitacao, 'veiculo') and solicitacao.veiculo:
+                                    detalhes_obs.append(f"Veículo: {solicitacao.veiculo.placa_veiculo}")
+                            
+                            if hasattr(registro, 'numero_nota_fiscal'):
+                                numero_nf = registro.numero_nota_fiscal or ''
+                            
+                            observacoes = ' • '.join(detalhes_obs)
+                            
+                            registros_categoria.append({
+                                'id': registro.id,
+                                'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y') if registro.data_entrega_ticket else '-',
+                                'valor': valor,
+                                'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                                'detalhamento': config['tipo'],
+                                'referencia': numero_nf or f"{config['tipo']}-{registro.id}",
+                                'descricao': observacoes,
+                                'beneficiario': beneficiario,
+                                'origem': config['origem'],
+                                'tipo_documento': config['tipo'],
+                                'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{registro.id}",
+                                'situacao_pagamento_id': registro.situacao_financeira_id if hasattr(registro, 'situacao_financeira_id') else None,
+                                'data_vencimento': None,
+                                'valor_total_original': valor,
+                                'faturamento_id': None,
+                                'lancamento_avulso_id': None,
+                                'origem_automatica': True
+                            })
 
             # 3. BUSCAR FATURAMENTOS (para categorias de receita)
+        
+        # Ordenar por beneficiário A-Z
+        registros_categoria.sort(key=lambda r: (r.get('beneficiario') or '').lower())
         
         # Calcular total
         total = sum(reg['valor'] for reg in registros_categoria)
@@ -1052,18 +970,65 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
             config = mapeamento_a_pagar.get(categoria.codigo)
             Model = config['model']
             
-            # NF Complementar usa destinatario_data_emissao ao invés de data_entrega_ticket
+            # NF Complementar (1.01.03): buscar SEMPRE título a título via RegistroOperacionalModel
             if categoria.codigo == '1.01.03':
-                query_a_pagar = Model.query.filter(
-                    Model.ativo == True,
-                    Model.deletado == False,
-                    Model.destinatario_data_emissao.isnot(None),
-                    Model.cliente_id.isnot(None)
-                )
-                query_a_pagar = query_a_pagar.filter(
-                    Model.destinatario_data_emissao >= data_inicio,
-                    Model.destinatario_data_emissao <= data_fim
-                )
+                query_nfc = RegistroOperacionalModel.query.filter(
+                    RegistroOperacionalModel.ativo == True,
+                    RegistroOperacionalModel.deletado == False,
+                    RegistroOperacionalModel.solicitacao_nf_id.isnot(None),
+                    RegistroOperacionalModel.peso_ton_nf.isnot(None),
+                    RegistroOperacionalModel.peso_liquido_ticket.isnot(None),
+                    RegistroOperacionalModel.preco_un_nf > 0,
+                    RegistroOperacionalModel.data_entrega_ticket.isnot(None),
+                    RegistroOperacionalModel.peso_liquido_ticket != RegistroOperacionalModel.peso_ton_nf,
+                    RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
+                    RegistroOperacionalModel.data_entrega_ticket <= data_fim
+                ).all()
+                
+                for reg in query_nfc:
+                    diferenca = (reg.peso_liquido_ticket or 0) - (reg.peso_ton_nf or 0)
+                    valor = round(diferenca * (reg.preco_un_nf or 0)) / 100.0
+                    
+                    tipo_nfc = 'positiva' if diferenca > 0 else 'negativa'
+                    sinal_valor = '+' if valor >= 0 else '-'
+                    valor_fmt = f"{sinal_valor} {ValoresMonetarios.converter_float_brl_positivo(abs(valor))}"
+                    tipo_label = 'Positiva' if diferenca > 0 else 'Negativa'
+                    
+                    beneficiario = 'Não informado'
+                    if hasattr(reg, 'solicitacao') and reg.solicitacao and hasattr(reg.solicitacao, 'cliente') and reg.solicitacao.cliente:
+                        beneficiario = reg.solicitacao.cliente.identificacao
+                    elif reg.destinatario_nome:
+                        beneficiario = reg.destinatario_nome
+                    
+                    numero_nf = reg.numero_nota_fiscal or ''
+                    sinal = '+' if diferenca > 0 else ''
+                    is_emitida = reg.status_emissao_nf_complementar_id == 1
+                    status_label = 'Emitida' if is_emitida else 'Não Emitida'
+                    detalhes_obs = [
+                        f"Peso NF: {reg.peso_ton_nf} Ton",
+                        f"Peso Ticket: {reg.peso_liquido_ticket} Ton",
+                        f"Diferença: {sinal}{diferenca:.2f} Ton"
+                    ]
+                    if reg.preco_un_nf:
+                        detalhes_obs.append(f"Preço: R$ {reg.preco_un_nf/100:.2f}")
+                    if reg.placa_ticket:
+                        detalhes_obs.append(f"Placa: {reg.placa_ticket}")
+                    if is_emitida:
+                        detalhes_obs.append("NF Compl. Emitida")
+                    
+                    registros_categoria.append({
+                        'id': reg.id,
+                        'data_competencia': reg.data_entrega_ticket.strftime('%d/%m/%Y') if reg.data_entrega_ticket else '-',
+                        'valor': valor,
+                        'valor_formatado': valor_fmt,
+                        'tipo_nf_complementar': tipo_nfc,
+                        'referencia': numero_nf or f"REG-{reg.id}",
+                        'descricao': ' • '.join(detalhes_obs),
+                        'beneficiario': beneficiario,
+                        'origem': f'NF Compl. {status_label} ({tipo_label})',
+                        'tipo_documento': 'NF Complementar' if is_emitida else 'Pendente de Emissão',
+                        'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{reg.id}"
+                    })
             else:
                 query_a_pagar = Model.query.filter(
                     Model.ativo == True,
@@ -1081,189 +1046,79 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                     Model.data_entrega_ticket >= data_inicio,
                     Model.data_entrega_ticket <= data_fim
                 )
-            
-            registros_a_pagar = query_a_pagar.all()
-            
-            for registro in registros_a_pagar:
-                # Para vendas NF Padrão (1.01.01)
-                if categoria.codigo == '1.01.01':
-                    valor = (registro.valor_total_nota_100 or 0) / 100.0
-                    beneficiario = registro.destinatario_nome or 'Não informado'
-                    numero_nf = registro.numero_nota_fiscal or ''
-                    observacoes = ''
-                    
-                    if hasattr(registro, 'solicitacao') and registro.solicitacao:
-                        solicitacao = registro.solicitacao
-                        detalhes_obs = []
-                        if hasattr(solicitacao, 'produto') and solicitacao.produto:
-                            detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
-                        if hasattr(solicitacao, 'bitola') and solicitacao.bitola:
-                            detalhes_obs.append(f"Bitola: {solicitacao.bitola.bitola}")
-                        if hasattr(solicitacao, 'cliente') and solicitacao.cliente:
-                            beneficiario = solicitacao.cliente.identificacao
-                        observacoes = ' • '.join(detalhes_obs)
-                    
-                    registros_categoria.append({
-                        'id': registro.id,
-                        'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y'),
-                        'valor': valor,
-                        'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
-                        'referencia': numero_nf or f"{config['tipo']}-{registro.id}",
-                        'descricao': observacoes,
-                        'beneficiario': beneficiario,
-                        'origem': config['origem'],
-                        'tipo_documento': 'Nota Fiscal',
-                        'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{registro.id}"
-                    })
-                # Para vendas NF Complementar (1.01.03)
-                elif categoria.codigo == '1.01.03':
-                    valor = (registro.valor_total_nota_100 or 0) / 100.0
-                    
-                    # Determinar tipo (positiva/negativa)
-                    tipo_nfc = 'positiva' if valor >= 0 else 'negativa'
-                    sinal_valor = '+' if valor >= 0 else '-'
-                    valor_fmt = f"{sinal_valor} {ValoresMonetarios.converter_float_brl_positivo(abs(valor))}"
-                    
-                    # Buscar cliente
-                    beneficiario = 'Não informado'
-                    if hasattr(registro, 'cliente') and registro.cliente:
-                        beneficiario = registro.cliente.identificacao
-                    elif registro.destinatario_nome:
-                        beneficiario = registro.destinatario_nome
-                    
-                    # Informações da NF Complementar
-                    numero_nf = registro.numero_nota_fiscal or ''
-                    detalhes_obs = []
-                    
-                    if registro.peso_ton_nf:
-                        detalhes_obs.append(f"Peso: {registro.peso_ton_nf} Ton")
-                    
-                    if registro.destinatario_cnpj_cpf:
-                        detalhes_obs.append(f"CNPJ/CPF: {registro.destinatario_cnpj_cpf}")
-                    
-                    if registro.placa_nf:
-                        detalhes_obs.append(f"Placa: {registro.placa_nf}")
-                    
-                    if registro.motorista_nf:
-                        detalhes_obs.append(f"Motorista: {registro.motorista_nf}")
-                    
-                    observacoes = ' • '.join(detalhes_obs)
-                    
-                    # Data de competência é a data de emissão
-                    data_competencia = registro.destinatario_data_emissao or registro.data_cadastro
-                    
-                    registros_categoria.append({
-                        'id': registro.id,
-                        'data_competencia': data_competencia.strftime('%d/%m/%Y') if data_competencia else '-',
-                        'valor': valor,
-                        'valor_formatado': valor_fmt,
-                        'tipo_nf_complementar': tipo_nfc,
-                        'referencia': numero_nf or f"NFC-{registro.id}",
-                        'descricao': observacoes,
-                        'beneficiario': beneficiario,
-                        'origem': config['origem'],
-                        'tipo_documento': 'NF Complementar',
-                        'codigo_documento': f"NFC-{numero_nf}" if numero_nf else f"NFC-{registro.id}"
-                    })
-                else:
-                    # Para despesas (a pagar)
-                    valor = (registro.valor_total_a_pagar_100 or 0) / 100.0
-                    beneficiario = 'Não informado'
-                    
-                    # Para Fretes, exibir transportadora
-                    if categoria.codigo == '2.01.02' and hasattr(registro, 'transportadora') and registro.transportadora:
-                        beneficiario = registro.transportadora.identificacao
-                    # Para Comissão, exibir comissionado
-                    elif categoria.codigo == '2.01.04' and hasattr(registro, 'comissionado') and registro.comissionado:
-                        beneficiario = registro.comissionado.identificacao
-                    elif hasattr(registro, 'fornecedor') and registro.fornecedor:
-                        beneficiario = registro.fornecedor.identificacao
-                    
-                    observacoes = ''
-                    numero_ticket = ''
-                    if hasattr(registro, 'solicitacao') and registro.solicitacao:
-                        solicitacao = registro.solicitacao
-                        detalhes_obs = []
-                        if hasattr(solicitacao, 'produto') and solicitacao.produto:
-                            detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
-                        if hasattr(registro, 'bitola') and registro.bitola:
-                            detalhes_obs.append(f"Bitola: {registro.bitola.bitola}")
-                        if hasattr(solicitacao, 'numero_ticket') and solicitacao.numero_ticket:
-                            numero_ticket = solicitacao.numero_ticket
-                        observacoes = ' • '.join(detalhes_obs)
-                    
-                    registros_categoria.append({
-                        'id': registro.id,
-                        'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y'),
-                        'valor': valor,
-                        'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
-                        'referencia': numero_ticket or f"{config['tipo']}-{registro.id}",
-                        'descricao': observacoes,
-                        'beneficiario': beneficiario,
-                        'origem': config['origem'],
-                        'tipo_documento': f'{config["tipo"]} a Pagar',
-                        'codigo_documento': f"{config['tipo'].upper()[:3]}-{registro.id}"
-                    })
-        
-            # Adicionar NFs Complementares NÃO EMITIDAS para categoria 1.01.03 (exportação)
-            if categoria.codigo == '1.01.03':
-                query_nao_emitidas = RegistroOperacionalModel.query.filter(
-                    RegistroOperacionalModel.ativo == True,
-                    RegistroOperacionalModel.deletado == False,
-                    RegistroOperacionalModel.solicitacao_nf_id.isnot(None),
-                    RegistroOperacionalModel.peso_ton_nf.isnot(None),
-                    RegistroOperacionalModel.peso_liquido_ticket.isnot(None),
-                    RegistroOperacionalModel.preco_un_nf > 0,
-                    db.or_(
-                        RegistroOperacionalModel.status_emissao_nf_complementar_id.is_(None),
-                        RegistroOperacionalModel.status_emissao_nf_complementar_id == 2
-                    ),
-                    RegistroOperacionalModel.peso_liquido_ticket != RegistroOperacionalModel.peso_ton_nf,
-                    RegistroOperacionalModel.data_entrega_ticket >= data_inicio,
-                    RegistroOperacionalModel.data_entrega_ticket <= data_fim
-                ).all()
                 
-                for reg in query_nao_emitidas:
-                    diferenca = (reg.peso_liquido_ticket or 0) - (reg.peso_ton_nf or 0)
-                    valor = round(diferenca * (reg.preco_un_nf or 0)) / 100.0
-                    
-                    # Determinar tipo (positiva/negativa)
-                    tipo_nfc = 'positiva' if valor >= 0 else 'negativa'
-                    sinal_valor = '+' if valor >= 0 else '-'
-                    valor_fmt = f"{sinal_valor} {ValoresMonetarios.converter_float_brl_positivo(abs(valor))}"
-                    tipo_label = 'Positiva' if valor >= 0 else 'Negativa'
-                    
-                    beneficiario = 'Não informado'
-                    if hasattr(reg, 'solicitacao') and reg.solicitacao and hasattr(reg.solicitacao, 'cliente') and reg.solicitacao.cliente:
-                        beneficiario = reg.solicitacao.cliente.identificacao
-                    elif reg.destinatario_nome:
-                        beneficiario = reg.destinatario_nome
-                    
-                    numero_nf = reg.numero_nota_fiscal or ''
-                    sinal = '+' if diferenca > 0 else ''
-                    detalhes_obs = [
-                        f"Peso NF: {reg.peso_ton_nf} Ton",
-                        f"Peso Ticket: {reg.peso_liquido_ticket} Ton",
-                        f"Diferença: {sinal}{diferenca:.2f} Ton"
-                    ]
-                    if reg.preco_un_nf:
-                        detalhes_obs.append(f"Preço: R$ {reg.preco_un_nf/100:.2f}")
-                    if reg.placa_ticket:
-                        detalhes_obs.append(f"Placa: {reg.placa_ticket}")
-                    
-                    registros_categoria.append({
-                        'id': reg.id,
-                        'data_competencia': reg.data_entrega_ticket.strftime('%d/%m/%Y') if reg.data_entrega_ticket else '-',
-                        'valor': valor,
-                        'valor_formatado': valor_fmt,
-                        'tipo_nf_complementar': tipo_nfc,
-                        'referencia': numero_nf or f"REG-{reg.id}",
-                        'descricao': ' • '.join(detalhes_obs),
-                        'beneficiario': beneficiario,
-                        'origem': f'NF Compl. Não Emitida ({tipo_label})',
-                        'tipo_documento': 'Pendente de Emissão',
-                        'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{reg.id}"
-                    })
+                registros_a_pagar = query_a_pagar.all()
+                
+                for registro in registros_a_pagar:
+                    # Para vendas NF Padrão (1.01.01)
+                    if categoria.codigo == '1.01.01':
+                        valor = (registro.valor_total_nota_100 or 0) / 100.0
+                        beneficiario = registro.destinatario_nome or 'Não informado'
+                        numero_nf = registro.numero_nota_fiscal or ''
+                        observacoes = ''
+                        
+                        if hasattr(registro, 'solicitacao') and registro.solicitacao:
+                            solicitacao = registro.solicitacao
+                            detalhes_obs = []
+                            if hasattr(solicitacao, 'produto') and solicitacao.produto:
+                                detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
+                            if hasattr(solicitacao, 'bitola') and solicitacao.bitola:
+                                detalhes_obs.append(f"Bitola: {solicitacao.bitola.bitola}")
+                            if hasattr(solicitacao, 'cliente') and solicitacao.cliente:
+                                beneficiario = solicitacao.cliente.identificacao
+                            observacoes = ' • '.join(detalhes_obs)
+                        
+                        registros_categoria.append({
+                            'id': registro.id,
+                            'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y'),
+                            'valor': valor,
+                            'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                            'referencia': numero_nf or f"{config['tipo']}-{registro.id}",
+                            'descricao': observacoes,
+                            'beneficiario': beneficiario,
+                            'origem': config['origem'],
+                            'tipo_documento': 'Nota Fiscal',
+                            'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{registro.id}"
+                        })
+                    else:
+                        # Para despesas (a pagar)
+                        valor = (registro.valor_total_a_pagar_100 or 0) / 100.0
+                        beneficiario = 'Não informado'
+                        
+                        # Para Fretes, exibir transportadora
+                        if categoria.codigo == '2.01.02' and hasattr(registro, 'transportadora') and registro.transportadora:
+                            beneficiario = registro.transportadora.identificacao
+                        # Para Comissão, exibir comissionado
+                        elif categoria.codigo == '2.01.04' and hasattr(registro, 'comissionado') and registro.comissionado:
+                            beneficiario = registro.comissionado.identificacao
+                        elif hasattr(registro, 'fornecedor') and registro.fornecedor:
+                            beneficiario = registro.fornecedor.identificacao
+                        
+                        observacoes = ''
+                        numero_ticket = ''
+                        if hasattr(registro, 'solicitacao') and registro.solicitacao:
+                            solicitacao = registro.solicitacao
+                            detalhes_obs = []
+                            if hasattr(solicitacao, 'produto') and solicitacao.produto:
+                                detalhes_obs.append(f"Produto: {solicitacao.produto.nome}")
+                            if hasattr(registro, 'bitola') and registro.bitola:
+                                detalhes_obs.append(f"Bitola: {registro.bitola.bitola}")
+                            if hasattr(solicitacao, 'numero_ticket') and solicitacao.numero_ticket:
+                                numero_ticket = solicitacao.numero_ticket
+                            observacoes = ' • '.join(detalhes_obs)
+                        
+                        registros_categoria.append({
+                            'id': registro.id,
+                            'data_competencia': registro.data_entrega_ticket.strftime('%d/%m/%Y'),
+                            'valor': valor,
+                            'valor_formatado': ValoresMonetarios.converter_float_brl_positivo(valor),
+                            'referencia': numero_ticket or f"{config['tipo']}-{registro.id}",
+                            'descricao': observacoes,
+                            'beneficiario': beneficiario,
+                            'origem': config['origem'],
+                            'tipo_documento': f'{config["tipo"]} a Pagar',
+                            'codigo_documento': f"{config['tipo'].upper()[:3]}-{registro.id}"
+                        })
         
         # Para categorias NÃO automáticas, buscar agendamentos categorizados
         if categoria.codigo not in mapeamento_a_pagar:
@@ -1330,6 +1185,9 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                         })
                 except (json.JSONDecodeError, TypeError):
                     continue
+        
+        # Ordenar por beneficiário A-Z
+        registros_categoria.sort(key=lambda r: (r.get('beneficiario') or '').lower())
         
         total = sum(reg['valor'] for reg in registros_categoria)
         return categoria, registros_categoria, total, data_inicio, data_fim, None
@@ -1515,7 +1373,7 @@ def dre_categoria_detalhes_pdf(categoria_id):
         
         nome_arquivo = f"DRE_Detalhes_{categoria.nome.replace(' ', '_')}_{data_inicio.strftime('%d%m%Y')}_{data_fim.strftime('%d%m%Y')}"
         
-        return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo)
+        return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo, 'landscape')
         
     except Exception as e:
         print(f"Erro ao exportar PDF DRE Detalhes: {e}")
