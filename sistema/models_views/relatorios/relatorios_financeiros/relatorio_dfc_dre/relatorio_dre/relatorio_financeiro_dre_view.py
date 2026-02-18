@@ -753,7 +753,11 @@ def dre_categoria_detalhes(categoria_id):
                     )
                 
                     if categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
-                        query_a_pagar = query_a_pagar.filter(Model.solicitacao_id.isnot(None))
+                        # Exclui registros sem preço configurado (valor zero = preço não cadastrado)
+                        query_a_pagar = query_a_pagar.filter(
+                            Model.solicitacao_id.isnot(None),
+                            Model.valor_total_a_pagar_100 > 0
+                        )
                     elif categoria.codigo == '1.01.01':
                         query_a_pagar = query_a_pagar.filter(Model.solicitacao_nf_id.isnot(None))
                     
@@ -763,6 +767,23 @@ def dre_categoria_detalhes(categoria_id):
                         query_a_pagar = query_a_pagar.filter(Model.data_entrega_ticket <= data_fim)
                     
                     registros_a_pagar = query_a_pagar.all()
+                    
+                    # Pré-carregar mapa fornecedor→extrator para a categoria de Extração (2.01.03)
+                    # Necessário pois registros antigos não têm extrator_id preenchido
+                    _mapa_fornecedor_extrator = {}
+                    if categoria.codigo == '2.01.03':
+                        from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_extracao_model import FornecedorPrecoCustoExtracaoModel
+                        fornecedor_ids_ext = list(set(r.fornecedor_id for r in registros_a_pagar if r.fornecedor_id))
+                        if fornecedor_ids_ext:
+                            configs_ext = FornecedorPrecoCustoExtracaoModel.query.filter(
+                                FornecedorPrecoCustoExtracaoModel.fornecedor_id.in_(fornecedor_ids_ext),
+                                FornecedorPrecoCustoExtracaoModel.ativo == True,
+                                FornecedorPrecoCustoExtracaoModel.deletado == False,
+                                FornecedorPrecoCustoExtracaoModel.extrator_id.isnot(None)
+                            ).all()
+                            for cfg in configs_ext:
+                                if cfg.fornecedor_id not in _mapa_fornecedor_extrator and cfg.extrator:
+                                    _mapa_fornecedor_extrator[cfg.fornecedor_id] = cfg.extrator.identificacao
                     
                     for registro in registros_a_pagar:
                         # Para vendas NF Padrão (1.01.01)
@@ -818,7 +839,18 @@ def dre_categoria_detalhes(categoria_id):
                             valor = (registro.valor_total_a_pagar_100 or 0) / 100.0
                             
                             beneficiario = 'Não informado'
-                            if hasattr(registro, 'fornecedor') and registro.fornecedor:
+                            # Cada categoria tem seu beneficiário específico
+                            if categoria.codigo == '2.01.02' and hasattr(registro, 'transportadora') and registro.transportadora:
+                                beneficiario = registro.transportadora.identificacao
+                            elif categoria.codigo == '2.01.03':
+                                # Prioriza extrator_id direto; fallback via mapa fornecedor→extrator
+                                if hasattr(registro, 'extrator') and registro.extrator:
+                                    beneficiario = registro.extrator.identificacao
+                                elif registro.fornecedor_id and registro.fornecedor_id in _mapa_fornecedor_extrator:
+                                    beneficiario = _mapa_fornecedor_extrator[registro.fornecedor_id]
+                            elif categoria.codigo == '2.01.04' and hasattr(registro, 'comissionado') and registro.comissionado:
+                                beneficiario = registro.comissionado.identificacao
+                            elif hasattr(registro, 'fornecedor') and registro.fornecedor:
                                 beneficiario = registro.fornecedor.identificacao if hasattr(registro.fornecedor, 'identificacao') else str(registro.fornecedor)
                             
                             observacoes = ''
@@ -1038,7 +1070,11 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                 
                 # Filtrar apenas operações vinculadas a cargas
                 if categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
-                    query_a_pagar = query_a_pagar.filter(Model.solicitacao_id.isnot(None))
+                    # Exclui registros sem preço configurado (valor zero = preço não cadastrado)
+                    query_a_pagar = query_a_pagar.filter(
+                        Model.solicitacao_id.isnot(None),
+                        Model.valor_total_a_pagar_100 > 0
+                    )
                 elif categoria.codigo == '1.01.01':
                     query_a_pagar = query_a_pagar.filter(Model.solicitacao_nf_id.isnot(None))
                 
@@ -1048,6 +1084,22 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                 )
                 
                 registros_a_pagar = query_a_pagar.all()
+                
+                # Pré-carregar mapa fornecedor→extrator para a categoria de Extração (2.01.03)
+                _mapa_fornecedor_extrator_exp = {}
+                if categoria.codigo == '2.01.03':
+                    from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_extracao_model import FornecedorPrecoCustoExtracaoModel
+                    fornecedor_ids_ext = list(set(r.fornecedor_id for r in registros_a_pagar if r.fornecedor_id))
+                    if fornecedor_ids_ext:
+                        configs_ext = FornecedorPrecoCustoExtracaoModel.query.filter(
+                            FornecedorPrecoCustoExtracaoModel.fornecedor_id.in_(fornecedor_ids_ext),
+                            FornecedorPrecoCustoExtracaoModel.ativo == True,
+                            FornecedorPrecoCustoExtracaoModel.deletado == False,
+                            FornecedorPrecoCustoExtracaoModel.extrator_id.isnot(None)
+                        ).all()
+                        for cfg in configs_ext:
+                            if cfg.fornecedor_id not in _mapa_fornecedor_extrator_exp and cfg.extrator:
+                                _mapa_fornecedor_extrator_exp[cfg.fornecedor_id] = cfg.extrator.identificacao
                 
                 for registro in registros_a_pagar:
                     # Para vendas NF Padrão (1.01.01)
@@ -1085,10 +1137,15 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                         valor = (registro.valor_total_a_pagar_100 or 0) / 100.0
                         beneficiario = 'Não informado'
                         
-                        # Para Fretes, exibir transportadora
+                        # Cada categoria tem seu beneficiário específico
                         if categoria.codigo == '2.01.02' and hasattr(registro, 'transportadora') and registro.transportadora:
                             beneficiario = registro.transportadora.identificacao
-                        # Para Comissão, exibir comissionado
+                        elif categoria.codigo == '2.01.03':
+                            # Prioriza extrator_id direto; fallback via mapa fornecedor→extrator
+                            if hasattr(registro, 'extrator') and registro.extrator:
+                                beneficiario = registro.extrator.identificacao
+                            elif registro.fornecedor_id and registro.fornecedor_id in _mapa_fornecedor_extrator_exp:
+                                beneficiario = _mapa_fornecedor_extrator_exp[registro.fornecedor_id]
                         elif categoria.codigo == '2.01.04' and hasattr(registro, 'comissionado') and registro.comissionado:
                             beneficiario = registro.comissionado.identificacao
                         elif hasattr(registro, 'fornecedor') and registro.fornecedor:

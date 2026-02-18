@@ -271,7 +271,8 @@ class DREModel:
                     Model.ativo == True,
                     Model.deletado == False,
                     getattr(Model, campo_data).isnot(None),
-                    getattr(Model, filtro_op).isnot(None)  # Exclui lançamentos avulsos
+                    getattr(Model, filtro_op).isnot(None),  # Exclui lançamentos avulsos
+                    getattr(Model, campo_valor) > 0          # Exclui registros sem preço configurado
                 )
                 
                 if data_inicio:
