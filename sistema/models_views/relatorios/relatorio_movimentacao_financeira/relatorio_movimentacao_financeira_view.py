@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from collections import OrderedDict
 from sistema import app, requires_roles, obter_url_absoluta_de_imagem
 from flask import render_template, request
 from flask_login import login_required
@@ -49,6 +50,49 @@ def _calcular_totalizadores(movimentacoes):
     }
 
 
+def _agrupar_movimentacoes_por_dia(movimentacoes):
+    """Agrupa movimentações por data e calcula subtotais diários.
+    
+    Retorna OrderedDict com datas como chave (mais recente primeiro), 
+    cada valor contendo as movimentações do dia e totais de entradas/saídas.
+    Semelhante à organização de extrato bancário.
+    """
+    agrupado = OrderedDict()
+
+    for mov in movimentacoes:
+        data_mov = mov.data_movimentacao
+        if data_mov not in agrupado:
+            agrupado[data_mov] = {
+                'movimentacoes': [],
+                'total_entradas': 0,
+                'total_saidas': 0,
+                'total_cancelamentos': 0,
+                'total_estornos': 0,
+                'saldo_dia': 0,
+                'qtd': 0
+            }
+
+        grupo = agrupado[data_mov]
+        grupo['movimentacoes'].append(mov)
+        grupo['qtd'] += 1
+
+        valor = _calcular_valor_movimentacao(mov)
+        if mov.tipo_movimentacao == 1:
+            grupo['total_entradas'] += valor
+        elif mov.tipo_movimentacao == 2:
+            grupo['total_saidas'] += valor
+        elif mov.tipo_movimentacao == 3:
+            grupo['total_cancelamentos'] += valor
+        elif mov.tipo_movimentacao in [4, 5]:
+            grupo['total_estornos'] += valor
+
+    # Calcular saldo do dia para cada grupo
+    for data_mov, grupo in agrupado.items():
+        grupo['saldo_dia'] = grupo['total_entradas'] - grupo['total_saidas']
+
+    return agrupado
+
+
 @app.route("/financeiro/movimentacoes-financeiras/exportar", methods=["GET"])
 @login_required
 @requires_roles
@@ -96,6 +140,9 @@ def exportar_movimentacaoes_financeiras():
     # Calcular totalizadores do período
     totalizadores = _calcular_totalizadores(movimentacoes)
     
+    # Agrupar movimentações por dia para totalização diária (padrão extrato bancário)
+    movimentacoes_por_dia = _agrupar_movimentacoes_por_dia(movimentacoes)
+    
     # Calcular saldo disponível
     # Quando "Todas as contas", soma apenas saldos de contas ATIVAS (igual à listagem de contas bancárias)
     if conta_selecionada_id and conta_selecionada_id != 0:
@@ -135,7 +182,8 @@ def exportar_movimentacaoes_financeiras():
         total_recebido=total_recebido,
         data_inicio=data_inicio,
         data_fim=data_fim,
-        totalizadores=totalizadores
+        totalizadores=totalizadores,
+        movimentacoes_por_dia=movimentacoes_por_dia
     )
 
     nome_arquivo_saida = f"movimentacoes_financeiras-{data_hoje}"

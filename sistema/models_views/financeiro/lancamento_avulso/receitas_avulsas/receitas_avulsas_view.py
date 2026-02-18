@@ -187,6 +187,10 @@ def excluir_receita_avulsa(id):
                                     print(movimentacao_reversao)
                                 
                                 saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
+                        
+                        # Desativar a movimentação original para não duplicar no relatório
+                        movimentacao.ativo = False
+                        movimentacao.deletado = True
                 
                 print(f"[EXCLUSAO] Conciliação revertida com sucesso para transação {transacao_conciliada.id}")
 

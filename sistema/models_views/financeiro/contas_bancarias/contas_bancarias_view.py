@@ -2071,8 +2071,7 @@ def reverter_conciliacao():
             'message': f'Erro ao reverter conciliação: {str(e)}'
         }), 500
 
-# ========================================================
-
+# =============================================================================
 # ====================  LISTAGEM MOVIMENTAÇÃO FINANCEIRA ======================
 
 @app.route("/financeiro/listagem-movimentacao-financeira", methods=["GET", "POST"])

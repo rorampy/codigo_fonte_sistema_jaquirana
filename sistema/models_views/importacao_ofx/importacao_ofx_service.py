@@ -574,6 +574,9 @@ class ImportacaoOfxService:
                     if movimentacao:
                         if conta_bancaria_id is None:
                             conta_bancaria_id = movimentacao.conta_bancaria_id
+                        # Desativar a movimentação original para não duplicar no relatório
+                        movimentacao.ativo = False
+                        movimentacao.deletado = True
 
                 valor_agendamento = dados.get('valor_agendamento', 0)
                 if valor_agendamento > 0 and conta_bancaria_id:

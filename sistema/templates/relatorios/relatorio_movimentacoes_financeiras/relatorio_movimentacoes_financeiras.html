@@ -132,27 +132,45 @@
         {% endif %}
         {% endif %}
 
-        {% if movimentacoes %}
-        <!-- Extrato Detalhado -->
+        {% if movimentacoes_por_dia %}
+        <!-- Extrato Detalhado com Totalização Diária -->
         <div class="section-title no-break">Extrato Detalhado de
           Movimentações</div>
 
-        <table>
+        {% for data_mov, grupo in movimentacoes_por_dia.items() %}
+        <!-- Cabeçalho do dia -->
+        <div class="dia-header no-break" style="background-color: #e7f0e7; padding: 8px 12px; margin-top: 15px; margin-bottom: 0; border-left: 4px solid #1e5631; border-radius: 4px 4px 0 0;">
+          <strong style="color: #1e5631; font-size: 14px;">
+            {{ data_mov.strftime('%d/%m/%Y') }}
+            {% set dia_semana = data_mov.strftime('%A') %}
+            {% if dia_semana == 'Monday' %} - Segunda-feira
+            {% elif dia_semana == 'Tuesday' %} - Terça-feira
+            {% elif dia_semana == 'Wednesday' %} - Quarta-feira
+            {% elif dia_semana == 'Thursday' %} - Quinta-feira
+            {% elif dia_semana == 'Friday' %} - Sexta-feira
+            {% elif dia_semana == 'Saturday' %} - Sábado
+            {% elif dia_semana == 'Sunday' %} - Domingo
+            {% endif %}
+          </strong>
+          <span style="float: right; color: #555; font-size: 12px;">{{ grupo.qtd }} movimentação{{ 'ões' if grupo.qtd > 1 else '' }}</span>
+        </div>
+
+        <table style="margin-bottom: 0;">
           <thead>
             <tr>
-              <th class="text-center">Data</th>
-              <th class="text-center">Conta Bancária</th>
-              <th class="text-center">Tipo</th>
-              <th class="text-center">Descrição</th>
-              <th class="text-center">Valor</th>
-              <th class="text-center">Status</th>
+              <th class="text-center" style="width: 10%;">Hora</th>
+              <th class="text-center" style="width: 15%;">Conta Bancária</th>
+              <th class="text-center" style="width: 12%;">Tipo</th>
+              <th class="text-center" style="width: 33%;">Descrição</th>
+              <th class="text-center" style="width: 18%;">Valor</th>
+              <th class="text-center" style="width: 12%;">Status</th>
             </tr>
           </thead>
           <tbody>
-            {% for mov in movimentacoes %}
+            {% for mov in grupo.movimentacoes %}
             <tr>
               <td class="text-center">
-                {{ mov.data_movimentacao.strftime('%d/%m/%Y') }}
+                {{ data_mov.strftime('%d/%m/%Y') }}
               </td>
 
               <td class="text-center">
@@ -320,8 +338,31 @@
               </td>
             </tr>
             {% endfor %}
+            
+            <!-- Totalização diária -->
+            <tr class="totalizacao-dia no-break" style="background-color: #f0f4f0 !important; border-top: 2px solid #1e5631;">
+              <td colspan="3" style="text-align: right; font-weight: 600; color: #1e5631; padding: 8px 10px;">
+                Subtotal {{ data_mov.strftime('%d/%m/%Y') }}:
+              </td>
+              <td class="text-center" style="font-weight: 600; font-size: 12px; color: #555;">
+                {% if grupo.total_entradas > 0 %}
+                  <span style="color: #2b8a3e;">+ {{ grupo.total_entradas | formatar_float_para_brl }}</span>
+                {% endif %}
+                {% if grupo.total_entradas > 0 and grupo.total_saidas > 0 %} | {% endif %}
+                {% if grupo.total_saidas > 0 %}
+                  <span style="color: #c92a2a;">- {{ grupo.total_saidas | formatar_float_para_brl }}</span>
+                {% endif %}
+              </td>
+              <td class="text-center" style="font-weight: 700; padding: 8px 10px;">
+                <span style="color: {% if grupo.saldo_dia >= 0 %}#2b8a3e{% else %}#c92a2a{% endif %};">
+                  {{ grupo.saldo_dia | formatar_float_para_brl }}
+                </span>
+              </td>
+              <td></td>
+            </tr>
           </tbody>
         </table>
+        {% endfor %}
         {% else %}
         <!-- Estado vazio -->
         <div style="text-align: center; padding: 50px 0;">
@@ -527,6 +568,15 @@
   
   .no-break {
     page-break-inside: avoid;
+  }
+
+  .dia-header {
+    page-break-inside: avoid;
+    page-break-after: avoid;
+  }
+
+  .totalizacao-dia td {
+    border-bottom: 2px solid #1e5631 !important;
   }
 
   .filtros-title {
