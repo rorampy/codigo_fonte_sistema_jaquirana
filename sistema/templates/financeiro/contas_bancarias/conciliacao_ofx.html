@@ -176,7 +176,6 @@
         </div>
       </div>
 
-      <!-- Cards de Resumo -->
       <div class="row mb-4">
         <div class="col-sm-6 col-lg-3">
           <div class="summary-card success">
@@ -287,7 +286,7 @@
 
       {% for transacao in transacoes_ofx %}
       <div class="row row-cards conciliacao-ofx-id-{{ transacao.id }} mt-2">
-        <!-- Área destinada para informação de transações -->
+        
         <div class="col-12 col-md-3 col-lg-3">
           <div class="card conciliacao-card" data-transacao-id="{{ transacao.id }}"
             data-transacao-valor="{{ transacao.valor_formatado }}" data-transacao-valor-original="{{ transacao.valor }}"
@@ -346,7 +345,7 @@
             <div class="card-body">
               <div class="tab-content">
                 <div class="tab-pane active show" id="tabs-transacao-{{ transacao.id }}">
-                  <!-- Tab de transação -->
+                  
                   <div class="tab-content-wrapper">
                     <div class="tab-content-text">
                       <strong class="{{ 'text-success' if transacao.valor > 0 else 'text-danger' }} fs-5">
@@ -378,7 +377,7 @@
                       </div>
 
                       {% if transacao.conciliacao_parcial %}
-                      <!-- Seção de conciliação parcial -->
+                      
                       <div class="mt-3 pt-2 border-top">
                         <div class="d-flex align-items-center flex-wrap mb-2">
                           <span class="text-decoration-line-through text-muted">{{ transacao.valor_formatado }}</span>
@@ -418,7 +417,6 @@
         </div>
         <div class="col-12 col-md-9 col-lg-9">
 
-          <!-- Área destinada para sugestões e criação de transações -->
           <div class="card conciliacao-card {{ 'card-deletada' if transacao.ofx_deletada else '' }}">
             {%if not transacao.conciliado or transacao.conciliacao_parcial%}
             {% if not transacao.ofx_deletada %}
@@ -461,14 +459,14 @@
             <div class="card-body">
               <div class="tab-content">
                 <div class="tab-pane active show" id="tabs-sugestao-{{ transacao.id }}">
-                  <!-- Tab de sugestão - Carregamento via AJAX -->
+                  
                   <div class="w-100 text-center py-4">
                     <div class="spinner-border text-primary"></div>
                     <h5 class="text-muted mt-2">Carregando sugestões...</h5>
                   </div>
                 </div>
                 <div class="tab-pane" id="tabs-nova-transacao-{{ transacao.id }}">
-                  <!-- Tab de nova transação -->
+                  
                   <h4>Nova Transação</h4>
                   <div class="d-flex justify-content-between align-items-center">
                     <div class="col-12">
@@ -491,7 +489,7 @@
                   </div>
                 </div>
                 <div class="tab-pane" id="tabs-buscar-existente-{{transacao.id}}">
-                  <!-- Tab de buscar existente -->
+                  
                   <h4>Buscar Existente</h4>
                   <div class="d-flex justify-content-between align-items-center">
                     <div class="tab-content-text">Selecione uma ou mais transações na lista abaixo ou <a href="#"
@@ -505,7 +503,7 @@
               </div>
             </div>
             {%else%}
-            <!-- Card para transação deletada -->
+            
             <div class="card-body text-center py-5">
               <div class="empty-state">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
@@ -524,7 +522,7 @@
             </div>
             {%endif%}
             {% else %}
-            <!-- Área para transação conciliada -->
+            
             <div class="card-body">
               <div class="row">
                 <div class="col-md-12">
@@ -536,7 +534,7 @@
                     A transação foi processada e vinculada aos registros financeiros do sistema.
                     {% endif %}
                   </p>
-                  <!-- Mostrar informações da conciliação se disponível -->
+                  
                   {% if transacao.dados_conciliacao_json %}
                   <div class="mt-3">
                     <h6>Detalhes da Conciliação:</h6>
@@ -604,22 +602,20 @@
       </div>
       {% endfor %}
 
-      <!-- Paginação das transações -->
       {% if total_paginas > 1 %}
       <div class="row mt-4">
         <div class="col-12">
           <div class="d-flex justify-content-between align-items-center">
-            <!-- Informações da paginação -->
+            
             <div>
               <small class="text-muted">
                 Mostrando {{ (pagina - 1) * por_pagina + 1 }} até {{ pagina * por_pagina if pagina * por_pagina <=
                   total_transacoes else total_transacoes }} de {{ total_transacoes }} transações </small>
             </div>
 
-            <!-- Controles de paginação -->
             <nav aria-label="Paginação de transações">
               <ul class="pagination mb-0">
-                <!-- Botão Anterior -->
+                
                 <li class="page-item {{ 'disabled' if pagina <= 1 else '' }}">
                   <a class="page-link" href="{{ url_for('conciliacao_ofx', conta_id=conta_id, pagina=pagina-1, 
                     conciliado=filtro_conciliado, 
@@ -639,7 +635,6 @@
                   </a>
                 </li>
 
-                <!-- Primeira página -->
                 {% if pagina > 3 %}
                 <li class="page-item">
                   <a class="page-link" href="{{ url_for('conciliacao_ofx', conta_id=conta_id, pagina=1,
@@ -658,7 +653,6 @@
                 {% endif %}
                 {% endif %}
 
-                <!-- Páginas ao redor da atual -->
                 {% for num_pagina in range([pagina - 2, 1]|max, [pagina + 3, total_paginas + 1]|min) %}
                 <li class="page-item {{ 'active' if num_pagina == pagina else '' }}">
                   <a class="page-link" href="{{ url_for('conciliacao_ofx', conta_id=conta_id, pagina=num_pagina,
@@ -672,7 +666,6 @@
                 </li>
                 {% endfor %}
 
-                <!-- Última página -->
                 {% if pagina < total_paginas - 2 %} {% if pagina < total_paginas - 3 %} <li class="page-item disabled">
                   <span class="page-link">...</span>
                   </li>
@@ -690,7 +683,6 @@
                   </li>
                   {% endif %}
 
-                  <!-- Botão Próximo -->
                   <li class="page-item {{ 'disabled' if pagina >= total_paginas else '' }}">
                     <a class="page-link" href="{{ url_for('conciliacao_ofx', conta_id=conta_id, pagina=pagina+1,
                         conciliado=filtro_conciliado, 
@@ -718,16 +710,12 @@
     </div>
   </div>
 
-  <!-- Incluir Modal de Conciliação -->
   {% include 'financeiro/contas_bancarias/modal_confirmar_conciliacao.html' %}
 
-  <!-- Incluir Modal de Conciliação em Massa -->
   {% include 'financeiro/contas_bancarias/modal_conciliacao_massa.html' %}
 
-  <!-- Include Modal de Reversão de Conciliação -->
   {% include 'financeiro/contas_bancarias/modal-reverter-conciliacao.html' %}
 
-  <!-- Modal de Conciliação Parcial -->
   <div class="modal fade" id="modalConciliacaoParcial" tabindex="-1" aria-labelledby="modalConciliacaoParcialLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -749,7 +737,7 @@
 
         <div class="modal-body">
           <div class="row g-3">
-            <!-- Informações da Transação -->
+            
             <div class="col-md-6">
               <div class="card">
                 <div class="card-header">
@@ -772,7 +760,6 @@
               </div>
             </div>
 
-            <!-- Informações do Agendamento -->
             <div class="col-md-6">
               <div class="card">
                 <div class="card-header">
@@ -795,7 +782,6 @@
               </div>
             </div>
 
-            <!-- Formulário de Valor Parcial -->
             <div class="col-12">
               <div class="card">
                 <div class="card-header">
@@ -840,7 +826,6 @@
     </div>
   </div>
 
-  <!-- Modal de Filtros -->
   <div class="modal modal-blur fade" id="modalFiltros" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -943,23 +928,17 @@
     </div>
   </div>
 
-
-  <!-- Incluir Toasts de Notificação -->
   {% include 'financeiro/contas_bancarias/toasts_conciliacao.html' %}
 
-  <!-- Script para Conciliação de Sugestões -->
   <script src="{{ url_for('static', filename='js/pages/conciliacao-sugestoes.js') }}"></script>
 
-  <!-- Script para Nova Transação OFX -->
   <script src="{{ url_for('static', filename='js/pages/conciliacao-ofx-nova-transacao-es6.js') }}"></script>
 
   <script>
-    // Configuração global para conciliação OFX
+    
     window.contaBancariaId = {{ conta_id }};
 
-    // Função global simples para notificar conciliações
     window.notificarConciliacao = function (transacaoId, agendamentoId) {
-      console.log('[Global] Conciliação realizada:', { transacaoId, agendamentoId });
       document.dispatchEvent(new CustomEvent('conciliacao-realizada', {
         detail: { transacaoId, agendamentoId }
       }));

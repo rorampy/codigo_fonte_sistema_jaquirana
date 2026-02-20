@@ -3,11 +3,7 @@ from sqlalchemy import desc
 import json
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
 
-# === Nova Arquitetura de Créditos ===
-# ServicoCreditos abstrai o acesso aos dados de crédito para compatibilidade
-# from sistema.models_views.faturamento.controle_credito.servico_creditos import ServicoCreditos
 
-# Imports para modelos de entidades
 from sistema.models_views.gerenciar.fornecedor.fornecedor_model import FornecedorModel
 from sistema.models_views.gerenciar.transportadora.transportadora_model import TransportadoraModel
 from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
@@ -18,34 +14,34 @@ class FaturamentoModel(BaseModel):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     
-    tipo_operacao = db.Column(db.Integer, nullable=False)  # 1-Carga, 2-Lancamento, 3-Credito
-    direcao_financeira = db.Column(db.Integer, nullable=False)  # 1-Receber, 2-Despesa
+    tipo_operacao = db.Column(db.Integer, nullable=False)
+    direcao_financeira = db.Column(db.Integer, nullable=False)
     
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     usuario = db.relationship('UsuarioModel', backref=db.backref('faturamentos', lazy=True))
     codigo_faturamento = db.Column(db.String(20), nullable=False)
     valor_total = db.Column(db.Integer, nullable=False)
-    valor_bruto_total = db.Column(db.Integer, nullable=True)  # Valor antes do crédito
+    valor_bruto_total = db.Column(db.Integer, nullable=True)
     valor_credito_aplicado = db.Column(db.Integer, nullable=True) 
-    valor_fornecedor = db.Column(db.Integer, nullable=True)  # Valor total dos fornecedores
-    valor_transportadora = db.Column(db.Integer, nullable=True)  # Valor total das transportadoras
-    valor_extrator = db.Column(db.Integer, nullable=True)  # Valor total dos extratores
-    valor_comissionado = db.Column(db.Integer, nullable=True)  # Valor total dos comissionados
-    valor_receita = db.Column(db.Integer, nullable=True)  # Valor total das receitas
-    valor_despesa = db.Column(db.Integer, nullable=True)  # Valor total das despesas
+    valor_fornecedor = db.Column(db.Integer, nullable=True)
+    valor_transportadora = db.Column(db.Integer, nullable=True)
+    valor_extrator = db.Column(db.Integer, nullable=True)
+    valor_comissionado = db.Column(db.Integer, nullable=True)
+    valor_receita = db.Column(db.Integer, nullable=True)
+    valor_despesa = db.Column(db.Integer, nullable=True)
     utilizou_credito = db.Column(db.Boolean, default=False, nullable=True)
-    ids_fornecedores= db.Column(db.Text, nullable=True)  # ids dos fornecedores, separados por vírgula
-    ids_fretes = db.Column(db.Text, nullable=True)      # ids dos fretes, separados por vírgula
-    ids_extratores = db.Column(db.Text, nullable=True)      # ids dos extratores, separados por vírgula
-    ids_comissionados = db.Column(db.Text, nullable=True)      # ids dos comissionados, separados por vírgula
-    ids_a_receber = db.Column(db.Text, nullable=True)      # ids dos a receber, separados por vírgula
-    ids_nf_complementar = db.Column(db.Text, nullable=True)      # ids dos a NF complementar, separados por vírgula
-    ids_nf_servico = db.Column(db.Text, nullable=True)      # ids dos a NF serviço, separados por vírgula
+    ids_fornecedores= db.Column(db.Text, nullable=True)
+    ids_fretes = db.Column(db.Text, nullable=True)
+    ids_extratores = db.Column(db.Text, nullable=True)
+    ids_comissionados = db.Column(db.Text, nullable=True)
+    ids_a_receber = db.Column(db.Text, nullable=True)
+    ids_nf_complementar = db.Column(db.Text, nullable=True)
+    ids_nf_servico = db.Column(db.Text, nullable=True)
 
     lancamento_avulso_id = db.Column(db.Integer, db.ForeignKey("lan_lancamento_avulso.id"), nullable=True)
     lancamento_avulso = db.relationship("LancamentoAvulsoModel", backref=db.backref("lancamento", lazy=True))
 
-    detalhes_json = db.Column(db.JSON, nullable=True)     # detalhes dos registros (JSON)
+    detalhes_json = db.Column(db.JSON, nullable=True)
     situacao_pagamento_id = db.Column(db.Integer, db.ForeignKey("fin_situacao_pagamento.id"), nullable=True)
     situacao = db.relationship("SituacaoPagamentoModel", backref=db.backref("faturamento_status", lazy=True))
     ativo = db.Column(db.Boolean, default=True, nullable=False)
@@ -167,7 +163,6 @@ class FaturamentoModel(BaseModel):
         if nf_servico:
             detalhes["nf_servico"] = nf_servico
         
-        # Como o campo é db.JSON, salvamos diretamente o dict (não fazemos json.dumps)
         self.detalhes_json = detalhes
 
     def obter_detalhes(self):
@@ -181,21 +176,17 @@ class FaturamentoModel(BaseModel):
             return default_detalhes
             
         try:
-            # Se for string, tentar fazer parse
             if isinstance(self.detalhes_json, str):
                 detalhes = json.loads(self.detalhes_json)
             else:
-                # Se já for dict/objeto, usar diretamente
                 detalhes = self.detalhes_json
                 
-            # Garantir que todas as chaves necessárias existam
             for chave in default_detalhes.keys():
                 if chave not in detalhes:
                     detalhes[chave] = []
                     
             return detalhes
         except Exception as e:
-            print(f"Erro ao processar detalhes_json do faturamento {self.id}: {e}")
             return default_detalhes
             
     def obter_lista_fornecedores(self):
@@ -320,18 +311,13 @@ class FaturamentoModel(BaseModel):
         Returns:
             list: Lista de objetos FaturamentoModel que atendem aos critérios de filtro.
         """
-        # Caso especial: Não Categorizado (situacao_id = 7) com filtro de beneficiário
-        # Nesse caso, não há AgendamentoPagamentoModel, então devemos buscar nos detalhes do faturamento
         if beneficiario and situacao_id == 7:
             from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
             
-            # Buscar a pessoa e seus vínculos
             pessoa = PessoaFinanceiroModel.obter_pessoa_por_id(beneficiario)
             if not pessoa or not pessoa.vinculos_operacionais:
-                # Se não tem vínculos, retornar vazio
                 return []
             
-            # Extrair IDs dos vínculos operacionais
             vinculos = pessoa.vinculos_operacionais
             ids_vinculados = {
                 'fornecedor': vinculos.get('fornecedor', []) if vinculos else [],
@@ -340,7 +326,6 @@ class FaturamentoModel(BaseModel):
                 'comissionado': vinculos.get('comissionado', []) if vinculos else []
             }
             
-            # Buscar todos os faturamentos não categorizados
             faturamentos = FaturamentoModel.query.filter(
                 FaturamentoModel.ativo == True,
                 FaturamentoModel.deletado == False,
@@ -349,30 +334,25 @@ class FaturamentoModel(BaseModel):
                 FaturamentoModel.situacao_pagamento_id == 7
             ).order_by(desc(FaturamentoModel.data_cadastro)).all()
             
-            # Filtrar em Python os que contêm os IDs vinculados nos detalhes
             faturamentos_filtrados = []
             for fat in faturamentos:
                 detalhes = fat.obter_detalhes()
                 
-                # Verificar se algum fornecedor está vinculado
                 for fornecedor in detalhes.get('fornecedores', []):
                     if fornecedor.get('fornecedor_id') in ids_vinculados['fornecedor']:
                         faturamentos_filtrados.append(fat)
                         break
                 else:
-                    # Verificar transportadoras
                     for transportadora in detalhes.get('transportadoras', []):
                         if transportadora.get('transportadora_id') in ids_vinculados['transportadora']:
                             faturamentos_filtrados.append(fat)
                             break
                     else:
-                        # Verificar extratores
                         for extrator in detalhes.get('extratores', []):
                             if extrator.get('extrator_id') in ids_vinculados['extrator']:
                                 faturamentos_filtrados.append(fat)
                                 break
                         else:
-                            # Verificar comissionados
                             for comissionado in detalhes.get('comissionados', []):
                                 if comissionado.get('comissionado_id') in ids_vinculados['comissionado']:
                                     faturamentos_filtrados.append(fat)
@@ -380,11 +360,9 @@ class FaturamentoModel(BaseModel):
             
             return faturamentos_filtrados
         
-        # Lógica normal para outros casos
         query = FaturamentoModel.query
 
         if beneficiario:
-            # Usar outerjoin para incluir faturamentos sem categorização quando não há filtro específico
             query = query.outerjoin(AgendamentoPagamentoModel).filter(
                 AgendamentoPagamentoModel.pessoa_financeiro_id == beneficiario
             )
@@ -526,7 +504,6 @@ class FaturamentoModel(BaseModel):
         grupos = defaultdict(lambda: {'registros': [], 'total': 0.0})
 
         for extrator in extratores:
-            # Tenta pegar o nome do extrator pelos diferentes campos possíveis
             nome = extrator.get('extrator_identificacao') or extrator.get('identificacao') or extrator.get('nome', 'Não informado')
             valor_str = extrator.get('valor_faturado', 'R$ 0,00')
             valor = valor_str
@@ -545,7 +522,6 @@ class FaturamentoModel(BaseModel):
         grupos = defaultdict(lambda: {'registros': [], 'total': 0.0})
 
         for comissionado in comissionados:
-            # Tenta pegar o nome do comissionado pelos diferentes campos possíveis
             nome = comissionado.get('comissionado_identificacao') or comissionado.get('identificacao') or comissionado.get('nome', 'Não informado')
             valor_str = comissionado.get('valor_faturado', 'R$ 0,00')
             valor = valor_str
@@ -566,20 +542,16 @@ class FaturamentoModel(BaseModel):
         from collections import defaultdict
         
         resultado = {
-            # Agrupamentos originais para compatibilidade
             'fornecedores_agrupados': {},
             'transportadoras_agrupadas': {},
             'extratores_agrupados': {},
             'comissionados_agrupados': {},
             'cargas_a_receber_agrupadas': {},
             
-            # Estrutura hierárquica por cliente e produto
             'dados_hierarquicos': []
         }
         
-        # === AGRUPAMENTOS ORIGINAIS ===
         
-        # Agrupar fornecedores
         grupos_fornecedores = defaultdict(lambda: {'registros': [], 'total': 0.0})
         for fornecedor in detalhes.get('fornecedores', []):
             nome = fornecedor.get('fornecedor_identificacao', 'Não informado')
@@ -593,7 +565,6 @@ class FaturamentoModel(BaseModel):
             grupos_fornecedores[nome]['total'] += valor
         resultado['fornecedores_agrupados'] = dict(grupos_fornecedores)
         
-        # Agrupar transportadoras
         grupos_transportadoras = defaultdict(lambda: {'registros': [], 'total': 0.0})
         for transportadora in detalhes.get('transportadoras', []):
             nome = transportadora.get('nome', 'Não informado') if transportadora.get('nome') else transportadora.get('transportadora_identificacao', 'Não informado')
@@ -607,7 +578,6 @@ class FaturamentoModel(BaseModel):
             grupos_transportadoras[nome]['total'] += valor
         resultado['transportadoras_agrupadas'] = dict(grupos_transportadoras)
         
-        # Agrupar extratores
         grupos_extratores = defaultdict(lambda: {'registros': [], 'total': 0.0})
         for extrator in detalhes.get('extratores', []):
             nome = extrator.get('extrator_identificacao') or extrator.get('identificacao') or extrator.get('nome', 'Não informado')
@@ -621,7 +591,6 @@ class FaturamentoModel(BaseModel):
             grupos_extratores[nome]['total'] += valor
         resultado['extratores_agrupados'] = dict(grupos_extratores)
         
-        # Agrupar comissionados
         grupos_comissionados = defaultdict(lambda: {'registros': [], 'total': 0.0})
         for comissionado in detalhes.get('comissionados', []):
             nome = comissionado.get('comissionado_identificacao') or comissionado.get('identificacao') or comissionado.get('nome', 'Não informado')
@@ -635,7 +604,6 @@ class FaturamentoModel(BaseModel):
             grupos_comissionados[nome]['total'] += valor
         resultado['comissionados_agrupados'] = dict(grupos_comissionados)
         
-        # Agrupar cargas a receber
         grupos_cargas = defaultdict(lambda: {'registros': [], 'total': 0.0})
         for carga in detalhes.get('cargas_a_receber', []):
             nome = carga.get('cliente_identificacao', 'Não informado')
@@ -649,9 +617,7 @@ class FaturamentoModel(BaseModel):
             grupos_cargas[nome]['total'] += valor
         resultado['cargas_a_receber_agrupadas'] = dict(grupos_cargas)
         
-        # === ESTRUTURA HIERÁRQUICA POR CLIENTE E PRODUTO ===
         
-        # Estrutura: clientes[cliente_nome][produto_nome] = {...}
         clientes = defaultdict(lambda: defaultdict(lambda: {
             'registros': {
                 'fornecedores': [],
@@ -670,14 +636,12 @@ class FaturamentoModel(BaseModel):
             }
         }))
         
-        # Processar cada categoria de dados
         categorias = ['fornecedores', 'transportadoras', 'extratores', 'comissionados', 'cargas_a_receber']
         
         for categoria in categorias:
             registros = detalhes.get(categoria, [])
             
             for registro in registros:
-                # Extrair cliente e produto do registro
                 cliente_nome = (
                     registro.get('cliente_identificacao') or 
                     registro.get('cliente_nome') or 
@@ -691,32 +655,26 @@ class FaturamentoModel(BaseModel):
                     'Produto não informado'
                 )
                 
-                # Extrair valor do registro
                 valor = 0.0
                 if 'valor_faturado' in registro:
                     if isinstance(registro['valor_faturado'], (int, float)):
                         valor = float(registro['valor_faturado'])
                     elif isinstance(registro['valor_faturado'], str):
-                        # Remover formatação monetária se houver
                         try:
                             valor_str = registro['valor_faturado'].replace('R$', '').replace('.', '').replace(',', '.').strip()
                             valor = float(valor_str) if valor_str else 0.0
                         except:
                             valor = 0.0
                 
-                # Adicionar registro à estrutura
                 clientes[cliente_nome][produto_nome]['registros'][categoria].append({
                     **registro,
                     'valor_faturado_num': valor
                 })
                 
-                # Somar ao total da categoria
                 clientes[cliente_nome][produto_nome]['totais'][categoria] += valor
                 
-                # Somar ao total geral
                 clientes[cliente_nome][produto_nome]['totais']['total_geral'] += valor
         
-        # Converter estrutura hierárquica para lista
         dados_hierarquicos = []
         
         for cliente_nome, produtos in clientes.items():
@@ -737,7 +695,6 @@ class FaturamentoModel(BaseModel):
             
             dados_hierarquicos.append(cliente_data)
         
-        # Ordenar clientes por nome
         dados_hierarquicos.sort(key=lambda x: x['cliente'])
         resultado['dados_hierarquicos'] = dados_hierarquicos
         
@@ -764,37 +721,31 @@ class FaturamentoModel(BaseModel):
         }
         
         try:
-            # Coletar IDs únicos de todas as entidades do faturamento
             fornecedores_ids = set()
             transportadoras_ids = set()
             extratores_ids = set()
             comissionados_ids = set()
             
-            # Extrair IDs dos fornecedores
             for fornecedor in detalhes.get('fornecedores', []):
                 fornecedor_id = fornecedor.get('fornecedor_id')
                 if fornecedor_id:
                     fornecedores_ids.add(fornecedor_id)
             
-            # Extrair IDs das transportadoras
             for transportadora in detalhes.get('transportadoras', []):
                 transportadora_id = transportadora.get('transportadora_id')
                 if transportadora_id:
                     transportadoras_ids.add(transportadora_id)
             
-            # Extrair IDs dos extratores
             for extrator in detalhes.get('extratores', []):
                 extrator_id = extrator.get('extrator_id')
                 if extrator_id:
                     extratores_ids.add(extrator_id)
                     
-            # Extrair IDs dos comissionados
             for comissionado in detalhes.get('comissionados', []):
                 comissionado_id = comissionado.get('comissionado_id')
                 if comissionado_id:
                     comissionados_ids.add(comissionado_id)
             
-            # Buscar créditos em aberto dos fornecedores via ServicoCreditos
             for fornecedor_id in fornecedores_ids:
                 creditos = ServicoCreditos.obter_creditos_disponiveis_fornecedor(fornecedor_id)
                 if creditos:
@@ -808,7 +759,6 @@ class FaturamentoModel(BaseModel):
                                 'descricao': credito.get('descricao') or "Adiantamento em aberto"
                             })
             
-            # Buscar créditos em aberto das transportadoras via ServicoCreditos
             for transportadora_id in transportadoras_ids:
                 creditos = ServicoCreditos.obter_creditos_disponiveis_transportadora(transportadora_id)
                 if creditos:
@@ -822,7 +772,6 @@ class FaturamentoModel(BaseModel):
                                 'descricao': credito.get('descricao') or "Adiantamento em aberto"
                             })
             
-            # Buscar créditos em aberto dos extratores via ServicoCreditos
             for extrator_id in extratores_ids:
                 creditos = ServicoCreditos.obter_creditos_disponiveis_extrator(extrator_id)
                 if creditos:
@@ -837,7 +786,6 @@ class FaturamentoModel(BaseModel):
                             })
         
         except Exception as e:
-            print(f"[ERROR] Erro ao buscar créditos em aberto: {e}")
             import traceback
             traceback.print_exc()
         
@@ -859,7 +807,6 @@ class FaturamentoModel(BaseModel):
             if not extrato_credito_id:
                 return "N/A"
 
-            # Mapear tipo de crédito para o campo no JSON (formato legado)
             campo_extrato_legado = {
                 'fornecedor': 'extrato_credito_fornecedor_id',
                 'transportadora': 'extrato_credito_transportadora_id', 
@@ -877,7 +824,6 @@ class FaturamentoModel(BaseModel):
             if tipo_credito not in campo_credito:
                 return "N/A"
                 
-            # Buscar em todos os faturamentos ativos
             faturamentos = FaturamentoModel.query.filter_by(ativo=True, deletado=False).all()
             
             for faturamento in faturamentos:
@@ -885,21 +831,17 @@ class FaturamentoModel(BaseModel):
                     continue
                     
                 try:
-                    # Processar detalhes JSON
                     if isinstance(faturamento.detalhes_json, dict):
                         detalhes = faturamento.detalhes_json
                     else:
                         detalhes = json.loads(faturamento.detalhes_json)
                     
-                    # Buscar no array de créditos do tipo correspondente
                     creditos = detalhes.get(campo_credito[tipo_credito], [])
                     
                     for credito in creditos:
-                        # Verificar formato novo (credito_id)
                         if credito.get('credito_id') == extrato_credito_id:
                             return faturamento.codigo_faturamento
                         
-                        # Verificar formato legado (extrato_credito_X_id)
                         if tipo_credito in campo_extrato_legado:
                             if credito.get(campo_extrato_legado[tipo_credito]) == extrato_credito_id:
                                 return faturamento.codigo_faturamento
@@ -907,7 +849,6 @@ class FaturamentoModel(BaseModel):
                 except (json.JSONDecodeError, TypeError):
                     continue
             
-            # Se não encontrou nos detalhes JSON, tentar buscar pelo TransacaoCreditoModel
             try:
                 from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import TransacaoCreditoModel
                 transacao = TransacaoCreditoModel.query.get(extrato_credito_id)
@@ -938,7 +879,6 @@ class FaturamentoModel(BaseModel):
             if not carga_pagar_id:
                 return "N/A"
 
-            # Mapear tipo de entidade para o campo ID no JSON
             campo_id = {
                 'fornecedor': 'fornecedor_a_pagar_id',
                 'transportadora': 'frete_a_pagar_id', 
@@ -946,7 +886,6 @@ class FaturamentoModel(BaseModel):
                 'extrator': 'extrator_a_pagar_id'
             }
             
-            # Mapear tipo de entidade para o campo da categoria no JSON
             campo_categoria = {
                 'fornecedor': 'fornecedores',
                 'transportadora': 'transportadoras',
@@ -957,7 +896,6 @@ class FaturamentoModel(BaseModel):
             if tipo_entidade not in campo_id:
                 return "N/A"
                 
-            # Buscar em todos os faturamentos ativos
             faturamentos = FaturamentoModel.query.filter_by(ativo=True, deletado=False).all()
             
             for faturamento in faturamentos:
@@ -965,13 +903,11 @@ class FaturamentoModel(BaseModel):
                     continue
                     
                 try:
-                    # Processar detalhes JSON
                     if isinstance(faturamento.detalhes_json, dict):
                         detalhes = faturamento.detalhes_json
                     else:
                         detalhes = json.loads(faturamento.detalhes_json)
                     
-                    # Buscar no array da categoria correspondente
                     registros = detalhes.get(campo_categoria[tipo_entidade], [])
                     
                     for registro in registros:

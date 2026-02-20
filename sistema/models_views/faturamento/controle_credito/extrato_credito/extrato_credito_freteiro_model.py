@@ -8,7 +8,6 @@ class ExtratoCreditoFreteiroModel(BaseModel):
     __tablename__ = 'ex_extrato_credito_freteiro'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
 
-    # 1 - Entrada | 2 - Saída | 3 - Cancelamento | 4 - Estorno
     tipo_movimentacao = db.Column(db.Integer, nullable=True)
 
     plano_conta_id = db.Column(db.Integer, db.ForeignKey("plan_plano_conta.id"), nullable=True)
@@ -84,8 +83,7 @@ class ExtratoCreditoFreteiroModel(BaseModel):
                 ExtratoCreditoFreteiroModel.deletado == False,
                 ExtratoCreditoFreteiroModel.ativo == True,
                 ExtratoCreditoFreteiroModel.transportadora_id == transportadora_id,
-                # Removido filtro tipo_movimentacao para incluir tanto créditos quanto débitos
-                ExtratoCreditoFreteiroModel.credito_utilizado == False  # Apenas créditos não utilizados
+                ExtratoCreditoFreteiroModel.credito_utilizado == False
             ).order_by(ExtratoCreditoFreteiroModel.data_movimentacao.desc()).all()
             
             creditos_formatados = []
@@ -100,6 +98,5 @@ class ExtratoCreditoFreteiroModel(BaseModel):
             
             return creditos_formatados
         except Exception as e:
-            print(f"[ERROR obter_creditos_disponiveis_transportadora] {e}")
             return []
 

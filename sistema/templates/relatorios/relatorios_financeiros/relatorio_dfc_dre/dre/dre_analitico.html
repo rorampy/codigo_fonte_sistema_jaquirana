@@ -314,7 +314,6 @@
 
         <div class="card-body p-0">
 
-          <!-- RECEITAS -->
           <div class="mb-4">
             <div class="d-flex align-items-center mb-3 px-3">
               <div class="badge bg-green-lt text-green me-2 rounded-pill px-3 py-2 border border-green"
@@ -340,7 +339,7 @@
                   {% for item in dre_dados.receitas.operacionais.detalhes %}
                   {% if item.valor != 0 %}
                   {% set partes_hierarquia = item.hierarquia_completa.split(' > ') %}
-                  <!-- Pegar a categoria pai mais específica (penúltima no caminho) -->
+                  
                   {% set categoria_principal = partes_hierarquia[-2] if partes_hierarquia|length > 1 else
                   partes_hierarquia[0] %}
                   {% if categoria_principal not in categorias_agrupadas %}
@@ -350,14 +349,12 @@
                   {% endif %}
                   {% endfor %}
 
-                  <!-- Ordenar grupos por código do primeiro item de cada grupo -->
                   {% set grupos_ordenados = [] %}
                   {% for categoria_principal, itens in categorias_agrupadas.items() %}
                   {% set _ = grupos_ordenados.append((itens[0].codigo[:7], categoria_principal, itens)) %}
                   {% endfor %}
                   {% set _ = grupos_ordenados.sort() %}
 
-                  <!-- Se há mais de um grupo ou se há itens detalhados, mostrar título geral -->
                   {% if grupos_ordenados|length > 1 or (grupos_ordenados|length == 1 and grupos_ordenados[0][2]|length >
                   1) %}
                   <tr class="bg-green-lt">
@@ -369,7 +366,7 @@
                   {% endif %}
 
                   {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados %}
-                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  
                   {% if grupos_ordenados|length > 1 or itens|length > 1 %}
                   <tr class="bg-green-lt">
                     <td class="ps-3 fw-medium py-2 text-green border-0">
@@ -381,7 +378,6 @@
                   </tr>
                   {% endif %}
 
-                  <!-- Sub-itens ordenados por código -->
                   {% for item in itens | sort(attribute='codigo') %}
                   <tr class="border-0">
                     <td
@@ -422,9 +418,8 @@
                   {% endfor %}
                   {% set _ = grupos_ordenados_nao_op.sort() %}
 
-                  <!-- Se há receitas não-operacionais, mostrar título -->
                   {% if grupos_ordenados_nao_op|length > 0 %}
-                  <!-- Receitas Não-Operacionais -->
+                  
                   {% set total_nao_op_sem_aplicacoes = [] %}
                   {% for item in dre_dados.receitas.nao_operacionais.detalhes %}
                   {% if not item.codigo.startswith('1.02.01') %}
@@ -439,7 +434,7 @@
                   </tr>
 
                   {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_nao_op %}
-                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  
                   {% if grupos_ordenados_nao_op|length > 1 or itens|length > 1 %}
                   <tr class="bg-green-lt">
                     <td class="ps-3 fw-medium py-2 text-green border-0">
@@ -451,7 +446,6 @@
                   </tr>
                   {% endif %}
 
-                  <!-- Sub-itens ordenados por código -->
                   {% for item in itens | sort(attribute='codigo') %}
                   <tr>
                     <td
@@ -474,7 +468,6 @@
                   {% endfor %}
                   {% endif %}
 
-                  <!-- Total Receitas -->
                   {% set total_receitas_sem_aplicacoes = dre_dados.receitas.operacionais.total +
                   (total_nao_op_sem_aplicacoes | sum(attribute='valor')) %}
                   <tr class="border-top border-1" style="border-color: #cbd5e1 !important;">
@@ -489,7 +482,6 @@
             </div>
           </div>
 
-          <!-- CUSTOS -->
           <div class="mb-4">
             <div class="d-flex align-items-center mb-3 px-3">
               <div class="badge bg-red-lt text-red me-2 rounded-pill px-3 py-2 border border-red"
@@ -532,7 +524,7 @@
                   {% set _ = grupos_ordenados_custos.sort() %}
 
                   {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_custos %}
-                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  
                   {% if grupos_ordenados_custos|length > 1 or itens|length > 1 %}
                   <tr class="bg-red-lt">
                     <td class="ps-3 fw-medium py-2 text-red border-0">
@@ -544,7 +536,6 @@
                   </tr>
                   {% endif %}
 
-                  <!-- Sub-itens ordenados por código -->
                   {% for item in itens | sort(attribute='codigo') %}
                   <tr class="border-0">
                     <td
@@ -566,7 +557,6 @@
                   {% endfor %}
                   {% endfor %}
 
-                  <!-- Total Custos -->
                   {% set total_custos_sem_exclusoes = [] %}
                   {% for item in dre_dados.custos.operacionais.detalhes %}
                   {% if not item.codigo.startswith('2.01.11') and not item.codigo.startswith('2.02.05') %}
@@ -585,7 +575,6 @@
             </div>
           </div>
 
-          <!-- MARGEM DE CONTRIBUIÇÃO -->
           {% set margem_contribuicao_filtrada = total_receitas_sem_aplicacoes - (total_custos_sem_exclusoes |
           sum(attribute='valor')) %}
           {% set margem_percentual_filtrada = (margem_contribuicao_filtrada / total_receitas_sem_aplicacoes * 100) if
@@ -617,7 +606,6 @@
             </div>
           </div>
 
-          <!-- DESPESAS - só mostra se há despesas -->
           {% if dre_dados.despesas.total > 0 %}
           <div class="mb-4">
             <div class="d-flex align-items-center mb-3 px-3">
@@ -661,7 +649,7 @@
                   {% set _ = grupos_ordenados_despesas.sort() %}
 
                   {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_despesas %}
-                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  
                   {% if grupos_ordenados_despesas|length > 1 or itens|length > 1 %}
                   <tr class="bg-orange-lt">
                     <td class="ps-3 fw-medium py-2 text-orange border-0">
@@ -673,7 +661,6 @@
                   </tr>
                   {% endif %}
 
-                  <!-- Sub-itens ordenados por código -->
                   {% for item in itens | sort(attribute='codigo') %}
                   <tr class="border-0">
                     <td
@@ -695,7 +682,6 @@
                   {% endfor %}
                   {% endfor %}
 
-                  <!-- Total Despesas -->
                   <tr class="border-top border-1" style="border-color: #e2e8f0 !important;">
                     <td class="fw-medium ps-3 py-3"
                       style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;">TOTAL DE DESPESAS</td>
@@ -709,7 +695,6 @@
           </div>
           {% endif %}
 
-          <!-- RESULTADO OPERACIONAL -->
           {% if dre_dados.resultado.operacional is defined %}
           <div class="mb-4">
             <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
@@ -737,7 +722,6 @@
           </div>
           {% endif %}
 
-          <!-- ATIVIDADES DE INVESTIMENTO - só mostra se há valores -->
           {% set compra_floresta = [] %}
           {% for item in dre_dados.custos.operacionais.detalhes %}
           {% if item.codigo.startswith('2.01.11') and item.valor != 0 %}
@@ -787,7 +771,7 @@
                   {% set _ = grupos_ordenados_inv.sort() %}
 
                   {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_inv %}
-                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  
                   {% if grupos_ordenados_inv|length > 1 or itens|length > 1 %}
                   <tr class="bg-orange-light">
                     <td class="ps-3 fw-medium py-2 text-orange border-0">
@@ -799,7 +783,6 @@
                   </tr>
                   {% endif %}
 
-                  <!-- Sub-itens ordenados por código -->
                   {% for item in itens | sort(attribute='codigo') %}
                   <tr class="border-0">
                     <td
@@ -821,7 +804,6 @@
                   {% endfor %}
                   {% endfor %}
 
-                  <!-- Total Atividades de Investimento -->
                   <tr class="border-top border-1" style="border-color: #cbd5e1 !important;">
                     <td class="fw-medium ps-3 py-3"
                       style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">TOTAL ATIVIDADES DE
@@ -836,18 +818,15 @@
           </div>
           {% endif %}
 
-          <!-- ATIVIDADES DE FINANCIAMENTO - só mostra se há valores -->
           {% set aplicacoes_financeiras = [] %}
           {% set retirada_capital = [] %}
 
-          <!-- Buscar Aplicações Financeiras nas receitas não-operacionais -->
           {% for item in dre_dados.receitas.nao_operacionais.detalhes %}
           {% if item.codigo.startswith('1.02.01') and item.valor != 0 %}
           {% set _ = aplicacoes_financeiras.append(item) %}
           {% endif %}
           {% endfor %}
 
-          <!-- Buscar Retirada de Capital nos custos operacionais -->
           {% for item in dre_dados.custos.operacionais.detalhes %}
           {% if item.codigo.startswith('2.02.05') and item.valor != 0 %}
           {% set _ = retirada_capital.append(item) %}
@@ -876,7 +855,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <!-- Agrupamento das Aplicações Financeiras por categoria pai -->
+                  
                   {% set categorias_agrupadas_fin = {} %}
                   {% for item in aplicacoes_financeiras %}
                   {% set partes_hierarquia = item.hierarquia_completa.split(' > ') %}
@@ -888,7 +867,6 @@
                   {% set _ = categorias_agrupadas_fin[categoria_principal].append(item) %}
                   {% endfor %}
 
-                  <!-- Agrupamento da Retirada de Capital por categoria pai -->
                   {% for item in retirada_capital %}
                   {% set partes_hierarquia = item.hierarquia_completa.split(' > ') %}
                   {% set categoria_principal = partes_hierarquia[-2] if partes_hierarquia|length > 1 else
@@ -906,7 +884,7 @@
                   {% set _ = grupos_ordenados_fin.sort() %}
 
                   {% for codigo_ordenacao, categoria_principal, itens in grupos_ordenados_fin %}
-                  <!-- Categoria Principal - só exibe se há múltiplos grupos ou múltiplos itens no grupo -->
+                  
                   {% if grupos_ordenados_fin|length > 1 or itens|length > 1 %}
                   <tr class="bg-gray-lt">
                     <td class="ps-3 fw-medium py-2 text-gray border-0">
@@ -926,7 +904,6 @@
                   </tr>
                   {% endif %}
 
-                  <!-- Sub-itens ordenados por código -->
                   {% for item in itens | sort(attribute='codigo') %}
                   <tr class="border-0">
                     <td
@@ -953,7 +930,6 @@
                   {% endfor %}
                   {% endfor %}
 
-                  <!-- Total Atividades de Financiamento -->
                   {% set total_financiamento = (aplicacoes_financeiras | sum(attribute='valor')) - (retirada_capital |
                   sum(attribute='valor')) %}
                   <tr class="border-top border-1" style="border-color: #cbd5e1 !important;">
@@ -970,46 +946,15 @@
           </div>
           {% endif %}
 
-          <!-- VARIAÇÃO DE CAIXA -->
           {% if dre_dados.resultado.variacao_caixa is defined %}
-          <!-- <div class="mb-4">
-            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
-              <div class="card-body text-center py-4 px-4">
-                <div class="d-flex align-items-center justify-content-between">
-                  <div class="d-flex align-items-center">
-                    <div class="badge me-3 rounded-circle p-2" style="background: #334155; color: white;">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                        <line x1="8" y1="21" x2="16" y2="21" />
-                        <line x1="12" y1="17" x2="12" y2="21" />
-                      </svg>
-                    </div>
-                    <h5 class="mb-0 fw-medium" style="color: #334155; letter-spacing: 0.3px;">VARIAÇÃO DE CAIXA</h5>
-                  </div>
-                  {% set total_atividades_investimento = -(compra_floresta | sum(attribute='valor')) %}
-                  {% set total_atividades_financiamento = (aplicacoes_financeiras | sum(attribute='valor')) - (retirada_capital | sum(attribute='valor')) %}
-                  {% set variacao_caixa_filtrada = resultado_operacional_filtrado + total_atividades_investimento + total_atividades_financiamento %}
-                  <h4 class="mb-0 fw-bold"
-                    style="color: {% if variacao_caixa_filtrada >= 0 %}#334155{% else %}#dc2626{% endif %}; font-size: 1.4rem;">
-                    {{ variacao_caixa_filtrada | formatar_float_para_brl }}
-                  </h4>
-                </div>
-                <div class="mt-3 pt-3 border-top" style="border-color: #cbd5e1 !important;">
-                  <small class="text-muted">
-                    Resultado Operacional + Atividades de Investimento + Atividades de Financiamento
-                  </small>
-                </div>
-              </div>
-            </div>
-          </div> -->
+          
           {% endif %}
 
         </div>
       </div>
 
       {% else %}
-      <!-- Estado vazio -->
+      
       <div class="card">
         <div class="card-body text-center p-5">
           <div class="mb-4">
@@ -1043,7 +988,6 @@
     </div>
   </div>
 
-  <!-- Modal de Filtros -->
   <div class="modal modal-blur fade" id="modal-filtros" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
       <form action="{{ url_for('dre_analitico') }}" method="POST">
@@ -1053,7 +997,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <!-- Opção de Filtro por Exercício -->
+            
             <div class="mb-4">
               <label class="form-label fw-semibold">Filtrar por Exercício</label>
               <div class="row">
@@ -1073,7 +1017,6 @@
 
             <hr class="my-4">
 
-            <!-- Período Personalizado -->
             <div class="mb-3">
               <label class="form-label fw-semibold">Selecione um período personalizado:</label>
             </div>
@@ -1111,7 +1054,6 @@
   {% include 'estrutura/footer.html' %}
 </div>
 
-<!-- Modal para exibir detalhes da categoria -->
 <div class="modal fade" id="modalDetalhesCategoria" tabindex="-1" aria-labelledby="modalDetalhesCategoriaLabel"
   aria-hidden="true">
   <div class="modal-dialog modal-xl">
@@ -1150,7 +1092,6 @@
           </div>
         </div>
 
-        <!-- Subtotais NF Complementar (positivas/negativas) - visível somente para 1.01.03 -->
         <div class="row mb-3" id="subtotaisNfComplementar" style="display: none;">
           <div class="col-md-4">
             <div class="card border-success">
@@ -1181,7 +1122,6 @@
           </div>
         </div>
 
-        <!-- Alerta de Categorização Incompleta -->
         <div class="alert alert-warning d-flex align-items-start" id="alertaCategorizacaoIncompleta" style="display: none !important;">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2 mt-1 flex-shrink-0">
@@ -1208,7 +1148,7 @@
               </tr>
             </thead>
             <tbody id="tabelaDetalhes">
-              <!-- Conteúdo será preenchido via JavaScript -->
+              
             </tbody>
           </table>
         </div>
@@ -1253,7 +1193,7 @@
 </div>
 
 <script>
-  // Variáveis para armazenar dados do modal atual
+  
   let modalCategoriaId = null;
   let modalDataInicio = null;
   let modalDataFim = null;
@@ -1274,7 +1214,6 @@
     }
   }
 
-  // Limpar exercício quando selecionar datas personalizadas
   document.addEventListener('DOMContentLoaded', function () {
     const dataInicio = document.querySelector('input[name="data_inicio"]');
     const dataFim = document.querySelector('input[name="data_fim"]');
@@ -1294,7 +1233,6 @@
       });
     }
 
-    // Event listener para links de categoria
     document.querySelectorAll('.categoria-link').forEach(function (link) {
       link.addEventListener('click', function (e) {
         e.preventDefault();
@@ -1302,7 +1240,6 @@
         const categoriaId = this.getAttribute('data-categoria-id');
         const categoriaNome = this.getAttribute('data-categoria-nome');
 
-        // Obter datas do filtro atual
         const dataInicio = '{{ dados_form.data_inicio }}';
         const dataFim = '{{ dados_form.data_fim }}';
 
@@ -1312,23 +1249,20 @@
   });
 
   function carregarDetalhesCategoria(categoriaId, categoriaNome, dataInicio, dataFim) {
-    // Armazenar dados para exportação
+    
     modalCategoriaId = categoriaId;
     modalDataInicio = dataInicio;
     modalDataFim = dataFim;
     modalTemDados = false;
     
-    // Ocultar botões de exportação e subtotais inicialmente
     document.getElementById('botoesExportacao').style.display = 'none';
     document.getElementById('subtotaisNfComplementar').style.display = 'none';
     document.getElementById('alertaCategorizacaoIncompleta').style.display = 'none';
     document.getElementById('alertaCategorizacaoIncompleta').style.cssText = 'display: none !important;';
     
-    // Mostrar modal
     const modal = new bootstrap.Modal(document.getElementById('modalDetalhesCategoria'));
     document.getElementById('nomeCategoria').textContent = categoriaNome;
 
-    // Mostrar loading
     document.getElementById('loadingDetalhes').style.display = 'block';
     document.getElementById('tabelaDetalhesContainer').style.display = 'none';
     document.getElementById('erroDetalhes').style.display = 'none';
@@ -1337,7 +1271,6 @@
 
     modal.show();
 
-    // Fazer requisição AJAX
     const url = `/relatorios/relatorios-financeiros/dre-categoria-detalhes/${categoriaId}?data_inicio=${dataInicio}&data_fim=${dataFim}`;
 
     fetch(url)
@@ -1348,26 +1281,20 @@
         return response.json();
       })
       .then(data => {
-        // Ocultar loading
+        
         document.getElementById('loadingDetalhes').style.display = 'none';
 
-        // Debug: verificar se os dados chegaram
-        console.log('Dados recebidos:', data);
-
-        // Atualizar contadores
         document.getElementById('totalRegistros').textContent = data.quantidade;
         document.getElementById('valorTotal').textContent = data.total_formatado || new Intl.NumberFormat('pt-BR', {
           style: 'currency',
           currency: 'BRL'
         }).format(data.total);
         
-        // Mostrar botões de exportação se houver dados E for categoria automática
         if (data.quantidade > 0 && data.permite_exportacao) {
           modalTemDados = true;
           document.getElementById('botoesExportacao').style.display = 'block';
         }
 
-        // Mostrar subtotais NF Complementar se disponível
         if (data.subtotais_nfc) {
           const sub = data.subtotais_nfc;
           document.getElementById('totalPositivas').textContent = sub.total_positivas_fmt;
@@ -1379,7 +1306,6 @@
           document.getElementById('subtotaisNfComplementar').style.display = 'flex';
         }
 
-        // Mostrar alerta de categorização incompleta se houver
         if (data.categorizacao_incompleta && data.categorizacao_incompleta.tem_incompletos) {
           const alerta = document.getElementById('alertaCategorizacaoIncompleta');
           const textoAlerta = document.getElementById('alertaCategorizacaoTexto');
@@ -1391,10 +1317,8 @@
           alerta.style.cssText = 'display: flex !important;';
         }
 
-        // Preencher tabela
         const tbody = document.getElementById('tabelaDetalhes');
         tbody.innerHTML = '';
-
 
         if (data.registros.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum registro encontrado</td></tr>';
@@ -1402,24 +1326,21 @@
           data.registros.forEach(registro => {
             const row = document.createElement('tr');
             
-            // Estilizar linha conforme tipo NF Complementar
             if (registro.tipo_nf_complementar === 'positiva') {
               row.style.borderLeft = '3px solid #2fb344';
             } else if (registro.tipo_nf_complementar === 'negativa') {
               row.style.borderLeft = '3px solid #d63939';
             }
             
-            // Destacar linhas com categorização incompleta
             if (registro.categorizacao_incompleta) {
               row.style.backgroundColor = '#fff3cd';
               row.style.borderLeft = '3px solid #f59f00';
               row.title = `Categorização incompleta: R$ ${new Intl.NumberFormat('pt-BR', {minimumFractionDigits: 2}).format(registro.valor_nao_categorizado)} não categorizado(s) do total de R$ ${new Intl.NumberFormat('pt-BR', {minimumFractionDigits: 2}).format(registro.valor_total_original)}`;
             }
             
-            // Formatar descrição de forma mais clara
             let descricaoFormatada = '';
             if (registro.descricao) {
-              // Separar os itens por bullet point e criar linhas separadas
+              
               const itens = registro.descricao.split(' • ');
               if (itens.length > 1) {
                 descricaoFormatada = itens.map(item => `<div class="text-muted small">${item}</div>`).join('');
@@ -1456,16 +1377,14 @@
           });
         }
 
-        // Mostrar tabela
         const tableContainer = document.getElementById('tabelaDetalhesContainer');
         tableContainer.style.display = 'block';
         tableContainer.style.visibility = 'visible';
       })
       .catch(error => {
-        // Ocultar loading
+        
         document.getElementById('loadingDetalhes').style.display = 'none';
 
-        // Mostrar erro
         document.getElementById('mensagemErro').textContent = error.message;
         document.getElementById('erroDetalhes').style.display = 'block';
 
@@ -1482,7 +1401,6 @@
     const tipo = isPdf ? 'pdf' : 'excel';
     const url = `/relatorios/relatorios-financeiros/dre-categoria-detalhes/${modalCategoriaId}/${tipo}?data_inicio=${modalDataInicio}&data_fim=${modalDataFim}`;
     
-    // Abrir em nova aba
     window.open(url, '_blank');
   }
 </script>

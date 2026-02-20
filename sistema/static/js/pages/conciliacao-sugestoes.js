@@ -1,18 +1,16 @@
-// Sistema de Conciliação de Sugestões OFX
+
 class ConciliacaoSugestoes {
     constructor() {
         this.dadosConciliacao = null;
         this.inicializar();
     }
 
-    // Inicializa eventos e componentes
     inicializar() {
         this.configurarEventos();
         this.inicializarComponentes();
         this.configurarEventoConciliacao();
     }
 
-    // Escuta eventos de conciliação para remover agendamento de outras sugestões
     configurarEventoConciliacao() {
         document.addEventListener('conciliacao-realizada', (event) => {
             const { agendamentoId } = event.detail;
@@ -22,9 +20,8 @@ class ConciliacaoSugestoes {
         });
     }
 
-    // Configura eventos de clique nos botões de conciliar
     configurarEventos() {
-        // Evento para botões de conciliação de sugestões
+        
         document.addEventListener('click', (event) => {
             if (event.target.closest('.btn-conciliar-sugestao')) {
                 event.preventDefault();
@@ -32,7 +29,6 @@ class ConciliacaoSugestoes {
             }
         });
 
-        // Evento para confirmar conciliação no modal
         const btnConfirmar = document.getElementById('btn-confirmar-conciliacao');
         if (btnConfirmar) {
             btnConfirmar.addEventListener('click', () => {
@@ -41,12 +37,10 @@ class ConciliacaoSugestoes {
         }
     }
 
-    // Inicializa componentes Bootstrap
     inicializarComponentes() {
         this.modal = new bootstrap.Modal(document.getElementById('modal-confirmar-conciliacao'));
     }
 
-    // Abre o modal de confirmação de conciliação
     abrirModalConciliacao(botao) {
         const agendamentoId = botao.dataset.agendamentoId;
         const transacaoId = botao.dataset.transacaoId;
@@ -56,7 +50,6 @@ class ConciliacaoSugestoes {
             return;
         }
 
-        // Buscar dados dos elementos na página
         const dadosTransacao = this.extrairDadosTransacao(transacaoId);
         const dadosAgendamento = this.extrairDadosAgendamento(botao);
 
@@ -65,7 +58,6 @@ class ConciliacaoSugestoes {
             return;
         }
 
-        // Armazenar dados para uso posterior
         this.dadosConciliacao = {
             transacao_id: transacaoId,
             agendamento_id: agendamentoId,
@@ -73,23 +65,19 @@ class ConciliacaoSugestoes {
             agendamento: dadosAgendamento
         };
 
-        // Preencher modal com os dados
         this.preencherModal();
         
-        // Mostrar modal
         this.modal.show();
     }
 
-    // Extrai dados da transação OFX da página
     extrairDadosTransacao(transacaoId) {
-        // Busca o card da transação pela estrutura da página
+        
         const cardTransacao = document.querySelector(`.conciliacao-ofx-id-${transacaoId} .card[data-transacao-id]`);
         if (!cardTransacao) {
             console.error(`Card da transação ${transacaoId} não encontrado`);
             return null;
         }
 
-        // Verificar se é conciliação parcial e usar valor disponível
         const isParcial = cardTransacao.dataset.conciliacaoParcial === 'true';
         const valor = isParcial 
             ? (cardTransacao.dataset.transacaoValorDisponivel || cardTransacao.dataset.transacaoValor || '-')
@@ -106,7 +94,6 @@ class ConciliacaoSugestoes {
         };
     }
 
-    // Extrai dados do agendamento do card de sugestão
     extrairDadosAgendamento(botao) {
         const card = botao.closest('.sugestao-card');
         if (!card) return null;
@@ -116,7 +103,6 @@ class ConciliacaoSugestoes {
         const pessoa = card.querySelector('.beneficiario-sugestao strong')?.textContent || '-';
         const origem = card.querySelector('.badge')?.textContent || '-';
         
-        // Extrair categorias
         const categorias = [];
         const badgesCategorias = card.querySelectorAll('.categorias-sugestao .badge');
         badgesCategorias.forEach(badge => {
@@ -134,28 +120,23 @@ class ConciliacaoSugestoes {
         };
     }
 
-    // Preenche o modal com os dados da conciliação
     preencherModal() {
         const { transacao, agendamento } = this.dadosConciliacao;
 
-        // Preenche dados da transação
         document.getElementById('modal-transacao-valor').textContent = transacao.valor;
         document.getElementById('modal-transacao-data').textContent = transacao.data;
         document.getElementById('modal-transacao-descricao').textContent = transacao.descricao;
         document.getElementById('modal-transacao-fitid').textContent = transacao.fitid;
 
-        // Preenche dados do agendamento
         document.getElementById('modal-agendamento-valor').textContent = agendamento.valor;
         document.getElementById('modal-agendamento-vencimento').textContent = agendamento.vencimento;
         document.getElementById('modal-agendamento-pessoa').textContent = agendamento.pessoa;
         document.getElementById('modal-agendamento-origem').textContent = agendamento.origem;
 
-        // Preencher categorias
         this.preencherCategorias(agendamento.categorias);
 
     }
 
-    // Preenche as categorias no modal
     preencherCategorias(categorias) {
         const container = document.getElementById('modal-agendamento-categorias');
         container.innerHTML = '';
@@ -173,8 +154,6 @@ class ConciliacaoSugestoes {
         });
     }
 
-
-    // Converte valor formatado para número
     converterValorParaNumero(valor) {
         return parseFloat(
             valor.replace('R$', '')
@@ -184,7 +163,6 @@ class ConciliacaoSugestoes {
         ) || 0;
     }
 
-    // Confirma e processa a conciliação
     async confirmarConciliacao() {
         if (!this.dadosConciliacao) {
             this.mostrarToast('erro', 'Dados da conciliação perdidos.');
@@ -196,7 +174,7 @@ class ConciliacaoSugestoes {
         const texto = btnConfirmar.querySelector('.btn-text');
 
         try {
-            // Mostrar loading
+            
             this.mostrarToast('loading', 'Processando conciliação...');
             btnConfirmar.disabled = true;
             spinner.classList.remove('d-none');
@@ -215,18 +193,16 @@ class ConciliacaoSugestoes {
 
             const data = await response.json();
 
-            // Esconder loading
             this.esconderToast('loading');
 
             if (data.success) {
-                // Mostrar sucesso e fechar modal
+                
                 this.mostrarToast('sucesso', data.message);
                 this.modal.hide();
                 
-                // Recarregar página após 1.5s para atualizar valores
                 setTimeout(() => window.location.reload(), 1500);
             } else {
-                // Erro - mostrar mensagem
+                
                 this.mostrarToast('erro', data.message || 'Erro ao processar conciliação.');
             }
 
@@ -235,25 +211,21 @@ class ConciliacaoSugestoes {
             this.esconderToast('loading');
             this.mostrarToast('erro', 'Erro de comunicação com o servidor.');
         } finally {
-            // Restaurar botão
+            
             btnConfirmar.disabled = false;
             spinner.classList.add('d-none');
             texto.textContent = 'Confirmar Conciliação';
         }
     }
 
-    // Remove a transação completa da tela quando uma conciliação é realizada
     removerTransacaoCompletaComEfeito(transacaoId) {
-        console.log(`[Conciliação] Removendo transação completa ${transacaoId} da tela`);
         
-        // Buscar a linha completa da transação usando o ID
         const linhaTransacao = document.querySelector(`.conciliacao-ofx-id-${transacaoId}`);
         if (!linhaTransacao) {
             console.warn(`[Conciliação] Linha da transação ${transacaoId} não encontrada`);
             return;
         }
 
-        // Efeito visual de sucesso antes de remover
         linhaTransacao.style.transition = 'all 0.5s ease-out';
         linhaTransacao.style.transform = 'scale(1.02)';
         linhaTransacao.style.backgroundColor = '#d4edda';
@@ -261,7 +233,6 @@ class ConciliacaoSugestoes {
         linhaTransacao.style.padding = '10px';
         linhaTransacao.style.boxShadow = '0 4px 15px rgba(40, 167, 69, 0.4)';
 
-        // Estilizar todos os cards internos
         const todosCards = linhaTransacao.querySelectorAll('.card');
         todosCards.forEach(card => {
             card.style.transition = 'all 0.5s ease-out';
@@ -269,7 +240,6 @@ class ConciliacaoSugestoes {
             card.style.backgroundColor = '#f8f9fa';
         });
 
-        // Adicionar ícone de sucesso
         const iconeSucesso = document.createElement('div');
         iconeSucesso.innerHTML = `
             <div style="position: absolute; top: 10px; right: 15px; z-index: 1000;">
@@ -282,44 +252,39 @@ class ConciliacaoSugestoes {
         linhaTransacao.appendChild(iconeSucesso);
 
         setTimeout(() => {
-            // Fade out da transação
+            
             linhaTransacao.style.transition = 'all 0.6s ease-in';
             linhaTransacao.style.opacity = '0';
             linhaTransacao.style.transform = 'scale(0.95) translateY(-30px)';
             
             setTimeout(() => {
-                // Colapso final da altura
+                
                 const alturaAtual = linhaTransacao.offsetHeight;
                 
                 linhaTransacao.style.transition = 'all 0.5s ease-in-out';
                 linhaTransacao.style.height = alturaAtual + 'px';
                 linhaTransacao.style.overflow = 'hidden';
                 
-                // Forçar reflow
                 linhaTransacao.offsetHeight;
                 
-                // Colapsar completamente
                 linhaTransacao.style.height = '0px';
                 linhaTransacao.style.padding = '0';
                 linhaTransacao.style.margin = '0';
                 
                 setTimeout(() => {
                     linhaTransacao.remove();
-                    console.log(`[Conciliação] Transação ${transacaoId} removida da interface`);
                     
-                    // Verifica se página ficou vazia
                     this.verificarPaginaVazia();
                 }, 500);
             }, 600);
         }, 600);
     }
 
-    // Verifica se a página ficou sem transações e mostra mensagem
     verificarPaginaVazia() {
         const transacoesRestantes = document.querySelectorAll('.row.row-cards[class*="conciliacao-ofx-id-"]');
         
         if (transacoesRestantes.length === 0) {
-            // Cria mensagem de página vazia
+            
             const container = document.querySelector('.container-xl');
             if (container) {
                 const mensagemVazia = document.createElement('div');
@@ -350,7 +315,6 @@ class ConciliacaoSugestoes {
                     </div>
                 `;
                 
-                // Insere após mensagens flash se existirem
                 const mensagensFlash = container.querySelector('.alert');
                 if (mensagensFlash) {
                     mensagensFlash.after(mensagemVazia);
@@ -361,34 +325,25 @@ class ConciliacaoSugestoes {
         }
     }
 
-    // Remove agendamento de todas as outras sugestões da página
     removerAgendamentoDeTodasSugestoes(agendamentoId) {
-        console.log(`[Conciliação] Removendo agendamento ${agendamentoId} de todas as sugestões`);
         
-        // Busca todos os botões de conciliação com este agendamento ID
         const botoesConciliacao = document.querySelectorAll(`.btn-conciliar-sugestao[data-agendamento-id="${agendamentoId}"]`);
         
-        // Para cada botão encontrado, remove o card pai
         botoesConciliacao.forEach((botao, index) => {
-            console.log(`[Conciliação] Removendo sugestão ${index + 1} do agendamento ${agendamentoId}`);
             
-            // Encontra o card pai da sugestão
             const cardSugestao = botao.closest('.sugestao-card') || botao.closest('.card') || botao.closest('.col-12');
             
             if (cardSugestao) {
-                // Fade out simples
+                
                 cardSugestao.style.transition = 'opacity 0.3s ease-out';
                 cardSugestao.style.opacity = '0';
                 
-                // Remove após a animação
                 setTimeout(() => {
                     cardSugestao.remove();
-                    console.log(`[Conciliação] Card do agendamento ${agendamentoId} removido`);
                 }, 300);
             }
         });
         
-        // Se removeu alguma sugestão, verifica se alguma aba ficou vazia
         if (botoesConciliacao.length > 0) {
             setTimeout(() => {
                 this.verificarTabsVazias();
@@ -396,15 +351,13 @@ class ConciliacaoSugestoes {
         }
     }
 
-    // Verifica se alguma tab de sugestões ficou vazia e mostra mensagem
     verificarTabsVazias() {
-        // Buscar todas as tabs de sugestão
+        
         const tabsSugestao = document.querySelectorAll('[id*="tabs-sugestao-"]');
         
         tabsSugestao.forEach(tab => {
             const sugestoesRestantes = tab.querySelectorAll('.sugestao-card, .card[data-agendamento-id]');
             
-            // Se não tem mais sugestões, mostrar mensagem
             if (sugestoesRestantes.length === 0) {
                 tab.innerHTML = `
                     <div class="text-center py-4">
@@ -423,14 +376,12 @@ class ConciliacaoSugestoes {
         });
     }
 
-    // Mostra toast de notificação
     mostrarToast(tipo, mensagem) {
         const toastId = `toast-conciliacao-${tipo}`;
         const toastElement = document.getElementById(toastId);
         
         if (!toastElement) return;
 
-        // Atualizar mensagem se necessário
         if (tipo !== 'loading') {
             const detalhes = toastElement.querySelector(`#toast-conciliacao-${tipo === 'sucesso' ? 'detalhes' : 'erro-detalhes'}`);
             if (detalhes) {
@@ -442,7 +393,6 @@ class ConciliacaoSugestoes {
         toast.show();
     }
 
-    // Esconde toast específico
     esconderToast(tipo) {
         const toastId = `toast-conciliacao-${tipo}`;
         const toastElement = document.getElementById(toastId);
@@ -456,12 +406,10 @@ class ConciliacaoSugestoes {
     }
 }
 
-// Inicializar quando DOM estiver pronto
 document.addEventListener('DOMContentLoaded', () => {
     window.conciliacaoSugestoes = new ConciliacaoSugestoes();
 });
 
-// Exportar para uso em módulos se necessário
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ConciliacaoSugestoes;
 }

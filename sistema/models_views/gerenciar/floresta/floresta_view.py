@@ -7,7 +7,6 @@ from sistema.models_views.pontuacao_usuario.pontuacao_usuario_model import Pontu
 from sistema.enum.pontuacao_enum.pontuacao_enum import TipoAcaoEnum
 from sistema._utilitarios import *
 
-# =========================> DESCONTINUADO <=========================
 
 @app.route("/gerenciar/florestas/cadastrar", methods=["GET", "POST"])
 @login_required
@@ -142,7 +141,6 @@ def editar_floresta(id):
 
         if gravar_banco == True:
 
-            # === Comparação de objetos ===
             obj1 = {
                 "identificacao": floresta.identificacao or "",
                 "rodovia": floresta.rodovia or "",
@@ -161,7 +159,6 @@ def editar_floresta(id):
                 "credito_100": credito_floresta_100,
             }
 
-            # === Registra Pontuação ===
             diferencas = Gameficacao.compara_objetos(obj1, obj2)
             if diferencas:
                 acao = TipoAcaoEnum.EDICAO
@@ -226,5 +223,3 @@ def ativar_floresta(id):
     flash(("Floresta ativada com sucesso!", "success"))
     return redirect(url_for("listar_florestas"))
 
-
-# =====================================================================

@@ -40,12 +40,10 @@ class FretePagarModel(BaseModel):
 
     utiliza_credito = db.Column(db.Boolean, nullable=True)
 
-    # Caso utiliza credito
     valor_credito_100 = db.Column(db.Integer, nullable=True)
 
     utiliza_saldo_movimentacao = db.Column(db.Boolean, nullable=True)
 
-    # Guarda valor saldo debitado
     valor_saldo_debitado_100 = db.Column(db.Integer, nullable=True)
 
     comprovante_pagamento_complementar_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
@@ -67,7 +65,6 @@ class FretePagarModel(BaseModel):
     preco_custo_bitola_100 = db.Column(db.Integer, nullable=False)
     valor_total_a_pagar_100 = db.Column(db.Integer, nullable=False)
 
-    # Associação com movimentação financeira de pagamento em massa (conciliada)
     movimentacao_financeira_id = db.Column(db.Integer, db.ForeignKey('mov_movimentacao_financeira.id'), nullable=True)
     movimentacao_financeira = db.relationship('MovimentacaoFinanceiraModel', foreign_keys=[movimentacao_financeira_id], backref=db.backref('transportadoras_pagas_massa', lazy=True))
 
@@ -272,28 +269,22 @@ class FretePagarModel(BaseModel):
         """Filtra fretes por transportadora com informações relacionadas."""
         from sistema.models_views.controle_carga.registro_operacional.registro_operacional_model import RegistroOperacionalModel
         
-        # Define período padrão se não informado
         if not data_inicio or not data_fim:
             data_inicio = date.today() - timedelta(days=30)
             data_fim = date.today()
 
-        # Determinar o campo de data para o filtro
         if tipo_data_filtro == 'data_emissao':
             campo_data = RegistroOperacionalModel.destinatario_data_emissao
         else:
-            # Padrão: data de entrega do ticket
             campo_data = RegistroOperacionalModel.data_entrega_ticket
 
-        # Cria query base
         query = FretePagarModel._criar_query_base()
 
-        # Aplica filtros de data
         query = query.filter(
             campo_data.isnot(None),
             campo_data.between(data_inicio, data_fim)
         )
 
-        # Filtros por texto usando LIKE
         if cliente:
             query = query.filter(ClienteModel.identificacao.ilike(f"%{cliente}%"))
         if motorista:
@@ -307,17 +298,14 @@ class FretePagarModel(BaseModel):
         if placa:
             query = query.filter(VeiculoModel.placa_veiculo.ilike(f"%{placa}%"))
 
-        # Filtro de produto usando LIKE
         if produto:
             query = query.join(ProdutoModel, CargaModel.produto).filter(
                 ProdutoModel.nome.ilike(f"%{produto}%")
             )
 
-        # Filtro específico para status pagamento (mantém por ID)
         if statusPagamento:
             query = query.filter(SituacaoPagamentoModel.id == statusPagamento)
 
-        # Filtro especial para número de NF (múltiplos campos)
         if numero_nf:
             query = query.filter(
                 or_(
@@ -328,14 +316,12 @@ class FretePagarModel(BaseModel):
                 )
             )
 
-        # Ordena resultados
         query = query.order_by(
             case((TransportadoraModel.identificacao.is_(None), 1), else_=0),
             TransportadoraModel.identificacao.asc(),
             TransportadoraModel.id.desc(),
         )
 
-        # Processa resultados
         return [
             {
                 "registro": registro,
@@ -450,8 +436,8 @@ class FretePagarModel(BaseModel):
             .filter(
                 FretePagarModel.deletado == False,
                 FretePagarModel.ativo == True,
-                FretePagarModel.situacao_pagamento_id == 1,  # somente pagos
-                MovimentacaoFinanceiraModel.tipo_movimentacao == 2,  # saída/pagamento
+                FretePagarModel.situacao_pagamento_id == 1,
+                MovimentacaoFinanceiraModel.tipo_movimentacao == 2,
             )
         )
 
@@ -492,7 +478,6 @@ class FretePagarModel(BaseModel):
         """
         query = FretePagarModel.query
         
-        # Aplicar filtros de data se fornecidos
         if data_inicio or data_fim:        
             if data_inicio:
                 query = query.filter(FretePagarModel.data_entrega_ticket >= data_inicio)
@@ -502,10 +487,8 @@ class FretePagarModel(BaseModel):
                 data_fim_inclusiva = data_fim + timedelta(days=1)
                 query = query.filter(FretePagarModel.data_entrega_ticket < data_fim_inclusiva)
         
-        # Filtrar apenas registros com data de entrega
         query = query.filter(FretePagarModel.data_entrega_ticket.isnot(None))
         
-        # Ordenar por data de entrega mais recente primeiro
         query = query.order_by(FretePagarModel.data_entrega_ticket.desc())
         
         return query.all()

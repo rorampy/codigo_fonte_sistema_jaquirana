@@ -84,7 +84,6 @@
                   </div>
                 </div>
 
-                <!-- Linha 2: Nome, Descrição, Referência -->
                 <div class="row mb-4">
                   <div class="col-md-4">
                     <label class="form-label required">Beneficiário</label>
@@ -128,7 +127,6 @@
                   </div>
                 </div>
 
-                <!-- Linha 3: Valor -->
                 <div class="row mb-4">
                   <div class="col-md-4">
                     <label class="form-label required">Valor</label>
@@ -146,12 +144,11 @@
                   </div>
                 </div>
 
-                <!-- Seção de Categorias com Alpine.js -->
                 <div class="mb-4">
                   <label class="form-label mb-3 required">Categoria</label>
                   
                   <div class="{% if 'categorias_json' in campos_obrigatorios or 'categorias_json' in campos_erros %}border border-danger rounded p-2{% endif %}">
-                    <!-- Lista de Categorias -->
+                    
                     <template x-for="(categoria, index) in lista" :key="index">
                       <div class="row mb-3 align-items-center">
                         <div class="col-lg-4 col-md-4 col-sm-6 col-12">
@@ -200,7 +197,6 @@
                       </div>
                     </template>
 
-                    <!-- Botão adicionar categoria -->
                     <div class="mt-3">
                       <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
                         @click="adicionarCategoria()">
@@ -227,10 +223,9 @@
                   {% endif %}
                 </div>
 
-                <!-- Opções adicionais -->
                 <div class="row mb-4">
                   <div class="col-12">
-                    <!-- Switch Valores Detalhados -->
+                    
                     <div class="form-check form-switch mb-3">
                       <input class="form-check-input" type="checkbox" id="valoresDetalhados"
                         x-model="mostrarValoresDetalhados" @change="validarTotalCompleto()">
@@ -239,12 +234,11 @@
                       </label>
                     </div>
 
-                    <!-- Painel Valores Detalhados -->
                     <div x-show="mostrarValoresDetalhados" x-transition class="card mb-3"
                       style="display: none; background-color: #F6F8FB !important;">
                       <div class="card-body">
                         <div class="{% if 'centros_custo_json' in campos_obrigatorios or 'centros_custo_json' in campos_erros %}border border-danger rounded p-2 mb-3{% endif %}">
-                        <!-- Tabs -->
+                        
                         <ul class="nav nav-tabs" role="tablist" style="border: unset !important;">
                           <li class="nav-item" role="presentation">
                             <a class="nav-link active" id="tab-centro-custo"
@@ -253,7 +247,6 @@
                           </li>
                         </ul>
 
-                        <!-- Tab Content -->
                         <div class="tab-content" style="background-color: white !important; padding: 30px;">
                           <div class="tab-pane fade show active" id="centro-custo" role="tabpanel">
                             <div class="mb-3">
@@ -276,7 +269,6 @@
                               </div>
                             </div>
 
-                            <!-- Lista de Centros de Custo -->
                             <template x-for="(centro, index) in centrosCusto" :key="index">
                               <div class="row mb-3 align-items-center">
                                 <div class="col-md-6">
@@ -316,7 +308,6 @@
                               </div>
                             </template>
 
-                            <!-- Botão adicionar centro de custo -->
                             <div class="mt-3">
                               <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
                                 @click="adicionarCentroCusto()">
@@ -336,7 +327,6 @@
                       </div>
                     </div>
                     
-                    <!-- Mensagens de erro para valores detalhados -->
                     {% if 'centros_custo_json' in campos_obrigatorios %}
                       <div class="text-danger mt-1 mb-3">
                         <small>{{ campos_obrigatorios['centros_custo_json'] }}</small>
@@ -347,8 +337,6 @@
                       </div>
                     {% endif %}
 
-
-                    <!-- Switch Parcelamento -->
                     <div class="form-check form-switch mb-3">
                       <input class="form-check-input" type="checkbox" id="parcelamento" 
                              name="parcelamento_ativo" value="true"
@@ -358,7 +346,7 @@
                         Parcelamento
                       </label>
                     </div>
-                    <!-- Painel Parcelamento -->
+                    
                     <div x-show="mostrarParcelamento" x-transition style="background-color: #F6F8FB !important;"
                       class="card mb-3 mt-3" style="display: none;">
                       <div class="card-body">
@@ -446,7 +434,6 @@
                       </div>
                     </div>
                     
-                    <!-- Mensagens de erro para parcelamento -->
                     {% if 'parcelas_json' in campos_obrigatorios %}
                       <div class="text-danger mt-1 mb-3">
                         <small>{{ campos_obrigatorios['parcelas_json'] }}</small>
@@ -459,13 +446,11 @@
                   </div>
                 </div>
 
-                <!-- Campos hidden para envio dos dados JSON -->
                 <input type="hidden" name="categorias_json" id="categorias_json">
                 <input type="hidden" name="centros_custo_json" id="centros_custo_json">
                 <input type="hidden" name="parcelas_json" id="parcelas_json">
                 <input type="hidden" name="valores_detalhados_ativo" id="valores_detalhados_ativo" value="false">
 
-                <!-- Botões de ação -->
                 <div class="row">
                   <div class="col-12">
                     <div class="d-flex justify-content-end gap-2">
@@ -513,7 +498,7 @@
       });
   });
   function categorias() {
-    // Criar mapa completo de código para dados das categorias
+    
     const mapaCategorias = {};
     {% for cat in estrutura_plano_contas %}
       {% for sub in cat.children %}
@@ -533,7 +518,7 @@
     {% endfor %}
 
     return {
-      totalPagar: 0, // Será calculado dinamicamente com base no valor informado
+      totalPagar: 0, 
       mostrarValoresDetalhados: {% if dados_corretos.valores_detalhados_ativo %}true{% else %}false{% endif %},
       tipoDistribuicao: 'percentual',
       mapaCategorias: mapaCategorias,
@@ -542,7 +527,7 @@
           nome: '',
           detalhamento: '',
           referencia: '',
-          valor: 0 // Valor armazenado como inteiro (centavos)
+          valor: 0 
         }
       ],
       centrosCusto: [
@@ -553,16 +538,14 @@
         }
       ],
 
-      // === PARCELAMENTO ===
       mostrarParcelamento: {% if dados_corretos.parcelamento_ativo %}true{% else %}false{% endif %},
       qtdParcelas: {{ dados_corretos.numero_parcelas or 0 }},
       diasEntre: {{ dados_corretos.dias_entre_parcelas or 30 }},
       parcelas: [],
       totalParcelas: 0,
 
-      // === FUNÇÕES ===
       prepararEnvio() {
-        // Preparar categorias com código + nome combinados
+        
         const categoriasComDados = this.lista.map(categoria => {
           const dadosCategoria = this.mapaCategorias[categoria.nome] || {};
           const categoriaCompleta = dadosCategoria.nome ? 
@@ -571,17 +554,15 @@
           
           return {
             categoria: categoriaCompleta,
-            categoria_id: dadosCategoria.id || null, // ID da categoria do plano de contas
+            categoria_id: dadosCategoria.id || null, 
             detalhamento: categoria.detalhamento,
             referencia: categoria.referencia,
             valor: categoria.valor
           };
         });
         
-        // Preparar dados JSON para envio
         document.getElementById('categorias_json').value = JSON.stringify(categoriasComDados);
         
-        // Enviar array vazio se valores detalhados não estiver ativo
         const centrosParaEnviar = this.mostrarValoresDetalhados ? this.centrosCusto : [];
         document.getElementById('centros_custo_json').value = JSON.stringify(centrosParaEnviar);
         
@@ -604,7 +585,7 @@
         const valorAgendamento = this.totalPagar;
         const valorParcela = Math.floor(valorAgendamento / this.qtdParcelas);
         let resto = valorAgendamento - (valorParcela * this.qtdParcelas);
-        // Definir a data base para o dia 10 do mês atual ou próximo
+        
         let hoje = new Date();
         let ano = hoje.getFullYear();
         let mes = hoje.getMonth();
@@ -645,13 +626,12 @@
         }
       },
 
-      // === CATEGORIAS E CENTROS DE CUSTO ===
       adicionarCategoria() {
         this.lista.push({
           nome: '',
           detalhamento: '',
           referencia: '',
-          valor: 0 // Valor inicializado como inteiro (centavos)
+          valor: 0 
         });
         this.$nextTick(() => {
           this.aplicarMascaraMonetaria();
@@ -679,15 +659,14 @@
         });
       },
       aplicarMascaraMonetaria() {
-        console.log('Máscara monetária aplicada via Alpine.js');
       },
       validarTotal() {
         this.validarTotalCompleto();
       },
       validarTotalCompleto() {
-        // Primeiro validar categorias duplicadas
+        
         if (this.validarCategoriasDuplicadas()) {
-          return; // Se há duplicadas, não prosseguir com outras validações
+          return; 
         }
         
         let totalCategorias = 0;
@@ -720,7 +699,7 @@
           if (categoria.nome && categoria.nome.trim() !== '') {
             if (categoriasUsadas.includes(categoria.nome)) {
               temDuplicada = true;
-              // Mostrar modal de erro com categoria completa
+              
               const dadosCategoria = this.mapaCategorias[categoria.nome] || {};
               const categoriaCompleta = dadosCategoria.nome ? 
                 `${categoria.nome} - ${dadosCategoria.nome}` : 
@@ -740,7 +719,6 @@
           }
         });
         
-        // Desabilitar botão salvar se há duplicadas
         const btnSalvar = document.getElementById('btnSalvarAgendamento');
         if (btnSalvar && temDuplicada) {
           btnSalvar.disabled = true;
@@ -797,9 +775,8 @@
         }
       },
 
-      // Restaurar dados quando há erros
       restaurarDados() {
-        // Restaurar categorias
+        
         {% if dados_corretos.categorias_json %}
         try {
           const categoriasSalvas = JSON.parse('{{ dados_corretos.categorias_json|safe }}');
@@ -812,11 +789,9 @@
             }));
           }
         } catch (e) {
-          console.log('Erro ao restaurar categorias:', e);
         }
         {% endif %}
 
-        // Restaurar centros de custo
         {% if dados_corretos.centros_custo_json %}
         try {
           const centrosSalvos = JSON.parse('{{ dados_corretos.centros_custo_json|safe }}');
@@ -828,11 +803,9 @@
             }));
           }
         } catch (e) {
-          console.log('Erro ao restaurar centros de custo:', e);
         }
         {% endif %}
 
-        // Restaurar parcelas
         {% if dados_corretos.parcelas_json %}
         try {
           const parcelasSalvas = JSON.parse('{{ dados_corretos.parcelas_json|safe }}');
@@ -846,30 +819,26 @@
             this.calcularTotalParcelas();
           }
         } catch (e) {
-          console.log('Erro ao restaurar parcelas:', e);
         }
         {% endif %}
       },
 
-      // Sincronizar valor com totalPagar
       atualizarTotalPagar() {
         const campoValor = document.querySelector('input[name="valor"]');
         if (campoValor && campoValor.value) {
-          // Converter valor do campo para centavos
+          
           const valorLimpo = campoValor.value.replace(/[^\d,]/g, '').replace(',', '.');
           const valorFloat = parseFloat(valorLimpo) || 0;
           this.totalPagar = Math.round(valorFloat * 100);
         }
       },
 
-      // Inicialização
       init() {
         this.restaurarDados();
         this.atualizarTotalPagar();
         this.initParcelamento();
         this.validarTotalCompleto();
         
-        // Listener para atualizar totalPagar quando o valor mudar
         const campoValor = document.querySelector('input[name="valor"]');
         if (campoValor) {
           campoValor.addEventListener('input', () => {

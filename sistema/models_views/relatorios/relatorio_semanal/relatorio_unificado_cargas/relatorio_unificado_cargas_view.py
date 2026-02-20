@@ -16,14 +16,12 @@ def relatorio_unificado_cargas():
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
     dataHoje = datetime.now().strftime("%d-%m-%Y")
 
-    # Obter semanas disponíveis
     semanas_disponiveis = UtilitariosSemana.obter_semanas_do_mes_atual()
     statusPagamentos = SituacaoPagamentoModel.listar_status()
 
     valor_padrao_semana = ""
     semana_atual_info = None
 
-    # Definir semana padrão (atual)
     for semana in semanas_disponiveis:
         if semana.get("is_atual", False):
             valor_padrao_semana = semana["valor"]
@@ -34,7 +32,6 @@ def relatorio_unificado_cargas():
         valor_padrao_semana = semanas_disponiveis[0]["valor"]
         semana_atual_info = semanas_disponiveis[0]
 
-    # Para exportações (POST), usar os dados do formulário
     if request.method == "POST":
         if any(request.form.values()) and not (request.form.get("exportar_pdf") or request.form.get("exportar_excel")):
             tipo_filtro = request.form.get("tipo_filtro", "semanal")
@@ -51,12 +48,10 @@ def relatorio_unificado_cargas():
             bitola = request.form.get("bitola")
             statusPagamentoCarga = request.form.get("statusPagamentoCarga")
 
-            # Determinar data_inicio e data_fim baseado no tipo de filtro
             if tipo_filtro == "data" and data_inicio_form and data_fim_form:
                 data_inicio = datetime.strptime(data_inicio_form, "%Y-%m-%d").date()
                 data_fim = datetime.strptime(data_fim_form, "%Y-%m-%d").date()
             else:
-                # Usar filtro semanal
                 data_inicio, data_fim = UtilitariosSemana.processar_semana_selecionada(
                     semana_selecionada or valor_padrao_semana
                 )
@@ -76,7 +71,6 @@ def relatorio_unificado_cargas():
             )
             dados_corretos = request.form
         else:
-            # Para exportações, reaplicar os filtros baseados nos hidden fields do form
             tipo_filtro = request.form.get("tipo_filtro", "semanal")
             semana_selecionada = request.form.get("semanaSelecionada")
             data_inicio_form = request.form.get("dataInicio")
@@ -92,12 +86,10 @@ def relatorio_unificado_cargas():
             statusPagamentoCarga = request.form.get("statusPagamentoCarga")
 
             if any([tipo_filtro, semana_selecionada, data_inicio_form, data_fim_form, placa, motorista, transportadora, fornecedor, cliente, numero_nf, produto, bitola, statusPagamentoCarga]):
-                # Determinar data_inicio e data_fim baseado no tipo de filtro
                 if tipo_filtro == "data" and data_inicio_form and data_fim_form:
                     data_inicio = datetime.strptime(data_inicio_form, "%Y-%m-%d").date()
                     data_fim = datetime.strptime(data_fim_form, "%Y-%m-%d").date()
                 else:
-                    # Usar filtro semanal
                     data_inicio, data_fim = UtilitariosSemana.processar_semana_selecionada(
                         semana_selecionada or valor_padrao_semana
                     )
@@ -116,7 +108,6 @@ def relatorio_unificado_cargas():
                     statusPagamentoCarga=statusPagamentoCarga
                 )
             else:
-                # Usar semana atual como padrão para exportações
                 tipo_filtro = "semanal"
                 if semana_atual_info:
                     data_inicio = semana_atual_info["inicio"]
@@ -127,7 +118,6 @@ def relatorio_unificado_cargas():
                 registros = RegistroOperacionalModel.obter_registros_unificado_cargas()
             dados_corretos = request.form
     else:
-        # Para GET, usar args
         if any(request.args.values()):
             tipo_filtro = request.args.get("tipo_filtro", "semanal")
             semana_selecionada = request.args.get("semanaSelecionada")
@@ -143,12 +133,10 @@ def relatorio_unificado_cargas():
             bitola = request.args.get("bitola")
             statusPagamentoCarga = request.args.get("statusPagamentoCarga")
 
-            # Determinar data_inicio e data_fim baseado no tipo de filtro
             if tipo_filtro == "data" and data_inicio_form and data_fim_form:
                 data_inicio = datetime.strptime(data_inicio_form, "%Y-%m-%d").date()
                 data_fim = datetime.strptime(data_fim_form, "%Y-%m-%d").date()
             else:
-                # Usar filtro semanal
                 data_inicio, data_fim = UtilitariosSemana.processar_semana_selecionada(
                     semana_selecionada or valor_padrao_semana
                 )
@@ -168,7 +156,6 @@ def relatorio_unificado_cargas():
             )
             dados_corretos = request.args
         else:
-            # Usar semana atual como padrão
             tipo_filtro = "semanal"
             if semana_atual_info:
                 data_inicio = semana_atual_info["inicio"]
@@ -262,7 +249,6 @@ def relatorio_unificado_cargas():
         resposta = ManipulacaoArquivos.exportar_excel(dados_excel, nome_arquivo_saida)
         return resposta
 
-    # Determinar tipo_filtro para o template
     if request.method == "GET":
         tipo_filtro = request.args.get("tipo_filtro", "semanal")
     else:

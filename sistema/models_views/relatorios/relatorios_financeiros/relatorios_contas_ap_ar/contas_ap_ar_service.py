@@ -31,19 +31,15 @@ from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar
 from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
 
 
-# =============================================================================
-# CONSTANTES
-# =============================================================================
 
 DIRECAO_AP = 2
 DIRECAO_AR = 1
 SITUACOES_PENDENTES = [5, 6, 7]
-SITUACOES_LIQUIDADAS = [8, 9, 10]  # 8=Liquidado, 9=Liquidado Parcial, 10=Conciliado
+SITUACOES_LIQUIDADAS = [8, 9, 10]
 SITUACOES_RECEBIDAS_AR = [3, 8, 9]
 SITUACAO_VENDA_PENDENTE = 2
 SITUACAO_VENDA_RECEBIDA = 3
 
-# Categorias automáticas - buscadas diretamente das tabelas operacionais (igual DRE)
 CATEGORIAS_AUTOMATICAS_AP = {
     '2.01.01': {'model': 'FornecedorPagarModel', 'campo_valor': 'valor_total_a_pagar_100', 'campo_data': 'data_entrega_ticket', 'filtro_operacional': 'solicitacao_id', 'descricao': 'Compra de Madeira'},
     '2.01.02': {'model': 'FretePagarModel', 'campo_valor': 'valor_total_a_pagar_100', 'campo_data': 'data_entrega_ticket', 'filtro_operacional': 'solicitacao_id', 'descricao': 'Fretes'},
@@ -56,19 +52,12 @@ CATEGORIAS_AUTOMATICAS_AR = {
     '1.01.03': {'model': 'NfComplementarModel', 'campo_valor': 'valor_total_nota_100', 'campo_data': 'destinatario_data_emissao', 'filtro_operacional': 'cliente_id', 'descricao': 'Vendas de NFe Complementares'},
 }
 
-# Códigos ignorados no DRE (não impactam resultado)
 CODIGOS_IGNORADOS = ['2.01.05', '3.']
 
-# =============================================================================
-# CLASSE SERVICE
-# =============================================================================
 
 class ContasAPARService:
     """Motor de consultas parametrizado por direção (AP / AR)."""
 
-    # --------------------------------------------------------------------- #
-    #  HELPERS INTERNOS
-    # --------------------------------------------------------------------- #
 
     @staticmethod
     def _direcao_int(direcao_str):
@@ -129,7 +118,6 @@ class ContasAPARService:
         if filtros.get('data_fim') and campo_data is not None:
             query = query.filter(campo_data <= filtros['data_fim'])
 
-        # Filtro por data_pagamento via subquery de parcelas
         if data_campo == 'data_pagamento':
             if filtros.get('data_inicio') or filtros.get('data_fim'):
                 subquery = db.session.query(ParcelaCategorizacaoModel.agendamento_id).filter(
@@ -146,7 +134,6 @@ class ContasAPARService:
         if filtros.get('pessoa_id'):
             query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == filtros['pessoa_id'])
 
-        # Filtro por plano de contas (busca em categorias_json)
         if filtros.get('plano_contas_id'):
             pc_id = int(filtros['plano_contas_id'])
             from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
@@ -163,7 +150,6 @@ class ContasAPARService:
                 conditions.append(cast_col.like(f'%"categoria": "{pc_obj.codigo}%'))
             query = query.filter(or_(*conditions))
 
-        # Filtro por centro de custo (busca em centros_custo_json)
         if filtros.get('centro_custo_id'):
             cc_id = str(filtros['centro_custo_id'])
             query = query.filter(
@@ -176,14 +162,12 @@ class ContasAPARService:
         if filtros.get('situacao_id'):
             query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == filtros['situacao_id'])
 
-        # Filtro por código de faturamento (busca parcial)
         if filtros.get('codigo_faturamento'):
             codigo_busca = filtros['codigo_faturamento'].strip()
             if codigo_busca:
                 query = query.filter(
                     or_(
                         FaturamentoModel.codigo_faturamento.ilike(f'%{codigo_busca}%'),
-                        # Para lançamentos avulsos, busca pelo id
                         and_(
                             AgendamentoPagamentoModel.lancamento_avulso_id.isnot(None),
                             AgendamentoPagamentoModel.lancamento_avulso_id.cast(db.String).ilike(f'%{codigo_busca}%')
@@ -191,7 +175,6 @@ class ContasAPARService:
                     )
                 )
 
-        # Filtro por descrição de lançamento avulso
         if filtros.get('descricao_avulso'):
             descricao_busca = filtros['descricao_avulso'].strip()
             if descricao_busca:
@@ -202,7 +185,6 @@ class ContasAPARService:
                     )
                 )
 
-        # Filtro por nota fiscal (busca no código do faturamento, referência ou detalhes JSON)
         if filtros.get('nota_fiscal'):
             nf_busca = filtros['nota_fiscal'].strip()
             if nf_busca:
@@ -214,7 +196,6 @@ class ContasAPARService:
                     )
                 )
 
-        # Filtro por conta bancária (banco de destino do pagamento/recebimento)
         if filtros.get('conta_bancaria_id'):
             query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
 
@@ -234,7 +215,6 @@ class ContasAPARService:
         pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
         parcelas = ParcelaCategorizacaoModel.obter_parcelas_por_agendamento(ag.id) if ag.id else []
 
-        # Valor original vem da origem (Faturamento ou Lançamento Avulso)
         if fat:
             valor_original = fat.valor_total or 0
         elif lav:
@@ -345,9 +325,6 @@ class ContasAPARService:
         except Exception:
             return '-'
 
-    # --------------------------------------------------------------------- #
-    #  HELPER — OBTER NOME DO EXTRATOR (busca robusta)
-    # --------------------------------------------------------------------- #
 
     @staticmethod
     def _obter_nome_extrator(reg):
@@ -361,13 +338,11 @@ class ContasAPARService:
         Returns:
             str: Nome do extrator ou None se não encontrado
         """
-        # Tentativa 1: método padrão do model (filtra ativo=True, deletado=False no preço)
         if hasattr(reg, 'obter_extrator') and callable(reg.obter_extrator):
             extrator = reg.obter_extrator()
             if extrator and hasattr(extrator, 'identificacao'):
                 return extrator.identificacao
 
-        # Tentativa 2: busca SEM filtrar ativo/deletado na tabela de preço
         if hasattr(reg, 'fornecedor_id') and reg.fornecedor_id and hasattr(reg, 'bitola_id') and reg.bitola_id:
             from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_extracao_model import FornecedorPrecoCustoExtracaoModel
             from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
@@ -384,9 +359,6 @@ class ContasAPARService:
 
         return None
 
-    # --------------------------------------------------------------------- #
-    #  SERIALIZAÇÃO — REGISTROS _A_PAGAR (AP)
-    # --------------------------------------------------------------------- #
 
     @staticmethod
     def _serializar_registro_a_pagar(record, tipo_label):
@@ -397,7 +369,6 @@ class ContasAPARService:
         Mapeia os campos específicos destes models para o dict padronizado
         que os templates já esperam.
         """
-        # Identificação da entidade a pagar — varia por tipo
         if tipo_label == 'Frete' and hasattr(record, 'transportadora') and record.transportadora:
             pessoa_nome = record.transportadora.identificacao
         elif tipo_label == 'Extrator':
@@ -406,16 +377,13 @@ class ContasAPARService:
         elif tipo_label == 'Comissionado' and hasattr(record, 'comissionado') and record.comissionado:
             pessoa_nome = record.comissionado.identificacao
         else:
-            # Fornecedor genérico
             pessoa_nome = record.fornecedor.identificacao if record.fornecedor else '-'
 
-        # Plano de contas (FK direto, não JSON)
         plano_contas_str = '-'
         if record.plano_conta_id and record.plano_conta:
             pc = record.plano_conta
             plano_contas_str = f"{pc.codigo} - {pc.nome}" if hasattr(pc, 'codigo') and pc.codigo else (pc.nome or '-')
 
-        # Situação
         situacao_nome = record.situacao.situacao if record.situacao else 'Sem situação'
 
         valor = record.valor_total_a_pagar_100 or 0
@@ -454,7 +422,6 @@ class ContasAPARService:
         filtro_op = config['filtro_operacional']
         descricao = config['descricao']
 
-        # Situações que NÃO são pendentes: 8 (Conciliado), 9 (Conc. Parcial), 10 (Cancelado)
         SITUACOES_NAO_PENDENTES = [8, 9, 10]
 
         try:
@@ -465,13 +432,11 @@ class ContasAPARService:
                 getattr(Model, filtro_op).isnot(None)
             )
 
-            # Filtro por pendentes (exclui liquidadas e canceladas)
             if hasattr(Model, 'situacao_pagamento_id'):
                 query = query.filter(~Model.situacao_pagamento_id.in_(SITUACOES_NAO_PENDENTES))
             elif hasattr(Model, 'situacao_financeira_id'):
                 query = query.filter(~Model.situacao_financeira_id.in_(SITUACOES_NAO_PENDENTES))
 
-            # Filtro por período de datas
             if filtros.get('data_inicio'):
                 data_inicio = date.fromisoformat(filtros['data_inicio']) if isinstance(filtros['data_inicio'], str) else filtros['data_inicio']
                 query = query.filter(getattr(Model, campo_data) >= data_inicio)
@@ -479,26 +444,22 @@ class ContasAPARService:
                 data_fim = date.fromisoformat(filtros['data_fim']) if isinstance(filtros['data_fim'], str) else filtros['data_fim']
                 query = query.filter(getattr(Model, campo_data) <= data_fim)
 
-            # Filtro por situação específica
             if filtros.get('situacao_id'):
                 if hasattr(Model, 'situacao_pagamento_id'):
                     query = query.filter(Model.situacao_pagamento_id == int(filtros['situacao_id']))
                 elif hasattr(Model, 'situacao_financeira_id'):
                     query = query.filter(Model.situacao_financeira_id == int(filtros['situacao_id']))
 
-            # Filtro por pessoa
             if filtros.get('pessoa_id'):
                 pessoa_id = filtros['pessoa_id']
                 
                 if direcao == 'ar':
-                    # AR: filtrar por cliente (direto ou via carga)
                     if hasattr(Model, 'cliente_id'):
                         query = query.filter(Model.cliente_id == int(pessoa_id))
                     elif hasattr(Model, 'solicitacao_nf_id'):
                         query = query.join(CargaModel, Model.solicitacao_nf_id == CargaModel.id)
                         query = query.filter(CargaModel.cliente_id == int(pessoa_id))
                 else:
-                    # AP: filtrar por fornecedor/transportadora/extrator/comissionado (ID direto)
                     if hasattr(Model, 'fornecedor_id'):
                         query = query.filter(Model.fornecedor_id == int(pessoa_id))
                     elif hasattr(Model, 'transportadora_id'):
@@ -508,7 +469,6 @@ class ContasAPARService:
                     elif hasattr(Model, 'comissionado_id'):
                         query = query.filter(Model.comissionado_id == int(pessoa_id))
 
-            # Filtro por conta bancária (se a tabela operacional tiver esse campo)
             if filtros.get('conta_bancaria_id') and hasattr(Model, 'conta_bancaria_id'):
                 query = query.filter(Model.conta_bancaria_id == int(filtros['conta_bancaria_id']))
 
@@ -519,10 +479,8 @@ class ContasAPARService:
                 valor = getattr(reg, campo_valor) or 0
                 data_emissao = getattr(reg, campo_data) if hasattr(reg, campo_data) else reg.data_cadastro
 
-                # Identificar pessoa baseado na direção
                 pessoa_nome = '-'
                 if direcao == 'ar':
-                    # AR: priorizar cliente
                     if hasattr(reg, 'cliente') and reg.cliente:
                         pessoa_nome = reg.cliente.identificacao if hasattr(reg.cliente, 'identificacao') else str(reg.cliente)
                     elif hasattr(reg, 'solicitacao') and reg.solicitacao and reg.solicitacao.cliente:
@@ -530,7 +488,6 @@ class ContasAPARService:
                     elif hasattr(reg, 'destinatario_nome') and reg.destinatario_nome:
                         pessoa_nome = reg.destinatario_nome
                 else:
-                    # AP: priorizar entidade correta conforme tipo de categoria
                     if codigo == '2.01.02' and hasattr(reg, 'transportadora') and reg.transportadora:
                         pessoa_nome = reg.transportadora.identificacao
                     elif codigo == '2.01.03':
@@ -545,7 +502,6 @@ class ContasAPARService:
                     elif hasattr(reg, 'comissionado') and reg.comissionado:
                         pessoa_nome = reg.comissionado.identificacao
 
-                # Situação
                 situacao = reg.situacao if hasattr(reg, 'situacao') and reg.situacao else None
                 situacao_nome = situacao.situacao if situacao else 'Sem situação'
                 situacao_id = None
@@ -554,7 +510,6 @@ class ContasAPARService:
                 elif hasattr(reg, 'situacao_financeira_id'):
                     situacao_id = reg.situacao_financeira_id
 
-                # Código identificador
                 if hasattr(reg, 'numero_nota_fiscal') and reg.numero_nota_fiscal:
                     codigo_fat = f'NF-{reg.numero_nota_fiscal}'
                 elif hasattr(reg, 'solicitacao_id') and reg.solicitacao_id:
@@ -569,7 +524,6 @@ class ContasAPARService:
                 else:
                     codigo_fat = f'LAN-{reg.id}'
 
-                # Dias de atraso (baseado na data atual)
                 vencimento = data_emissao
                 hoje = date.today()
                 dias_atraso = 0
@@ -602,7 +556,6 @@ class ContasAPARService:
             return resultado
 
         except Exception as e:
-            print(f"[ContasAPARService] Erro ao buscar pendentes categoria {codigo}: {e}")
             return []
 
     @staticmethod
@@ -620,7 +573,6 @@ class ContasAPARService:
             AgendamentoPagamentoModel.categorias_json.isnot(None)
         )
         
-        # Filtro por período de datas
         if filtros.get('data_inicio'):
             data_inicio = date.fromisoformat(filtros['data_inicio']) if isinstance(filtros['data_inicio'], str) else filtros['data_inicio']
             query = query.filter(AgendamentoPagamentoModel.data_competencia >= data_inicio)
@@ -628,15 +580,12 @@ class ContasAPARService:
             data_fim = date.fromisoformat(filtros['data_fim']) if isinstance(filtros['data_fim'], str) else filtros['data_fim']
             query = query.filter(AgendamentoPagamentoModel.data_competencia <= data_fim)
         
-        # Filtro por situação
         if filtros.get('situacao_id'):
             query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == int(filtros['situacao_id']))
         
-        # Filtro por pessoa
         if filtros.get('pessoa_id'):
             query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
         
-        # Filtro por centro de custo
         if filtros.get('centro_custo_id'):
             cc_id = str(filtros['centro_custo_id'])
             query = query.filter(
@@ -646,7 +595,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por conta bancária
         if filtros.get('conta_bancaria_id'):
             query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
@@ -673,7 +621,6 @@ class ContasAPARService:
                     pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
                     codigo = ag.referencia if ag.referencia else f'LAN-{ag.id}'
                     
-                    # Dias de atraso (baseado na data atual)
                     vencimento = ag.data_vencimento or ag.data_cadastro
                     dias_atraso = 0
                     if vencimento and vencimento < hoje:
@@ -712,24 +659,21 @@ class ContasAPARService:
         filtros = filtros or {}
         plano_contas_id = filtros.get('plano_contas_id')
         categorias_map = CATEGORIAS_AUTOMATICAS_AP
-        tipo_categoria = 2  # despesas
+        tipo_categoria = 2
         resultado = []
         
-        # Filtro por plano de contas específico
         if plano_contas_id:
             codigo = ContasAPARService._obter_codigo_plano_contas(plano_contas_id)
             if codigo and codigo in categorias_map:
                 return ContasAPARService._obter_pendentes_tabela_operacional(codigo, categorias_map[codigo], filtros, 'ap')
             return ContasAPARService._obter_pendentes_agendamentos(filtros, tipo_categoria, plano_contas_id_filtro=int(plano_contas_id))
         
-        # Buscar tudo: tabelas operacionais + agendamentos
         for codigo, config in categorias_map.items():
             resultado.extend(ContasAPARService._obter_pendentes_tabela_operacional(codigo, config, filtros, 'ap'))
         
         ids_excluir = ContasAPARService._obter_ids_categorias_automaticas(categorias_map)
         resultado.extend(ContasAPARService._obter_pendentes_agendamentos(filtros, tipo_categoria, ids_excluir=ids_excluir))
         
-        # Ordenar por data de vencimento (mais antigo primeiro - maior atraso)
         resultado.sort(key=lambda x: (x.get('data_vencimento') or date.min))
         return resultado
 
@@ -745,11 +689,10 @@ class ContasAPARService:
         from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
         
         filtros = filtros or {}
-        SITUACOES_PENDENTES_AP = [6, 10]  # 6=Categorizado, 10=Parcialmente Conciliado
+        SITUACOES_PENDENTES_AP = [6, 10]
         resultado = []
         hoje = date.today()
         
-        # Query base: agendamentos ativos nas situações 6 e 10
         query = (
             db.session.query(AgendamentoPagamentoModel)
             .outerjoin(
@@ -764,7 +707,6 @@ class ContasAPARService:
                 AgendamentoPagamentoModel.ativo == True,
                 AgendamentoPagamentoModel.deletado == False,
                 AgendamentoPagamentoModel.situacao_pagamento_id.in_(SITUACOES_PENDENTES_AP),
-                # Filtro de direção: AP (despesa)
                 or_(
                     and_(
                         AgendamentoPagamentoModel.faturamento_id.isnot(None),
@@ -782,22 +724,18 @@ class ContasAPARService:
             )
         )
         
-        # Filtro por data de vencimento (até a data_fim)
         if filtros.get('data_fim'):
             data_fim = date.fromisoformat(filtros['data_fim']) if isinstance(filtros['data_fim'], str) else filtros['data_fim']
             query = query.filter(AgendamentoPagamentoModel.data_vencimento <= data_fim)
         
-        # Filtro por pessoa (fornecedor)
         if filtros.get('pessoa_id'):
             query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
         
-        # Filtro por situação específica
         if filtros.get('situacao_id'):
             sit_id = int(filtros['situacao_id'])
             if sit_id in SITUACOES_PENDENTES_AP:
                 query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == sit_id)
         
-        # Filtro por plano de contas (categorias_json)
         if filtros.get('plano_contas_id'):
             pc_id = int(filtros['plano_contas_id'])
             query = query.filter(
@@ -807,7 +745,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por centro de custo
         if filtros.get('centro_custo_id'):
             cc_id = str(filtros['centro_custo_id'])
             query = query.filter(
@@ -817,11 +754,9 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por conta bancária
         if filtros.get('conta_bancaria_id'):
             query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
-        # Filtro por código de faturamento
         if filtros.get('codigo_faturamento'):
             cod = filtros['codigo_faturamento'].strip()
             query = query.filter(
@@ -831,7 +766,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por nota fiscal (busca no código do faturamento, referência ou detalhes JSON)
         if filtros.get('nota_fiscal'):
             nf = filtros['nota_fiscal'].strip()
             query = query.filter(
@@ -842,7 +776,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por descrição (lançamento avulso ou descrição do agendamento)
         if filtros.get('descricao_avulso'):
             desc = filtros['descricao_avulso'].strip()
             query = query.filter(
@@ -855,19 +788,15 @@ class ContasAPARService:
                 )
             )
         
-        # Processar resultados
         for ag in query.all():
-            # Calcular valor pendente
             valor_total = ag.valor_total_100 or 0
             valor_conciliado = ag.valor_conciliado_100 or 0
             
-            # Se conciliação parcial, o pendente é a diferença
             if ag.conciliacao_parcial and valor_conciliado > 0:
                 valor_pendente = valor_total - valor_conciliado
             else:
                 valor_pendente = valor_total
             
-            # Obter código do faturamento ou lançamento avulso
             fat = None
             lav = None
             if ag.faturamento_id:
@@ -888,7 +817,6 @@ class ContasAPARService:
             pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
             situacao_nome = ag.situacao.situacao if ag.situacao else 'Sem situação'
             
-            # Dias de atraso
             vencimento = ag.data_vencimento or ag.data_cadastro
             dias_atraso = 0
             if vencimento and vencimento < hoje:
@@ -920,10 +848,8 @@ class ContasAPARService:
                 'conciliacao_parcial': ag.conciliacao_parcial or False,
             })
         
-        # Incluir NF Complementares pendentes (diferenças negativas = a pagar/creditar)
         resultado.extend(ContasAPARService._obter_nf_complementares_pendentes_ap(filtros))
 
-        # Ordenar por data de vencimento (mais antigo primeiro - maior atraso)
         resultado.sort(key=lambda x: (x.get('data_vencimento') or date.min))
         return resultado
 
@@ -939,11 +865,10 @@ class ContasAPARService:
         from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
         
         filtros = filtros or {}
-        SITUACOES_PENDENTES_AR = [6, 10]  # 6=Categorizado, 10=Parcialmente Conciliado
+        SITUACOES_PENDENTES_AR = [6, 10]
         resultado = []
         hoje = date.today()
         
-        # Query base: agendamentos ativos nas situações 6 e 10
         query = (
             db.session.query(AgendamentoPagamentoModel)
             .outerjoin(
@@ -958,7 +883,6 @@ class ContasAPARService:
                 AgendamentoPagamentoModel.ativo == True,
                 AgendamentoPagamentoModel.deletado == False,
                 AgendamentoPagamentoModel.situacao_pagamento_id.in_(SITUACOES_PENDENTES_AR),
-                # Filtro de direção: AR (receita)
                 or_(
                     and_(
                         AgendamentoPagamentoModel.faturamento_id.isnot(None),
@@ -976,22 +900,18 @@ class ContasAPARService:
             )
         )
         
-        # Filtro por data de vencimento (até a data_fim)
         if filtros.get('data_fim'):
             data_fim = date.fromisoformat(filtros['data_fim']) if isinstance(filtros['data_fim'], str) else filtros['data_fim']
             query = query.filter(AgendamentoPagamentoModel.data_vencimento <= data_fim)
         
-        # Filtro por pessoa (cliente)
         if filtros.get('pessoa_id'):
             query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
         
-        # Filtro por situação específica
         if filtros.get('situacao_id'):
             sit_id = int(filtros['situacao_id'])
             if sit_id in SITUACOES_PENDENTES_AR:
                 query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == sit_id)
         
-        # Filtro por plano de contas (categorias_json)
         if filtros.get('plano_contas_id'):
             pc_id = int(filtros['plano_contas_id'])
             query = query.filter(
@@ -1001,7 +921,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por centro de custo
         if filtros.get('centro_custo_id'):
             cc_id = str(filtros['centro_custo_id'])
             query = query.filter(
@@ -1011,11 +930,9 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por conta bancária
         if filtros.get('conta_bancaria_id'):
             query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
-        # Filtro por código de faturamento
         if filtros.get('codigo_faturamento'):
             cod = filtros['codigo_faturamento'].strip()
             query = query.filter(
@@ -1025,7 +942,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por nota fiscal (busca no código do faturamento, referência ou detalhes JSON)
         if filtros.get('nota_fiscal'):
             nf = filtros['nota_fiscal'].strip()
             query = query.filter(
@@ -1036,7 +952,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por descrição (lançamento avulso ou descrição do agendamento)
         if filtros.get('descricao_avulso'):
             desc = filtros['descricao_avulso'].strip()
             query = query.filter(
@@ -1049,19 +964,15 @@ class ContasAPARService:
                 )
             )
         
-        # Processar resultados
         for ag in query.all():
-            # Calcular valor pendente
             valor_total = ag.valor_total_100 or 0
             valor_conciliado = ag.valor_conciliado_100 or 0
             
-            # Se conciliação parcial, o pendente é a diferença
             if ag.conciliacao_parcial and valor_conciliado > 0:
                 valor_pendente = valor_total - valor_conciliado
             else:
                 valor_pendente = valor_total
             
-            # Obter código do faturamento ou lançamento avulso
             fat = None
             lav = None
             if ag.faturamento_id:
@@ -1082,7 +993,6 @@ class ContasAPARService:
             pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
             situacao_nome = ag.situacao.situacao if ag.situacao else 'Sem situação'
             
-            # Dias de atraso
             vencimento = ag.data_vencimento or ag.data_cadastro
             dias_atraso = 0
             if vencimento and vencimento < hoje:
@@ -1114,16 +1024,11 @@ class ContasAPARService:
                 'conciliacao_parcial': ag.conciliacao_parcial or False,
             })
         
-        # Incluir NF Complementares pendentes (emitidas + não emitidas com diferença positiva)
         resultado.extend(ContasAPARService._obter_nf_complementares_pendentes_ar(filtros))
 
-        # Ordenar por data de vencimento (mais antigo primeiro - maior atraso)
         resultado.sort(key=lambda x: (x.get('data_vencimento') or date.min))
         return resultado
 
-    # --------------------------------------------------------------------- #
-    #  NF COMPLEMENTAR — PENDENTES (igual DRE 1.01.03)
-    # --------------------------------------------------------------------- #
 
     @staticmethod
     def _obter_nf_complementares_pendentes_ar(filtros):
@@ -1139,7 +1044,6 @@ class ContasAPARService:
         SITUACOES_NAO_PENDENTES = [8, 9, 10]
 
         try:
-            # --- 1. NFs Complementares EMITIDAS pendentes ---
             query_emitidas = NfComplementarModel.query.filter(
                 NfComplementarModel.ativo == True,
                 NfComplementarModel.deletado == False,
@@ -1147,7 +1051,6 @@ class ContasAPARService:
                 NfComplementarModel.destinatario_data_emissao.isnot(None),
             )
 
-            # Excluir já liquidadas/conciliadas
             query_emitidas = query_emitidas.filter(
                 or_(
                     NfComplementarModel.situacao_financeira_id.is_(None),
@@ -1206,7 +1109,6 @@ class ContasAPARService:
                     'is_nf_complementar': True,
                 })
 
-            # --- 2. NFs Complementares NÃO EMITIDAS (diferença positiva: Ticket > NF) ---
             query_nao_emitidas = RegistroOperacionalModel.query.filter(
                 RegistroOperacionalModel.ativo == True,
                 RegistroOperacionalModel.deletado == False,
@@ -1271,7 +1173,7 @@ class ContasAPARService:
                 })
 
         except Exception as e:
-            print(f"[ContasAPARService] Erro ao buscar NF Complementares pendentes AR: {e}")
+            pass
 
         return resultado
 
@@ -1351,13 +1253,10 @@ class ContasAPARService:
                 })
 
         except Exception as e:
-            print(f"[ContasAPARService] Erro ao buscar NF Complementares pendentes AP: {e}")
+            pass
 
         return resultado
 
-    # --------------------------------------------------------------------- #
-    #  SERIALIZAÇÃO — VENDAS ENTREGUES (AR)
-    # --------------------------------------------------------------------- #
 
     @staticmethod
     def _serializar_venda_entregue(registro):
@@ -1406,30 +1305,24 @@ class ContasAPARService:
         filtros = filtros or {}
         plano_contas_id = filtros.get('plano_contas_id')
         categorias_map = CATEGORIAS_AUTOMATICAS_AR
-        tipo_categoria = 1  # receitas
+        tipo_categoria = 1
         resultado = []
         
-        # Filtro por plano de contas específico
         if plano_contas_id:
             codigo = ContasAPARService._obter_codigo_plano_contas(plano_contas_id)
             if codigo and codigo in categorias_map:
                 return ContasAPARService._obter_pendentes_tabela_operacional(codigo, categorias_map[codigo], filtros, 'ar')
             return ContasAPARService._obter_pendentes_agendamentos(filtros, tipo_categoria, plano_contas_id_filtro=int(plano_contas_id))
         
-        # Buscar tudo: tabelas operacionais + agendamentos
         for codigo, config in categorias_map.items():
             resultado.extend(ContasAPARService._obter_pendentes_tabela_operacional(codigo, config, filtros, 'ar'))
         
         ids_excluir = ContasAPARService._obter_ids_categorias_automaticas(categorias_map)
         resultado.extend(ContasAPARService._obter_pendentes_agendamentos(filtros, tipo_categoria, ids_excluir=ids_excluir))
         
-        # Ordenar por data de vencimento (mais antigo primeiro - maior atraso)
         resultado.sort(key=lambda x: (x.get('data_vencimento') or date.min))
         return resultado
 
-    # --------------------------------------------------------------------- #
-    #  CONSULTAS PÚBLICAS
-    # --------------------------------------------------------------------- #
 
     @staticmethod
     def _obter_model_por_nome(nome_model):
@@ -1487,40 +1380,34 @@ class ContasAPARService:
         descricao = config['descricao']
 
         try:
-            # Filtros base IGUAIS ao DRE
             query = Model.query.filter(
                 Model.ativo == True,
                 Model.deletado == False,
-                getattr(Model, campo_data).isnot(None),  # Data preenchida (igual DRE)
-                getattr(Model, filtro_op).isnot(None)    # Só operacionais (igual DRE)
+                getattr(Model, campo_data).isnot(None),
+                getattr(Model, filtro_op).isnot(None)
             )
 
-            # Filtro por período de datas
             if filtros.get('data_inicio'):
                 query = query.filter(getattr(Model, campo_data) >= filtros['data_inicio'])
             if filtros.get('data_fim'):
                 query = query.filter(getattr(Model, campo_data) <= filtros['data_fim'])
 
-            # Filtro por situação
             if filtros.get('situacao_id'):
                 if hasattr(Model, 'situacao_pagamento_id'):
                     query = query.filter(Model.situacao_pagamento_id == int(filtros['situacao_id']))
                 elif hasattr(Model, 'situacao_financeira_id'):
                     query = query.filter(Model.situacao_financeira_id == int(filtros['situacao_id']))
 
-            # Filtro por pessoa
             if filtros.get('pessoa_id'):
                 pessoa_id = filtros['pessoa_id']
                 
                 if direcao == 'ar':
-                    # AR: filtrar por cliente (direto ou via carga)
                     if hasattr(Model, 'cliente_id'):
                         query = query.filter(Model.cliente_id == int(pessoa_id))
                     elif hasattr(Model, 'solicitacao_nf_id'):
                         query = query.join(CargaModel, Model.solicitacao_nf_id == CargaModel.id)
                         query = query.filter(CargaModel.cliente_id == int(pessoa_id))
                 else:
-                    # AP: filtrar por fornecedor/transportadora/extrator/comissionado (ID direto)
                     if hasattr(Model, 'fornecedor_id'):
                         query = query.filter(Model.fornecedor_id == int(pessoa_id))
                     elif hasattr(Model, 'transportadora_id'):
@@ -1530,7 +1417,6 @@ class ContasAPARService:
                     elif hasattr(Model, 'comissionado_id'):
                         query = query.filter(Model.comissionado_id == int(pessoa_id))
 
-            # Filtro por conta bancária (se a tabela operacional tiver esse campo)
             if filtros.get('conta_bancaria_id') and hasattr(Model, 'conta_bancaria_id'):
                 query = query.filter(Model.conta_bancaria_id == int(filtros['conta_bancaria_id']))
 
@@ -1542,10 +1428,8 @@ class ContasAPARService:
                 data_emissao = getattr(reg, campo_data) if hasattr(reg, campo_data) else reg.data_cadastro
                 data_pagamento = getattr(reg, 'data_liquidacao', None) or data_emissao
 
-                # Identificar pessoa baseado na direção
                 pessoa_nome = '-'
                 if direcao == 'ar':
-                    # AR: priorizar cliente
                     if hasattr(reg, 'cliente') and reg.cliente:
                         pessoa_nome = reg.cliente.identificacao if hasattr(reg.cliente, 'identificacao') else str(reg.cliente)
                     elif hasattr(reg, 'solicitacao') and reg.solicitacao and reg.solicitacao.cliente:
@@ -1553,7 +1437,6 @@ class ContasAPARService:
                     elif hasattr(reg, 'destinatario_nome') and reg.destinatario_nome:
                         pessoa_nome = reg.destinatario_nome
                 else:
-                    # AP: priorizar entidade correta conforme tipo de categoria
                     if codigo == '2.01.02' and hasattr(reg, 'transportadora') and reg.transportadora:
                         pessoa_nome = reg.transportadora.identificacao
                     elif codigo == '2.01.03':
@@ -1568,7 +1451,6 @@ class ContasAPARService:
                     elif hasattr(reg, 'comissionado') and reg.comissionado:
                         pessoa_nome = reg.comissionado.identificacao
 
-                # Situação
                 situacao = reg.situacao if hasattr(reg, 'situacao') and reg.situacao else None
                 situacao_nome = situacao.situacao if situacao else 'Sem situação'
                 situacao_id = None
@@ -1577,11 +1459,9 @@ class ContasAPARService:
                 elif hasattr(reg, 'situacao_financeira_id'):
                     situacao_id = reg.situacao_financeira_id
 
-                # Código identificador baseado no tipo de registro
                 if hasattr(reg, 'numero_nota_fiscal') and reg.numero_nota_fiscal:
                     codigo_fat = f'NF-{reg.numero_nota_fiscal}'
                 elif hasattr(reg, 'solicitacao_id') and reg.solicitacao_id:
-                    # Tabelas operacionais vinculadas a carga
                     prefixos = {
                         'FornecedorPagarModel': 'FOR',
                         'FretePagarModel': 'FRE', 
@@ -1618,7 +1498,6 @@ class ContasAPARService:
             return resultado
 
         except Exception as e:
-            print(f"[ContasAPARService] Erro ao buscar categoria automática {codigo}: {e}")
             return []
 
     @staticmethod
@@ -1632,21 +1511,18 @@ class ContasAPARService:
         tipo_categoria = 2 if direcao_str == 'ap' else 1
         resultado = []
         
-        # Filtro por plano de contas específico
         if plano_contas_id:
             codigo = ContasAPARService._obter_codigo_plano_contas(plano_contas_id)
             if codigo and codigo in categorias_map:
                 return ContasAPARService._obter_emissoes_tabela_operacional(codigo, categorias_map[codigo], filtros, direcao_str)
             return ContasAPARService._obter_emissoes_agendamentos(filtros, tipo_categoria, plano_contas_id_filtro=int(plano_contas_id))
         
-        # Buscar tudo: tabelas operacionais + agendamentos
         for codigo, config in categorias_map.items():
             resultado.extend(ContasAPARService._obter_emissoes_tabela_operacional(codigo, config, filtros, direcao_str))
         
         ids_excluir = ContasAPARService._obter_ids_categorias_automaticas(categorias_map)
         resultado.extend(ContasAPARService._obter_emissoes_agendamentos(filtros, tipo_categoria, ids_excluir=ids_excluir))
         
-        # Ordenar por data (mais recente primeiro)
         resultado.sort(key=lambda x: (x.get('data_emissao') or date.min), reverse=True)
         return resultado
 
@@ -1668,7 +1544,6 @@ class ContasAPARService:
         
         ids_excluir = ids_excluir or set()
         
-        # Query: situação 6/8/9 + data_competencia (igual DRE)
         query = AgendamentoPagamentoModel.query.filter(
             AgendamentoPagamentoModel.ativo == True,
             AgendamentoPagamentoModel.deletado == False,
@@ -1676,21 +1551,17 @@ class ContasAPARService:
             AgendamentoPagamentoModel.categorias_json.isnot(None)
         )
         
-        # Filtro por período
         if filtros.get('data_inicio'):
             query = query.filter(AgendamentoPagamentoModel.data_competencia >= filtros['data_inicio'])
         if filtros.get('data_fim'):
             query = query.filter(AgendamentoPagamentoModel.data_competencia <= filtros['data_fim'])
         
-        # Filtro por situação
         if filtros.get('situacao_id'):
             query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == int(filtros['situacao_id']))
         
-        # Filtro por pessoa
         if filtros.get('pessoa_id'):
             query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
         
-        # Filtro por centro de custo (busca dentro do JSON — campo 'centro' armazena ID como string)
         if filtros.get('centro_custo_id'):
             cc_id = str(filtros['centro_custo_id'])
             query = query.filter(
@@ -1700,7 +1571,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por conta bancária
         if filtros.get('conta_bancaria_id'):
             query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
@@ -1712,7 +1582,6 @@ class ContasAPARService:
                     cat_id = cat_info.get('categoria_id')
                     valor = cat_info.get('valor', 0)
                     
-                    # Validações
                     if plano_contas_id_filtro and cat_id != plano_contas_id_filtro:
                         continue
                     if cat_id in ids_excluir:
@@ -1726,7 +1595,6 @@ class ContasAPARService:
                     
                     pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
                     
-                    # Código: referência do agendamento ou LAN-{id}
                     codigo = ag.referencia if ag.referencia else f'LAN-{ag.id}'
                     
                     resultado.append({
@@ -1770,7 +1638,6 @@ class ContasAPARService:
         descricao = config['descricao']
 
         try:
-            # Filtros base
             query = Model.query.filter(
                 Model.ativo == True,
                 Model.deletado == False,
@@ -1778,14 +1645,12 @@ class ContasAPARService:
                 getattr(Model, filtro_op).isnot(None)
             )
 
-            # Filtro por situação liquidada/recebida
             situacoes_filtro = SITUACOES_RECEBIDAS_AR if direcao == 'ar' else SITUACOES_LIQUIDADAS
             if hasattr(Model, 'situacao_pagamento_id'):
                 query = query.filter(Model.situacao_pagamento_id.in_(situacoes_filtro))
             elif hasattr(Model, 'situacao_financeira_id'):
                 query = query.filter(Model.situacao_financeira_id.in_(situacoes_filtro))
 
-            # Filtro por período de datas (data_liquidacao para baixas)
             if filtros.get('data_inicio'):
                 if hasattr(Model, 'data_liquidacao'):
                     query = query.filter(Model.data_liquidacao >= filtros['data_inicio'])
@@ -1797,26 +1662,22 @@ class ContasAPARService:
                 else:
                     query = query.filter(getattr(Model, campo_data) <= filtros['data_fim'])
 
-            # Filtro por situação específica
             if filtros.get('situacao_id'):
                 if hasattr(Model, 'situacao_pagamento_id'):
                     query = query.filter(Model.situacao_pagamento_id == int(filtros['situacao_id']))
                 elif hasattr(Model, 'situacao_financeira_id'):
                     query = query.filter(Model.situacao_financeira_id == int(filtros['situacao_id']))
 
-            # Filtro por pessoa
             if filtros.get('pessoa_id'):
                 pessoa_id = filtros['pessoa_id']
                 
                 if direcao == 'ar':
-                    # AR: filtrar por cliente (direto ou via carga)
                     if hasattr(Model, 'cliente_id'):
                         query = query.filter(Model.cliente_id == int(pessoa_id))
                     elif hasattr(Model, 'solicitacao_nf_id'):
                         query = query.join(CargaModel, Model.solicitacao_nf_id == CargaModel.id)
                         query = query.filter(CargaModel.cliente_id == int(pessoa_id))
                 else:
-                    # AP: filtrar por fornecedor/transportadora/extrator/comissionado (ID direto)
                     if hasattr(Model, 'fornecedor_id'):
                         query = query.filter(Model.fornecedor_id == int(pessoa_id))
                     elif hasattr(Model, 'transportadora_id'):
@@ -1834,10 +1695,8 @@ class ContasAPARService:
                 data_emissao = getattr(reg, campo_data) if hasattr(reg, campo_data) else reg.data_cadastro
                 data_pagamento = getattr(reg, 'data_liquidacao', None) or data_emissao
 
-                # Identificar pessoa baseado na direção
                 pessoa_nome = '-'
                 if direcao == 'ar':
-                    # AR: priorizar cliente
                     if hasattr(reg, 'cliente') and reg.cliente:
                         pessoa_nome = reg.cliente.identificacao if hasattr(reg.cliente, 'identificacao') else str(reg.cliente)
                     elif hasattr(reg, 'solicitacao') and reg.solicitacao and reg.solicitacao.cliente:
@@ -1845,7 +1704,6 @@ class ContasAPARService:
                     elif hasattr(reg, 'destinatario_nome') and reg.destinatario_nome:
                         pessoa_nome = reg.destinatario_nome
                 else:
-                    # AP: priorizar entidade correta conforme tipo de categoria
                     if codigo == '2.01.02' and hasattr(reg, 'transportadora') and reg.transportadora:
                         pessoa_nome = reg.transportadora.identificacao
                     elif codigo == '2.01.03':
@@ -1860,7 +1718,6 @@ class ContasAPARService:
                     elif hasattr(reg, 'comissionado') and reg.comissionado:
                         pessoa_nome = reg.comissionado.identificacao
 
-                # Situação
                 situacao = reg.situacao if hasattr(reg, 'situacao') and reg.situacao else None
                 situacao_nome = situacao.situacao if situacao else 'Sem situação'
                 situacao_id = None
@@ -1869,7 +1726,6 @@ class ContasAPARService:
                 elif hasattr(reg, 'situacao_financeira_id'):
                     situacao_id = reg.situacao_financeira_id
 
-                # Código identificador
                 if hasattr(reg, 'numero_nota_fiscal') and reg.numero_nota_fiscal:
                     codigo_fat = f'NF-{reg.numero_nota_fiscal}'
                 elif hasattr(reg, 'solicitacao_id') and reg.solicitacao_id:
@@ -1909,7 +1765,6 @@ class ContasAPARService:
             return resultado
 
         except Exception as e:
-            print(f"[ContasAPARService] Erro ao buscar baixas categoria {codigo}: {e}")
             return []
 
     @staticmethod
@@ -1921,10 +1776,8 @@ class ContasAPARService:
         
         ids_excluir = ids_excluir or set()
         
-        # Query: situações liquidadas (AP: 8,9,10 | AR: 3,8,9)
         situacoes_filtro = SITUACOES_RECEBIDAS_AR if direcao == 'ar' else SITUACOES_LIQUIDADAS
         
-        # Direção financeira: AP=2 (saída), AR=1 (entrada)
         direcao_financeira = 2 if direcao == 'ap' else 1
         
         query = AgendamentoPagamentoModel.query.filter(
@@ -1934,22 +1787,18 @@ class ContasAPARService:
             AgendamentoPagamentoModel.categorias_json.isnot(None)
         )
         
-        # Filtro por direção financeira (faturamento ou lançamento avulso)
-        # Subquery para faturamentos válidos
         faturamentos_validos = db.session.query(FaturamentoModel.id).filter(
             FaturamentoModel.direcao_financeira == direcao_financeira,
             FaturamentoModel.ativo == True,
             FaturamentoModel.deletado == False
         ).subquery()
         
-        # Subquery para lançamentos avulsos válidos
         lancamentos_validos = db.session.query(LancamentoAvulsoModel.id).filter(
             LancamentoAvulsoModel.tipo_movimentacao == direcao_financeira,
             LancamentoAvulsoModel.ativo == True,
             LancamentoAvulsoModel.deletado == False
         ).subquery()
         
-        # Filtrar: faturamento válido OU lançamento avulso válido
         query = query.filter(
             or_(
                 AgendamentoPagamentoModel.faturamento_id.in_(faturamentos_validos),
@@ -1957,21 +1806,17 @@ class ContasAPARService:
             )
         )
         
-        # Filtro por período (data_competencia)
         if filtros.get('data_inicio'):
             query = query.filter(AgendamentoPagamentoModel.data_competencia >= filtros['data_inicio'])
         if filtros.get('data_fim'):
             query = query.filter(AgendamentoPagamentoModel.data_competencia <= filtros['data_fim'])
         
-        # Filtro por situação
         if filtros.get('situacao_id'):
             query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == int(filtros['situacao_id']))
         
-        # Filtro por pessoa
         if filtros.get('pessoa_id'):
             query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
         
-        # Filtro por centro de custo
         if filtros.get('centro_custo_id'):
             cc_id = str(filtros['centro_custo_id'])
             query = query.filter(
@@ -1981,7 +1826,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por conta bancária
         if filtros.get('conta_bancaria_id'):
             query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
@@ -1990,9 +1834,6 @@ class ContasAPARService:
             try:
                 categorias = json_lib.loads(ag.categorias_json) if isinstance(ag.categorias_json, str) else ag.categorias_json
                 
-                # Lógica de valor pago considerando conciliação parcial
-                # Se conciliacao_parcial = 1 e valor_conciliado existe, usa valor_conciliado
-                # Senão, usa valor_total (pagamento total)
                 if ag.conciliacao_parcial and ag.valor_conciliado_100 is not None:
                     valor_pago = ag.valor_conciliado_100
                 else:
@@ -2047,11 +1888,9 @@ class ContasAPARService:
         """Pagamentos/Recebimentos no período - busca TODOS os agendamentos liquidados."""
         filtros = filtros or {}
         
-        # Para AP, usar nova lógica que busca todos os agendamentos
         if direcao_str == 'ap':
             return ContasAPARService._obter_pagamentos_ap(filtros)
         
-        # Para AR, usar nova lógica que busca todos os agendamentos
         return ContasAPARService._obter_recebimentos_ar(filtros)
 
     @staticmethod
@@ -2063,21 +1902,18 @@ class ContasAPARService:
         from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
         from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
         
-        # Subquery para faturamentos válidos (AP = direcao_financeira = 2)
         faturamentos_validos = db.session.query(FaturamentoModel.id).filter(
             FaturamentoModel.direcao_financeira == DIRECAO_AP,
             FaturamentoModel.ativo == True,
             FaturamentoModel.deletado == False
         ).subquery()
         
-        # Subquery para lançamentos avulsos válidos (AP = tipo_movimentacao = 2)
         lancamentos_validos = db.session.query(LancamentoAvulsoModel.id).filter(
             LancamentoAvulsoModel.tipo_movimentacao == DIRECAO_AP,
             LancamentoAvulsoModel.ativo == True,
             LancamentoAvulsoModel.deletado == False
         ).subquery()
         
-        # Query principal: TODOS os agendamentos liquidados
         query = AgendamentoPagamentoModel.query.filter(
             AgendamentoPagamentoModel.ativo == True,
             AgendamentoPagamentoModel.deletado == False,
@@ -2088,21 +1924,17 @@ class ContasAPARService:
             )
         )
         
-        # Filtro por período (data_competencia)
         if filtros.get('data_inicio'):
             query = query.filter(AgendamentoPagamentoModel.data_competencia >= filtros['data_inicio'])
         if filtros.get('data_fim'):
             query = query.filter(AgendamentoPagamentoModel.data_competencia <= filtros['data_fim'])
         
-        # Filtro por situação específica
         if filtros.get('situacao_id'):
             query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == int(filtros['situacao_id']))
         
-        # Filtro por pessoa
         if filtros.get('pessoa_id'):
             query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
         
-        # Filtro por centro de custo
         if filtros.get('centro_custo_id'):
             cc_id = str(filtros['centro_custo_id'])
             query = query.filter(
@@ -2112,7 +1944,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por código de faturamento
         if filtros.get('codigo_faturamento'):
             cod = filtros['codigo_faturamento'].strip()
             fats_por_codigo = db.session.query(FaturamentoModel.id).filter(
@@ -2124,7 +1955,6 @@ class ContasAPARService:
                 AgendamentoPagamentoModel.faturamento_id.in_(fats_por_codigo)
             )
         
-        # Filtro por nota fiscal (busca no código do faturamento, referência ou detalhes JSON)
         if filtros.get('nota_fiscal'):
             nf = filtros['nota_fiscal'].strip()
             fats_com_nf = db.session.query(FaturamentoModel.id).filter(
@@ -2142,7 +1972,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por descrição (lançamento avulso ou descrição do agendamento)
         if filtros.get('descricao_avulso'):
             desc = filtros['descricao_avulso'].strip()
             lavs_por_desc = db.session.query(LancamentoAvulsoModel.id).filter(
@@ -2157,26 +1986,20 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por conta bancária
         if filtros.get('conta_bancaria_id'):
             query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
         resultado = []
         for ag in query.all():
-            # Lógica de valor pago (igual SQL):
-            # Se conciliacao_parcial = 1 e valor_conciliado existe, usa valor_conciliado
-            # Senão, usa valor_total (pagamento total)
             if ag.conciliacao_parcial and ag.valor_conciliado_100 is not None:
                 valor_pago = ag.valor_conciliado_100
             else:
                 valor_pago = ag.valor_total_100 or 0
             
-            # Obter descrição/tipo operação
             tipo_operacao = 'Pagamento'
             descricao = ag.descricao or 'Pagamento'
             plano_contas = '-'
             
-            # Tentar obter plano de contas do categorias_json
             if ag.categorias_json:
                 try:
                     categorias = json_lib.loads(ag.categorias_json) if isinstance(ag.categorias_json, str) else ag.categorias_json
@@ -2191,10 +2014,8 @@ class ContasAPARService:
                 except (json_lib.JSONDecodeError, TypeError):
                     pass
             
-            # Código identificador
             codigo = ag.referencia if ag.referencia else f'LAN-{ag.id}'
             
-            # Pessoa
             pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
             
             resultado.append({
@@ -2222,7 +2043,6 @@ class ContasAPARService:
                 'conciliacao_parcial': ag.conciliacao_parcial or False,
             })
         
-        # Ordenar por data (mais recente primeiro)
         resultado.sort(key=lambda x: (x.get('data_pagamento') or x.get('data_emissao') or date.min), reverse=True)
         return resultado
 
@@ -2239,21 +2059,18 @@ class ContasAPARService:
         from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
         from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
         
-        # Subquery para faturamentos válidos (AR = direcao_financeira = 1)
         faturamentos_validos = db.session.query(FaturamentoModel.id).filter(
             FaturamentoModel.direcao_financeira == DIRECAO_AR,
             FaturamentoModel.ativo == True,
             FaturamentoModel.deletado == False
         ).subquery()
         
-        # Subquery para lançamentos avulsos válidos (AR = tipo_movimentacao = 1)
         lancamentos_validos = db.session.query(LancamentoAvulsoModel.id).filter(
             LancamentoAvulsoModel.tipo_movimentacao == DIRECAO_AR,
             LancamentoAvulsoModel.ativo == True,
             LancamentoAvulsoModel.deletado == False
         ).subquery()
         
-        # Query principal: TODOS os agendamentos liquidados (situações 8, 9, 10)
         query = AgendamentoPagamentoModel.query.filter(
             AgendamentoPagamentoModel.ativo == True,
             AgendamentoPagamentoModel.deletado == False,
@@ -2265,21 +2082,17 @@ class ContasAPARService:
             )
         )
         
-        # Filtro por período (data_competencia)
         if filtros.get('data_inicio'):
             query = query.filter(AgendamentoPagamentoModel.data_competencia >= filtros['data_inicio'])
         if filtros.get('data_fim'):
             query = query.filter(AgendamentoPagamentoModel.data_competencia <= filtros['data_fim'])
         
-        # Filtro por situação específica
         if filtros.get('situacao_id'):
             query = query.filter(AgendamentoPagamentoModel.situacao_pagamento_id == int(filtros['situacao_id']))
         
-        # Filtro por pessoa (cliente)
         if filtros.get('pessoa_id'):
             query = query.filter(AgendamentoPagamentoModel.pessoa_financeiro_id == int(filtros['pessoa_id']))
         
-        # Filtro por centro de custo
         if filtros.get('centro_custo_id'):
             cc_id = str(filtros['centro_custo_id'])
             query = query.filter(
@@ -2289,7 +2102,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por código de faturamento
         if filtros.get('codigo_faturamento'):
             cod = filtros['codigo_faturamento'].strip()
             fats_por_codigo = db.session.query(FaturamentoModel.id).filter(
@@ -2301,7 +2113,6 @@ class ContasAPARService:
                 AgendamentoPagamentoModel.faturamento_id.in_(fats_por_codigo)
             )
         
-        # Filtro por nota fiscal (busca no código do faturamento, referência ou detalhes JSON)
         if filtros.get('nota_fiscal'):
             nf = filtros['nota_fiscal'].strip()
             fats_com_nf = db.session.query(FaturamentoModel.id).filter(
@@ -2319,7 +2130,6 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por descrição (lançamento avulso ou descrição do agendamento)
         if filtros.get('descricao_avulso'):
             desc = filtros['descricao_avulso'].strip()
             lavs_por_desc = db.session.query(LancamentoAvulsoModel.id).filter(
@@ -2334,26 +2144,20 @@ class ContasAPARService:
                 )
             )
         
-        # Filtro por conta bancária
         if filtros.get('conta_bancaria_id'):
             query = query.filter(AgendamentoPagamentoModel.conta_bancaria_id == int(filtros['conta_bancaria_id']))
         
         resultado = []
         for ag in query.all():
-            # Lógica de valor recebido (igual SQL):
-            # Se conciliacao_parcial = 1 e valor_conciliado existe, usa valor_conciliado
-            # Senão, usa valor_total (recebimento total)
             if ag.conciliacao_parcial and ag.valor_conciliado_100 is not None:
                 valor_recebido = ag.valor_conciliado_100
             else:
                 valor_recebido = ag.valor_total_100 or 0
             
-            # Obter descrição/tipo operação
             tipo_operacao = 'Recebimento'
             descricao = ag.descricao or 'Recebimento'
             plano_contas = '-'
             
-            # Tentar obter plano de contas do categorias_json
             if ag.categorias_json:
                 try:
                     categorias = json_lib.loads(ag.categorias_json) if isinstance(ag.categorias_json, str) else ag.categorias_json
@@ -2368,10 +2172,8 @@ class ContasAPARService:
                 except (json_lib.JSONDecodeError, TypeError):
                     pass
             
-            # Código identificador
             codigo = ag.referencia if ag.referencia else f'LAN-{ag.id}'
             
-            # Pessoa (cliente)
             pessoa = ag.pessoa_financeiro if ag.pessoa_financeiro_id else None
             
             resultado.append({
@@ -2386,9 +2188,9 @@ class ContasAPARService:
                 'data_emissao': ag.data_competencia or ag.data_cadastro,
                 'data_vencimento': ag.data_vencimento or ag.data_cadastro,
                 'data_competencia': ag.data_competencia,
-                'data_pagamento': ag.data_competencia or ag.data_alteracao,  # data_recebimento
+                'data_pagamento': ag.data_competencia or ag.data_alteracao,
                 'valor_original_100': ag.valor_total_100 or 0,
-                'valor_pago_100': valor_recebido,  # valor_recebido
+                'valor_pago_100': valor_recebido,
                 'saldo_100': (ag.valor_total_100 or 0) - valor_recebido,
                 'situacao': ag.situacao.situacao if ag.situacao else 'Sem situação',
                 'situacao_id': ag.situacao_pagamento_id,
@@ -2399,7 +2201,6 @@ class ContasAPARService:
                 'conciliacao_parcial': ag.conciliacao_parcial or False,
             })
         
-        # Ordenar por data (mais recente primeiro)
         resultado.sort(key=lambda x: (x.get('data_pagamento') or x.get('data_emissao') or date.min), reverse=True)
         return resultado
 
@@ -2411,9 +2212,6 @@ class ContasAPARService:
             return ContasAPARService._obter_pendentes_ap_novo(filtros)
         return ContasAPARService._obter_pendentes_ar_novo(filtros)
 
-    # --------------------------------------------------------------------- #
-    #  TOTALIZADORES
-    # --------------------------------------------------------------------- #
 
     @staticmethod
     def totalizar(registros):
@@ -2429,9 +2227,6 @@ class ContasAPARService:
             'quantidade': len(registros),
         }
 
-    # --------------------------------------------------------------------- #
-    #  EXCEL — preparação de dados
-    # --------------------------------------------------------------------- #
 
     @staticmethod
     def preparar_dados_excel_emissoes(registros, direcao_str):
@@ -2519,7 +2314,6 @@ class ContasAPARService:
             lancamento_descricao = grupo.get('lancamento_descricao')
             
             if detalhes:
-                # Adicionar fornecedores
                 for f in detalhes.get('fornecedores', []):
                     dados.append({
                         'Faturamento': codigo_fat,
@@ -2542,7 +2336,6 @@ class ContasAPARService:
                         'Data Faturamento': data_faturamento.strftime('%d/%m/%Y') if data_faturamento else '-',
                     })
                 
-                # Adicionar transportadoras
                 for t in detalhes.get('transportadoras', []):
                     dados.append({
                         'Faturamento': codigo_fat,
@@ -2565,7 +2358,6 @@ class ContasAPARService:
                         'Data Faturamento': data_faturamento.strftime('%d/%m/%Y') if data_faturamento else '-',
                     })
                 
-                # Adicionar extratores
                 for e in detalhes.get('extratores', []):
                     dados.append({
                         'Faturamento': codigo_fat,
@@ -2588,7 +2380,6 @@ class ContasAPARService:
                         'Data Faturamento': data_faturamento.strftime('%d/%m/%Y') if data_faturamento else '-',
                     })
                 
-                # Adicionar comissionados
                 for c in detalhes.get('comissionados', []):
                     dados.append({
                         'Faturamento': codigo_fat,
@@ -2612,7 +2403,6 @@ class ContasAPARService:
                     })
                     
             elif lancamento_descricao:
-                # Lançamento avulso - uma linha só
                 dados.append({
                     'Faturamento': codigo_fat,
                     'Beneficiário': pessoa_nome,
@@ -2634,7 +2424,6 @@ class ContasAPARService:
                     'Data Faturamento': data_faturamento.strftime('%d/%m/%Y') if data_faturamento else '-',
                 })
             else:
-                # Sem detalhes - uma linha resumida
                 dados.append({
                     'Faturamento': codigo_fat,
                     'Beneficiário': pessoa_nome,
@@ -2658,9 +2447,6 @@ class ContasAPARService:
         
         return dados
 
-    # --------------------------------------------------------------------- #
-    #  AGRUPAMENTO — AP PENDENTES POR FATURAMENTO
-    # --------------------------------------------------------------------- #
 
     @staticmethod
     def agrupar_pendentes_por_faturamento(registros):
@@ -2708,16 +2494,13 @@ class ContasAPARService:
             'data_faturamento': None,
         })
         
-        # Cache de faturamentos e lançamentos já carregados
         faturamentos_cache = {}
         lancamentos_cache = {}
         
         for reg in registros:
-            # Chave de agrupamento: codigo_faturamento
             chave = reg.get('codigo_faturamento', f"AG-{reg.get('id')}")
             grupo = grupos_dict[chave]
             
-            # Preencher dados do grupo (apenas na primeira ocorrência)
             if grupo['codigo_faturamento'] is None:
                 grupo['codigo_faturamento'] = chave
                 grupo['faturamento_id'] = reg.get('faturamento_id')
@@ -2726,7 +2509,6 @@ class ContasAPARService:
                 grupo['pessoa_nome'] = reg.get('pessoa_nome', '-')
                 grupo['pessoa_id'] = reg.get('pessoa_id')
                 
-                # Buscar detalhes do faturamento
                 if reg.get('faturamento_id'):
                     fat_id = reg.get('faturamento_id')
                     if fat_id not in faturamentos_cache:
@@ -2745,7 +2527,6 @@ class ContasAPARService:
                         grupo['valor_credito_aplicado'] = faturamentos_cache[fat_id]['valor_credito_aplicado']
                         grupo['data_faturamento'] = faturamentos_cache[fat_id]['data_cadastro']
                 
-                # Buscar detalhes do lançamento avulso
                 elif reg.get('lancamento_avulso_id'):
                     lav_id = reg.get('lancamento_avulso_id')
                     if lav_id not in lancamentos_cache:
@@ -2760,26 +2541,21 @@ class ContasAPARService:
                         grupo['lancamento_descricao'] = lancamentos_cache[lav_id]['descricao']
                         grupo['data_faturamento'] = lancamentos_cache[lav_id]['data_cadastro']
             
-            # Acumular totais
             grupo['total_original_100'] += reg.get('valor_original_100', 0)
             grupo['total_pendente_100'] += reg.get('saldo_100', 0)
             grupo['qtd_agendamentos'] += 1
             
-            # Atualizar maior atraso
             dias_atraso = reg.get('dias_atraso', 0)
             if dias_atraso > grupo['maior_atraso']:
                 grupo['maior_atraso'] = dias_atraso
             
-            # Atualizar data de vencimento mais antiga
             data_venc = reg.get('data_vencimento')
             if data_venc:
                 if grupo['data_vencimento_mais_antiga'] is None or data_venc < grupo['data_vencimento_mais_antiga']:
                     grupo['data_vencimento_mais_antiga'] = data_venc
             
-            # Adicionar agendamento à lista
             grupo['agendamentos'].append(reg)
         
-        # Converter para lista e ordenar por maior atraso (maior primeiro)
         grupos_lista = list(grupos_dict.values())
         grupos_lista.sort(key=lambda g: (g['maior_atraso']), reverse=True)
         
@@ -2789,12 +2565,8 @@ class ContasAPARService:
     def obter_pendentes_agrupados(direcao_str, filtros=None):
         """Retorna pendentes agrupados por faturamento (para AP e AR)."""
         registros = ContasAPARService.obter_pendentes(direcao_str, filtros)
-        # Agora tanto AP quanto AR usam agrupamento por faturamento
         return ContasAPARService.agrupar_pendentes_por_faturamento(registros)
 
-    # --------------------------------------------------------------------- #
-    #  AGRUPAMENTO — AP BAIXAS (PAGAMENTOS) POR FATURAMENTO
-    # --------------------------------------------------------------------- #
 
     @staticmethod
     def agrupar_baixas_por_faturamento(registros):
@@ -2842,12 +2614,10 @@ class ContasAPARService:
             'tem_parcial': False,
         })
         
-        # Cache de faturamentos e lançamentos já carregados
         faturamentos_cache = {}
         lancamentos_cache = {}
         
         for reg in registros:
-            # Chave de agrupamento: faturamento_id ou lancamento_avulso_id
             fat_id = reg.get('faturamento_id')
             lav_id = reg.get('lancamento_avulso_id')
             
@@ -2860,7 +2630,6 @@ class ContasAPARService:
             
             grupo = grupos_dict[chave]
             
-            # Preencher dados do grupo (apenas na primeira ocorrência)
             if grupo['codigo_faturamento'] is None:
                 grupo['faturamento_id'] = fat_id
                 grupo['lancamento_avulso_id'] = lav_id
@@ -2868,7 +2637,6 @@ class ContasAPARService:
                 grupo['pessoa_nome'] = reg.get('pessoa_nome', '-')
                 grupo['pessoa_id'] = reg.get('pessoa_id')
                 
-                # Buscar detalhes do faturamento
                 if fat_id:
                     if fat_id not in faturamentos_cache:
                         fat = FaturamentoModel.query.get(fat_id)
@@ -2888,7 +2656,6 @@ class ContasAPARService:
                     else:
                         grupo['codigo_faturamento'] = f'FAT-{fat_id}'
                 
-                # Buscar detalhes do lançamento avulso
                 elif lav_id:
                     if lav_id not in lancamentos_cache:
                         lav = LancamentoAvulsoModel.query.get(lav_id)
@@ -2908,25 +2675,20 @@ class ContasAPARService:
                 else:
                     grupo['codigo_faturamento'] = reg.get('codigo_faturamento', f"AG-{reg.get('id')}")
             
-            # Acumular totais
             grupo['total_original_100'] += reg.get('valor_original_100', 0)
             grupo['total_pago_100'] += reg.get('valor_pago_100', 0)
             grupo['qtd_agendamentos'] += 1
             
-            # Detectar se tem pago parcial
             if reg.get('conciliacao_parcial'):
                 grupo['tem_parcial'] = True
             
-            # Atualizar data de pagamento mais recente
             data_pag = reg.get('data_pagamento')
             if data_pag:
                 if grupo['data_pagamento_mais_recente'] is None or data_pag > grupo['data_pagamento_mais_recente']:
                     grupo['data_pagamento_mais_recente'] = data_pag
             
-            # Adicionar agendamento à lista
             grupo['agendamentos'].append(reg)
         
-        # Converter para lista e ordenar por data de pagamento (mais recente primeiro)
         grupos_lista = list(grupos_dict.values())
         grupos_lista.sort(key=lambda g: (g['data_pagamento_mais_recente'] or date.min), reverse=True)
         
@@ -2938,5 +2700,4 @@ class ContasAPARService:
         registros = ContasAPARService.obter_baixas(direcao_str, filtros)
         if direcao_str == 'ap':
             return ContasAPARService.agrupar_baixas_por_faturamento(registros)
-        # Para AR, por enquanto retorna sem agrupamento
         return registros

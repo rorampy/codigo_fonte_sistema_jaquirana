@@ -4,7 +4,7 @@ class TipoAcaoEnum(Enum):
     CADASTRO = "cadastro"
     EDICAO = "edicao"
 
-    @property #método da classe em um atributo de leitura 
+    @property
     def pontos(self):
         return {
             TipoAcaoEnum.CADASTRO: 1.0,

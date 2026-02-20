@@ -98,7 +98,6 @@ class NfEntradaModel(BaseModel):
         for nfentrada, registro, fornecedor, floresta in query.all():
             origem = "Indefinido"
             if fornecedor and fornecedor.identificacao:
-                # Se o fornecedor tem controle_entrada = True, agrupa como "Outros fornecedores"
                 if fornecedor.controle_entrada == False:
                     origem = "Outros fornecedores"
                 else:
@@ -195,7 +194,6 @@ class NfEntradaModel(BaseModel):
         for nfentrada, registro, fornecedor, floresta in query.all():
             origem = "Indefinido"
             if fornecedor and fornecedor.identificacao:
-                # Se o fornecedor tem controle_entrada = True, agrupa como "Outros fornecedores"
                 if fornecedor.controle_entrada:
                     origem = "Outros fornecedores"
                 else:

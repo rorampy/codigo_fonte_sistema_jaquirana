@@ -6,7 +6,7 @@ class FornecedorCreditoModel(BaseModel):
     
     id = db.Column(db.Integer, primary_key=True)
     fornecedor_id = db.Column(db.Integer, db.ForeignKey('for_fornecedor_cadastro.id'), nullable=False)    
-    credito_100 = db.Column(db.Integer, nullable=True)  # Crédito em centavos por tonelada
+    credito_100 = db.Column(db.Integer, nullable=True)
 
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
@@ -47,11 +47,9 @@ class FornecedorCreditoModel(BaseModel):
         registro = FornecedorCreditoModel.obter_credito_por_fornecedor(fornecedor_id)
         
         if registro:
-            # Atualiza registro existente - NÃO CRIA NOVO!
             if credito_100 is not None:
                 registro.credito_100 = credito_100
         else:
-            # Cria novo registro APENAS se não existir
             registro = FornecedorCreditoModel(
                 fornecedor_id=fornecedor_id,
                 credito_100=credito_100

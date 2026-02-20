@@ -3,12 +3,12 @@
 {% include 'estrutura/header.html' %}
 
 <div class="page-wrapper">
-  <!-- Cabeçalho da página -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Pré-título e título da página -->
+          
           <div class="page-pretitle">
             PEDIDO DE COMPRA
           </div>
@@ -17,10 +17,9 @@
           </h2>
         </div>
 
-        <!-- Botões de ação no canto direito -->
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="d-flex gap-2">
-            <!-- Badge com total de cargas -->
+            
             <span class="badge bg-blue-lt p-2 d-flex align-items-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -31,9 +30,8 @@
               {{ total_itens }} cargas no total
             </span>
             
-            <!-- Botão: Cadastrar novo pedido -->
             <a href="{{ url_for('cadastrar_pedido_compra') }}" class="btn btn-primary">
-              <!-- Ícone de + (adicionar) -->
+              
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
                 stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -48,11 +46,9 @@
     </div>
   </div>
 
-  <!-- Corpo da página -->
   <div class="page-body">
     <div class="container-xl">
 
-      <!-- Inclui componente de mensagens flash (sucesso, erro, etc) -->
       {% include 'estrutura/mensagens_flash.html' %}
 
       <div class="col-12">
@@ -60,7 +56,7 @@
           <div class="card-body p-0">
             
             {% if itens_por_fornecedor and itens_por_fornecedor|length > 0 %}
-            <!-- Accordion agrupado por fornecedor -->
+            
             <div class="accordion" id="fornecedoresAccordion">
               
               {% for fornecedor_id, grupo in itens_por_fornecedor.items() %}
@@ -68,7 +64,7 @@
               {% set itens = grupo.itens %}
               
               <div class="accordion-item">
-                <!-- Cabeçalho do accordion (nome do fornecedor) -->
+                
                 <h2 class="accordion-header d-flex align-items-center" id="heading-fornecedor-{{ loop.index }}">
                   <button class="accordion-button {% if not loop.first %}collapsed{% endif %} flex-grow-1" type="button" 
                           data-bs-toggle="collapse"
@@ -76,7 +72,7 @@
                           aria-expanded="{% if loop.first %}true{% else %}false{% endif %}">
                     <div class="d-flex align-items-center justify-content-between w-100 me-3">
                       <div class="d-flex align-items-center">
-                        <!-- Ícone de caminhão -->
+                        
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-primary" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                           <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                           <path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
@@ -85,11 +81,11 @@
                         </svg>
                         <strong>{{ fornecedor.identificacao if fornecedor else 'Sem Fornecedor Definido' }} - {{ itens[0].data_carga.strftime('%d/%m/%Y') if itens and itens[0].data_carga else '' }}</strong>
                       </div>
-                      <!-- Badge com quantidade de cargas -->
+                      
                       <span class="badge bg-azure-lt ms-2">{{ itens|length }} cargas</span>
                     </div>
                   </button>
-                  <!-- Botão: Excluir Escala Completa -->
+                  
                   <button class="btn btn-sm btn-outline-danger me-2" 
                           data-bs-toggle="modal"
                           data-bs-target="#modal-excluir-escala-{{ loop.index }}"
@@ -106,7 +102,6 @@
                   </button>
                 </h2>
                 
-                <!-- Modal de confirmação de exclusão da escala -->
                 <div class="modal modal-blur fade" id="modal-excluir-escala-{{ loop.index }}" tabindex="-1" role="dialog" aria-hidden="true">
                   <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
                     <div class="modal-content">
@@ -147,7 +142,6 @@
                   </div>
                 </div>
                 
-                <!-- Corpo do accordion (tabela de itens) -->
                 <div id="collapse-fornecedor-{{ loop.index }}"
                      class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
                      data-bs-parent="#fornecedoresAccordion">
@@ -171,31 +165,27 @@
                         <tbody>
                           {% for item in itens %}
                           <tr>
-                            <!-- Data Carga -->
+                            
                             <td class="text-center fw-bold text-primary" style="text-align: center;">
                               {{ item.data_carga.strftime('%d/%m/%Y') if item.data_carga else '-' }}
                             </td>
-                            <!-- Data Lançamento -->
+                            
                             <td class="text-center text-muted" style="text-align: center;">
                               {{ item.data_cadastro.strftime('%d/%m/%Y %H:%M') if item.data_cadastro else '-' }}
                             </td>
                             
-                            <!-- Data Entrega -->
                             <td class="text-center" style="text-align: center;">
                               {{ item.data_entrega.strftime('%d/%m/%Y') if item.data_entrega else '-' }}
                             </td>
                             
-                            <!-- Transportadora -->
                             <td class="text-center" style="text-align: center;">
                               {{ item.obter_nome_transportadora() | truncate(25, True, '...') }}
                             </td>
                             
-                            <!-- Motorista -->
                             <td class="text-center" style="text-align: center;">
                               {{ item.obter_nome_motorista() | truncate(20, True, '...') }}
                             </td>
                             
-                            <!-- Placa -->
                             <td class="text-center" style="text-align: center;">
                               {% if item.veiculo %}
                               <span class="badge bg-yellow-lt">{{ item.obter_placa_veiculo() }}</span>
@@ -204,12 +194,10 @@
                               {% endif %}
                             </td>
                             
-                            <!-- Extrator -->
                             <td class="text-center" style="text-align: center;">
                               {{ item.obter_nome_extrator() | truncate(20, True, '...') }}
                             </td>
                             
-                            <!-- Código do Pedido (Escala) -->
                             <td class="text-center" style="text-align: center;">
                               <a href="{{ url_for('editar_pedido_compra', id=item.pedido_compra.id) }}" 
                                  class="badge bg-blue-lt text-decoration-none"
@@ -218,10 +206,9 @@
                               </a>
                             </td>
                             
-                            <!-- Botões de ação -->
                             <td class="text-center" style="text-align: center;">
                               <div class="btn-list flex-nowrap justify-content-center">
-                                <!-- Botão: Editar pedido -->
+                                
                                 <a href="{{ url_for('editar_pedido_compra', id=item.pedido_compra.id) }}" 
                                    class="btn btn-icon btn-outline-warning"
                                    data-bs-toggle="tooltip" 
@@ -234,7 +221,6 @@
                                   </svg>
                                 </a>
 
-                                <!-- Botão: Excluir item (abre modal de confirmação) -->
                                 <a href="#"
                                    class="btn btn-icon btn-outline-danger"
                                    data-bs-toggle="modal" 
@@ -253,7 +239,6 @@
                             </td>
                           </tr>
                           
-                          <!-- Modal de confirmação de exclusão do item -->
                           <div class="modal modal-blur fade" id="modal-excluir-item-{{ item.id }}" tabindex="-1" role="dialog" aria-hidden="true">
                             <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
                               <div class="modal-content">
@@ -291,10 +276,10 @@
                               </div>
                             </div>
                           </div>
-                          <!-- Fim do modal -->
+                          
                           {% endfor %}
                         </tbody>
-                        <!-- Rodapé da tabela com total -->
+                        
                         <tfoot class="bg-light">
                           <tr>
                             <td colspan="8" class="text-end pe-3">
@@ -311,10 +296,9 @@
               {% endfor %}
               
             </div>
-            <!-- Fim do accordion -->
             
             {% else %}
-            <!-- Mensagem quando não há itens cadastrados -->
+            
             <div class="text-center text-muted py-5">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg mb-2" width="48" height="48" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -343,17 +327,14 @@
 </div>
 
 <script>
-/**
- * Script para gerenciar exclusão de itens via AJAX
- */
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Adiciona evento de clique nos botões de excluir item individual
+    
     document.querySelectorAll('.btn-excluir-item').forEach(btn => {
         btn.addEventListener('click', function() {
             const itemId = this.getAttribute('data-item-id');
             const modal = this.closest('.modal');
             
-            // Faz requisição AJAX para excluir o item
             fetch(`/pedido-compra/item/excluir/${itemId}`, {
                 method: 'POST',
                 headers: {
@@ -363,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.sucesso) {
-                    // Fecha o modal e recarrega a página
+                    
                     bootstrap.Modal.getInstance(modal).hide();
                     window.location.reload();
                 } else {

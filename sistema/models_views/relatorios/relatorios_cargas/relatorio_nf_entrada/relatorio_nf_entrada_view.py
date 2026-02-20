@@ -18,7 +18,6 @@ def relatorio_controle_estoque_fornecedor():
         changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
         dataHoje = datetime.now().strftime("%d-%m-%Y")
         
-        # Converter strings de data para objetos date se fornecidas
         data_inicio = None
         data_fim = None
         
@@ -55,5 +54,4 @@ def relatorio_controle_estoque_fornecedor():
 
     except Exception as e:
         flash(("Não foi possível gerar o relatório de controle de estoque! Entre em contato com o suporte!", "warning"))
-        print(f"Erro no relatório de controle de estoque: {e}")
         return redirect(url_for("principal"))

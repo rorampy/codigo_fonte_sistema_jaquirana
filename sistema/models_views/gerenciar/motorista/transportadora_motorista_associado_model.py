@@ -63,11 +63,9 @@ class TransportadoraMotoristaAssocModel(BaseModel):
             .all()
         )
 
-        # Combinar os dois resultados e remover duplicados pelo atributo 'id'
         todos = {m.id: m for m in motoristas_assoc}
 
         for m in motoristas_legado:
             if m.id not in todos:
                 todos[m.id] = m
-        print(list(todos.values()))
         return list(todos.values())

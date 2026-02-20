@@ -38,10 +38,8 @@ class ExtracaoTicket:
                 return caminho
             
             altura, largura = img.shape[:2]
-            # Reduzido para 1280px - tickets não precisam de alta resolução
             max_dim = 1280
             
-            # Se a imagem for muito grande, redimensiona mantendo proporção
             if largura > max_dim or altura > max_dim:
                 escala = max_dim / max(largura, altura)
                 nova_largura = int(largura * escala)
@@ -50,13 +48,10 @@ class ExtracaoTicket:
                 img_redimensionada = cv2.resize(img, (nova_largura, nova_altura), 
                                                 interpolation=cv2.INTER_AREA)
                 
-                # Libera memória da imagem original
                 del img
                 
-                # Salva com qualidade reduzida
                 cv2.imwrite(caminho, img_redimensionada, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 
-                # Libera memória da imagem redimensionada
                 del img_redimensionada
         except Exception:
             pass
@@ -84,7 +79,6 @@ class ExtracaoTicket:
         img = cv2.imread(path)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         
-        # Libera memória da imagem original
         del img
         
         blur = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -92,7 +86,6 @@ class ExtracaoTicket:
         enhanced = clahe.apply(blur)
         sharpen = cv2.addWeighted(enhanced, 1.5, blur, -0.5, 0)
         
-        # Libera memória
         del gray, blur, enhanced
         
         return sharpen
@@ -117,20 +110,15 @@ class ExtracaoTicket:
             imagem_path = self.caminho_imagem
             
         try:
-            # Abre imagem com PIL (mais leve que cv2 para OCR)
             img = Image.open(imagem_path)
             
-            # Configuração otimizada do Tesseract para tickets
             config_tesseract = '--psm 6 --oem 3'
             
-            # Executa OCR
             texto = pytesseract.image_to_string(img, lang='por', config=config_tesseract)
             
-            # Fecha imagem para liberar memória
             img.close()
             del img
             
-            # Retorna linhas não vazias
             linhas = [linha.strip() for linha in texto.split('\n') if linha.strip()]
             
             return linhas
@@ -251,13 +239,11 @@ class ExtracaoTicket:
         for i, linha in enumerate(linhas):
             linha_lower = linha.lower()
 
-            # Busca placa
             if not dados["placa"]:
                 placa = ExtracaoTicket.extrair_placa(linha)
                 if placa:
                     dados["placa"] = placa
 
-            # Busca peso líquido
             if re.search(r'l[ií]quido', linha_lower):
                 num = ExtracaoTicket.extrair_numero(linha)
                 if num and num > 0:
@@ -267,7 +253,6 @@ class ExtracaoTicket:
                     if num and num > 0:
                         dados["peso_liquido"] = num
 
-            # Busca data de entrada
             if not dados["data_entrada"]:
                 if re.search(r'entrada|peso\s+ent', linha_lower):
                     data = ExtracaoTicket.extrair_data(linha)
@@ -286,7 +271,6 @@ class ExtracaoTicket:
                     if data:
                         dados["data_entrada"] = data
 
-            # Busca número da nota
             if not dados["numero_nota"]:
                 if re.search(r'nota|n\.?f|num\.?\s*nota|numer[oa]', linha_lower):
                     match = re.search(r'\d{5,9}', linha)
@@ -297,7 +281,6 @@ class ExtracaoTicket:
                         if match:
                             dados["numero_nota"] = match.group(0)
 
-        # Libera memória das linhas
         del linhas
         
         return dados
@@ -348,7 +331,6 @@ class ExtracaoTicket:
                 'placa': dados_extraidos.get('placa')
             }
             
-            # Libera memória dos dados extraídos
             del dados_extraidos
             
             return resultado

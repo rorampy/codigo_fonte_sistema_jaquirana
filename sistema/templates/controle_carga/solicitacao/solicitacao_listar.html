@@ -3,12 +3,12 @@
 {% include 'estrutura/header.html' %}
 
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             PEDIDOS DE VENDA
           </div>
@@ -48,7 +48,7 @@
       </div>
     </div>
   </div>
-  <!-- Page body -->
+  
   <div class="page-body">
     <div class="container-xl">
 
@@ -58,7 +58,6 @@
         {%if solicitacao%}
         <div class="card">
 
-          <!-- Início Tabela -->
           <div class="table-responsive">
             <table id="tabela-informacao" class="table table-vcenter card-table"
               style="margin-bottom: 0 !important;">
@@ -96,7 +95,7 @@
                   <td>
                     <div class="btn-list flex-nowrap"
                       style="justify-content: center; gap: 8px;">
-                      <!-- Botão Lançar NF - Verde -->
+                      
                       <a href="{{url_for('cadastrar_emissao', id=s.id)}}"
                         class="btn btn-icon btn-outline-success {% if s.nf_emitida == 1 %}disabled{% endif %}"
                         data-bs-toggle="tooltip" data-bs-placement="top"
@@ -116,7 +115,6 @@
                         </svg>
                       </a>
 
-                      <!-- Relatorio da solicitacao -->
                       <a
                         href="{{url_for('relatorio_solicitacoes_lancamentos', id=s.id)}}"
                         class="btn disabled btn-icon btn-outline-red"
@@ -135,7 +133,6 @@
                             d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" /></svg>
                       </a>
 
-                      <!-- Botão Detalhes - Cinza -->
                       <a href="{{url_for('detalhes_solicitacao', id=s.id )}}"
                         class="btn btn-icon btn-outline-secondary"
                         data-bs-toggle="tooltip" data-bs-placement="top"
@@ -154,7 +151,6 @@
                         </svg>
                       </a>
 
-                      <!-- Botão Editar - Amarelo -->
                       <a href="{{url_for('editar_solicitacao', id=s.id)}}"
                         class="btn btn-icon btn-outline-warning"
                         data-bs-toggle="tooltip" data-bs-placement="top"
@@ -174,7 +170,7 @@
                         </svg>
                       </a>
                       {% if s.cancelada == 0 %}
-                      <!-- Botão Cancelar - Vermelho -->
+                      
                       <a href="#"
                         class="btn btn-icon btn-outline-danger {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%} excluir"
                         data-bs-toggle="modal"
@@ -192,7 +188,6 @@
                         </svg>
                       </a>
 
-                      <!-- Modal de Confirmação -->
                       <div class="modal modal-blur fade"
                         id="modal-cancelar-{{s.id}}"
                         tabindex="-1" role="dialog" aria-hidden="true">
@@ -300,7 +295,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1"
     role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -342,7 +336,7 @@
             </a>
             <button type="submit" class="btn btn-primary btn-5 ms-auto"
               data-bs-dismiss="modal">
-              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2"
@@ -375,11 +369,11 @@
       if (radioCPF.checked) {
         grupoFloresta.forEach(el => el.style.display = 'block');
         grupoFornecedor.forEach(el => el.style.display = 'none');
-        limparCampos('grupoFornecedor'); // Limpa campos do grupo Fornecedor
+        limparCampos('grupoFornecedor'); 
       } else {
         grupoFloresta.forEach(el => el.style.display = 'none');
         grupoFornecedor.forEach(el => el.style.display = 'block');
-        limparCampos('grupoFloresta'); // Limpa campos do grupo floresta
+        limparCampos('grupoFloresta'); 
       }
     }
 
@@ -387,7 +381,7 @@
       radio.addEventListener('change', alternarCampos);
     });
 
-    alternarCampos(); // Configura o estado inicial dos campos
+    alternarCampos(); 
   </script>
   {% include 'estrutura/footer.html' %}
 </div>

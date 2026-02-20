@@ -35,14 +35,11 @@ class HistoricoTransacaoCreditoModel(BaseModel):
     
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     
-    # === Transação de Crédito ===
     transacao_credito_id = db.Column(db.Integer, db.ForeignKey("cre_transacao_credito.id"), nullable=False, index=True)
     transacao_credito = db.relationship("TransacaoCreditoModel", backref=db.backref("historico", lazy="dynamic"))
     
-    # === Ação Realizada ===
-    acao = db.Column(db.Integer, nullable=False, index=True)  # AcaoHistoricoCredito enum
+    acao = db.Column(db.Integer, nullable=False, index=True)
     
-    # === Valores Antes/Depois ===
     valor_original_anterior_100 = db.Column(db.Integer, nullable=True)
     valor_original_posterior_100 = db.Column(db.Integer, nullable=True)
     valor_utilizado_anterior_100 = db.Column(db.Integer, nullable=True)
@@ -50,25 +47,19 @@ class HistoricoTransacaoCreditoModel(BaseModel):
     saldo_anterior_100 = db.Column(db.Integer, nullable=True)
     saldo_posterior_100 = db.Column(db.Integer, nullable=True)
     
-    # === Usuário Responsável ===
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     usuario = db.relationship('UsuarioModel', backref=db.backref('historico_transacoes_credito', lazy='dynamic'))
     
-    # === Timestamp ===
     data_hora = db.Column(db.DateTime, default=datetime.now, nullable=False, index=True)
     
-    # === Descrição/Motivo ===
     descricao = db.Column(db.String(500), nullable=True)
     motivo = db.Column(db.String(500), nullable=True)
     
-    # === Snapshot do Estado Completo ===
     snapshot_json = db.Column(db.JSON, nullable=True)
     
-    # === Referências Relacionadas ===
     faturamento_relacionado_id = db.Column(db.Integer, db.ForeignKey("fin_faturamento.id"), nullable=True)
     faturamento_relacionado = db.relationship("FaturamentoModel", backref=db.backref("historico_creditos", lazy="dynamic"))
     
-    # === Índices compostos ===
     __table_args__ = (
         db.Index('idx_historico_transacao_data', 'transacao_credito_id', 'data_hora'),
         db.Index('idx_historico_acao_data', 'acao', 'data_hora'),
@@ -105,7 +96,6 @@ class HistoricoTransacaoCreditoModel(BaseModel):
         self.snapshot_json = snapshot_json
         self.faturamento_relacionado_id = faturamento_relacionado_id
     
-    # === Métodos de Instância ===
     
     def obter_acao_descricao(self):
         """Descrição legível da ação"""
@@ -127,7 +117,6 @@ class HistoricoTransacaoCreditoModel(BaseModel):
             return self.saldo_posterior_100 - self.saldo_anterior_100
         return 0
     
-    # === Métodos Estáticos ===
     
     def buscar_por_transacao(transacao_credito_id: int, limite: int = None) -> list:
         """
@@ -248,21 +237,16 @@ class HistoricoTransacaoCreditoModel(BaseModel):
         Returns:
             Registro de histórico criado
         """
-        # Para créditos positivos: subtração normal
-        # Para débitos negativos: o valor_utilizado_100 já considerou o sinal correto
         is_debito = transacao.valor_original_100 < 0
         
         if is_debito:
-            # Para débitos: valor_utilizado é negativo, então soma para voltar ao anterior
             valor_utilizado_anterior = transacao.valor_utilizado_100 + valor_utilizado_100
         else:
-            # Para créditos: valor_utilizado é positivo, então subtrai para voltar ao anterior
             valor_utilizado_anterior = transacao.valor_utilizado_100 - valor_utilizado_100
         
         saldo_anterior = transacao.valor_original_100 - valor_utilizado_anterior
         saldo_posterior = transacao.obter_saldo_disponivel_100()
         
-        # Determina se é utilização parcial ou total
         acao = AcaoHistoricoCredito.UTILIZACAO_TOTAL if saldo_posterior == 0 else AcaoHistoricoCredito.UTILIZACAO_PARCIAL
         
         historico = HistoricoTransacaoCreditoModel(

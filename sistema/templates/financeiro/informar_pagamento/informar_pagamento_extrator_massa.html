@@ -24,7 +24,7 @@
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
       <div class="row g-3 mb-4">
-        <!-- Card Crédito -->
+        
         <div class="col-6 col-md-4">
           <div class="card border-0 shadow-sm h-100">
             <div class="card-body p-4 d-flex flex-column">
@@ -73,7 +73,6 @@
           </div>
         </div>
 
-        <!-- Card Total a Faturar -->
         <div class="col-6 col-md-4">
           <div class="card border-0 shadow-sm h-100">
             <div class="card-body p-4 d-flex flex-column">
@@ -94,14 +93,12 @@
                 <div class="flex-grow-1">
                   <p class="text-muted mb-1 small text-uppercase fw-medium" id="total-pagar-label">Total a Faturar</p>
 
-                  <!-- Valor principal (dinâmico conforme uso do crédito) -->
                   <h4 class="mb-0 fw-bold" style="color: #1B5E20;" id="total-pagar">
                     {{ valor_total_geral | formatar_float_para_brl }}
                   </h4>
 
-                  <!-- Informações adicionais -->
                   <div id="total-pagar-detalhes">
-                    <!-- Badge de status do crédito (aparece apenas quando usar crédito) -->
+                    
                     <div id="credito-status" class="mt-1" style="display: none;">
                       <small class="text-muted d-block mt-1">
                         Total bruto: <span id="total-bruto-mini">-</span>
@@ -268,10 +265,9 @@
             </div>
 
             {%if total_credito_disponivel != 0%}
-            <!-- Seção do resumo de créditos (aparece quando seleciona "Sim") -->
+            
             <div id="resumo-creditos" class="mb-4" style="display: none;">
 
-              <!-- Tabelas de Créditos Individuais - Extratores -->
               {% for extrator_id, dados_extrator in extratores_dict.items() %}
               {% if dados_extrator.creditos_individuais %}
               <div class="creditos-section mb-3" id="creditos-extrator-{{ extrator_id }}"
@@ -350,7 +346,6 @@
               {% endif %}
               {% endfor %}
 
-              <!-- Header moderno -->
               <div class="card border-0 shadow-sm" style="border-radius: 5px; overflow: hidden;">
                 <div class="card-header border-0 text-white position-relative"
                   style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 24px;">
@@ -371,14 +366,12 @@
                 </div>
 
                 <div class="card-body p-0">
-                  <!-- Seção Principal: Cards lado a lado -->
+                  
                   <div class="row g-0">
 
-                    <!-- Extratores -->
                     <div class="col-12">
                       <div class="p-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
 
-                        <!-- Título da seção -->
                         <div class="d-flex align-items-center mb-4">
                           <div class="rounded-circle me-3 d-flex align-items-center justify-content-center"
                             style="width: 40px; height: 40px; background: #1B5E20;">
@@ -395,7 +388,6 @@
                           </div>
                         </div>
 
-                        <!-- Cards dos extratores -->
                         <div class="space-y-3">
                           {% for extrator_id, dados_extrator in extratores_dict.items() %}
                           <div class="card border-0 shadow-sm mb-3" style="border-radius: 5px; background: white;"
@@ -446,11 +438,9 @@
                     </div>
                   </div>
 
-                  <!-- Resumo Final Moderno -->
                   <div class="border-top bg-light">
                     <div class="p-4">
 
-                      <!-- Título do resumo -->
                       <div class="text-center mb-4">
                         <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center"
                           style="width: 48px; height: 48px; background: #f8f9fa; border: 2px solid #dee2e6;">
@@ -465,7 +455,6 @@
                         <h5 class="mb-0 text-dark">RESULTADO FINAL</h5>
                       </div>
 
-                      <!-- Cards do resumo matemático -->
                       <div class="row g-3 mb-4">
                         <div class="col-md-4">
                           <div class="card border shadow-sm"
@@ -539,7 +528,6 @@
     </div>
   </div>
 
-  <!-- Estilos customizados para as tabelas de créditos -->
   <style>
     .hover-row:hover {
       background-color: #f8f9fa !important;
@@ -577,9 +565,8 @@
     }
   </style>
 
-  <!-- Sistema de Gerenciamento de Créditos -->
   <script>
-    // Inicialização do TomSelect para selects
+    
     document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll('select.form-select:not(.categoria-select)').forEach(function (select) {
         new TomSelect(select, {
@@ -589,12 +576,10 @@
       });
     });
 
-    // Variáveis globais para créditos selecionados
     let creditosSelecionados = {
       extrator: {}
     };
 
-    // Função para alternar todos os créditos de uma entidade
     function toggleAllCreditos(tipo, entidadeId) {
       const checkboxPrincipal = document.getElementById(`select-all-creditos-${tipo}-${entidadeId}`);
       const checkboxes = document.querySelectorAll(`input[name="creditos_${tipo}_${entidadeId}[]"]`);
@@ -606,20 +591,17 @@
       calcularCreditosSelecionados();
     }
 
-    // Função para calcular créditos selecionados
     function calcularCreditosSelecionados() {
-      // Reset dos totais
+      
       const creditosParaEnvio = { extrator: {} };
       creditosSelecionados = { extrator: {} };
 
-      // Calcular por tipo de entidade
       document.querySelectorAll('.credito-checkbox:checked').forEach(checkbox => {
         const tipo = checkbox.dataset.tipo;
         const entidadeId = checkbox.dataset.entidadeId;
         const valor = parseInt(checkbox.dataset.valor) || 0;
         const creditoId = parseInt(checkbox.value);
 
-        // Para exibição visual
         if (!creditosSelecionados[tipo][entidadeId]) {
           creditosSelecionados[tipo][entidadeId] = [];
         }
@@ -628,32 +610,26 @@
           valor: valor
         });
 
-        // Para envio ao backend (apenas IDs)
         if (!creditosParaEnvio[tipo][entidadeId]) {
           creditosParaEnvio[tipo][entidadeId] = [];
         }
         creditosParaEnvio[tipo][entidadeId].push(creditoId);
       });
 
-      // Atualizar totais visuais
       atualizarTotaisCreditos();
 
-      // Atualizar campo hidden com estrutura simplificada para o backend
       document.getElementById('creditos-selecionados-hidden').value = JSON.stringify(creditosParaEnvio);
 
-      // Verificar se há créditos excessivos
       verificarCreditosExcessivos();
 
-      // Recalcular totais gerais se estiver usando crédito
       const radioUsarCredito = document.querySelector('input[name="usar_credito"][value="sim"]');
       if (radioUsarCredito && radioUsarCredito.checked) {
         calcularTotaisGerais();
       }
     }
 
-    // Função para verificar créditos excessivos
     function verificarCreditosExcessivos() {
-      // Calcular total de créditos selecionados
+      
       let totalCreditosSelecionados = 0;
 
       Object.keys(creditosSelecionados.extrator).forEach(extratorId => {
@@ -662,22 +638,18 @@
         }
       });
 
-      // Calcular valor total da fatura
       let valorTotalFatura = 0;
       Object.values(valoresCalculados).forEach(dados => {
         valorTotalFatura += dados.valor_total;
       });
 
-      // Verificar se há excesso
       const creditoExcessivo = Math.max(0, totalCreditosSelecionados - valorTotalFatura);
 
-      // Remover alerta anterior se existir
       const alertaExistente = document.getElementById('alerta-credito-excessivo');
       if (alertaExistente) {
         alertaExistente.remove();
       }
 
-      // Mostrar alerta se há crédito excessivo
       if (creditoExcessivo > 0) {
         const alertaDiv = document.createElement('div');
         alertaDiv.id = 'alerta-credito-excessivo';
@@ -695,7 +667,6 @@
           </div>
         `;
 
-        // Inserir após as tabelas de crédito
         const resumoCreditos = document.getElementById('resumo-creditos');
         if (resumoCreditos) {
           resumoCreditos.appendChild(alertaDiv);
@@ -703,9 +674,8 @@
       }
     }
 
-    // Função para atualizar totais visuais dos créditos
     function atualizarTotaisCreditos() {
-      // Atualizar totais por extrator
+      
       Object.keys(creditosSelecionados.extrator).forEach(extratorId => {
         const total = creditosSelecionados.extrator[extratorId].reduce((sum, credito) => sum + credito.valor, 0);
         const elemento = document.getElementById(`total-credito-extrator-${extratorId}`);
@@ -714,7 +684,6 @@
         }
       });
 
-      // Limpar totais para entidades sem créditos selecionados
       document.querySelectorAll('[id^="total-credito-extrator-"]').forEach(elemento => {
         const extratorId = elemento.id.replace('total-credito-extrator-', '');
         if (!creditosSelecionados.extrator[extratorId] || creditosSelecionados.extrator[extratorId].length === 0) {
@@ -724,9 +693,8 @@
     }
   </script>
 
-  <!-- Sistema de Cálculo de Faturamento -->
   <script>
-    // Variáveis globais do sistema
+    
     const totalCreditoDisponivel = {{ total_credito_disponivel|default (0) / 100}};
     let valoresCalculados = {};
 
@@ -738,7 +706,6 @@
     creditosOriginais.extratores['{{ extrator_id }}'] = {{ dados_extrator.credito_disponivel / 100 }};
     {% endfor %}
 
-    // Utilitários de formatação
     function extrairValorNumerico(valorMascarado) {
       if (!valorMascarado) return 0;
       return parseFloat(valorMascarado.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
@@ -748,7 +715,6 @@
       return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    // Cálculo de valores individuais
     function calcularValorRegistro(registroId) {
       const row = document.querySelector(`tr[data-registro-id="${registroId}"]`);
       if (!row) return;
@@ -773,7 +739,6 @@
       calcularTotaisGerais();
     }
 
-    // Motor principal de cálculo
     function calcularTotaisGerais() {
       let totalGeralExtratores = 0;
       const totaisPorExtrator = {};
@@ -796,15 +761,13 @@
       const radioUsarCredito = document.querySelector('input[name="usar_credito"][value="sim"]');
       const usandoCredito = radioUsarCredito && radioUsarCredito.checked;
 
-      // Aplicação de crédito por entidade
       let valorFinalExtratores = totalGeralExtratores;
       let totalCreditoAplicado = 0;
 
       if (usandoCredito) {
-        // CALCULAR TOTAL DE CRÉDITOS SELECIONADOS
+        
         let totalCreditosSelecionados = 0;
 
-        // Somar créditos de extratores
         Object.keys(creditosSelecionados.extrator).forEach(extratorId => {
           if (creditosSelecionados.extrator[extratorId]) {
             const creditoExtrator = creditosSelecionados.extrator[extratorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
@@ -812,10 +775,8 @@
           }
         });
 
-        // LIMITAR CRÉDITOS AO VALOR TOTAL (não usar mais que o necessário)
         totalCreditoAplicado = Math.min(totalCreditosSelecionados, totalGeralExtratores);
 
-        // APLICAR DESCONTO GLOBAL: Total Geral - Créditos Utilizados
         valorFinalExtratores = Math.max(0, totalGeralExtratores - totalCreditoAplicado);
       }
 
@@ -825,7 +786,6 @@
       atualizarCamposHidden();
     }
 
-    // Atualização da interface
     function atualizarInterface(totalBruto, valorFinal, usandoCredito, creditoAplicado, totaisPorExtrator) {
       atualizarCardTotalFaturar(totalBruto, valorFinal, usandoCredito, creditoAplicado);
       atualizarSubtotais(totalBruto);
@@ -906,18 +866,15 @@
 
       if (elements.totalPagar) elements.totalPagar.textContent = formatarMoeda(totalGeral);
 
-      // Calcular e mostrar créditos selecionados
       if (elements.creditosTotais) {
         let totalCreditosSelecionados = 0;
 
-        // Somar créditos de extratores
         Object.keys(creditosSelecionados.extrator).forEach(extratorId => {
           if (creditosSelecionados.extrator[extratorId]) {
             totalCreditosSelecionados += creditosSelecionados.extrator[extratorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
           }
         });
 
-        // Limitar aos créditos que serão realmente utilizados (não mais que o valor total)
         const creditosUtilizados = Math.min(totalCreditosSelecionados, totalGeral);
         elements.creditosTotais.textContent = formatarMoeda(creditosUtilizados);
       }
@@ -953,7 +910,6 @@
           const valorPagar = totaisPorExtrator[extratorId] || 0;
           let creditoSelecionado = 0;
 
-          // Calcular créditos selecionados para este extrator
           if (creditosSelecionados.extrator[extratorId]) {
             creditoSelecionado = creditosSelecionados.extrator[extratorId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
           }
@@ -973,7 +929,6 @@
       if (hiddenInput) hiddenInput.value = JSON.stringify(valoresCalculados);
     }
 
-    // Inicialização do sistema
     function inicializarValoresOriginais() {
       document.querySelectorAll('tr[data-registro-id]').forEach(row => {
         const registroId = row.dataset.registroId;
@@ -1013,19 +968,17 @@
       });
     }
 
-    // Inicialização principal
     document.addEventListener('DOMContentLoaded', function () {
       inicializarValoresOriginais();
       configurarEventListeners();
-      calcularCreditosSelecionados(); // Inicializar sistema de créditos
+      calcularCreditosSelecionados(); 
       calcularTotaisGerais();
     });
   </script>
 
-  <!-- Script para máscara de moeda -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Função para aplicar máscara de moeda brasileira
+      
       function aplicarMascaraMoeda(input) {
         let valor = input.value.replace(/\D/g, '');
         if (valor === '') {
@@ -1039,7 +992,6 @@
         input.value = 'R$ ' + valor;
       }
 
-      // Aplicar máscara nos inputs de preço de custo
       document.querySelectorAll('.campo-moeda-brl').forEach(input => {
         input.addEventListener('input', function () {
           aplicarMascaraMoeda(this);
@@ -1057,7 +1009,6 @@
           }
         });
 
-        // Permitir apenas números e vírgula
         input.addEventListener('keypress', function (e) {
           const char = String.fromCharCode(e.which);
           if (!/[0-9,.]/.test(char)) {
@@ -1068,7 +1019,6 @@
     });
   </script>
 
-  <!-- JavaScript aprimorado -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const radioSim = document.querySelector('input[name="usar_credito"][value="sim"]');
@@ -1079,7 +1029,7 @@
         const creditosSections = document.querySelectorAll('.creditos-section');
 
         if (radioSim && radioSim.checked) {
-          // Mostrar resumo
+          
           resumoCreditos.style.display = 'block';
           resumoCreditos.style.opacity = '0';
           resumoCreditos.style.transform = 'translateY(20px)';
@@ -1090,7 +1040,6 @@
             resumoCreditos.style.transform = 'translateY(0)';
           }, 10);
 
-          // Mostrar tabelas de créditos com animação
           creditosSections.forEach(section => {
             section.style.display = 'block';
             section.style.opacity = '0';
@@ -1104,7 +1053,7 @@
           });
 
         } else {
-          // Esconder resumo
+          
           resumoCreditos.style.transition = 'all 0.3s ease-out';
           resumoCreditos.style.opacity = '0';
           resumoCreditos.style.transform = 'translateY(-20px)';
@@ -1113,7 +1062,6 @@
             resumoCreditos.style.display = 'none';
           }, 300);
 
-          // Esconder tabelas de créditos
           creditosSections.forEach(section => {
             section.style.transition = 'all 0.3s ease-out';
             section.style.opacity = '0';
@@ -1124,12 +1072,10 @@
             }, 300);
           });
 
-          // Desmarcar todos os checkboxes de crédito
           document.querySelectorAll('.credito-checkbox').forEach(checkbox => {
             checkbox.checked = false;
           });
 
-          // Recalcular totais sem créditos selecionados
           calcularCreditosSelecionados();
         }
       }
@@ -1137,12 +1083,10 @@
       if (radioSim) radioSim.addEventListener('change', toggleResumo);
       if (radioNao) radioNao.addEventListener('change', toggleResumo);
 
-      // Inicializar
       toggleResumo();
     });
   </script>
 
-  <!-- Modal para Lançamento de Crédito -->
   <div class="modal fade" id="modalLancarCredito" tabindex="-1" aria-labelledby="modalLancarCreditoLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -1228,7 +1172,7 @@
   </div>
 
   <script>
-    // Configuração do modal de lançamento de crédito
+    
     document.getElementById('modalLancarCredito').addEventListener('show.bs.modal', function (event) {
       const button = event.relatedTarget;
 
@@ -1295,7 +1239,6 @@
 
           mostrarToast(`Crédito lançado com sucesso para ${tipoTexto}: ${nomeEntidade}`, 'success');
 
-          // Recarregar a página após um breve delay para mostrar o toast
           setTimeout(() => {
             window.location.reload();
           }, 1500);
@@ -1336,7 +1279,6 @@
       }, 3000);
     }
 
-    // Função para formatar moeda (reutilizada)
     function formatarMoeda(valor) {
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency',

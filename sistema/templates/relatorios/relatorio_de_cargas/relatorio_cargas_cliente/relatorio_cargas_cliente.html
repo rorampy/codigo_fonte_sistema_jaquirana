@@ -3,7 +3,7 @@
 {% include 'estrutura/header.html' %}
 <link href="{{ url_for('static', filename='css/relatorio-cargas.css') }}" rel="stylesheet">
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
@@ -85,7 +85,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
@@ -276,7 +275,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
       <form action="{{ url_for('relatorio_cargas_cliente') }}" method="GET">
@@ -287,7 +285,7 @@
           </div>
           <div class="modal-body">
             <div class="row">
-              <!-- Linha 1: Datas -->
+              
               <div class="col-md-6 mb-3">
                 <label class="form-label">Data Início</label>
                 <input type="date" name="dataInicio" class="form-control"
@@ -298,7 +296,6 @@
                 <input type="date" name="dataFim" class="form-control" value="{{ dados_corretos.get('dataFim', '') }}">
               </div>
 
-              <!-- Linha 2: Placa e Motorista -->
               <div class="col-md-4 mb-3">
                 <label class="form-label">Produto</label>
                 <input type="text" name="produtoFiltro" class="form-control"
@@ -315,7 +312,6 @@
                   value="{{ dados_corretos.get('motoristaCargaCliente', '') }}">
               </div>
 
-              <!-- Linha 3: Transportadora e Fornecedor -->
               <div class="col-md-6 mb-3">
                 <label class="form-label">Transportadora</label>
                 <input type="text" name="tranpostadoraCargaCliente" class="form-control"
@@ -327,7 +323,6 @@
                   value="{{ dados_corretos.get('fornecedorCargaCliente', '') }}">
               </div>
 
-              <!-- Linha 4: Cliente e Número NF -->
               <div class="col-md-6 mb-3">
                 <label class="form-label">Cliente</label>
                 <input type="text" name="clienteCarga" class="form-control"

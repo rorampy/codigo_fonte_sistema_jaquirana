@@ -35,12 +35,8 @@ class RegistroOperacionalModel(BaseModel):
     solicitacao_nf_id = db.Column(db.Integer, db.ForeignKey("car_carga.id"), nullable=True)
     solicitacao = db.relationship("CargaModel", backref=db.backref("car_carga_registro_operacional", lazy=True))
 
-    # Dados do emissor da nota fiscal
 
-    # =========================> ATENÇÃO <=========================
-    # Coluna descontinuada no projeto, agora é usada somente a tabela de fornecedor_id
     floresta_id = db.Column(db.Integer, db.ForeignKey("flor_floresta.id"), nullable=True)
-    # =============================================================
     fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True)
 
     razao_social_emissor = db.Column(db.String(200), nullable=True)
@@ -55,29 +51,23 @@ class RegistroOperacionalModel(BaseModel):
     valor_total_nota_100 = db.Column(db.Integer, nullable=True)
     preco_un_nf = db.Column(db.Integer, nullable=True)
 
-    # Dados do transportador (nota fiscal)
     transportador_nome = db.Column(db.String(200), nullable=True)
     transportador_cnpj_cpf = db.Column(db.String(20), nullable=True)
     transportador_insc_estadual = db.Column(db.String(50), nullable=True)
 
-    # Dados transporte NF
     placa_nf = db.Column(db.String(50), nullable=True)
     motorista_nf = db.Column(db.String(200), nullable=True)
 
-    # Dados transporte Ticket
     placa_ticket = db.Column(db.String(50), nullable=True)
     motorista_ticket = db.Column(db.String(200), nullable=True)
     data_entrega_ticket = db.Column(db.Date, nullable=True)
 
-    # Ticket de pesagem
     numero_nota_fiscal_ticket = db.Column(db.String(20), nullable=True)
     peso_liquido_ticket = db.Column(db.Float, nullable=True)
 
-    # Arquivos PDF 
     arquivo_nota_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     arquivo_nota = db.relationship("UploadArquivoModel",foreign_keys=[arquivo_nota_id], backref=db.backref("car_registro_nf", lazy=True))
 
-    # Arquivos XML
     arquivo_nota_xml_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     arquivo_nota_xml = db.relationship("UploadArquivoModel",foreign_keys=[arquivo_nota_xml_id], backref=db.backref("car_registro_nf_xml", lazy=True))
 
@@ -90,14 +80,11 @@ class RegistroOperacionalModel(BaseModel):
     situacao_financeira_id = db.Column(db.Integer, db.ForeignKey("fin_situacao_pagamento.id"), nullable=True)
     situacao = db.relationship("SituacaoPagamentoModel",backref=db.backref("situacao_financeira_registro", lazy=True))
 
-    # Arquivos de excesso
     possui_excesso_carga = db.Column(db.Boolean, default=False, nullable=False) 
 
-    # Excesso PDF
     arquivo_nota_excesso_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     arquivo_nota_excesso = db.relationship("UploadArquivoModel",foreign_keys=[arquivo_nota_excesso_id], backref=db.backref("arquivo_nota_excesso", lazy=True))
     
-    # Excesso XML
     arquivo_nota_excesso_xml_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     arquivo_nota_excesso_xml = db.relationship("UploadArquivoModel",foreign_keys=[arquivo_nota_excesso_xml_id], backref=db.backref("arquivo_nota_excesso_xml", lazy=True))
 
@@ -144,14 +131,14 @@ class RegistroOperacionalModel(BaseModel):
         placa_ticket=None,
         motorista_ticket=None,
         peso_liquido=None,
-        arquivo_nota_id=None, # PDF
-        arquivo_nota_xml_id=None, # XML
+        arquivo_nota_id=None,
+        arquivo_nota_xml_id=None,
         arquivo_ticket_id=None,
         status_emissao_nf_complementar_id=None,
         situacao_financeira_id=None,
         possui_excesso_carga=False,
-        arquivo_nota_excesso_id=None, # Excesso PDF
-        arquivo_nota_excesso_xml_id=None, # Excesso XML
+        arquivo_nota_excesso_id=None,
+        arquivo_nota_excesso_xml_id=None,
         peso_ton_nf_excesso=None,
         peso_nf_ton_com_excecao=None,
         estorno_nf=False,
@@ -186,14 +173,14 @@ class RegistroOperacionalModel(BaseModel):
         self.data_entrega_ticket = data_entrega_ticket
         self.motorista_ticket = motorista_ticket
         self.peso_liquido = peso_liquido
-        self.arquivo_nota_id = arquivo_nota_id # PDF
-        self.arquivo_nota_xml_id = arquivo_nota_xml_id # XML
+        self.arquivo_nota_id = arquivo_nota_id
+        self.arquivo_nota_xml_id = arquivo_nota_xml_id
         self.arquivo_ticket_id = arquivo_ticket_id
         self.status_emissao_nf_complementar_id = status_emissao_nf_complementar_id
         self.situacao_financeira_id = situacao_financeira_id
         self.possui_excesso_carga = possui_excesso_carga
-        self.arquivo_nota_excesso_id = arquivo_nota_excesso_id # Excesso PDF
-        self.arquivo_nota_excesso_xml_id = arquivo_nota_excesso_xml_id # Excesso XML
+        self.arquivo_nota_excesso_id = arquivo_nota_excesso_id
+        self.arquivo_nota_excesso_xml_id = arquivo_nota_excesso_xml_id
         self.peso_ton_nf_excesso = peso_ton_nf_excesso
         self.peso_nf_ton_com_excecao = peso_nf_ton_com_excecao
         self.estorno_nf = estorno_nf
@@ -221,7 +208,6 @@ class RegistroOperacionalModel(BaseModel):
 
             atualizou = False
         
-            # Corrige nota normal - APENAS XML
             if (registro.peso_ton_nf is None or registro.preco_un_nf is None) and registro.arquivo_nota_xml_id:
                 arquivo_xml = UploadArquivoModel.query.get(registro.arquivo_nota_xml_id)
             
@@ -245,10 +231,8 @@ class RegistroOperacionalModel(BaseModel):
                         registro.preco_un_nf = preco_un
                         atualizou = True
                     except Exception as e:
-                        print(f"[ERRO] Falha ao processar XML: {e}")
                         db.session.rollback()
             
-            # Corrige nota de excesso - APENAS XML
             if (registro.peso_ton_nf_excesso is None) and registro.possui_excesso_carga and registro.arquivo_nota_excesso_xml_id:
                 arquivo_excesso_xml = UploadArquivoModel.query.get(registro.arquivo_nota_excesso_xml_id)
 
@@ -268,7 +252,6 @@ class RegistroOperacionalModel(BaseModel):
                         registro.peso_ton_nf_excesso = peso_nf_excesso
                         atualizou = True
                     except Exception as e:
-                        print(f"[ERRO] Falha ao processar XML de excesso: {e}")
                         db.session.rollback()
 
             if atualizou:
@@ -309,33 +292,26 @@ class RegistroOperacionalModel(BaseModel):
         Processa os dados extraídos do XML da nota fiscal.
         """
         
-        # Dados do emissor
         razao_social_emissor = dados_xml["emissor"].get("razao_social_emissor", "")
         numero_nota_fiscal = dados_xml["emissor"].get("numero_nota", "")
         serie_nota = dados_xml["emissor"].get("serie", "")
         chave_acesso = dados_xml["emissor"].get("chave_acesso", "")
         
-        # Dados do destinatário
         destinatario_nome = dados_xml["destinatario"].get("nome_razao_social", "")
         destinatario_cnpj_cpf = dados_xml["destinatario"].get("cnpj_cpf", "")
         destinatario_insc_estadual = dados_xml["destinatario"].get("insc_estadual", "")
         destinatario_data_emissao = dados_xml["destinatario"].get("data_emissao", "")
         
-        # Dados do transportador
         transportador_nome = dados_xml["transportador"].get("nome", "")
         transportador_cnpj_cpf = dados_xml["transportador"].get("cnpj_cpf", "")
         transportador_insc_estadual = dados_xml["transportador"].get("insc_estadual", "")
         
-        # Dados adicionais
         placa_nf = dados_xml["dados_adicionais"].get("placa", "")
         motorista_nf = dados_xml["dados_adicionais"].get("motorista", "")
         
-        # Valor total da nota (já está em reais no XML)
         valor_total_nota = dados_xml["calculo_imposto"].get("valor_total_nota", "0")
-        # Converter para centavos (multiplicar por 100 para armazenar como integer)
         valor_total_nota_centavos = int(float(valor_total_nota) * 100) if valor_total_nota else 0
         
-        # Calcular peso e valores dos itens
         peso_nf = 0
         preco_un = 0
         for item in dados_xml["itens"]:
@@ -403,18 +379,15 @@ class RegistroOperacionalModel(BaseModel):
         try:
             dados_xml = ExtrairTextoNotaFiscal.nf_extrair_dados_nota_xml(objeto_nf_xml.caminho)
             
-            # Verificar se XML tem dados essenciais
             if not (dados_xml.get("emissor", {}).get("numero_nota") and 
                     dados_xml.get("destinatario", {}).get("nome_razao_social") and 
                     dados_xml.get("calculo_imposto", {}).get("valor_total_nota")):
                 raise ValueError("XML não contém dados essenciais para processamento")
             
             dados_nf = RegistroOperacionalModel.extrair_dados_nf_xml(dados_xml)
-            print(f"[INFO] Dados extraídos do XML com sucesso")
             return dados_nf
             
         except Exception as e:
-            print(f"[ERRO] Falha ao processar XML obrigatório: {e}")
             raise e
 
     @staticmethod
@@ -443,14 +416,11 @@ class RegistroOperacionalModel(BaseModel):
                 raise ValueError("XML de excesso não contém dados essenciais")
             
             dados_excesso = RegistroOperacionalModel.extrair_dados_nf_excesso_xml(dados_xml)
-            print(f"[INFO] Dados de excesso extraídos do XML com sucesso")
             return dados_excesso
             
         except Exception as e:
-            print(f"[ERRO] Falha ao processar XML de excesso: {e}")
             raise e
 
-    # Propriedades para exibição
     @property
     def arquivo_nota_display(self):
         """
@@ -688,7 +658,6 @@ class RegistroOperacionalModel(BaseModel):
         for registro, cliente in query.all():
             produto = getattr(registro.solicitacao.produto, "nome", "Indefinido")
             
-            # Buscar dados das NFs complementares
             dados_complementar = RegistroOperacionalModel.obter_dados_nf_complementar_por_registro(registro.id)
             
             resultados.append({
@@ -742,11 +711,9 @@ class RegistroOperacionalModel(BaseModel):
             data_inicio = date.today() - timedelta(days=30)
             data_fim = date.today()
 
-        # Determinar o campo de data para o filtro
         if tipo_data_filtro == 'data_emissao':
             campo_data = RegistroOperacionalModel.destinatario_data_emissao
         else:
-            # Padrão: data de entrega do ticket
             campo_data = RegistroOperacionalModel.data_entrega_ticket
 
         query = (
@@ -835,7 +802,6 @@ class RegistroOperacionalModel(BaseModel):
         for registro, cliente in query.all():
             produto = getattr(registro.solicitacao.produto, "nome", "Indefinido")
             
-            # Buscar dados das NFs complementares
             dados_complementar = RegistroOperacionalModel.obter_dados_nf_complementar_por_registro(registro.id)
             
             resultados.append({
@@ -978,7 +944,6 @@ class RegistroOperacionalModel(BaseModel):
 
         resultados = []
         for registro, cliente in query.all():
-            # Aqui garantimos que o relacionamento está sendo acessado corretamente
             produto = getattr(registro.solicitacao.produto, "nome", "Indefinido")
 
             resultados.append(
@@ -1238,7 +1203,6 @@ class RegistroOperacionalModel(BaseModel):
             transp = carga.transportadora_exibicao or mot.transportadora
             nome_transp = transp.identificacao if transp else "Indefinido"
             
-            # Filtro especial de transportadora aplicado após a query
             if transportadora and transportadora.lower() not in nome_transp.lower():
                 continue
 
@@ -1515,7 +1479,7 @@ class RegistroOperacionalModel(BaseModel):
 
             registros.append({
                 "origem": origem,
-                "fornecedor_obj": fornecedor or floresta,  # Objeto do fornecedor/floresta para acessar dados bancários
+                "fornecedor_obj": fornecedor or floresta,
                 "cliente": cliente,
                 "transportadora": registro.solicitacao.transportadora_exibicao.identificacao if registro.solicitacao.transportadora_exibicao else "Indefinido",
                 "produto": produto,
@@ -1780,7 +1744,6 @@ class RegistroOperacionalModel(BaseModel):
             query = query.filter(MotoristaModel.nome_completo.ilike(f"%{motorista}%"))
 
         if transportadora:
-            print(transportadora)
             query = query.outerjoin(
                 TransportadoraModel,
                 CargaModel.transportadora_id == TransportadoraModel.id,
@@ -1887,7 +1850,7 @@ class RegistroOperacionalModel(BaseModel):
                 "origem": origem,
                 "cliente": cliente,
                 "transportadora": transportadora_nome,
-                "transportadora_obj": transp,  # Objeto da transportadora para acessar dados bancários
+                "transportadora_obj": transp,
                 "fornecedor": fornecedor.identificacao if fornecedor else (floresta.identificacao if floresta else "Indefinido"),
                 "produto": produto.nome if produto else "Indefinido",
                 "bitola": bitola.bitola if bitola else "",
@@ -2154,10 +2117,7 @@ class RegistroOperacionalModel(BaseModel):
             )
         
         if debug_query:
-            # Imprime a query SQL
             compiled = q.statement.compile(compile_kwargs={"literal_binds": True})
-            print("Query SQL:")
-            print(str(compiled))
 
         page = request.args.get("page", default=1, type=int)
         per_page = qtd_itens_por_pagina
@@ -2219,7 +2179,6 @@ class RegistroOperacionalModel(BaseModel):
             )
         )
 
-        # Se datas forem fornecidas, aplica o filtro
         if data_inicio and data_fim:
             query = query.filter(
                 RegistroOperacionalModel.data_entrega_ticket.isnot(None),
@@ -2266,14 +2225,12 @@ class RegistroOperacionalModel(BaseModel):
         if placa:
             query = query.filter(VeiculoModel.placa_veiculo.ilike(f"%{placa}%"))
 
-        # Ordenação
         query = query.order_by(
             case((FornecedorCadastroModel.identificacao == None, 1), else_=0),
             FornecedorCadastroModel.identificacao.asc(),
             RegistroOperacionalModel.id.desc(),
         )
 
-        # Monta os registros
         registros = []
         for registro, fornecedor, fornecedor_pagar in query.all():
             origem = "Indefinido"
@@ -2319,7 +2276,6 @@ class RegistroOperacionalModel(BaseModel):
         Obter valor total a receber por conta (implementação simplificada temporariamente)
         TODO: Reimplementar usando novo sistema de conciliação
         """
-        # Por enquanto, retornar os valores a receber não conciliados
         q = (
             db.session.query(
                 func.coalesce(
@@ -2329,7 +2285,7 @@ class RegistroOperacionalModel(BaseModel):
             .filter(
                 RegistroOperacionalModel.deletado == False,
                 RegistroOperacionalModel.ativo == True,
-                RegistroOperacionalModel.situacao_financeira_id != 3,  # não recebidos
+                RegistroOperacionalModel.situacao_financeira_id != 3,
             )
         )
 
@@ -2356,7 +2312,6 @@ class RegistroOperacionalModel(BaseModel):
         Obter valor total recebido por conta (implementação simplificada temporariamente)
         TODO: Reimplementar usando novo sistema de conciliação
         """
-        # Por enquanto, retornar os valores já recebidos
         q = (
             db.session.query(
                 func.coalesce(
@@ -2366,7 +2321,7 @@ class RegistroOperacionalModel(BaseModel):
             .filter(
                 RegistroOperacionalModel.deletado == False,
                 RegistroOperacionalModel.ativo == True,
-                RegistroOperacionalModel.situacao_financeira_id == 3,  # recebidos
+                RegistroOperacionalModel.situacao_financeira_id == 3,
             )
         )
 
@@ -2449,13 +2404,10 @@ class RegistroOperacionalModel(BaseModel):
                 query = query.filter(RegistroOperacionalModel.data_entrega_ticket <= data_fim)
             
         
-        # Contagem total de registros
         total = query.count()
         
-        # Aplicar offset e limit
         vendas_transito = query.offset(offset).limit(por_pagina).all()
         
-        # Calcular informações de paginação
         total_paginas = (total + por_pagina - 1) // por_pagina
         
         return {
@@ -2517,7 +2469,6 @@ class RegistroOperacionalModel(BaseModel):
         elif categoria_venda == 'entregue':
             query = query.filter(CargaModel.ticket_emitido == True)
         
-        # Aplicar filtros condicionalmente
         if cliente_venda:
             query = query.join(ClienteModel, CargaModel.cliente_id == ClienteModel.id).filter(
                 ClienteModel.identificacao.ilike(f"%{cliente_venda}%")
@@ -2564,9 +2515,7 @@ class RegistroOperacionalModel(BaseModel):
                     FornecedorCadastroModel.identificacao.ilike(f"%{origem_venda}%"),
                 )
             
-            # Filtro de data baseado no tipo selecionado
             if tipo_data_filtro == 'data_emissao':
-                # Filtrar por data de emissão da NFe
                 if data_inicio:
                     data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
                     query = query.filter(RegistroOperacionalModel.destinatario_data_emissao >= data_inicio_obj)
@@ -2575,7 +2524,6 @@ class RegistroOperacionalModel(BaseModel):
                     data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
                     query = query.filter(RegistroOperacionalModel.destinatario_data_emissao <= data_fim_obj)
             else:
-                # Padrão: filtrar por data de entrega do ticket
                 if data_inicio:
                     data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
                     query = query.filter(RegistroOperacionalModel.data_entrega_ticket >= data_inicio_obj)
@@ -2585,16 +2533,12 @@ class RegistroOperacionalModel(BaseModel):
                     query = query.filter(RegistroOperacionalModel.data_entrega_ticket <= data_fim_obj)
         
     
-        # Ordenação
         query = query.order_by(desc(RegistroOperacionalModel.id))
         
-        # Contagem total de registros
         total = query.count()
         
-        # Aplicar offset e limit
         vendas_transito = query.offset(offset).limit(por_pagina).all()
         
-        # Calcular informações de paginação
         total_paginas = (total + por_pagina - 1) // por_pagina
         
         return {

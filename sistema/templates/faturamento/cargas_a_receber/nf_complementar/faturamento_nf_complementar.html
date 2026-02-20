@@ -12,7 +12,7 @@
         </div>
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="d-flex gap-2">
-            <!-- Botão Exportar Excel -->
+            
             <a href="{{ url_for('exportar_nf_complementar_excel') }}" class="btn btn-primary">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -26,7 +26,7 @@
               </svg>
               Exportar Excel
             </a>
-            <!-- Botão de Agrupamento com Cargas a Receber -->
+            
             {% if agrupar_cargas_receber %}
             <button id="btn-agrupar-cargas-receber" class="btn btn-secondary" disabled>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -40,7 +40,7 @@
               Agrupar com Cargas a Receber
             </button>
             {% else %}
-            <!-- Botão de Faturamento em Massa (apenas quando não está em modo agrupamento) -->
+            
             <button id="btn-informar-faturamento-massa" class="btn btn-secondary" disabled>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -53,15 +53,7 @@
               Faturamento em massa
             </button>
             {% endif %}
-            <!-- <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-report">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path
-                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
-              </svg>
-              Filtrar </a> -->
+            
           </div>
         </div>
       </div>
@@ -122,7 +114,7 @@
                                 <th class="text-center">Transportador</th>
                                 <th class="text-center">Valor Total</th>
                                 <th class="text-center">Situação</th>
-                                <!-- Coluna de Ações apenas quando não está em modo agrupamento -->
+                                
                                 {% if not agrupar_cargas_receber %}
                                 <th class="text-center">Ações</th>
                                 {% endif %}
@@ -177,7 +169,7 @@
                                     item.registro.situacao_financeira.situacao
                                     }}</span>
                                 </td>
-                                <!-- Coluna de Ações apenas quando não está em modo agrupamento -->
+                                
                                 {% if not agrupar_cargas_receber %}
                                 <td>
                                   <div class="btn-list flex-nowrap justify-content-center">
@@ -195,7 +187,7 @@
                                           d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
                                       </svg>
                                     </a>
-                                    <!-- Botão para informar faturamento -->
+                                    
                                     <a href="{{ url_for('informar_faturamento_nf_complementar', id=item.registro.id) }}"
                                       class="btn btn-icon btn-outline-success {% if not
                                       item.registro.nf_complementar.arquivo_nota or item.registro.situacao_financeira.id == 5 %}disabled{% endif %}"
@@ -241,11 +233,9 @@
               {% endfor %}
             </div>
 
-            <!-- Modais de confirmação para cada registro -->
             {% for cliente_group in registros|groupby('cliente') %}
             {% for item in cliente_group.list %}
 
-            <!-- Modal para excluir NF complementar -->
             {% if item.registro.situacao_financeira.id == 2 %}
             <div class="modal modal-blur fade" id="modal-excluir-{{item.registro.id}}" tabindex="-1" role="dialog"
               aria-hidden="true">
@@ -315,7 +305,7 @@
           </div>
           <div class="modal-body">
             <div class="row">
-              <!-- Linha 1: Datas -->
+              
               <div class="col-md-6 mb-3">
                 <label class="form-label">Data Início</label>
                 <input type="date" name="dataInicio" class="form-control"
@@ -393,7 +383,7 @@
   </div>
 
   <script>
-    // Inicializa Tom Select nos outros selects
+    
     document.querySelectorAll('select.form-select').forEach(function (select) {
       new TomSelect(select, {
         create: false,
@@ -422,13 +412,11 @@
         if (span) span.textContent = formatarParaBRL(total / 100);
       }
 
-      // Função para atualizar o estado do botão de faturamento em massa
       function updateFaturamentoMassaButton() {
         const btnFaturamentoMassa = document.getElementById('btn-informar-faturamento-massa');
         const btnAgruparCargas = document.getElementById('btn-agrupar-cargas-receber');
         const selecionadosValidos = document.querySelectorAll('.registro-checkbox:checked:not(:disabled)').length;
 
-        // Atualizar botão de faturamento em massa (apenas se existir)
         if (btnFaturamentoMassa) {
           if (selecionadosValidos > 0) {
             btnFaturamentoMassa.disabled = false;
@@ -441,7 +429,6 @@
           }
         }
 
-        // Botão de agrupamento: habilitado apenas quando há seleção
         if (btnAgruparCargas) {
           if (selecionadosValidos > 0) {
             btnAgruparCargas.disabled = false;
@@ -455,7 +442,6 @@
         }
       }
 
-      // Event listeners para checkboxes
       document.body.addEventListener('change', e => {
         if (e.target.matches('.registro-checkbox')) {
           updateGroupTotal(e.target.dataset.group);
@@ -473,7 +459,6 @@
         }
       });
 
-      // Funcionalidade do botão faturamento em massa (apenas se existir)
       const btnFaturamentoMassa = document.getElementById('btn-informar-faturamento-massa');
       if (btnFaturamentoMassa) {
         btnFaturamentoMassa.addEventListener('click', function () {
@@ -484,7 +469,6 @@
             return;
           }
 
-          // Verificar se todas as NFs selecionadas são do mesmo cliente (agrupamento do accordion)
           const acordeonsComSelecao = [...new Set(selecionados.map(cb => cb.closest('.accordion-item')))];
 
           if (acordeonsComSelecao.length > 1) {
@@ -492,25 +476,20 @@
             return;
           }
 
-          // Redirecionar diretamente para a tela de faturamento em massa
           const ids = selecionados.map(cb => cb.dataset.id).join(',');
           window.location.href = `{{ url_for('informar_faturamento_nf_complementar_massa') }}?ids_registros=${ids}`;
         });
       }
 
-      // Inicializar estado do botão de faturamento em massa
       updateFaturamentoMassaButton();
 
-      // Funcionalidade do botão agrupar com cargas a receber
       const btnAgruparCargas = document.getElementById('btn-agrupar-cargas-receber');
       if (btnAgruparCargas) {
         btnAgruparCargas.addEventListener('click', function () {
           const selecionados = Array.from(document.querySelectorAll('.registro-checkbox:checked:not(:disabled)'));
 
-          // Capturar os IDs selecionados (pode ser vazio se nenhum foi selecionado)
           const idsSelecionados = selecionados.map(cb => cb.dataset.id);
 
-          // Capturar os IDs já agrupados que vieram da página anterior (se houver)
           const urlParams = new URLSearchParams(window.location.search);
           const idsCargas = urlParams.get('agrupar_cargas_receber') || urlParams.get('ids_cargas') || '';
           const idsNfComplementar = urlParams.get('ids_nf_complementar') || '';
@@ -520,7 +499,6 @@
             idsNfComplementar.split(',').concat(idsSelecionados) :
             idsSelecionados;
 
-          // Construir URL de retorno preservando todos os IDs
           let urlRetorno = "{{ url_for('informar_recebimento_massa') }}";
           const params = [];
 
@@ -534,7 +512,6 @@
             params.push('ids_nf_servico=' + encodeURIComponent(idsNfServico));
           }
 
-          // Sempre adicionar parâmetros se houver pelo menos IDs de cargas
           if (params.length > 0) {
             urlRetorno += '?' + params.join('&');
           } else if (idsCargas) {
@@ -648,7 +625,6 @@
         }
       }
 
-      // Novo fluxo: ação individual redireciona para tela de recebimento
       window.informarPagamentoIndividual = (id, btn) => {
         window.location.href = urls.informarIndividual(id);
       };

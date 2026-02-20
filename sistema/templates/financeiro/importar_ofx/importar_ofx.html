@@ -84,7 +84,6 @@
                   <p class="upload-text" id="file-size">0 KB</p>
                 </div>
                 
-                <!-- Feedback de erro para arquivo -->
                 {% if 'arquivo_ofx' in campos_obrigatorios or 'arquivo_ofx' in campos_erros %}
                 <div class="invalid-feedback d-block mt-2">
                   {% if 'arquivo_ofx' in campos_obrigatorios %}
@@ -142,7 +141,6 @@
   {% include 'estrutura/footer.html' %}
 </div>
 
-<!-- Modais -->
 <div class="modal modal-blur fade" id="modal-arquivo-grande" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
     <div class="modal-content modern-modal">
@@ -334,7 +332,6 @@
 
   document.addEventListener('DOMContentLoaded', () => {
 
-    // Inicializa Tom Select nos outros selects
     document.querySelectorAll('select.form-select').forEach(function (select) {
       new TomSelect(select, {
       });

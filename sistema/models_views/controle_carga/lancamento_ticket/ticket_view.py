@@ -125,7 +125,6 @@ def cadastrar_ticket(id):
             )
             db.session.add(fornecedorPagamento)
 
-            # Capturar extrator selecionado no formulário (se houver)
             extrator_ticket_id = request.form.get("extratorTicket", "")
             extrator_id_para_pagar = int(extrator_ticket_id) if extrator_ticket_id and extrator_ticket_id.strip() else None
 
@@ -142,7 +141,6 @@ def cadastrar_ticket(id):
             )
             db.session.add(extratorPagamento)
 
-            # Verificar se o fornecedor possui comissionados vinculados
             if fornecedor and fornecedor.possui_comissionado:
                 comissionados_vinculados = FornecedorComissionadoModel.query.filter(
                     FornecedorComissionadoModel.fornecedor_id == fornecedor.id,
@@ -152,13 +150,10 @@ def cadastrar_ticket(id):
                 
                 for vinculo in comissionados_vinculados:
                     if vinculo.tipo_comissao == 1:
-                        # Comissão percentual: converte de (percentual * 100) para decimal
-                        # Divide por 10000 pois: /100 desfaz o *100 do armazenamento, /100 converte % para decimal
                         percentual = (vinculo.valor_comissao_ton_100 or 0) / 10000
                         valor_comissao_por_ton_100 = preco_custo * percentual
                         valor_total_comissao_100 = peso_liquido_float * valor_comissao_por_ton_100
                     else:
-                        # Comissão valor fixo: já está em centavos, usa diretamente
                         valor_comissao_por_ton_100 = vinculo.valor_comissao_ton_100 or 0
                         valor_total_comissao_100 = peso_liquido_float * valor_comissao_por_ton_100
                     
@@ -260,7 +255,6 @@ def cadastrar_ticket(id):
             return redirect(url_for("vendas_entregues"))
 
     except Exception as e:
-        print(e)
         flash(("Houve um erro ao tentar lançar ticket, entre em contato com o suporte!", "warning"))
         return redirect(url_for("vendas_entregues"))
 
@@ -304,12 +298,11 @@ def processar_ticket_api():
                 'mensagem': 'Arquivo inválido'
             }), 400
         
-        # Validar tamanho do arquivo (máximo 10MB)
         arquivo.seek(0, os.SEEK_END)
         tamanho_arquivo = arquivo.tell()
         arquivo.seek(0)
         
-        if tamanho_arquivo > 10 * 1024 * 1024:  # 10MB
+        if tamanho_arquivo > 10 * 1024 * 1024:
             return jsonify({
                 'sucesso': False,
                 'erro': 'ARQUIVO_MUITO_GRANDE',
@@ -331,7 +324,6 @@ def processar_ticket_api():
             extrator = ExtracaoTicket(temp_path)
             dados = extrator.processar()
             
-            # Liberar memória explicitamente
             del extrator
             
             if not dados.get('sucesso'):
@@ -541,7 +533,6 @@ def editar_ticket(id):
                     )
                     db.session.add(fornecedorPagamento)
 
-                # Capturar extrator selecionado no formulário (se houver)
                 extrator_ticket_id_edicao = request.form.get("extratorTicket", "")
                 extrator_id_para_pagar_edicao = int(extrator_ticket_id_edicao) if extrator_ticket_id_edicao and extrator_ticket_id_edicao.strip() else None
 
@@ -582,19 +573,16 @@ def editar_ticket(id):
                     ativo=True
                 ).all()
 
-                # Verificar se algum comissionado já foi pago
                 comissionados_pagos = [c for c in comissionados_existentes if c.situacao_pagamento_id == 1]
                 if comissionados_pagos:
                     flash(("Comissionados não podem ser editados, pois já foi realizado o pagamento!", "warning"))
                     return redirect(url_for("editar_ticket", id=id))
 
-                # Remover comissionados existentes que não foram pagos (serão recriados)
                 for comissionado_existente in comissionados_existentes:
                     if comissionado_existente.situacao_pagamento_id != 1:
                         comissionado_existente.ativo = False
                         comissionado_existente.deletado = True
 
-                # Criar novos registros de comissionados se o fornecedor tiver
                 if fornecedorIdentificacao != "0" and fornecedor and fornecedor.possui_comissionado:
                     comissionados_vinculados = FornecedorComissionadoModel.query.filter(
                         FornecedorComissionadoModel.fornecedor_id == fornecedor.id,
@@ -604,13 +592,10 @@ def editar_ticket(id):
                     
                     for vinculo in comissionados_vinculados:
                         if vinculo.tipo_comissao == 1:
-                            # Comissão percentual: converte de (percentual * 100) para decimal
-                            # Divide por 10000 pois: /100 desfaz o *100 do armazenamento, /100 converte % para decimal
                             percentual = (vinculo.valor_comissao_ton_100 or 0) / 10000
                             valor_comissao_por_ton_100 = preco_custo * percentual
                             valor_total_comissao_100 = peso_liquido_float * valor_comissao_por_ton_100
                         else:
-                            # Comissão valor fixo: já está em centavos, usa diretamente
                             valor_comissao_por_ton_100 = vinculo.valor_comissao_ton_100 or 0
                             valor_total_comissao_100 = peso_liquido_float * valor_comissao_por_ton_100
                             

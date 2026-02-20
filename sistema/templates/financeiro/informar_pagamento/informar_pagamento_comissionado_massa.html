@@ -270,24 +270,20 @@
         const peso = parseFloat(pesoSpan.textContent) || 0;
         const valorTotal = preco * peso;
 
-        // Atualiza o display
         valorSpan.textContent = formatarMoeda(valorTotal);
 
-        // Armazena os valores calculados
         valoresCalculados[registroId] = {
           preco_custo: preco,
           valor_total: valorTotal
         };
 
-        // Atualiza totais
         atualizarTotais();
       }
 
       function atualizarTotais() {
-        // Atualizar total por comissionado
+        
         const totaisPorComissionado = {};
 
-        // Calcular totais por comissionado
         Object.keys(valoresCalculados).forEach(registroId => {
           const row = document.querySelector(`tr[data-id="${registroId}"]`);
           if (row) {
@@ -305,7 +301,6 @@
           }
         });
 
-        // Atualizar displays dos totais por comissionado
         Object.keys(totaisPorComissionado).forEach(comissionadoId => {
           const span = document.getElementById(`total-comissionado-${comissionadoId}`);
           if (span) {
@@ -313,7 +308,6 @@
           }
         });
 
-        // Atualizar total geral
         let totalGeral = 0;
         Object.values(valoresCalculados).forEach(item => {
           totalGeral += item.valor_total;
@@ -324,23 +318,18 @@
           totalPagarEl.textContent = formatarMoeda(totalGeral);
         }
 
-        // Atualizar campo hidden com os valores para envio
         document.getElementById('valores-calculados-input').value = JSON.stringify(valoresCalculados);
       }
 
-      // Event listeners para campos de preço
       document.querySelectorAll('.campo-preco-comissao').forEach(input => {
         const registroId = input.dataset.registroId;
 
-        // Calcular valor inicial
         calcularValorRegistro(registroId);
 
-        // Event listeners
         input.addEventListener('input', () => calcularValorRegistro(registroId));
         input.addEventListener('blur', () => calcularValorRegistro(registroId));
       });
 
-      // Configurar data padrão
       const dataInput = document.getElementById('dataLiquidacao');
       if (!dataInput.value) {
         const hoje = new Date();
@@ -350,7 +339,6 @@
         dataInput.value = `${year}-${month}-${day}`;
       }
 
-      // Inicializar totais
       atualizarTotais();
     });
   </script>

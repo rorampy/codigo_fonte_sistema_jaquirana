@@ -3,7 +3,7 @@
 {% include 'estrutura/header.html' %}
 <link href="{{ url_for('static', filename='css/relatorio-cargas.css') }}" rel="stylesheet">
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
@@ -72,11 +72,10 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
-      <!-- Indicador da semana selecionada -->
+      
       <div class="col-12 mb-3">
         <div class="alert {% if tipo_filtro == 'data' %}alert-info{% else %}alert-success{% endif %} d-flex align-items-center bg-white" role="alert">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -171,7 +170,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
       <form action="{{ url_for('relatorio_sintetico_fornecedor_floresta') }}" method="GET">
@@ -182,7 +180,7 @@
           </div>
           <div class="modal-body">
             <div class="row">
-              <!-- Toggle entre Filtro Semanal e Por Data -->
+              
               <div class="col-12 mb-3">
                 <label class="form-label">Tipo de Filtro</label>
                 <div class="form-selectgroup form-selectgroup-boxes d-flex flex-row">
@@ -216,7 +214,6 @@
                 </div>
               </div>
 
-              <!-- Filtro Semanal -->
               <div id="filtro-semanal" class="col-12 mb-3" {% if dados_corretos.get('tipo_filtro')=='data'
                 %}style="display: none;" {% endif %}>
                 <label class="form-label">Selecionar Período</label>
@@ -247,7 +244,6 @@
                 </div>
               </div>
 
-              <!-- Filtro por Data -->
               <div id="filtro-data" class="row" {% if dados_corretos.get('tipo_filtro') !='data'
                 %}style="display: none;" {% endif %}>
                 <div class="col-md-6 mb-3">
@@ -318,7 +314,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Inicializar Tom Select
+      
       document.querySelectorAll('select.form-select').forEach(function (select) {
         new TomSelect(select, {
           create: false,
@@ -326,7 +322,6 @@
         });
       });
 
-      // Inicializar filtros após carregamento completo
       setTimeout(function () {
         inicializarFiltros();
       }, 300);
@@ -353,10 +348,8 @@
         }
       }
 
-      // Aplicar estado inicial baseado nos radio buttons já configurados pelo backend
       alternarFiltros();
 
-      // Event listeners
       radioSemanal.addEventListener('click', alternarFiltros);
       radioData.addEventListener('click', alternarFiltros);
       radioSemanal.addEventListener('change', alternarFiltros);

@@ -223,7 +223,7 @@
       </div>
 
       <div class="content">
-        <!-- Cabeçalho -->
+        
         <div class="header no-break">
           <img src="{{ logo_path }}" alt="Logo Jaquirana" />
           <div class="system-info">
@@ -232,10 +232,8 @@
           </div>
         </div>
 
-        <!-- Título do Relatório -->
         <div class="relatorio-title">DRE - Detalhes por Categoria</div>
 
-        <!-- Informações da Categoria -->
         <div class="dados-registro no-break">
           <div class="filtros-title">{{ categoria.codigo }} - {{ categoria.nome }}</div>
           <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
@@ -252,9 +250,8 @@
           </div>
         </div>
 
-        <!-- Cards de Resumo -->
         {% if is_nf_complementar and subtotais_nfc %}
-        <!-- Subtotais NF Complementar -->
+        
         <table class="subtotais-nfc" style="width: 100%; margin-bottom: 15px;">
           <tr>
             <td style="width: 33%; text-align: center;">
@@ -281,24 +278,7 @@
           </tr>
         </table>
         {% endif %}
-        <!-- <table style="width: 100%; margin-bottom: 15px; border: none;">
-          <tr>
-            <td style="text-align: center; border: none; padding: 5px;">
-              <div class="resumo-card" style="display: inline-block;">
-                <div class="label">Total de Registros</div>
-                <div class="value">{{ quantidade }}</div>
-              </div>
-            </td>
-            <td style="text-align: center; border: none; padding: 5px;">
-              <div class="resumo-card destaque" style="display: inline-block;">
-                <div class="label">Valor Total</div>
-                <div class="value">{{ total_formatado }}</div>
-              </div>
-            </td>
-          </tr>
-        </table> -->
-
-        <!-- Tabela de Detalhes -->
+        
         <table>
           <thead>
             <tr>
@@ -377,7 +357,6 @@
           </tfoot>
         </table>
 
-        <!-- Rodapé -->
         <div class="footer">
           Documento gerado automaticamente pelo Sistema de Gestão Jaquirana
         </div>

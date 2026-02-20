@@ -134,13 +134,11 @@
     transform: scale(1.2);
   }
 
-
   .changelog-item.in-focus .version-badge {
     background: rgba(var(--tblr-primary-rgb), 0.1);
     color: var(--tblr-primary);
     border-color: rgba(var(--tblr-primary-rgb), 0.2);
   }
-
 
   @media (min-width: 768px) {
     .changelog-timeline::before {
@@ -165,9 +163,6 @@
   .changelog-footer-end.visible {
     opacity: 1;
   }
-
- 
-
 
 </style>
 
@@ -232,23 +227,21 @@
               <div
                 class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mb-3">
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <!-- Badge de Versão do Sistema-->
+                  
                   <span class="badge badge-outline text-blue ">v{{ changelog.versao }}</span>
                   {% if changelog.branch %}
-                  <!-- Badge de Branch do Sistema-->
+                  
                   <span class="badge badge-outline text-azure d-flex mx-auto">
                     <span class="d-flex justify-content-center align-items-center">{{ changelog.branch }}</span>
                   </span>
                   {% endif %}
-
-
 
                 </div>
                 <span class="text-muted small fw-medium ms-auto {% if current_user.role_id == 1 %} me-2 {% endif %}"
                   style="letter-spacing: 0.5px;">{{
                   changelog.data_lancamento }}</span>
                 {% if current_user.role_id == 1 %}
-                <!-- Botão para Editar -->
+                
                 <span class="badge badge-outline text-blue" >
                   <a href="{{ url_for('changelog_editar', id=changelog.id) }}" style="margin-left: auto;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -263,8 +256,6 @@
 
                 {% endif %}
               </div>
-
-
 
               <div class="markdown text-secondary" style="font-size: 1.05rem; line-height: 1.7;">
                 {{ changelog.conteudo | safe }}
@@ -304,24 +295,18 @@
 <script>
   document.addEventListener("DOMContentLoaded", function () {
 
-    // 1. Observer para ENTRADA (Reveal)
-    // Quando o item aparece levemente na tela (10%), ele perde o "hidden" e entra.
     const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('in-view');
-          // Opcional: Parar de observar depois de entrar
-          // revealObserver.unobserve(entry.target); 
+          
         }
       });
     }, {
       threshold: 0.1,
-      rootMargin: "0px 0px -50px 0px" // Entra um pouco antes do final da tela
+      rootMargin: "0px 0px -50px 0px" 
     });
 
-    // 2. Observer para FOCO (Focus)
-    // Esse é o segredo do "High End". Cria uma área no meio da tela.
-    // Se o elemento estiver nessa área, ele ganha destaque total.
     const focusObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -331,8 +316,8 @@
         }
       });
     }, {
-      threshold: 0.5, // Precisa estar 50% visível
-      rootMargin: "-25% 0px -25% 0px" // Cria uma faixa central "ativa" na tela
+      threshold: 0.5, 
+      rootMargin: "-25% 0px -25% 0px" 
     });
 
     const items = document.querySelectorAll('.changelog-item');
@@ -345,7 +330,7 @@
 
     if (footer) {
       revealObserver.observe(footer);
-      // Footer simples lógica de visibilidade
+      
       const footerObserver = new IntersectionObserver((entries) => {
         entries.forEach(e => {
           if (e.isIntersecting) e.target.classList.add('visible');

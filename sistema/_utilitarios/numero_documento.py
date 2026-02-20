@@ -8,7 +8,6 @@ class ValidaDocs:
         pontos e o traço do final.
         Ex.: Entrada -> 000.000.000-00 | Saída -> 00000000000
         '''
-        # Remove todos os caracteres não numéricos do CPF
         cpf = ''.join(filter(str.isdigit, cpf))
 
         return cpf
@@ -37,7 +36,6 @@ class ValidaDocs:
         barra e traço.
         Ex.: Entrada -> 00.000.000/0000-00 | Saída -> 00000000000000
         '''
-        # Remove todos os caracteres não numéricos do CNPJ
         cnpj = ''.join(filter(str.isdigit, cnpj))
 
         return cnpj
@@ -76,7 +74,6 @@ class ValidaDocs:
         por parâmetro e remove espaços e outros caracteres não numéricos.
         Ex.: Entrada -> 1234567 | Saída -> 1234567
         '''
-        # Remove todos os caracteres não numéricos da Cédula
         cedula = ''.join(filter(str.isdigit, cedula))
 
         return cedula
@@ -92,7 +89,6 @@ class ValidaDocs:
         cedula = str(cedula)
 
         if len(cedula) <= 7:
-            # Adiciona pontos a cada três dígitos
             cedula = '.'.join(cedula[i:i+3] for i in range(0, len(cedula), 3))
             return cedula
         else:
@@ -105,7 +101,6 @@ class ValidaDocs:
         por parâmetro e remove traços e outros caracteres não numéricos.
         Ex.: Entrada -> 1234567-8 | Saída -> 12345678
         '''
-        # Remove todos os caracteres não numéricos do RUC
         ruc = ''.join(filter(str.isdigit, ruc))
 
         return ruc
@@ -120,13 +115,11 @@ class ValidaDocs:
         ruc = str(ruc)
 
         if 6 <= len(ruc) <= 8:
-            # Insere um traço antes do último dígito
             ruc = f'{ruc[:-1]}-{ruc[-1]}'
             return ruc
         else:
             return 'Inválido!'
         
-    #Retira todos os caracteres de um numero
     def somente_numeros(valor):
         if isinstance(valor, tuple):
             valor = valor[0]

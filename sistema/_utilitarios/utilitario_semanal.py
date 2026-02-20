@@ -6,7 +6,7 @@ class UtilitariosSemana:
     @staticmethod
     def _obter_primeira_segunda(data_inicial):
         """Encontra a primeira segunda-feira da semana que contém a data inicial."""
-        while data_inicial.weekday() != 0:  # 0 = segunda-feira
+        while data_inicial.weekday() != 0:
             data_inicial -= timedelta(days=1)
         return data_inicial
     
@@ -29,24 +29,20 @@ class UtilitariosSemana:
         hoje = datetime.now().date()
         ano, mes = hoje.year, hoje.month
         
-        # Define período: início do ano até final do mês atual
         inicio_periodo = date(ano, 1, 1)
         fim_periodo = date(ano, mes, calendar.monthrange(ano, mes)[1])
         
         semanas = []
         
-        # Adiciona opção de período completo
         semanas.append(UtilitariosSemana._criar_semana_info(
             inicio_periodo, fim_periodo, hoje, is_mes_completo=True
         ))
         
-        # Encontra primeira segunda-feira e gera semanas
         semana_inicio = UtilitariosSemana._obter_primeira_segunda(inicio_periodo)
         
         while semana_inicio <= fim_periodo:
             fim_semana = semana_inicio + timedelta(days=6)
             
-            # Só processa semanas que interceptam o período e não são futuras
             if (fim_semana >= inicio_periodo and semana_inicio <= hoje):
                 semana_info = UtilitariosSemana._criar_semana_info(
                     semana_inicio, fim_semana, hoje
@@ -55,7 +51,6 @@ class UtilitariosSemana:
             
             semana_inicio += timedelta(days=7)
         
-        # Ordena: semana atual primeiro, depois por data decrescente
         return sorted(semanas[1:], key=lambda x: (not x["is_atual"], -x["inicio"].toordinal())) + [semanas[0]]
     
     @staticmethod

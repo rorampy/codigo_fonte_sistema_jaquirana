@@ -85,7 +85,6 @@
               <div class="col-md-12">
                 <div class="row g-2 align-items-end">
 
-                  <!-- Filtros de Data -->
                   <div class="col-md-2">
                     <label class="form-label mb-1 small text-muted">Data Início</label>
                     <input type="date" id="data-inicio" class="form-control busca-rapida"
@@ -99,7 +98,6 @@
                       title="Data fim do vencimento">
                   </div>
 
-                  <!-- Campo Fornecedor -->
                   <div class="col-md-3">
                     <label class="form-label mb-1 small text-muted">Transportadora</label>
                     <input type="text"
@@ -108,21 +106,19 @@
                       placeholder="Buscar transportadora...">
                   </div>
 
-                  <!-- Campo de NF -->
                   <div class="col-md-2">
                     <label class="form-label mb-1 small text-muted">NF</label>
                     <input type="text" value="{{ dados_corretos.get('nf_venda', '') if dados_corretos else '' }}"
                       class="form-control busca-rapida" id="search-nf" placeholder="Buscar NF...">
                   </div>
 
-                  <!-- Campo Cliente -->
                   <div class="col-md-3">
                     <label class="form-label mb-1 small text-muted">Cliente</label>
                     <input type="text" value="{{ dados_corretos.get('cliente_venda', '') if dados_corretos else '' }}"
                       class="form-control busca-rapida" id="search-cliente" placeholder="Buscar cliente...">
                   </div>
                 </div>
-                <!-- Loading indicator -->
+                
                 <div id="loading-indicator" class="text-center mt-2" style="display: none;">
                   <div class="spinner-border spinner-border-sm text-primary" role="status">
                     <span class="visually-hidden">Carregando...</span>
@@ -322,7 +318,7 @@
               </p>
 
               <ul class="pagination m-0 ms-auto">
-                <!-- Primeira página -->
+                
                 {% if paginacao.pagina > 1 %}
                 <li class="page-item">
                   {% if dados_corretos %}
@@ -354,7 +350,6 @@
                 </li>
                 {% endif %}
 
-                <!-- Página anterior -->
                 {% if paginacao.tem_anterior %}
                 <li class="page-item">
                   {% if dados_corretos %}
@@ -385,7 +380,6 @@
                 </li>
                 {% endif %}
 
-                <!-- Páginas numeradas -->
                 {% for num_pagina in range([1, paginacao.pagina - 2] | max, [paginacao.total_paginas, paginacao.pagina +
                 3] | min + 1) %}
                 {% if num_pagina == paginacao.pagina %}
@@ -406,7 +400,6 @@
                 {% endif %}
                 {% endfor %}
 
-                <!-- Próxima página -->
                 {% if paginacao.tem_proximo %}
                 <li class="page-item">
                   {% if dados_corretos %}
@@ -437,7 +430,6 @@
                 </li>
                 {% endif %}
 
-                <!-- Última página -->
                 {% if paginacao.pagina < paginacao.total_paginas %} <li class="page-item">
                   {% if dados_corretos %}
                   <a class="page-link"
@@ -478,7 +470,6 @@
     </div>
   </div>
 
-  <!-- Área de modais -->
   <div class="modal modal-blur fade" id="modal-filtro-vendas-transito" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
       <form action="{{ url_for('vendas_em_transito_filtrar') }}" method="GET">
@@ -563,7 +554,6 @@
   {% include 'estrutura/footer.html' %}
 </div>
 
-<!-- Modal de Upload do Ticket -->
 <div class="modal modal-blur fade" id="modalUploadTicket" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -582,7 +572,6 @@
       </div>
       <div class="modal-body">
         
-        <!-- Card: Informações da Solicitação -->
         <div class="card border border-primary shadow-sm mb-4">
           <div class="card-body">
             <h3 class="card-title mb-3 text-primary">Informações da Solicitação</h3>
@@ -649,7 +638,6 @@
           </div>
         </div>
         
-        <!-- Seção: Upload do Ticket -->
         <h4 class="subheader mb-3">Upload do Ticket</h4>
         <div id="dropZoneTicket" class="dropzone-area text-center py-5 border border-2 border-dashed rounded-3"
              style="border-color: var(--tblr-primary) !important; background: var(--tblr-bg-surface-tertiary); cursor: pointer; transition: all 0.3s ease;">
@@ -705,7 +693,6 @@
   </div>
 </div>
 
-<!-- Loader para processamento -->
 <div id="loaderTicket" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center;">
   <div class="text-center">
     <div class="spinner-border text-light" style="width: 3rem; height: 3rem;"></div>
@@ -714,10 +701,8 @@
   </div>
 </div>
 
-<!-- Script específico da página -->
 <script src="{{ url_for('static', filename='js/pages/vendas-em-transito-listagem.js') }}"></script>
 
-<!-- Script do upload de ticket na listagem -->
 <script>
 (function() {
   'use strict';
@@ -725,7 +710,6 @@
   let arquivoSelecionado = null;
   let solicitacaoIdAtual = null;
   
-  // Elementos
   const modal = document.getElementById('modalUploadTicket');
   const dropZone = document.getElementById('dropZoneTicket');
   const dropZoneConteudo = document.getElementById('dropZoneConteudoTicket');
@@ -736,7 +720,6 @@
   const btnProcessar = document.getElementById('btnProcessarTicket');
   const loader = document.getElementById('loaderTicket');
   
-  // Campos do modal
   const modalCliente = document.getElementById('modal-cliente');
   const modalProduto = document.getElementById('modal-produto');
   const modalBitola = document.getElementById('modal-bitola');
@@ -747,8 +730,6 @@
   const modalMotorista = document.getElementById('modal-motorista');
   const modalPlaca = document.getElementById('modal-placa');
   
-  // Usa event delegation para vincular eventos aos botões de lançar ticket
-  // Isso garante que funcione mesmo após atualização via AJAX/filtro rápido
   document.addEventListener('click', function(e) {
     const btn = e.target.closest('.btn-lancar-ticket');
     if (!btn) return;
@@ -758,7 +739,6 @@
     
     solicitacaoIdAtual = btn.dataset.solicitacaoId;
     
-    // Preenche todos os campos do modal
     if (modalCliente) modalCliente.value = btn.dataset.cliente || '-';
     if (modalProduto) modalProduto.value = btn.dataset.produto || '-';
     if (modalBitola) modalBitola.value = btn.dataset.bitola || '-';
@@ -773,7 +753,6 @@
     new bootstrap.Modal(modal).show();
   });
   
-  // Formatar CPF/CNPJ
   function formatarDocumento(doc) {
     if (!doc) return '-';
     doc = doc.replace(/\D/g, '');
@@ -785,7 +764,6 @@
     return doc;
   }
   
-  // Formatar telefone
   function formatarTelefone(tel) {
     if (!tel) return '-';
     tel = tel.replace(/\D/g, '');
@@ -797,7 +775,6 @@
     return tel;
   }
   
-  // Click no dropzone
   if (dropZone) {
     dropZone.addEventListener('click', () => inputUpload.click());
     
@@ -822,7 +799,6 @@
     });
   }
   
-  // Input file change
   if (inputUpload) {
     inputUpload.addEventListener('change', (e) => {
       const arquivo = e.target.files[0];
@@ -830,7 +806,6 @@
     });
   }
   
-  // Botão processar
   if (btnProcessar) {
     btnProcessar.addEventListener('click', processarUpload);
   }
@@ -862,7 +837,6 @@
   async function processarUpload() {
     if (!arquivoSelecionado || !solicitacaoIdAtual) return;
     
-    // Fecha modal e mostra loader
     bootstrap.Modal.getInstance(modal).hide();
     loader.style.display = 'flex';
     
@@ -885,21 +859,18 @@
       
       const dados = await resposta.json();
       
-      // Armazena dados extraídos no sessionStorage para usar na página de cadastro
       sessionStorage.setItem('ticketDadosExtraidos', JSON.stringify({
         numero_nf: dados.dados?.numero_nf || '',
         peso_liquido: dados.dados?.peso_liquido || '',
         data_entrega: dados.dados?.data_entrega || ''
       }));
       
-      // Armazena arquivo para transferir
       const reader = new FileReader();
       reader.onload = function(e) {
         sessionStorage.setItem('ticketArquivoBase64', e.target.result);
         sessionStorage.setItem('ticketArquivoNome', arquivoSelecionado.name);
         sessionStorage.setItem('ticketArquivoTipo', arquivoSelecionado.type);
         
-        // Redireciona para página de cadastro
         window.location.href = `/controle-cargas/cadastrar/ticket/${solicitacaoIdAtual}`;
       };
       reader.readAsDataURL(arquivoSelecionado);

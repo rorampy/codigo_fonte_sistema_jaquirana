@@ -39,11 +39,9 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
-      <!-- Seção de Análise de Produção -->
       <div class="dashboard-section">
         {% if mostrar_linhas_graficas %}
         <div class="row g-3">
@@ -86,7 +84,6 @@
         {% endif %}
       </div>
 
-      <!-- Seção de Controle de Estoque -->
       <div class="dashboard-section">
         {% if valores_contra_acumulados %}
         <div class="glass-card chart-container">
@@ -111,7 +108,6 @@
         {% endif %}
       </div>
 
-      <!-- Seção de Ranking -->
       <div class="dashboard-section">
         {% if tem_pontuacao %}
         <div class="glass-card chart-container">
@@ -137,7 +133,6 @@
         {% endif %}
       </div>
 
-      <!-- Seção de Alertas -->
       <div class="dashboard-section">
         <div class="row g-3">
           <div class="col-lg-3 col-md-6">
@@ -232,7 +227,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
       <form id="filtroForm" method="get">
@@ -244,7 +238,7 @@
           <div class="modal-body">
             <div class="row">
               <div class="col-md-8 mb-3 mb-3">
-                <!-- Seletor de empresa -->
+                
                 <label class="form-label" for="selectEmpresa"><strong>Empresa
                     Emissora:</strong></label>
                 <select id="selectEmpresa" name="empresa_emissora_id" class="form-select">
@@ -268,7 +262,7 @@
               Limpar Filtros
             </a>
             <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
-              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="icon icon-2">
@@ -284,7 +278,7 @@
   </div>
 
   <script>
-    // dispara o submit do mesmo form ao mudar mês ou empresa
+    
     document.getElementById('selectMes').addEventListener('change', () => {
       document.getElementById('filtroForm').submit();
     });
@@ -293,7 +287,6 @@
     });
   </script>
 
-  <!-- Scripts originais dos gráficos mantidos -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       if (!window.ApexCharts) return;

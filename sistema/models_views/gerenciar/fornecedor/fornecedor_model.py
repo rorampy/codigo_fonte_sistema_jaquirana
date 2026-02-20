@@ -1,7 +1,6 @@
 from ...base_model import BaseModel, db
 from sqlalchemy import and_
 
-# MODEL LEGADA, AGORA TODOS OS FORNECEDORES ESTÃO CADASTRADOS EM for_fornecedor_cadastro MODEL FornececedorCadastroModel
 
 class FornecedorModel(BaseModel):
     """
@@ -13,46 +12,36 @@ class FornecedorModel(BaseModel):
     identificacao = db.Column(db.String(200), nullable=False)
     numero_documento = db.Column(db.String(20), nullable=False)
     telefone = db.Column(db.String(20), nullable=False)
-    estimativa_tonelada = db.Column(db.Float, nullable=True) # Estimativa de Tonelada
+    estimativa_tonelada = db.Column(db.Float, nullable=True)
 
-    # Cadastro funrural 1- Sim | 2- Não
     funrural = db.Column(db.Boolean, default=True, nullable=False)
 
-    # Cadastro senar 1- Sim | 2- Não
     senar = db.Column(db.Boolean, default=False, nullable=False)
 
-    # Possui madeira posta? 1- Sim | 2- Não
     madeira_posta = db.Column(db.Boolean, default=False, nullable=False)
 
-    # Possui comissionado? 1- Sim | 2- Não
     possui_comissionado = db.Column(db.Boolean, default=False, nullable=False)
 
-    # possui custo de extração? 1- Sim | 2- Não
     custo_extracao = db.Column(db.Boolean, default=False, nullable=False)
 
     extrator_id = db.Column(db.Integer, db.ForeignKey("ext_extrator.id"), nullable=True)
     extrator = db.relationship("ExtratorModel", backref=db.backref("extrator_fornecedor", lazy=True))
 
-    # preços de custo de extração para Eucalipto (opcionais)
     euca_custo_extracao_bitola_1_100 = db.Column(db.Integer, nullable=True)
     euca_custo_extracao_bitola_2_100 = db.Column(db.Integer, nullable=True)
     euca_custo_extracao_bitola_3_100 = db.Column(db.Integer, nullable=True)
     euca_custo_extracao_bitola_4_100 = db.Column(db.Integer, nullable=True)
 
-    # preços de custo de extração para Pinus (opcionais)
     pinus_custo_extracao_bitola_1_100 = db.Column(db.Integer, nullable=True)
     pinus_custo_extracao_bitola_2_100 = db.Column(db.Integer, nullable=True)
     pinus_custo_extracao_bitola_3_100 = db.Column(db.Integer, nullable=True)
     pinus_custo_extracao_bitola_4_100 = db.Column(db.Integer, nullable=True)
     pinus_custo_extracao_bitola_5_100 = db.Column(db.Integer, nullable=True)
 
-    # preços de custo de extração para Biomassa (opcionais)
     bio_custo_extracao_bitola_5_100 = db.Column(db.Integer, nullable=True)
     bio_custo_extracao_bitola_7_100 = db.Column(db.Integer, nullable=True)
 
-    # ===============================================================================|
 
-    # Bitolas e preços de custo para Eucalipto (opcionais)
     euca_bitola_1_id = db.Column(db.Integer, nullable=True)
     euca_preco_custo_bitola_1_100 = db.Column(db.Integer, nullable=True)
     euca_bitola_2_id = db.Column(db.Integer, nullable=True)
@@ -62,7 +51,6 @@ class FornecedorModel(BaseModel):
     euca_bitola_4_id = db.Column(db.Integer, nullable=True)
     euca_preco_custo_bitola_4_100 = db.Column(db.Integer, nullable=True)
 
-    # Bitolas e preços de custo para Pinus (opcionais)
     pinus_bitola_1_id = db.Column(db.Integer, nullable=True)
     pinus_preco_custo_bitola_1_100 = db.Column(db.Integer, nullable=True)
     pinus_bitola_2_id = db.Column(db.Integer, nullable=True)
@@ -74,11 +62,10 @@ class FornecedorModel(BaseModel):
     pinus_bitola_5_id = db.Column(db.Integer, nullable=True)
     pinus_preco_custo_bitola_5_100 = db.Column(db.Integer, nullable=True)
 
-    # Bitola e preço de custo para Biomassa (opcionais)
     bio_bitola_5_id = db.Column(db.Integer, nullable=True)
     bio_preco_custo_bitola_5_100 = db.Column(db.Integer, nullable=True)
-    bio_bitola_7_id = db.Column(db.Integer, nullable=True) # Madeira Biomassa
-    bio_preco_custo_bitola_7_100 = db.Column(db.Integer, nullable=True) # Madeira Biomassa
+    bio_bitola_7_id = db.Column(db.Integer, nullable=True)
+    bio_preco_custo_bitola_7_100 = db.Column(db.Integer, nullable=True)
 
     contrato_fornecedor_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     contrato_fornecedor = db.relationship("UploadArquivoModel", foreign_keys=[contrato_fornecedor_id], backref=db.backref("contrato_fornecedor", lazy=True))
@@ -98,18 +85,15 @@ class FornecedorModel(BaseModel):
     conta_bancaria = db.Column(db.String(50), nullable=True)
     chave_pix = db.Column(db.String(155), nullable=True)
  
-    classe_fornecedor = db.Column(db.Boolean, nullable=False, default=False) # 1- Floresta | 0- Terceiro
+    classe_fornecedor = db.Column(db.Boolean, nullable=False, default=False)
     valor_contrato_100 = db.Column(db.Integer, nullable=True)
     
     controle_entrada = db.Column(db.Boolean, default=True)
     
     ativo = db.Column(db.Boolean, default=True, nullable=False)
 
-    # relacionamento 1:N -> cada fornecedor pode ter várias entradas de madeira posta
     madeiras_posta = db.relationship("FornecedorMadeiraPostaModel", back_populates="fornecedor", cascade="all, delete-orphan")
     
-    # relacionamento 1:N -> cada fornecedor pode ter várias tags - REMOVIDO: agora aponta para for_fornecedor_cadastro
-    # fornecedor_tags = db.relationship("FornecedorTag", backref="fornecedor_rel", lazy=True)
 
     def __init__(
             self, fatura_via_cpf, identificacao, numero_documento, senar,
@@ -147,7 +131,7 @@ class FornecedorModel(BaseModel):
             conta_bancaria=None,
             chave_pix=None,
             possui_comissionado=None,
-            estimativa_tonelada=None# Estimativa de Tonelada
+            estimativa_tonelada=None
     ):
         self.funrural = funrural
         self.senar = senar
@@ -195,9 +179,9 @@ class FornecedorModel(BaseModel):
 
         self.bio_custo_extracao_bitola_5_100 = bio_custo_extracao_bitola_5_100
         self.bio_bitola_5_id = bio_bitola_5_id
-        self.bio_bitola_7_id = bio_bitola_7_id # Madeira Biomassa
+        self.bio_bitola_7_id = bio_bitola_7_id
         self.bio_custo_extracao_bitola_7_100 = bio_custo_extracao_bitola_7_100
-        self.bio_preco_custo_bitola_7_100 = bio_preco_custo_bitola_7_100 # Madeira Biomassa
+        self.bio_preco_custo_bitola_7_100 = bio_preco_custo_bitola_7_100
         self.bio_preco_custo_bitola_5_100 = bio_preco_custo_bitola_5_100
 
         self.madeira_posta = madeira_posta
@@ -212,7 +196,6 @@ class FornecedorModel(BaseModel):
         self.chave_pix = chave_pix
         self.ativo = ativo
 
-        # Estimativa de Tonelada
         self.estimativa_tonelada = estimativa_tonelada
 
     def listar_fornecedores():

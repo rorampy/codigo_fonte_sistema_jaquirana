@@ -192,7 +192,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table>
       <tr>
@@ -209,12 +209,10 @@
 
   <div class="relatorio-title">Demonstrativo de Resultado do Exercício - Sintético</div>
 
-  <!-- Período do Relatório -->
   <div class="period-badge">
     <span class="badge">Período: {{ data_inicio.strftime('%d/%m/%Y') }} a {{ data_fim.strftime('%d/%m/%Y') }}</span>
   </div>
 
-  <!-- RECEITAS OPERACIONAIS -->
   <div class="section-badge section-receitas">RECEITAS OPERACIONAIS</div>
   
   <table class="table-borderless">
@@ -233,7 +231,6 @@
 
   <div class="section-spacing"></div>
 
-  <!-- CUSTOS OPERACIONAIS -->
   <div class="section-badge section-custos">CUSTOS OPERACIONAIS</div>
   
   <table class="table-borderless">
@@ -250,13 +247,11 @@
     </tbody>
   </table>
 
-  <!-- MARGEM BRUTA -->
   <div class="highlight-card">
     <div class="title">MARGEM BRUTA</div>
     <div class="value">{{ dre_dados.resultado_bruto | formatar_float_para_brl }}</div>
   </div>
 
-  <!-- DESPESAS OPERACIONAIS -->
   {% if dre_dados.despesas_operacionais > 0 %}
   <div class="section-badge section-despesas">DESPESAS OPERACIONAIS</div>
   
@@ -275,13 +270,11 @@
   </table>
   {% endif %}
 
-  <!-- RESULTADO OPERACIONAL -->
   <div class="highlight-card">
     <div class="title">RESULTADO OPERACIONAL</div>
     <div class="value">{{ dre_dados.resultado_operacional | formatar_float_para_brl }}</div>
   </div>
 
-  <!-- ATIVIDADES DE FINANCIAMENTO -->
   {% if dre_dados.receitas_aplicacoes_financeiras > 0 %}
   <div class="section-badge section-financiamento">ATIVIDADES DE FINANCIAMENTO</div>
   
@@ -300,7 +293,6 @@
   </table>
   {% endif %}
 
-  <!-- ATIVIDADES DE INVESTIMENTO -->
   {% if dre_dados.despesas_compra_floresta > 0 or dre_dados.despesas_retirada_capital > 0 %}
   <div class="section-badge section-investimento">ATIVIDADES DE INVESTIMENTO</div>
   
@@ -329,7 +321,6 @@
   </table>
   {% endif %}
 
-  <!-- RESULTADO LÍQUIDO -->
   {% if dre_dados.variacao_caixa is defined %}
   <div class="highlight-card">
     <div class="title">RESULTADO LÍQUIDO</div>

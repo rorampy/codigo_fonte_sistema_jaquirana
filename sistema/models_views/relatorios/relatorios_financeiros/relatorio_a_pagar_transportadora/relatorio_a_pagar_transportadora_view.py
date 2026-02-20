@@ -11,9 +11,6 @@ from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
 from sistema._utilitarios import ManipulacaoArquivos
 
 
-# ============================================================================
-# FUNÇÕES AUXILIARES
-# ============================================================================
 
 def calcular_totalizadores_frete(registros):
     """
@@ -44,7 +41,6 @@ def calcular_totalizadores_frete(registros):
                 "valor_100": 0,
             }
         
-        # Somar toneladas
         if registro_operacional and registro_operacional.peso_liquido_ticket:
             try:
                 peso = float(registro_operacional.peso_liquido_ticket)
@@ -53,7 +49,6 @@ def calcular_totalizadores_frete(registros):
             except (ValueError, TypeError):
                 pass
         
-        # Somar valor (já está em centavos no banco)
         if registro and registro.valor_total_a_pagar_100:
             try:
                 valor_100 = int(registro.valor_total_a_pagar_100)
@@ -156,7 +151,6 @@ def preparar_dados_excel_frete(registros):
     total_geral_valor = 0
     total_geral_toneladas = 0
     
-    # Agrupar por origem e produto
     for item in registros:
         origem = item.get("origem", "Sem origem")
         if origem not in registros_por_origem:
@@ -168,11 +162,9 @@ def preparar_dados_excel_frete(registros):
             
         registros_por_origem[origem][produto].append(item)
 
-    # Gerar linhas do Excel
     for origem in sorted(registros_por_origem.keys()):
         produtos_origem = registros_por_origem[origem]
         
-        # Cabeçalho da origem
         dados_excel.append({
             "Frete": f"FRETE: {origem.upper()}",
             "Data Entrega": "", "Fornecedor": "", "Bitola": "", "Preço/Ton": "", "Peso Ticket": "",
@@ -186,7 +178,6 @@ def preparar_dados_excel_frete(registros):
         for produto in sorted(produtos_origem.keys()):
             registros_produto = produtos_origem[produto]
             
-            # Cabeçalho do produto
             dados_excel.append({
                 "Frete": f"  Produto: {produto}",
                 "Data Entrega": "", "Fornecedor": "", "Bitola": "", "Preço/Ton": "", "Peso Ticket": "",
@@ -201,29 +192,24 @@ def preparar_dados_excel_frete(registros):
                 registro = item["registro"]
                 registro_op = item.get("registro_operacional")
                 
-                # Formatar data entrega
                 data_entrega = registro.data_entrega_ticket.strftime("%d/%m/%Y") if registro.data_entrega_ticket else "-"
                 
-                # Formatar fornecedor
                 fornecedor = "-"
                 if (registro.solicitacao and 
                     registro.solicitacao.fornecedor and 
                     registro.solicitacao.fornecedor.identificacao):
                     fornecedor = registro.solicitacao.fornecedor.identificacao
                 
-                # Formatar bitola
                 bitola = "-"
                 if (registro.solicitacao and 
                     registro.solicitacao.bitola and 
                     registro.solicitacao.bitola.bitola):
                     bitola = registro.solicitacao.bitola.bitola
                 
-                # Formatar preço por bitola
                 preco_bitola = "-"
                 if registro.preco_custo_bitola_100:
                     preco_bitola = f"R$ {registro.preco_custo_bitola_100 / 100:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
                 
-                # Formatar peso
                 peso_ticket = "Sem peso"
                 peso_valor = 0
                 if registro_op and registro_op.peso_liquido_ticket:
@@ -236,14 +222,12 @@ def preparar_dados_excel_frete(registros):
                     except (ValueError, TypeError):
                         peso_ticket = f"{registro_op.peso_liquido_ticket} Ton."
                 
-                # Formatar número NF
                 numero_nf = "-"
                 if registro_op and registro_op.estorno_nf:
                     numero_nf = f"{registro_op.numero_nota_fiscal_estorno} *"
                 elif registro_op and registro_op.numero_nota_fiscal:
                     numero_nf = str(registro_op.numero_nota_fiscal)
                 
-                # Calcular valor
                 valor_pagar = 0
                 if registro.valor_total_a_pagar_100:
                     valor_pagar = registro.valor_total_a_pagar_100 / 100
@@ -251,7 +235,6 @@ def preparar_dados_excel_frete(registros):
                     total_transportadora_valor += valor_pagar
                     total_geral_valor += valor_pagar
                 
-                # Formatar placa e motorista
                 placa = "-"
                 motorista = ""
                 if (registro.solicitacao and 
@@ -286,7 +269,6 @@ def preparar_dados_excel_frete(registros):
                     "Incompleto": incompleto,
                 })
             
-            # Total do produto
             if registros_produto and total_produto > 0:
                 dados_excel.append({
                     "Frete": "", "Data Entrega": "", "Fornecedor": "", "Bitola": "", "Preço/Ton": "",
@@ -295,10 +277,8 @@ def preparar_dados_excel_frete(registros):
                     "Status pagamento": "", "Placa/Motorista": "", "Incompleto": "",
                 })
             
-            # Linha em branco após produto
             dados_excel.append({k: "" for k in ["Frete", "Data Entrega", "Fornecedor", "Bitola", "Preço/Ton", "Peso Ticket", "Número NF", "A pagar frete", "Status pagamento", "Placa/Motorista", "Incompleto"]})
         
-        # Totalizador da transportadora
         dados_excel.append({
             "Frete": f"TOTAL {origem.upper()}",
             "Data Entrega": "", "Fornecedor": "", "Bitola": "", "Preço/Ton": "",
@@ -307,10 +287,8 @@ def preparar_dados_excel_frete(registros):
             "Status pagamento": "", "Placa/Motorista": "", "Incompleto": "",
         })
         
-        # Linha em branco após origem
         dados_excel.append({k: "" for k in ["Frete", "Data Entrega", "Fornecedor", "Bitola", "Preço/Ton", "Peso Ticket", "Número NF", "A pagar frete", "Status pagamento", "Placa/Motorista", "Incompleto"]})
     
-    # Totalizador geral (somente se houver mais de uma transportadora)
     if len(registros_por_origem) > 1:
         dados_excel.append({
             "Frete": "TOTAL GERAL",
@@ -323,9 +301,6 @@ def preparar_dados_excel_frete(registros):
     return dados_excel
 
 
-# ============================================================================
-# VIEWS
-# ============================================================================
 
 @app.route("/relatorios/relatorios-financeiros/a-pagar-frete", methods=["GET"])
 @login_required
@@ -340,11 +315,9 @@ def relatorio_a_pagar_fretes():
 
     verificar_e_limpar_conciliacao_incorreta('pagamento_frete') 
     
-    # Obter filtros e dados
     filtros = obter_filtros_frete()
     registros = buscar_registros_frete(filtros)
     
-    # Calcular totalizadores
     totalizadores = calcular_totalizadores_frete(registros)
     
     return render_template(
@@ -368,11 +341,9 @@ def relatorio_a_pagar_fretes_exportar_pdf():
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
     dataHoje = datetime.now().strftime("%d-%m-%Y")
     
-    # Obter filtros e dados
     filtros = obter_filtros_frete()
     registros = buscar_registros_frete(filtros)
     
-    # Calcular totalizadores
     totalizadores = calcular_totalizadores_frete(registros)
     
     logo_path = obter_url_absoluta_de_imagem("logo.png")
@@ -399,11 +370,9 @@ def relatorio_a_pagar_fretes_exportar_excel():
     """
     dataHoje = datetime.now().strftime("%d-%m-%Y")
     
-    # Obter filtros e dados
     filtros = obter_filtros_frete()
     registros = buscar_registros_frete(filtros)
     
-    # Preparar dados para Excel
     dados_excel = preparar_dados_excel_frete(registros)
     
     nome_arquivo_saida = f"relatorio-fretes-a-pagar-{dataHoje}"

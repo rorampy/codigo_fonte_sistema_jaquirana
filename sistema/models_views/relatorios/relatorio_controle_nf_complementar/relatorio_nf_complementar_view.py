@@ -28,7 +28,6 @@ def relatorio_controle_nf_complementar():
         registros = RegistroOperacionalModel.registros_carga_cliente()
         dados_corretos = {}
 
-    # Exporta PDF
     if request.form.get('exportar_pdf'):
         logo_path = obter_url_absoluta_de_imagem('logo.png')
         html = render_template(

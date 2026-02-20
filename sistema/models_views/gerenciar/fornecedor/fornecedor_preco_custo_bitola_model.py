@@ -11,7 +11,7 @@ class FornecedorPrecoCustoBitolaModel(BaseModel):
     produto = db.relationship('ProdutoModel', backref='produto_preco_custo_fornecedor', lazy=True)
     bitola_id = db.Column(db.Integer, db.ForeignKey('z_sys_bitola.id'), nullable=False)
     bitola = db.relationship('BitolaModel', backref='bitola_preco_custo_fornecedor', lazy=True)
-    valor_preco_custo_100 = db.Column(db.Integer, nullable=True)  # Valor por 100 em centavos
+    valor_preco_custo_100 = db.Column(db.Integer, nullable=True)
 
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
@@ -82,11 +82,9 @@ class FornecedorPrecoCustoBitolaModel(BaseModel):
         )
         
         if registro:
-            # Atualiza registro existente
             if valor_preco_custo_100 is not None:
                 registro.valor_preco_custo_100 = valor_preco_custo_100
         else:
-            # Cria novo registro
             registro = FornecedorPrecoCustoBitolaModel(
                 fornecedor_id=fornecedor_id,
                 produto_id=produto_id,

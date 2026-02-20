@@ -2,7 +2,7 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
@@ -32,7 +32,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -41,7 +40,6 @@
       <div class="col-12">
         <div class="card">
 
-          <!-- Tabela -->
           <div class="table-responsive">
             <table class="table table-vcenter card-table">
               <thead>
@@ -110,7 +108,6 @@
     </div>
   </div>
 
-  <!-- Modal Filtro -->
   <div class="modal modal-blur fade" id="modal-filtro" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
       <form action="{{ url_for('listar_fornecedor_extratores') }}" method="GET">

@@ -10,11 +10,8 @@ class MotoristaModel(BaseModel):
     __tablename__ = 'transp_motorista'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
 
-    # =========================> DESCONTINUADO <=========================
-    # Tabela legada, usada somente para pegar informações que foram cadastradas antes da nova implementação
     transportadora_id = db.Column(db.Integer, db.ForeignKey('transp_transportadora.id'), nullable=True)
     transportadora = db.relationship('TransportadoraModel', backref=db.backref('transportadora_motorista', lazy=True))
-    # ===================================================================
 
     nome_completo = db.Column(db.String(255), nullable=False)
     cpf = db.Column(db.String(20), nullable=False)

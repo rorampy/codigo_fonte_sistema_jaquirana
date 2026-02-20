@@ -6,11 +6,9 @@ from email.mime.text import MIMEText
 from huey import SqliteHuey, crontab
 from config import *
 
-# obtendo o caminho relativo para o banco ficar ao lado de tarefas.py
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'bd_tarefas.db')
 
-# instância
 huey = SqliteHuey(filename=DB_PATH)
 
 
@@ -18,15 +16,13 @@ huey = SqliteHuey(filename=DB_PATH)
 def enviar_email_html(titulo, corpo, destinatario):
     server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORTA, timeout=10)
     
-    # se quiser ativar o debug do smtplib
-    # server.set_debuglevel(1)
     server.starttls()
     server.login(EMAIL_LOGIN, EMAIL_SENHA)
     email_msg = MIMEMultipart()
     email_msg['From'] = EMAIL_LOGIN
     email_msg['To'] = destinatario
     email_msg['Subject'] = titulo
-    email_msg.attach(MIMEText(corpo, 'html'))    # 'plain' = tipo texto | 'html' = tipo HTML
+    email_msg.attach(MIMEText(corpo, 'html'))
     
     server.sendmail(email_msg['From'], email_msg['To'], email_msg.as_string())
     server.quit()
@@ -81,7 +77,6 @@ def sincronizar_precos_fornecedores(data_inicio=None, data_fim=None, fornecedor_
                 data_fim=filtro_data_fim
             )
             
-            # Filtrar por fornecedor específico se informado
             if fornecedor_id:
                 try:
                     fornecedor_id_int = int(fornecedor_id)
@@ -105,8 +100,8 @@ def sincronizar_precos_fornecedores(data_inicio=None, data_fim=None, fornecedor_
                 db.session.query(FornecedorPagarModel)
                 .options(joinedload(FornecedorPagarModel.solicitacao))  
                 .filter(FornecedorPagarModel.id.in_([f.id for f in fornecedoresPagar]),
-                        FornecedorPagarModel.situacao_pagamento_id != 5, # Faturado
-                        FornecedorPagarModel.situacao_pagamento_id != 8) # Conciliado
+                        FornecedorPagarModel.situacao_pagamento_id != 5,
+                        FornecedorPagarModel.situacao_pagamento_id != 8)
                 .all()
             )
             
@@ -213,7 +208,6 @@ def sincronizar_precos_transportadoras(data_inicio=None, data_fim=None, transpor
     with app.app_context():
         try:
             
-            # Processamento e validação das datas de filtro
             filtro_data_inicio = None
             filtro_data_fim = None
             
@@ -258,8 +252,8 @@ def sincronizar_precos_transportadoras(data_inicio=None, data_fim=None, transpor
                 db.session.query(FretePagarModel)
                 .options(joinedload(FretePagarModel.solicitacao))  
                 .filter(FretePagarModel.id.in_([f.id for f in fretesPagar]),
-                        FretePagarModel.situacao_pagamento_id != 5, # Faturado
-                        FretePagarModel.situacao_pagamento_id != 8) # Conciliado
+                        FretePagarModel.situacao_pagamento_id != 5,
+                        FretePagarModel.situacao_pagamento_id != 8)
                 .all()
             )
             
@@ -386,7 +380,6 @@ def sincronizar_precos_extratores(data_inicio=None, data_fim=None, extrator_id=N
                 data_fim=filtro_data_fim
             )
             
-            # Filtrar por extrator específico se informado
             if extrator_id:
                 try:
                     extrator_id_int = int(extrator_id)
@@ -410,8 +403,8 @@ def sincronizar_precos_extratores(data_inicio=None, data_fim=None, extrator_id=N
                 db.session.query(ExtratorPagarModel)
                 .options(joinedload(ExtratorPagarModel.solicitacao))  
                 .filter(ExtratorPagarModel.id.in_([e.id for e in extratoresPagar]),
-                        ExtratorPagarModel.situacao_pagamento_id != 5, # Faturado
-                        ExtratorPagarModel.situacao_pagamento_id != 8) # Conciliado
+                        ExtratorPagarModel.situacao_pagamento_id != 5,
+                        ExtratorPagarModel.situacao_pagamento_id != 8)
                 .all()
             )
             
@@ -429,7 +422,6 @@ def sincronizar_precos_extratores(data_inicio=None, data_fim=None, extrator_id=N
                         if not solicitacao:
                             continue
                         
-                        # Obter preço de extração
                         preco_extracao = FornecedorPrecoCustoExtracaoModel.obter_custo_extracao_por_bitola(
                             fornecedor_id=extrator.fornecedor_id,
                             produto_id=solicitacao.produto_id,
@@ -537,7 +529,6 @@ def sincronizar_precos_comissionados(data_inicio=None, data_fim=None, comissiona
                 data_fim=filtro_data_fim
             )
             
-            # Filtrar por comissionado específico se informado
             if comissionado_id:
                 try:
                     comissionado_id_int = int(comissionado_id)
@@ -561,8 +552,8 @@ def sincronizar_precos_comissionados(data_inicio=None, data_fim=None, comissiona
                 db.session.query(ComissionadoPagarModel)
                 .options(joinedload(ComissionadoPagarModel.solicitacao))  
                 .filter(ComissionadoPagarModel.id.in_([c.id for c in comissionadosPagar]),
-                        ComissionadoPagarModel.situacao_pagamento_id != 5, # Faturado
-                        ComissionadoPagarModel.situacao_pagamento_id != 8) # Conciliado
+                        ComissionadoPagarModel.situacao_pagamento_id != 5,
+                        ComissionadoPagarModel.situacao_pagamento_id != 8)
                 .all()
             )
             
@@ -580,7 +571,6 @@ def sincronizar_precos_comissionados(data_inicio=None, data_fim=None, comissiona
                         if not solicitacao:
                             continue
                         
-                        # Obter preço de comissão
                         vinculo_comissao = FornecedorComissionadoModel.obter_por_fornecedor_comissionado(
                             fornecedor_id=comissionado.fornecedor_id,
                             comissionado_id=comissionado.comissionado_id
@@ -591,8 +581,6 @@ def sincronizar_precos_comissionados(data_inicio=None, data_fim=None, comissiona
                                 peso_liquido = registroOperacional.peso_liquido_ticket
                                 
                                 if vinculo_comissao.tipo_comissao == 1:
-                                    # Comissão percentual: precisa do preço de custo do fornecedor
-                                    # Divide por 10000 pois: /100 desfaz o *100 do armazenamento, /100 converte % para decimal
                                     from sistema.models_views.gerenciar.fornecedor.fornecedor_cadastro_model import FornecedorCadastroModel
                                     
                                     resultado_precos = FornecedorCadastroModel.obter_precos_custo_fornecedor(
@@ -618,7 +606,6 @@ def sincronizar_precos_comissionados(data_inicio=None, data_fim=None, comissiona
                                         erro_msg = f'Preço de custo do fornecedor não encontrado para calcular comissão percentual - comissionado {comissionado.id}'
                                         erros.append(erro_msg)
                                 else:
-                                    # Comissão valor fixo: já está em centavos, usa diretamente
                                     preco = vinculo_comissao.valor_comissao_ton_100
                                     valorTotal = float(preco) * peso_liquido
                                     

@@ -15,7 +15,6 @@
 
         <div class="relatorio-title">Relatório Financeiro a pagar Comissionado</div>
 
-        <!-- Filtros aplicados se existirem -->
         {% if dados_corretos %}
         <div class="dados-registro no-break">
           <div class="filtros-title">Filtros Aplicados</div>
@@ -71,13 +70,13 @@
 
         {% if registros %}
         {% for cliente_group in registros|groupby('comissionado.identificacao') %}
-        <!-- Seção do Comissionado -->
+        
         <div class="no-break" style="margin-top: 20px;">
           <div class="filtros-title">Comissionado: {{ cliente_group.grouper }}</div>
         </div>
 
         {% for produto_group in cliente_group.list|groupby('produto') %}
-        <!-- Produto dentro do Comissionado -->
+        
         <div class="section-title no-break">
           Produto: {{ produto_group.grouper }}
           <span style="float: right; font-weight: normal; font-size: 12px;">
@@ -85,7 +84,6 @@
           </span>
         </div>
 
-        <!-- Tabela de cargas para este produto -->
         <table>
           <thead>
             <tr>
@@ -157,7 +155,6 @@
         </table>
         {% endfor %}
         
-        <!-- Totalizador do Comissionado como linha de tabela -->
         {% if totalizadores and totalizadores.por_comissionado and cliente_group.grouper in totalizadores.por_comissionado %}
         <table style="margin-top: 5px;">
           <tbody>
@@ -184,7 +181,6 @@
 
         {% endfor %}
         
-        <!-- Totalizador Geral como linha de tabela (somente se houver mais de um comissionado) -->
         {% if totalizadores and totalizadores.quantidade_comissionados > 1 %}
         <table style="margin-top: 20px;">
           <tbody>
@@ -210,7 +206,7 @@
         {% endif %}
 
         {% else %}
-        <!-- Estado vazio -->
+        
         <div style="text-align: center; padding: 50px 0;">
           <h3 style="color: #666;">Nenhum registro encontrado</h3>
           <p style="color: #999;">Não há registros de comissionado a pagar </p>

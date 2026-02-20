@@ -119,7 +119,6 @@ def cadastrar_cliente():
         if gravar_banco == True:
             telefone_tratado = Tels.remove_pontuacao_telefone_celular_br(telefone)
             
-            # Conversão dos valores de Eucalipto
             euca_preco_venda_1_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoVenda1)
             euca_preco_venda_1_100 = euca_preco_venda_1_float * 100
 
@@ -132,7 +131,6 @@ def cadastrar_cliente():
             euca_preco_venda_4_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoVenda4)
             euca_preco_venda_4_100 = euca_preco_venda_4_float * 100
 
-            # Conversão dos valores de Pinus
             pinus_preco_venda_1_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoVenda1)
             pinus_preco_venda_1_100 = pinus_preco_venda_1_float * 100
 
@@ -166,7 +164,6 @@ def cadastrar_cliente():
                 identificacao=identificacao,
                 numero_documento=numero_documento,
                 telefone=telefone_tratado,
-                # Bitolas e preços de Eucalipto
                 euca_bitola_1_id=1,
                 euca_bitola_2_id=2,
                 euca_bitola_3_id=3,
@@ -176,7 +173,6 @@ def cadastrar_cliente():
                 euca_preco_venda_bitola_3_100=euca_preco_venda_3_100,
                 euca_preco_venda_bitola_4_100=euca_preco_venda_4_100,
 
-                # Bitolas e preços de Pinus
                 pinus_bitola_1_id=1,
                 pinus_bitola_2_id=2,
                 pinus_bitola_3_id=3,
@@ -343,7 +339,6 @@ def editar_cliente(id):
 
             telefone_tratado = Tels.remove_pontuacao_telefone_celular_br(telefone)
             
-            # Conversão dos valores de Eucalipto
             euca_preco_venda_1_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoVenda1)
             euca_preco_venda_1_100 = euca_preco_venda_1_float * 100
 
@@ -356,7 +351,6 @@ def editar_cliente(id):
             euca_preco_venda_4_float = ValoresMonetarios.converter_string_brl_para_float(eucaPrecoVenda4)
             euca_preco_venda_4_100 = euca_preco_venda_4_float * 100
 
-            # Conversão dos valores de Pinus
             pinus_preco_venda_1_float = ValoresMonetarios.converter_string_brl_para_float(pinusPrecoVenda1)
             pinus_preco_venda_1_100 = pinus_preco_venda_1_float * 100
 
@@ -385,7 +379,6 @@ def editar_cliente(id):
                 identificacao = razao_social
                 numero_documento = cnpj_tratado
             
-            # === Comparação de objetos ===
             obj1 = {
                 "tipoCadastro": "cpf" if cliente.fatura_via_cpf == 1 else "cnpj",
                 "razaoSocial": cliente.identificacao if cliente.fatura_via_cpf == 0 else "",
@@ -432,7 +425,6 @@ def editar_cliente(id):
                 "chavePix": chave_pix.strip() if chave_pix else None,
             }
 
-            # === Registra Pontuação ===
 
             diferencas = Gameficacao.compara_objetos(obj1, obj2)
             if diferencas == True:
@@ -452,7 +444,6 @@ def editar_cliente(id):
             cliente.agencia_bancaria=agencia_bancaria if agencia_bancaria else None
             cliente.conta_bancaria=conta_bancaria if conta_bancaria else None
             cliente.chave_pix=chave_pix if chave_pix else None
-            # Bitolas e preços de Eucalipto
             cliente.euca_bitola_1_id=1
             cliente.euca_bitola_2_id=2
             cliente.euca_bitola_3_id=3

@@ -65,22 +65,18 @@ def excluir_registro_operacional(id):
     registro.deletado = 1
     registro.ativo = 0
 
-    # Deletar arquivo PDF se existir
     if registro.arquivo_nota:
         registro.arquivo_nota.deletado = 1
         registro.arquivo_nota.ativo = 0
     
-    # Deletar arquivo XML se existir
     if registro.arquivo_nota_xml:
         registro.arquivo_nota_xml.deletado = 1
         registro.arquivo_nota_xml.ativo = 0
         
-    # Deletar arquivo PDF de excesso se existir
     if registro.arquivo_nota_excesso:
         registro.arquivo_nota_excesso.deletado = 1
         registro.arquivo_nota_excesso.ativo = 0
         
-    # Deletar arquivo XML de excesso se existir
     if registro.arquivo_nota_excesso_xml:
         registro.arquivo_nota_excesso_xml.deletado = 1
         registro.arquivo_nota_excesso_xml.ativo = 0

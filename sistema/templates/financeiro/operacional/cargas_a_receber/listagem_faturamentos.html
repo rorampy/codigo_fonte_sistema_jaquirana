@@ -15,7 +15,7 @@
         </div>
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="d-flex gap-2">
-            <!-- Botões de filtro rápido -->
+            
             <a href="{{ url_for('listagem_faturamentos_cargas_a_receber', situacaoFaturamento='') }}"
               class="btn btn-outline-primary">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -73,7 +73,6 @@
 
       {% include 'estrutura/mensagens_flash.html' %}
 
-      <!-- Indicador dos filtros aplicados -->
       <div class="col-12 mb-3">
         <div class="alert alert-info d-flex align-items-center bg-white" role="alert">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -108,7 +107,6 @@
         </div>
       </div>
 
-      <!-- Filtro -->
       <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-md modal-dialog-centered" role="document" style="display: grid;">
           <form action="" method="GET">
@@ -152,7 +150,7 @@
                   Limpar Filtros
                 </a>
                 <button type="submit" class="btn btn-primary btn-5 ms-auto">
-                  <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+                  
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="icon icon-2">
@@ -179,7 +177,7 @@
                   <th style="text-align: center;">Valor Bruto</th>
                   <th style="text-align: center;">Crédito Aplicado</th>
                   <th style="text-align: center;">Valor Total</th>
-                  <!-- <th style="text-align: center;">Utilizou Crédito</th>-->
+                  
                   <th style="text-align: center;">Situação</th>
                   <th style="text-align: center;">Ações</th>
                 </tr>
@@ -247,7 +245,7 @@
                       </button>
 
                       {% if faturamento.situacao_pagamento_id == 6 or faturamento.situacao_pagamento_id == 8 %}
-                      <!-- Botão para ver categorização (já categorizado) -->
+                      
                       <button type="button" class="btn btn-icon btn-outline-dark" data-bs-toggle="modal"
                         data-bs-target="#modal-categorizacao" onclick="carregarCategorizacao({{ faturamento.id }})"
                         data-bs-toggle="tooltip" data-bs-placement="top" title="Visualizar Categorização">
@@ -260,7 +258,7 @@
                         </svg>
                       </button>
                       {% else %}
-                      <!-- Botão para categorizar (não categorizado) -->
+                      
                       <a href="{{ url_for('categorizar_fatura', id=faturamento.id, tipo='receita') }}"
                         class="btn btn-icon btn-outline-orange" data-bs-toggle="tooltip" data-bs-placement="top"
                         title="Categorizar Fatura">
@@ -326,7 +324,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             <div class="modal-status bg-danger"></div>
                             <div class="modal-body text-center py-4">
-                              <!-- Download SVG icon from http://tabler.io/icons/icon/alert-triangle -->
+                              
                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
@@ -399,7 +397,7 @@
           </div>
 
           <div id="conteudo-dados-bancarios" class="p-4">
-            <!-- Conteúdo será preenchido dinamicamente -->
+            
           </div>
         </div>
 
@@ -449,7 +447,6 @@
 
           <div id="conteudo-faturamento" style="display: none;">
 
-            <!-- Resumo Financeiro Destacado -->
             <div class="p-4"
               style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-bottom: 1px solid #dee2e6;">
               <div class="row g-4">
@@ -498,7 +495,7 @@
             </div>
 
             <div class="p-4">
-              <!-- Carga a receber -->
+              
               <div id="secao-cargas-a-receber">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                   <div class="d-flex align-items-center">
@@ -515,7 +512,6 @@
                 <div id="lista-cargas-a-receber"></div>
               </div>
 
-              <!-- NFs Complementares -->
               <div id="secao-nfs-complementares" style="display: none;">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                   <div class="d-flex align-items-center">
@@ -531,7 +527,6 @@
                 <div id="lista-nfs-complementares"></div>
               </div>
 
-              <!-- NFs de Serviço -->
               <div id="secao-nfs-servico" style="display: none;">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                   <div class="d-flex align-items-center">
@@ -566,7 +561,6 @@
     </div>
   </div>
 
-  <!-- Modal Exportar PDF -->
   <div class="modal modal-blur fade" id="modal-exportar-pdf" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -629,7 +623,6 @@
     </div>
   </div>
 
-
 </div>
 
 {% include 'estrutura/footer.html' %}
@@ -645,13 +638,12 @@
       });
     });
   });
-  // Variável global para o modal PDF
+  
   let faturamentoParaPDF = null;
   let faturamentoParaImagem = null;
 
-  // Inicialização quando DOM carregar
   document.addEventListener('DOMContentLoaded', function () {
-    // Event listeners para visualizar faturamentos
+    
     document.querySelectorAll('[data-faturamento-id]').forEach(button => {
       button.addEventListener('click', function () {
         const faturamentoId = this.getAttribute('data-faturamento-id');
@@ -660,8 +652,6 @@
     });
 
   });
-
-  // ===== FUNÇÕES PRINCIPAIS =====
 
   function visualizarFaturamento(id) {
     const modal = new bootstrap.Modal(document.getElementById('modal-faturamento'));
@@ -679,24 +669,19 @@
           return;
         }
 
-        // Preencher informações
         document.getElementById('info-data').textContent = data.faturamento.data_cadastro;
         document.getElementById('info-valor-bruto').textContent = data.faturamento.valor_bruto_total;
         document.getElementById('info-valor-total').textContent = data.faturamento.valor_total;
         document.getElementById('modal-faturamento-id').textContent = data.faturamento.codigo_faturamento;
 
-        // Processar dados
         processarCargasAReceber(data.cargas_a_receber || []);
         processarNfsComplementares(data.nf_complementar || []);
         processarNfsServico(data.nf_servico || []);
 
-        // Verificar se não há dados para mostrar mensagem informativa
         verificarDadosVazios(data.cargas_a_receber || [], data.nf_complementar || [], data.nf_servico || []);
 
-        // Contadores
         document.getElementById('total-cargas-a-receber').textContent = data.faturamento.total_cargas_a_receber;
         
-        // Atualizar contador de NFs de Serviço se o elemento existir
         const totalNfsServico = document.getElementById('total-nfs-servico');
         if (totalNfsServico && data.faturamento.total_nfs_servico) {
           totalNfsServico.textContent = data.faturamento.total_nfs_servico;
@@ -719,16 +704,14 @@
     container.innerHTML = '';
 
     if (!cargas.length) {
-      // Esconder a seção inteira quando não há cargas a receber
+      
       secaoCargas.style.display = 'none';
       document.getElementById('total-valor-cargas-a-receber').textContent = 'R$ 0,00';
       return;
     }
 
-    // Mostrar a seção quando há cargas a receber
     secaoCargas.style.display = 'block';
 
-    // Agrupar e processar
     const grupos = {};
     let totalGeral = 0;
 
@@ -746,7 +729,6 @@
     document.getElementById('total-valor-cargas-a-receber').textContent =
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
 
-    // Criar grupos
     Object.entries(grupos).forEach(([nome, grupo]) => {
       const card = document.createElement('div');
       card.className = 'card mb-4 shadow-sm';
@@ -805,21 +787,19 @@
     if (!dataString) return '-';
     
     try {
-      // Se a data já está no formato brasileiro (DD/MM/YYYY), retornar como está
+      
       if (dataString.includes('/')) {
         return dataString;
       }
       
-      // Se a data está no formato ISO (YYYY-MM-DD), converter para brasileiro
       if (dataString.includes('-')) {
         const [ano, mes, dia] = dataString.split('-');
         return `${dia}/${mes}/${ano}`;
       }
       
-      // Tentar criar um objeto Date e formatar
       const data = new Date(dataString);
       if (isNaN(data.getTime())) {
-        return dataString; // Se não conseguir converter, retornar original
+        return dataString; 
       }
       
       return data.toLocaleDateString('pt-BR');
@@ -833,7 +813,7 @@
     const container = document.getElementById('lista-nfs-complementares');
     const secaoNfs = document.getElementById('secao-nfs-complementares');
 
-    if (!container || !secaoNfs) return; // Se não existir os elementos, não processar
+    if (!container || !secaoNfs) return; 
 
     container.innerHTML = '';
 
@@ -844,7 +824,6 @@
 
     secaoNfs.style.display = 'block';
 
-    // Agrupar NFs por cliente
     const grupos = {};
     let totalGeral = 0;
 
@@ -864,7 +843,6 @@
 
     document.getElementById('total-nfs-complementares').textContent = nfs.length;
 
-    // Criar grupos de NFs complementares
     Object.entries(grupos).forEach(([cliente, grupo]) => {
       const card = document.createElement('div');
       card.className = 'card mb-4 shadow-sm';
@@ -909,7 +887,6 @@
       `;
       container.appendChild(card);
 
-      // Carregar registros operacionais para cada NF complementar
       grupo.nfs.forEach(nf => {
         carregarRegistrosOperacionais(nf.nf_complementar_id);
       });
@@ -920,7 +897,7 @@
     const container = document.getElementById('lista-nfs-servico');
     const secaoNfs = document.getElementById('secao-nfs-servico');
 
-    if (!container || !secaoNfs) return; // Se não existir os elementos, não processar
+    if (!container || !secaoNfs) return; 
 
     container.innerHTML = '';
 
@@ -931,7 +908,6 @@
 
     secaoNfs.style.display = 'block';
 
-    // Agrupar NFs por cliente
     const grupos = {};
     let totalGeral = 0;
 
@@ -951,7 +927,6 @@
 
     document.getElementById('total-nfs-servico').textContent = nfs.length;
 
-    // Criar grupos de NFs de Serviço
     Object.entries(grupos).forEach(([cliente, grupo]) => {
       const card = document.createElement('div');
       card.className = 'card mb-4 shadow-sm';
@@ -1000,7 +975,6 @@
     const container = document.getElementById(`registros-operacionais-${nfComplementarId}`);
     if (!container) return;
 
-    // Fazer requisição para buscar os registros operacionais reais
     fetch(`/financeiro/operacional/cargas-a-receber/nf-complementar/${nfComplementarId}/registros-operacionais`)
       .then(response => response.json())
       .then(data => {
@@ -1071,8 +1045,6 @@
       });
   }
 
-  // ===== FUNÇÕES DE EXPORTAR PDF =====
-
   function abrirModalExportarPDF(faturamentoId) {
     faturamentoParaPDF = faturamentoId;
     faturamentoParaImagem = null;
@@ -1083,19 +1055,16 @@
       return;
     }
 
-    // Restaurar título original do modal
     const modalTitle = modalElement.querySelector('.modal-title');
     modalTitle.innerHTML = `
     Exportar Faturamento para PDF
   `;
 
-    // Restaurar texto do botão e limpar event listeners
     const btnGerar = document.getElementById('btn-gerar-pdf');
     btnGerar.innerHTML = `
     Gerar PDF
   `;
 
-    // Limpar todos os event listeners e definir apenas um
     btnGerar.replaceWith(btnGerar.cloneNode(true));
     const newBtnGerar = document.getElementById('btn-gerar-pdf');
     newBtnGerar.onclick = function () {
@@ -1107,12 +1076,11 @@
         const modal = new bootstrap.Modal(modalElement);
         modal.show();
       } else {
-        // Fallback manual
+        
         modalElement.style.display = 'block';
         modalElement.classList.add('show');
         document.body.classList.add('modal-open');
 
-        // Criar backdrop
         if (!document.querySelector('.modal-backdrop')) {
           const backdrop = document.createElement('div');
           backdrop.className = 'modal-backdrop fade show';
@@ -1120,8 +1088,7 @@
         }
       }
     } catch (error) {
-      console.log('Erro ao abrir modal PDF:', error);
-      // Fallback final
+      
       modalElement.style.display = 'block';
       modalElement.classList.add('show');
       document.body.classList.add('modal-open');
@@ -1134,7 +1101,6 @@
       return;
     }
 
-    // Coletar opções do modal
     const opcoes = {
       ocultar_fornecedores: document.getElementById('ocultar-fornecedores')?.checked || false,
       ocultar_transportadoras: document.getElementById('ocultar-transportadoras')?.checked || false,
@@ -1143,13 +1109,11 @@
       ocultar_despesas_avulsas: document.getElementById('ocultar-despesas-avulsas')?.checked || false
     };
 
-    // Criar formulário para enviar via POST
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = `/financeiro/cargas-a-pagar/exportar-pdf/${faturamentoParaPDF}`;
-    form.target = '_blank'; // Abrir em nova aba
+    form.target = '_blank'; 
 
-    // Adicionar dados das opções
     Object.keys(opcoes).forEach(key => {
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -1158,7 +1122,6 @@
       form.appendChild(input);
     });
 
-    // Adicionar CSRF token se necessário
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
     if (csrfToken) {
       const input = document.createElement('input');
@@ -1168,25 +1131,21 @@
       form.appendChild(input);
     }
 
-    // Enviar formulário
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
 
-    // Fechar modal
     fecharModalSeguro('modal-exportar-pdf');
 
     mostrarNotificacao('PDF sendo gerado...', 'info');
   }
-
-  // ===== FUNÇÕES AUXILIARES =====
 
   function fecharModalSeguro(modalId) {
     const modalElement = document.getElementById(modalId);
     if (!modalElement) return;
 
     try {
-      // Tentar Bootstrap Modal
+      
       if (window.bootstrap && window.bootstrap.Modal) {
         const modalInstance = bootstrap.Modal.getInstance(modalElement);
         if (modalInstance) {
@@ -1198,25 +1157,21 @@
         return;
       }
 
-      // Fallback manual
       modalElement.style.display = 'none';
       modalElement.classList.remove('show');
       document.body.classList.remove('modal-open');
 
-      // Remover backdrop se existir
       const backdrop = document.querySelector('.modal-backdrop');
       if (backdrop) {
         backdrop.remove();
       }
 
     } catch (error) {
-      console.log('Erro ao fechar modal:', error);
-      // Fallback final
+      
       modalElement.style.display = 'none';
       modalElement.classList.remove('show');
       document.body.classList.remove('modal-open');
 
-      // Remover backdrop
       const backdrop = document.querySelector('.modal-backdrop');
       if (backdrop) {
         backdrop.remove();
@@ -1225,14 +1180,14 @@
   }
 
   function mostrarNotificacao(mensagem, tipo = 'info') {
-    // Toast simples do Tabler (se não tiver, usar fallback)
+    
     if (typeof window.Tabler !== 'undefined' && window.Tabler.toast) {
       window.Tabler.toast({
         message: mensagem,
         type: tipo
       });
     } else {
-      // Fallback: criar toast manual
+      
       const toast = document.createElement('div');
       toast.className = `bg-white alert alert-${tipo === 'success' ? 'success' : tipo === 'warning' ? 'warning' : tipo === 'error' ? 'danger' : 'info'} alert-dismissible`;
       toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
@@ -1243,7 +1198,6 @@
 
       document.body.appendChild(toast);
 
-      // Auto remover após 4 segundos
       setTimeout(() => {
         if (toast.parentElement) {
           toast.remove();
@@ -1252,31 +1206,26 @@
     }
   }
 
-  // ======== FUNÇÃO DE EXPORTAR IMG ======
-
   function abrirModalExportarImagem(faturamentoId) {
     faturamentoParaImagem = faturamentoId;
-    faturamentoParaPDF = null; // Limpar variável de PDF
+    faturamentoParaPDF = null; 
 
-    const modalElement = document.getElementById('modal-exportar-pdf'); // Reutilizar o mesmo modal
+    const modalElement = document.getElementById('modal-exportar-pdf'); 
     if (!modalElement) {
       console.error('Modal de exportar não encontrado');
       return;
     }
 
-    // Alterar título do modal para imagem
     const modalTitle = modalElement.querySelector('.modal-title');
     modalTitle.innerHTML = `
     Exportar Faturamento para Imagem
   `;
 
-    // Alterar texto do botão e limpar event listeners
     const btnGerar = document.getElementById('btn-gerar-pdf');
     btnGerar.innerHTML = `
     Gerar Imagem
   `;
 
-    // Limpar todos os event listeners e definir apenas um
     btnGerar.replaceWith(btnGerar.cloneNode(true));
     const newBtnGerar = document.getElementById('btn-gerar-pdf');
     newBtnGerar.onclick = function () {
@@ -1299,14 +1248,11 @@
         }
       }
     } catch (error) {
-      console.log('Erro ao abrir modal imagem:', error);
       modalElement.style.display = 'block';
       modalElement.classList.add('show');
       document.body.classList.add('modal-open');
     }
   }
-
-  // Gerar imagem do faturamento
 
   function gerarImagemFaturamento() {
     if (!faturamentoParaImagem) {
@@ -1314,7 +1260,6 @@
       return;
     }
 
-    // Coletar opções do modal (mesmo do PDF)
     const opcoes = {
       ocultar_fornecedores: document.getElementById('ocultar-fornecedores')?.checked || false,
       ocultar_transportadoras: document.getElementById('ocultar-transportadoras')?.checked || false,
@@ -1323,13 +1268,11 @@
       ocultar_despesas_avulsas: document.getElementById('ocultar-despesas-avulsas')?.checked || false
     };
 
-    // Criar formulário para enviar via POST
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = `/financeiro/cargas-a-pagar/exportar-imagem/${faturamentoParaImagem}`; // Nova rota
+    form.action = `/financeiro/cargas-a-pagar/exportar-imagem/${faturamentoParaImagem}`; 
     form.target = '_blank';
 
-    // Adicionar dados das opções
     Object.keys(opcoes).forEach(key => {
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -1338,7 +1281,6 @@
       form.appendChild(input);
     });
 
-    // Adicionar CSRF token se necessário
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
     if (csrfToken) {
       const input = document.createElement('input');
@@ -1348,25 +1290,20 @@
       form.appendChild(input);
     }
 
-    // Enviar formulário
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
 
-    // Fechar modal
     fecharModalSeguro('modal-exportar-pdf');
 
     mostrarNotificacao('Imagem sendo gerada...', 'info');
   }
-
-  // ===== FUNÇÃO PARA VERIFICAR DADOS VAZIOS =====
 
   function verificarDadosVazios(cargas_a_receber, nf_complementar, nf_servico) {
     const temCargasAReceber = cargas_a_receber && cargas_a_receber.length > 0;
     const temNfComplementar = nf_complementar && nf_complementar.length > 0;
     const temNfServico = nf_servico && nf_servico.length > 0;
 
-    // Se não há nenhum tipo de dados, criar mensagem informativa
     if (!temCargasAReceber && !temNfComplementar && !temNfServico) {
       const conteudoFaturamento = document.querySelector('#conteudo-faturamento .p-4');
       if (conteudoFaturamento) {
@@ -1391,7 +1328,6 @@
 
 </script>
 
-<!-- Modal de Categorização Simples -->
 <div class="modal modal-blur fade" id="modal-categorizacao" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -1412,7 +1348,7 @@
         </div>
 
         <div id="conteudo-categorizacao" style="display: none;">
-          <!-- O conteúdo será carregado via JavaScript -->
+          
         </div>
       </div>
 
@@ -1448,16 +1384,13 @@
   function carregarCategorizacao(faturamentoId) {
     faturamentoSelecionadoId = faturamentoId;
 
-    // Mostrar loading
     document.getElementById('loading-categorizacao').style.display = 'block';
     document.getElementById('conteudo-categorizacao').style.display = 'none';
 
-    // Fazer requisição
     fetch(`/faturamento/categorizacao/detalhes-json/${faturamentoId}`)
       .then(response => response.json())
       .then(data => {
-        console.log(data)
-        // Esconder loading
+        
         document.getElementById('loading-categorizacao').style.display = 'none';
 
         if (data.error) {
@@ -1468,7 +1401,7 @@
             </div>
           `;
         } else {
-          // Montar HTML com os dados
+          
           categoriaId = data.categorizacao_id
           document.getElementById('conteudo-categorizacao').innerHTML = montarHtmlCategorizacao(data);
         }
@@ -1489,15 +1422,14 @@
   }
 
   function montarHtmlCategorizacao(data) {
-    console.log(data)
-    // Usar valores vindos do backend
+    
     const valorBrutoTotal = (data.faturamento.valor_bruto_total || data.faturamento.valor_total) / 100;
     const valorCreditoTotal = (data.faturamento.valor_credito_total || 0) / 100;
     const valorFinalTotal = data.faturamento.valor_total / 100;
 
     let html = `
     <div class="p-4">
-      <!-- Resumo Superior com 4 cards -->
+      
       <div class="row g-3 mb-4">
         <div class="col-4">
           <div class="text-center p-3" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
@@ -1535,7 +1467,6 @@
 
       <hr class="my-4">
 
-      <!-- Informações do Pagamento -->
       <div class="mb-4">
         <h4 class="mb-3" style="color: #277329;">
           Informações da Categorização
@@ -1556,7 +1487,6 @@
         </div>
       </div>`;
 
-    // Seção de Fornecedores
     if (data.faturamento.fornecedores && data.faturamento.fornecedores.length > 0) {
       const totalFornecedores = data.faturamento.fornecedores.reduce((total, f) => total + (f.valor || 0), 0) / 100;
 
@@ -1599,7 +1529,6 @@
       </div>`;
     }
 
-    // Seção de Transportadoras
     if (data.faturamento.transportadoras && data.faturamento.transportadoras.length > 0) {
       const totalTransportadoras = data.faturamento.transportadoras.reduce((total, t) => total + (t.valor || 0), 0) / 100;
 
@@ -1642,7 +1571,6 @@
       </div>`;
     }
 
-    // Seção de Extratores
     if (data.faturamento.extratores && data.faturamento.extratores.length > 0) {
       const totalExtratores = data.faturamento.extratores.reduce((total, t) => total + (t.valor || 0), 0) / 100;
 
@@ -1685,7 +1613,6 @@
       </div>`;
     }
 
-    // Seção de Comissionados
     if (data.faturamento.comissionados && data.faturamento.comissionados.length > 0) {
       const totalComissionados = data.faturamento.comissionados.reduce((total, t) => total + (t.valor || 0), 0) / 100;
 
@@ -1728,7 +1655,6 @@
       </div>`;
     }
 
-    // Seção de Receitas Avulsas
     if (data.receitas_avulsas && data.receitas_avulsas.length > 0) {
       const totalReceitas = data.receitas_avulsas.reduce((total, r) => {
         const valor = parseFloat(r.valor.replace(/[R$\s.]/g, '').replace(',', '.'));
@@ -1769,7 +1695,6 @@
       </div>`;
     }
 
-    // Seção de Despesas Avulsas
     if (data.despesas_avulsas && data.despesas_avulsas.length > 0) {
       const totalDespesas = data.despesas_avulsas.reduce((total, d) => {
         const valor = parseFloat(d.valor.replace(/[R$\s.]/g, '').replace(',', '.'));
@@ -1808,7 +1733,7 @@
           </table>
         </div>
       </div>`;
-    }    // Seção de Categorização por Conta
+    }    
     if (data.categorias && data.categorias.length > 0) {
       html += `
       <div class="mb-4">
@@ -1854,7 +1779,7 @@
         </div>
       </div>`;
     }
-    // Seção de Centros de Custo (se houver)
+    
     if (data.centros_custo && data.centros_custo.length > 0) {
       html += `
       <div class="mb-4">
@@ -1891,7 +1816,6 @@
       </div>`;
     }
 
-    // Seção de Parcelas
     if (data.parcelas && data.parcelas.length > 0) {
       html += `
       <div class="mb-4">
@@ -1940,7 +1864,6 @@
       return;
     }
 
-    // Fechar o modal atual
     const modal = document.getElementById('modal-categorizacao');
     if (modal) {
       const modalInstance = bootstrap.Modal.getInstance(modal);

@@ -24,10 +24,8 @@ def faturamento_nf_complementar():
     dataHoje = datetime.now().strftime('%d-%m-%Y')
     clientes = ClienteModel.listar_clientes_ativos()
 
-    # Verificar se está vindo do agrupamento de cargas a receber
     agrupar_cargas_receber = request.args.get('agrupar_cargas_receber')
     if agrupar_cargas_receber:
-        # Filtrar apenas NFs pendentes (situação 2)
         nfs_complementares = NfComplementarModel.query.filter(
             NfComplementarModel.ativo == True,
             NfComplementarModel.situacao_financeira_id == 2
@@ -35,7 +33,6 @@ def faturamento_nf_complementar():
     else:
         nfs_complementares = NfComplementarModel.listar_ativas()
 
-    # Adaptar dados para o formato esperado pelo template (agrupado por cliente)
     registros_agrupados = []
     for nf in nfs_complementares:
         registro_obj = type('obj', (object,), {
@@ -55,7 +52,6 @@ def faturamento_nf_complementar():
             'nf_complementar': nf
         })()
         
-        # Criar objeto no formato pelo template (cliente + registro)
         item_agrupado = type('obj', (object,), {
             'cliente': nf.cliente.identificacao if nf.cliente else "Cliente não identificado",
             'registro': registro_obj
@@ -81,12 +77,10 @@ def exportar_nf_complementar_excel():
     try:
         dataHoje = datetime.now().strftime('%d-%m-%Y')
         
-        # Buscar todas as NFs complementares ativas
         nfs_complementares = NfComplementarModel.listar_ativas()
         
         linhas = []
         for nf in nfs_complementares:
-            # Calcular peso total dos tickets (soma dos registros operacionais)
             peso_ticket_total = 0.0
             if nf.nf_complementar_detalhes and 'registros_operacionais' in nf.nf_complementar_detalhes:
                 registro_ids = [item['registro_id'] for item in nf.nf_complementar_detalhes['registros_operacionais']]
@@ -98,7 +92,6 @@ def exportar_nf_complementar_excel():
                         if reg.peso_liquido_ticket:
                             peso_ticket_total += reg.peso_liquido_ticket
             
-            # Calcular diferença
             peso_nf = nf.peso_ton_nf if nf.peso_ton_nf else 0
             diferenca = round(peso_nf - peso_ticket_total, 2)
             
@@ -117,7 +110,6 @@ def exportar_nf_complementar_excel():
         return ManipulacaoArquivos.exportar_excel(linhas, nome_arquivo_saida)
         
     except Exception as e:
-        print(f"[ERROR] Erro ao exportar NF Complementar para Excel: {e}")
         flash((f"Erro ao exportar relatório! Contate o suporte.", "error"))
         return redirect(url_for('faturamento_nf_complementar'))
 
@@ -140,7 +132,6 @@ def informar_faturamento_nf_complementar(id):
             flash(("Registro já consta como faturado!", "warning"))
             return redirect(url_for('faturamento_nf_complementar'))
             
-        # Buscar registros operacionais dos detalhes
         registros_operacionais = []
         if registro.nf_complementar_detalhes and 'registros_operacionais' in registro.nf_complementar_detalhes:
             registro_ids = [item['registro_id'] for item in registro.nf_complementar_detalhes['registros_operacionais']]
@@ -165,7 +156,6 @@ def informar_faturamento_nf_complementar(id):
             if gravar_banco:
                 registro.situacao_financeira_id = 5  
                 
-                # Criação do faturamento para o registro individual (adaptado para extrator)
                 novo_faturamento = FaturamentoModel(
                     usuario_id=current_user.id,
                     codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
@@ -176,7 +166,6 @@ def informar_faturamento_nf_complementar(id):
                     direcao_financeira=1
                 )
                
-                # Detalhes para NF complementar (vai no array de NF complementar)
                 detalhes_nf_complementar = [{
                     "nf_complementar_id": registro.id,
                     "numero_nf": registro.numero_nota_fiscal or "",
@@ -188,7 +177,6 @@ def informar_faturamento_nf_complementar(id):
                     "destinatario_data_emissao": registro.destinatario_data_emissao.strftime('%Y-%m-%d') if registro.destinatario_data_emissao else "",
                 }]
 
-                # Salvar detalhes
                 novo_faturamento.salvar_detalhes(nf_complementar=detalhes_nf_complementar)
 
                 db.session.add(novo_faturamento)
@@ -213,7 +201,6 @@ def informar_faturamento_nf_complementar(id):
         )
     except Exception as e:
         db.session.rollback()
-        print(f"[ERROR] Erro ao informar faturamento de carga: {e}")
         flash((f"Erro ao informar faturamento de carga: {str(e)}", "danger"))
         return redirect(url_for("faturamento_nf_complementar"))
 
@@ -238,7 +225,7 @@ def informar_faturamento_nf_complementar_massa():
                 flash(("IDs inválidos selecionados!", "warning"))
                 return redirect(url_for("faturamento_nf_complementar"))
 
-        else:  # POST
+        else:
             ids_selecionados = request.form.get('ids_registros', '')
             if not ids_selecionados:
                 flash(("Nenhum registro foi selecionado para recebimento!", "warning"))
@@ -251,7 +238,7 @@ def informar_faturamento_nf_complementar_massa():
                 return redirect(url_for("faturamento_nf_complementar"))
 
         registros = [NfComplementarModel.obter_por_id(registro_id) for registro_id in ids_list]
-        registros = [r for r in registros if r and r.situacao_financeira_id != 5]  # Filtrar já recebidos
+        registros = [r for r in registros if r and r.situacao_financeira_id != 5]
 
         if not registros:
             flash(("Nenhum registro válido encontrado para recebimento!", "warning"))
@@ -262,7 +249,7 @@ def informar_faturamento_nf_complementar_massa():
 
         clientes_dict = {}
         valor_total_geral = 0
-        valores_recebidos_dict = {}  # id do registro -> valor editado (centavos)
+        valores_recebidos_dict = {}
 
         for registro in registros:
             valor_total_recebimento = registro.valor_total_nota_100 or 0
@@ -278,7 +265,6 @@ def informar_faturamento_nf_complementar_massa():
                     'valor_total': 0
                 }
 
-            # Buscar registros operacionais dos detalhes
             registros_operacionais = []
             if registro.nf_complementar_detalhes and 'registros_operacionais' in registro.nf_complementar_detalhes:
                 registro_ids = [item['registro_id'] for item in registro.nf_complementar_detalhes['registros_operacionais']]
@@ -328,7 +314,6 @@ def informar_faturamento_nf_complementar_massa():
                             "destinatario_data_emissao": registro.destinatario_data_emissao.strftime('%Y-%m-%d') if registro.destinatario_data_emissao else "",
                         })
 
-                    # Criação do faturamento em massa (um único faturamento para todos os registros)
                     novo_faturamento = FaturamentoModel(
                         usuario_id=current_user.id,
                         codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
@@ -339,7 +324,6 @@ def informar_faturamento_nf_complementar_massa():
                         direcao_financeira=1
                     )
                    
-                    # Salvar detalhes 
                     novo_faturamento.salvar_detalhes(nf_complementar=detalhes_nf_complementar)
                     db.session.add(novo_faturamento)
 
@@ -356,7 +340,6 @@ def informar_faturamento_nf_complementar_massa():
                     return redirect(url_for('faturamento_nf_complementar'))
 
                 except Exception as e:
-                    print(f"[ERROR] Erro ao processar faturamento em massa: {e}")
                     db.session.rollback()
                     flash((f"Erro ao processar faturamento em massa: {str(e)}", "error"))
                     return redirect(request.url)
@@ -373,7 +356,6 @@ def informar_faturamento_nf_complementar_massa():
         )
 
     except Exception as e:
-        print(f"[ERROR] Erro interno: {e}")
         db.session.rollback()
         flash((f"Erro interno: {str(e)}", "error"))
         return redirect(url_for("faturamento_nf_complementar"))
@@ -394,7 +376,6 @@ def excluir_nf_complementar(id):
             flash(("Não é possível excluir uma NF Complementar que já foi faturada!", "warning"))
             return redirect(url_for('faturamento_nf_complementar'))
         
-        # Buscar e processar registros operacionais relacionados
         registros_operacionais_processados = 0
         
         if nf_complementar.nf_complementar_detalhes and 'registros_operacionais' in nf_complementar.nf_complementar_detalhes:
@@ -404,14 +385,11 @@ def excluir_nf_complementar(id):
                 registro_id = item.get('registro_id')
                 
                 if registro_id:
-                    # Buscar registro operacional
                     registro_operacional = RegistroOperacionalModel.query.get(registro_id)
                     if registro_operacional:
-                        # Reverter status emissão NF complementar para nao emitida
                         registro_operacional.status_emissao_nf_complementar_id = 2
                         registros_operacionais_processados += 1
         
-        # Marcar NF complementar como deletada (soft delete)
         nf_complementar.deletado = True
         nf_complementar.ativo = False
         
@@ -421,7 +399,6 @@ def excluir_nf_complementar(id):
         return redirect(url_for('faturamento_nf_complementar'))
         
     except Exception as e:
-        print(f"[ERROR] Erro ao excluir NF complementar: {e}")
         db.session.rollback()
         flash((f"Erro ao excluir NF complementar: {str(e)}", "danger"))
         return redirect(url_for('faturamento_nf_complementar'))

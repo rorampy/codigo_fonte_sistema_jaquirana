@@ -92,7 +92,6 @@
         </div>
       </div>
 
-      <!-- Tabela com os registros operacionais -->
       {% if registro.registro_servico %}
       <div class="card shadow-sm border-0 rounded-3 mb-4">
         <div class="card-body p-0">
@@ -171,12 +170,11 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Aplica a máscara de moeda
+      
       if (typeof aplicarMascaraMoeda === 'function') {
         aplicarMascaraMoeda();
       }
 
-      // Gerencia mudanças no valor total
       const valorTotalInput = document.getElementById('valor-total-input');
       const valorTotalHidden = document.getElementById('valor-total-hidden');
       const valorReceberDisplay = document.getElementById('valor-receber');
@@ -185,14 +183,13 @@
       valorTotalInput.addEventListener('input', function () {
         const valorFormatado = this.value;
 
-        // Função robusta para converter BRL para centavos (considera negativos e centavos)
         function brlToCents(str) {
           if (!str) return 0;
-          // Remove R$, espaços, etc
+          
           str = str.replace(/[^\d,\.-]/g, '');
-          // Troca ponto por nada e vírgula por ponto
+          
           str = str.replace(/\./g, '').replace(/,/g, '.');
-          // Trata negativo
+          
           let val = parseFloat(str);
           if (isNaN(val)) return 0;
           return Math.round(val * 100);
@@ -202,7 +199,6 @@
         valorTotalHidden.value = valorEmCentavos;
         valorReceberDisplay.textContent = formatarMoeda(valorEmCentavos);
 
-        // Atualiza o card "Saldo Após Recebimento" se há saldo atual
         const saldoAtualText = document.getElementById('saldo-atual').textContent;
         const saldoAtualCentavos = brlToCents(saldoAtualText);
         saldoFuturoDisplay.textContent = formatarMoeda(saldoAtualCentavos + valorEmCentavos);

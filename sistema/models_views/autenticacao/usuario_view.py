@@ -34,7 +34,6 @@ def usuario_cadastrar():
     roles = RoleModel.obter_roles_desc_id()
 
     validacao_campos_obrigatorios = {}
-    # chave é o name="", valor é o erro.
     validacao_campos_erros = {}
     gravar_banco = True
 
@@ -47,7 +46,6 @@ def usuario_cadastrar():
         senha = request.form['senhaUsuario']
         cargo = request.form['cargoUsuario']
         
-        # "chave": ["Label", valor_input]
         campos = {
             'nome': ['Nome', nome],
             'sobrenome': ['Sobrenome', sobrenome],
@@ -89,7 +87,6 @@ def usuario_cadastrar():
             validacao_campos_erros['cpf'] = f'O CPF informado já existe no banco de dados!'
             
         if gravar_banco == True:
-            #senha = UsuarioModel.gerar_senha_aleatoria_sem_cripto(8)
             telefone_tratado = Tels.remove_pontuacao_telefone_celular_br(telefone)
             ativo = 1
 
@@ -126,7 +123,6 @@ def usuario_editar(id):
     usuario = UsuarioModel.obter_usuario_por_id(id)
 
     validacao_campos_obrigatorios = {}
-    # chave é o name="", valor é o erro.
     validacao_campos_erros = {}
     gravar_banco = True
 
@@ -137,7 +133,6 @@ def usuario_editar(id):
         email = request.form['emailUsuario']
         cargo = request.form['cargoUsuario']
 
-        # "chave": ["Label", valor_input]
         campos = {
             'nome': ['Nome', nome],
             'sobrenome': ['Sobreome', sobrenome],
@@ -234,7 +229,6 @@ def usuario_minha_conta(id):
         nova_senha = request.form['novaSenhaUsuario']
         repertir_nova_senha = request.form['repetirNovaSenhaUsuario']
         
-        # "chave": ["Label", valor_input]
         campos = {
             'nome': ['Nome', nome],
             'sobrenome': ['Sobrenome', sobrenome],

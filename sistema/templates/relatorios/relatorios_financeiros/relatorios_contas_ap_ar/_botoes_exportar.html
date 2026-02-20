@@ -1,13 +1,6 @@
-{#
-  Include: botões de exportação PDF/Excel + botão filtrar.
-  Variáveis esperadas:
-    - url_pdf   : url_for do endpoint de exportação PDF
-    - url_excel : url_for do endpoint de exportação Excel
-    - dados_corretos : request.args ou request.form
-#}
 
 <div class="d-flex gap-2">
-  {# PDF #}
+  
   <form action="{{ url_pdf }}" method="POST" target="_blank">
     {% for key, value in dados_corretos.items() %}
     {% if key not in ['exportar_pdf', 'exportar_excel'] %}
@@ -30,7 +23,6 @@
     </button>
   </form>
 
-  {# Excel #}
   <form action="{{ url_excel }}" method="POST">
     {% for key, value in dados_corretos.items() %}
     {% if key not in ['exportar_pdf', 'exportar_excel'] %}
@@ -52,7 +44,6 @@
     </button>
   </form>
 
-  {# Filtrar #}
   <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-report">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"

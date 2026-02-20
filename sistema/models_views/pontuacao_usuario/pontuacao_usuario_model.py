@@ -8,9 +8,9 @@ class PontuacaoUsuarioModel(BaseModel):
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
     usuario = db.relationship('UsuarioModel', backref=db.backref('usuario', lazy=True))
-    tipo_acao = db.Column(db.String(100), nullable=False)  # ex: 'cadastro', 'edicao'
-    pontos = db.Column(db.Float, nullable=False) # cadastro => 1 | edição => 0.5
-    modulo = db.Column(db.String(150), nullable=False)  # opcional: 'clientes', 'transportadoras' etc.
+    tipo_acao = db.Column(db.String(100), nullable=False)
+    pontos = db.Column(db.Float, nullable=False)
+    modulo = db.Column(db.String(150), nullable=False)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
 
     def __init__(self, usuario_id, tipo_acao, pontos, modulo, ativo=True):
@@ -28,7 +28,7 @@ class PontuacaoUsuarioModel(BaseModel):
 
         registro = PontuacaoUsuarioModel(
             usuario_id=usuario_id,
-            tipo_acao=tipo_acao.value,  # converte Enum para string
+            tipo_acao=tipo_acao.value,
             pontos=pontuacao,
             modulo=modulo,
             ativo=True

@@ -86,7 +86,6 @@ def _agrupar_movimentacoes_por_dia(movimentacoes):
         elif mov.tipo_movimentacao in [4, 5]:
             grupo['total_estornos'] += valor
 
-    # Calcular saldo do dia para cada grupo
     for data_mov, grupo in agrupado.items():
         grupo['saldo_dia'] = grupo['total_entradas'] - grupo['total_saidas']
 
@@ -105,7 +104,6 @@ def exportar_movimentacaoes_financeiras():
     data_inicio_str = request.args.get("data_inicio")
     data_fim_str = request.args.get("data_fim")
     
-    # Converter strings para date
     data_inicio = None
     data_fim = None
     if data_inicio_str:
@@ -122,7 +120,6 @@ def exportar_movimentacaoes_financeiras():
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
     data_hoje = datetime.now().strftime("%d-%m-%Y")
 
-    # Obter conta selecionada
     conta_obj = None
     conta_label = "Todas as contas"
     if conta_selecionada_id and conta_selecionada_id != 0:
@@ -130,21 +127,16 @@ def exportar_movimentacaoes_financeiras():
         if conta_obj:
             conta_label = conta_obj.identificacao
 
-    # Obter movimentações com filtro de período e ordenação decrescente
     movimentacoes = MovimentacaoFinanceiraModel.listagem_movimentacoes_financeiras_relatorio(
         conta_selecionada_id,
         data_inicio,
         data_fim
     )
     
-    # Calcular totalizadores do período
     totalizadores = _calcular_totalizadores(movimentacoes)
     
-    # Agrupar movimentações por dia para totalização diária (padrão extrato bancário)
     movimentacoes_por_dia = _agrupar_movimentacoes_por_dia(movimentacoes)
     
-    # Calcular saldo disponível
-    # Quando "Todas as contas", soma apenas saldos de contas ATIVAS (igual à listagem de contas bancárias)
     if conta_selecionada_id and conta_selecionada_id != 0:
         saldo_disponivel = SaldoMovimentacaoFinanceiraModel.obter_registro_saldo_por_conta_bancaria(conta_selecionada_id)
     else:
@@ -154,7 +146,6 @@ def exportar_movimentacaoes_financeiras():
             for conta in contas_ativas
         )
 
-    # Calcular totais a pagar (valores pendentes)
     a_pagar_frete = FretePagarModel.obter_valor_total_a_pagar()
     a_pagar_fornecedor = FornecedorPagarModel.obter_valor_total_a_pagar()
     a_pagar_extrator = ExtratorPagarModel.obter_valor_total_a_pagar()

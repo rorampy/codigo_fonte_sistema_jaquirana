@@ -17,11 +17,10 @@ class FornecedorMadeiraPostaPrecoBitolaModel(BaseModel):
     transportadora_id = db.Column(db.Integer, db.ForeignKey("transp_transportadora.id"), nullable=True)
     produto_id = db.Column(db.Integer, db.ForeignKey('prod_produto.id'), nullable=False)
     bitola_id = db.Column(db.Integer, db.ForeignKey('z_sys_bitola.id'), nullable=False)
-    preco_madeira_posta_100 = db.Column(db.Integer, nullable=True)  # Preço por 100 em centavos
+    preco_madeira_posta_100 = db.Column(db.Integer, nullable=True)
 
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
-    # Relacionamentos
     cliente = db.relationship("ClienteModel", backref="madeira_posta_recebida", lazy=True)
     transportadora = db.relationship("TransportadoraModel", backref="madeira_posta_transportada", lazy=True)
     produto = db.relationship("ProdutoModel", backref="madeira_posta_produtos", lazy=True)
@@ -121,11 +120,9 @@ class FornecedorMadeiraPostaPrecoBitolaModel(BaseModel):
         )
         
         if registro:
-            # Atualiza registro existente
             if preco_madeira_posta_100 is not None:
                 registro.preco_madeira_posta_100 = preco_madeira_posta_100
         else:
-            # Cria novo registro
             registro = FornecedorMadeiraPostaPrecoBitolaModel(
                 fornecedor_id=fornecedor_id,
                 cliente_id=cliente_id,

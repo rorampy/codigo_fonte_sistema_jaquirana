@@ -10,11 +10,8 @@ class VeiculoModel(BaseModel):
     __tablename__ = 'transp_veiculo'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     
-    # =========================> DESCONTINUADO <=========================
-    # Tabela legada, usada somente para pegar informações que foram cadastradas antes da nova implementação
     transportadora_id = db.Column(db.Integer, db.ForeignKey('transp_transportadora.id'), nullable=True)
     transportadora = db.relationship('TransportadoraModel', backref=db.backref('transportadora_veiculo', lazy=True))
-    # ===================================================================
     
     placa_veiculo = db.Column(db.String(20), nullable=False)
     capacidade_ton = db.Column(db.Float, nullable=False)

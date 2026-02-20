@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             NOVA MOVIMENTAÇÃO CADASTRAR
           </div>
@@ -30,9 +30,6 @@
   {% include 'financeiro/importar_ofx/dados_conciliacao_component.html' %}
   {% endif %}
 
-
-
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
@@ -48,7 +45,6 @@
               %}
               {% endif %}
 
-              <!-- Tipo de Movimentação -->
               <div class="col-12">
                 <div class="mb-3">
                   <div class="form-label required">Tipo de Movimentação</div>
@@ -78,7 +74,6 @@
                 </div>
               </div>
 
-              <!-- Vencimento -->
               <div class="col-md-2">
                 <div class="mb-3">
                   <label class="form-label required">Vencimento</label>
@@ -95,7 +90,6 @@
                 </div>
               </div>
 
-              <!-- Descrição -->
               <div class="col-md-6">
                 <div class="mb-3">
                   <label class="form-label required">Descrição</label>
@@ -112,7 +106,6 @@
                 </div>
               </div>
 
-              <!-- Mês/Ano -->
               <div class="col-md-2">
                 <div class="mb-3">
                   <label class="form-label required" id="labelMesAno">Mês/Ano Referência</label>
@@ -130,7 +123,6 @@
                 </div>
               </div>
 
-              <!-- Valor -->
               <div class="col-md-2">
                 <div class="mb-3">
                   <label class="form-label required">Valor</label>
@@ -156,7 +148,6 @@
                 </div>
               </div>
 
-              <!-- Plano de Contas -->
               <div class="col-md-3">
                 <div class="mb-3">
                   <label class="form-label required">Plano de Contas</label>
@@ -175,7 +166,6 @@
                 </div>
               </div>
 
-              <!-- Categoria Fiscal -->
               <div class="col-md-3">
                 <div class="mb-3">
                   <label class="form-label required">Categoria Fiscal</label>
@@ -184,18 +174,16 @@
                     <option value disabled selected>Selecione...</option>
 
                     {% for cat in estrutura_fiscal %}
-                    {# Nível 1 – desabilitado #}
+                    
                     <option value="{{ cat.codigo }}" disabled>
                       {{ cat.codigo }} – {{ cat.nome }}
                     </option>
 
-                    {# Nível 2 – selecionável #}
                     {% for sub in cat.children %}
                     <option value="{{ sub.codigo }}">
                       &nbsp;&nbsp;{{ sub.codigo }} – {{ sub.nome }}
                     </option>
 
-                    {# Nível 3 – selecionável #}
                     {% for sub2 in sub.children %}
                     <option value="{{ sub2.codigo }}">
                       &nbsp;&nbsp;&nbsp;&nbsp;{{ sub2.codigo }} – {{ sub2.nome
@@ -216,7 +204,6 @@
                 </div>
               </div>
 
-              <!-- Conta Bancária -->
               <div class="col-md-3">
                 <div class="mb-3">
                   <label class="form-label required">Conta Bancária</label>
@@ -241,7 +228,6 @@
                 </div>
               </div>
 
-              <!-- Centro de Custo (apenas para despesas) -->
               <div class="col-md-3" id="campoCentroCusto" style="display: none;">
                 <div class="mb-3">
                   <label class="form-label required">Centro de Custo</label>
@@ -298,13 +284,12 @@
   {% include 'estrutura/footer.html' %}
 </div>
 
-<!-- Dados para JavaScript -->
 <script type="application/json" id="estrutura-plano-data">
   {{ estrutura_plano | tojson }}
 </script>
 
 <script>
-  // Carregar dados da estrutura do plano de contas
+  
   const estruturaPlano = JSON.parse(document.getElementById('estrutura-plano-data').textContent);
   const valorPlanoContasSelecionado = "{{ dados_corretos['planoContas'] if dados_corretos['planoContas'] else '' }}";
 
@@ -316,15 +301,12 @@
     const vencimento = document.getElementById('vencimento');
     const labelMesAno = document.getElementById('labelMesAno');
 
-    // Esconde centro de custo
     campoCentroCusto.style.display = 'none';
 
-    // Define data de hoje se o campo estiver vazio
     if (!vencimento.value) {
       vencimento.value = new Date().toISOString().slice(0, 10);
     }
 
-    // Filtrar plano de contas baseado no tipo
     filtrarPlanoContas(tipo);
 
     if (tipo === 'receita') {
@@ -383,51 +365,44 @@
     const selectPlano = document.getElementById('planoContas');
     const valorSelecionadoAnterior = selectPlano.value;
 
-    // Limpar todas as opções exceto a primeira
     selectPlano.innerHTML = '<option value="">Selecione...</option>';
 
-    // Determinar quais tipos mostrar
     let tiposPermitidos = [];
     if (tipoMovimentacao === 'receita') {
-      tiposPermitidos = [1, 3]; // Receita e Movimentação
+      tiposPermitidos = [1, 3]; 
     } else if (tipoMovimentacao === 'despesa') {
-      tiposPermitidos = [2, 3]; // Despesa e Movimentação
+      tiposPermitidos = [2, 3]; 
     } else {
-      tiposPermitidos = [1, 2, 3]; // Todos
+      tiposPermitidos = [1, 2, 3]; 
     }
 
-    // Filtrar e adicionar opções
     estruturaPlano.forEach(categoria => {
       if (tiposPermitidos.includes(categoria.tipo)) {
-        // Nível 1 - desabilitado
+        
         const option1 = document.createElement('option');
         option1.value = categoria.codigo;
         option1.disabled = true;
         option1.textContent = `${categoria.codigo} – ${categoria.nome}`;
         selectPlano.appendChild(option1);
 
-        // Nível 2 - selecionável
         if (categoria.children) {
           categoria.children.forEach(subcategoria => {
             const option2 = document.createElement('option');
             option2.value = subcategoria.codigo;
             option2.textContent = `  ${subcategoria.codigo} – ${subcategoria.nome}`;
 
-            // Manter seleção se era o valor anterior
             if (subcategoria.codigo === valorSelecionadoAnterior || subcategoria.codigo === valorPlanoContasSelecionado) {
               option2.selected = true;
             }
 
             selectPlano.appendChild(option2);
 
-            // Nível 3 - selecionável
             if (subcategoria.children) {
               subcategoria.children.forEach(subsubcategoria => {
                 const option3 = document.createElement('option');
                 option3.value = subsubcategoria.codigo;
                 option3.textContent = `    ${subsubcategoria.codigo} – ${subsubcategoria.nome}`;
 
-                // Manter seleção se era o valor anterior
                 if (subsubcategoria.codigo === valorSelecionadoAnterior || subsubcategoria.codigo === valorPlanoContasSelecionado) {
                   option3.selected = true;
                 }
@@ -441,11 +416,9 @@
     });
   }
 
-  // Event listeners
   document.querySelectorAll('input[name="tipoMovimentacao"]')
     .forEach(r => r.addEventListener('change', alterarCampos));
 
-  // Executa ao carregar
   document.addEventListener('DOMContentLoaded', alterarCampos);
 </script>
 {% endblock conteudo %}

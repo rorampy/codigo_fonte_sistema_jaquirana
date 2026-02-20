@@ -312,7 +312,6 @@
 
         <div class="card-body p-0">
 
-          <!-- RECEITAS OPERACIONAIS -->
           <div class="mb-4">
             <div class="d-flex align-items-center mb-3 px-3">
               <div class="badge bg-green-lt text-green me-2 rounded-pill px-3 py-2 border border-green"
@@ -345,7 +344,6 @@
             </div>
           </div>
 
-          <!-- CUSTOS OPERACIONAIS -->
           <div class="mb-4">
             <div class="d-flex align-items-center mb-3 px-3">
               <div class="badge bg-red-lt text-red me-2 rounded-pill px-3 py-2 border border-red"
@@ -378,7 +376,6 @@
             </div>
           </div>
 
-          <!-- MARGEM BRUTA -->
           <div class="mb-4">
             <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
               <div class="card-body text-center py-4 px-4">
@@ -412,8 +409,6 @@
           </div>
         </div>
 
-
-        <!-- DESPESAS OPERACIONAIS -->
         {% if dre_dados['despesas_operacionais'] > 0 %}
         <div class="mb-4">
           <div class="d-flex align-items-center mb-3 px-3">
@@ -449,8 +444,6 @@
         </div>
         {% endif %}
 
-
-        <!-- RESULTADO OPERACIONAL -->
         <div class="mb-4">
           <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
             <div class="card-body text-center py-4 px-4">
@@ -475,7 +468,6 @@
           </div>
         </div>
 
-        <!-- ATIVIDADES DE FINANCIAMENTO -->
         {% if dre_dados['receitas_aplicacoes_financeiras'] > 0 %}
         <div class="mb-4">
           <div class="d-flex align-items-center mb-3 px-3">
@@ -505,7 +497,6 @@
                   </td>
                 </tr>
 
-                <!-- Total Atividades de Financiamento -->
                 <tr class="border-top border-1" style="border-color: #cbd5e1 !important;">
                   <td class="fw-medium ps-3 py-3"
                     style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">TOTAL ATIVIDADES DE
@@ -520,7 +511,6 @@
         </div>
         {% endif %}
 
-        <!-- ATIVIDADES DE INVESTIMENTO -->
         {% if dre_dados['despesas_compra_floresta'] > 0 or dre_dados['despesas_retirada_capital'] > 0 %}
         <div class="mb-4">
           <div class="d-flex align-items-center mb-3 px-3">
@@ -562,7 +552,6 @@
                 </tr>
                 {% endif %}
 
-                <!-- Total Atividades de Investimento -->
                 {% set total_investimento = (dre_dados['despesas_compra_floresta'] +
                 dre_dados['despesas_retirada_capital']) * -1 %}
                 <tr class="border-top border-1" style="border-color: #cbd5e1 !important;">
@@ -579,35 +568,15 @@
         </div>
         {% endif %}
 
-        <!-- VARIAÇÃO DE CAIXA -->
         {% if dre_dados['variacao_caixa'] is defined %}
-        <!-- <div class="mb-4">
-          <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
-            <div class="card-body text-center py-4 px-4">
-              <div class="d-flex align-items-center justify-content-center">
-                <div class="text-center">
-                  <div class="text-muted fs-6 mb-1">Variação de Caixa</div>
-                  <div class="fw-bold text-dark" style="font-size: 1.5rem;">
-                    {{ dre_dados['variacao_caixa'] | formatar_float_para_brl }}
-                  </div>
-                </div>
-              </div>
-              <div class="mt-3 pt-3 border-top" style="border-color: #cbd5e1 !important;">
-                <small class="text-muted">
-                  Resultado Operacional + Atividades de Investimento + Atividades de Financiamento
-                </small>
-              </div>
-            </div>
-          </div>
-        </div> -->
+        
         {% endif %}
-
 
       </div>
     </div>
 
     {% else %}
-    <!-- Estado vazio -->
+    
     <div class="card">
       <div class="card-body text-center p-5">
         <div class="mb-4">
@@ -641,7 +610,6 @@
   </div>
 </div>
 
-<!-- Modal de Filtros -->
 <div class="modal modal-blur fade" id="modal-filtros" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
     <form action="{{ url_for('dre_sintetico') }}" method="POST">
@@ -651,7 +619,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <!-- Opção de Filtro por Exercício -->
+          
           <div class="mb-4">
             <label class="form-label fw-semibold">Filtrar por Exercício</label>
             <div class="row">
@@ -671,7 +639,6 @@
 
           <hr class="my-4">
 
-          <!-- Período Personalizado -->
           <div class="mb-3">
             <label class="form-label fw-semibold">Selecione um período personalizado:</label>
           </div>
@@ -724,7 +691,6 @@
     }
   }
 
-  // Limpar exercício quando selecionar datas personalizadas
   document.addEventListener('DOMContentLoaded', function () {
     const dataInicio = document.querySelector('input[name="data_inicio"]');
     const dataFim = document.querySelector('input[name="data_fim"]');

@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             TICKET
           </div>
@@ -19,7 +19,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -119,7 +118,6 @@
                     </div>
                   </div>
 
-                  <!-- Botão Visualizar -->
                   <a href="#" id="visualizar-ticket"
                     class="btn btn-visualizar-arquivo mb-3"
                     data-url="{{ url_for('diretorio_uploads_tickets', filename=registro.arquivo_ticket.caminho.split('/')[-1]) }}"
@@ -138,7 +136,6 @@
                     Visualizar Ticket Atual
                   </a>
 
-                  <!-- Input de upload (oculto inicialmente) -->
                   <div id="inputUploadTicket" class="d-none">
                     <input type="file" name="arquivoTicket"
                       class="form-control arquivoTicket {% if 'arquivoTicket' in campos_obrigatorios or 'arquivoTicket' in campos_erros %}
@@ -366,7 +363,7 @@
   </div>
   <script>
       document.addEventListener('DOMContentLoaded', function () {    
-        // === Ticket ===
+        
         const radioManterFloresta = document.getElementById("opcaoTicketManterTicket");
         const radioAlterarFloresta = document.getElementById("opcaoTicketAlterarTicket");
         const inputUploadFloresta = document.getElementById("inputUploadTicket");
@@ -390,7 +387,6 @@
         }
       });
 
-       // Funções para alternar exibição entre floresta e fornecedor
        function limparCampos(grupoClasse) {
         document.querySelectorAll('.' + grupoClasse + ' select').forEach(function (input) {
           input.value = '';
@@ -418,7 +414,6 @@
         radio.addEventListener('change', alternarCampos);
       });
     
-      // Aplica estado inicial correto nos campos
       alternarCampos();
     </script>
 

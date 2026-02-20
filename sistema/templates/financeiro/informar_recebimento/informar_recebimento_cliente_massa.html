@@ -24,7 +24,6 @@
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
 
-      <!-- Cards de resumo -->
       <div class="row row-cards mb-4">
         <div class="col-md-6 col-lg-3">
           <div class="card border shadow-lg rounded-3">
@@ -73,15 +72,12 @@
         </div>
       </div>
 
-
-      <!-- Formulário de confirmação -->
       <form action="{{ url_for('informar_recebimento_massa') }}" method="POST" enctype="multipart/form-data"
         id="form-recebimento">
         <input type="hidden" name="ids_registros" value="{{ ids_selecionados }}">
         <input type="hidden" name="ids_nfs_complementares" value="{{ ids_nfs_complementares or '' }}">
         <input type="hidden" name="ids_nfs_servico" value="{{ ids_nfs_servico or '' }}">
 
-        <!-- Seção detalhada dos registros por cliente -->
         <div class="card shadow-sm border-0 rounded-3 mb-4">
           <div class="card-header bg-light fw-bold">Detalhes dos Registros por Cliente</div>
           <div class="card-body">
@@ -152,7 +148,6 @@
           </div>
         </div>
 
-        <!-- Seção de agrupamento (opcional) -->
         {% if nfs_complementares_dict or nfs_servico_dict %}
         <div class="card shadow-sm border-0 rounded-3 mb-4">
           {% if nfs_complementares_dict %}
@@ -204,8 +199,6 @@
           </div>
         </div>
         {% endif %}
-
-
 
         {% if nfs_servico_dict %}
         <div class="card shadow-sm border-0 rounded-3 mb-4">
@@ -260,7 +253,7 @@
     <div class="card shadow-sm border-0 rounded-3">
       <div class="card-header bg-light fw-bold">Dados do Faturamento</div>
       <div class="card-body">
-        <!-- Botões de agrupamento -->
+        
         <div class="row mb-3">
           <div class="col">
             <h6 class="fw-bold">Agrupar com outras notas:</h6>
@@ -326,7 +319,6 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM carregado, iniciando configuração...');
 
     if (typeof aplicarMascaraMoeda === 'function') {
       aplicarMascaraMoeda();
@@ -359,7 +351,6 @@
         const valorFormatado = input.value;
         const valorEmCentavos = brlToCents(valorFormatado);
 
-        // Atualiza campo hidden correspondente (em centavos)
         const hiddenField = document.getElementById(`valor-hidden-${registroId}`);
         if (hiddenField) {
           hiddenField.value = valorEmCentavos;
@@ -409,14 +400,10 @@
       });
     }
 
-    // Event listeners para botões de agrupamento
-    console.log('Configurando event listeners para botões de agrupamento...');
-
     const btnAgruparNfComplementar = document.getElementById('btn-agrupar-nf-complementar');
     const btnAgruparNfServico = document.getElementById('btn-agrupar-nf-servico');
 
     if (btnAgruparNfComplementar) {
-      console.log('Botão NF Complementar encontrado');
       btnAgruparNfComplementar.addEventListener('click', function (e) {
         e.preventDefault();
         const idsRegistros = document.querySelector('input[name="ids_registros"]').value;
@@ -438,11 +425,9 @@
         window.location.href = url;
       });
     } else {
-      console.log('Botão NF Complementar NÃO encontrado');
     }
 
     if (btnAgruparNfServico) {
-      console.log('Botão NF Serviço encontrado');
       btnAgruparNfServico.addEventListener('click', function (e) {
         e.preventDefault();
         const idsRegistros = document.querySelector('input[name="ids_registros"]').value;
@@ -464,28 +449,19 @@
         window.location.href = url;
       });
     } else {
-      console.log('Botão NF Serviço NÃO encontrado');
     }
 
-    console.log('Configuração dos event listeners concluída');
   });
 
-  // Funções globais para onclick
   function agruparNfComplementar() {
-    console.log('Função agruparNfComplementar chamada');
     const idsRegistros = document.querySelector('input[name="ids_registros"]').value;
-    console.log('IDs dos registros:', idsRegistros);
     const url = `{{ url_for('faturamento_nf_complementar') }}?agrupar_cargas_receber=${encodeURIComponent(idsRegistros)}`;
-    console.log('URL gerada:', url);
     window.location.href = url;
   }
 
   function agruparNfServico() {
-    console.log('Função agruparNfServico chamada');
     const idsRegistros = document.querySelector('input[name="ids_registros"]').value;
-    console.log('IDs dos registros:', idsRegistros);
     const url = `{{ url_for('faturamento_nf_servico') }}?agrupar_cargas_receber=${encodeURIComponent(idsRegistros)}`;
-    console.log('URL gerada:', url);
     window.location.href = url;
   }
 </script>

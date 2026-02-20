@@ -14,7 +14,6 @@ class ImportacaoOfx(BaseModel):
     
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     
-    # Dados da transação OFX
     fitid = db.Column(db.String(50), nullable=False)
     refnum = db.Column(db.String(50), nullable=True)
     data_transacao = db.Column(db.Date, nullable=False)
@@ -25,31 +24,25 @@ class ImportacaoOfx(BaseModel):
     descricao_limpa = db.Column(db.Text, nullable=True)
     categoria_automatica = db.Column(db.String(100), nullable=True)
     
-    # Dados do arquivo importado
     arquivo_nome = db.Column(db.String(255), nullable=False)
     data_importacao = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     batch_importacao = db.Column(db.String(50), nullable=False, index=True)
     
-    # Dados da conta bancária (extraídos do arquivo OFX)
     banco_id = db.Column(db.String(10), nullable=True)
     conta_id = db.Column(db.String(50), nullable=True)
     tipo_conta = db.Column(db.String(20), nullable=True)
     moeda = db.Column(db.String(3), nullable=True, default='BRL')
     
-    # Dados da instituição financeira (extraídos do arquivo OFX)
     instituicao_org = db.Column(db.String(100), nullable=True)
     instituicao_fid = db.Column(db.String(100), nullable=True)
     
-    # Período do extrato
     data_inicio_extrato = db.Column(db.String(10), nullable=True)
     data_fim_extrato = db.Column(db.String(10), nullable=True)
     
-    # Controle e processamento
     processado = db.Column(db.Boolean, default=False, nullable=False)
     categoria_manual = db.Column(db.String(100), nullable=True)
     observacoes = db.Column(db.Text, nullable=True)
 
-    # Controle de conciliação
     conciliado = db.Column(db.Boolean, default=False, nullable=False)
     tipo_conciliacao = db.Column(db.String(50), nullable=True)
     pagamento_id = db.Column(db.Integer, nullable=True)
@@ -57,21 +50,17 @@ class ImportacaoOfx(BaseModel):
     usuario_conciliacao_id = db.Column(db.Integer, nullable=True)
     observacoes_conciliacao = db.Column(db.Text, nullable=True)
     
-    # Controle de conciliação parcial
-    valor_utilizado_100 = db.Column(db.Integer, nullable=True)  # Valor já utilizado em centavos
+    valor_utilizado_100 = db.Column(db.Integer, nullable=True)
     conciliacao_parcial = db.Column(db.Boolean, default=False)
     
-    # Dados da conciliação em JSON para permitir reversão
     dados_conciliacao_json = db.Column(db.JSON, nullable=True)
     
-    # Controle de exclusão/ignorar movimentação
     ofx_deletada = db.Column(db.Boolean, default=False, nullable=False)
     ofx_justificativa_deletada = db.Column(db.String(50), nullable=True)
     
     conta_bancaria_id = db.Column(db.Integer, db.ForeignKey("con_conta_bancaria.id"), nullable=True)
     conta_bancaria = db.relationship("ContaBancariaModel", foreign_keys=[conta_bancaria_id], backref=db.backref("transacoes_ofx", lazy=True))
     
-    # Índices para melhor performance
     __table_args__ = (
         db.Index('idx_ofx_fitid', 'fitid'),
         db.Index('idx_ofx_data_transacao', 'data_transacao'),
@@ -83,9 +72,6 @@ class ImportacaoOfx(BaseModel):
     def __repr__(self):
         return f'<OfxTransacao {self.fitid}: {self.valor_formatado} - {self.descricao_limpa[:50] if self.descricao_limpa else self.memo[:50]}...>'
     
-    # =====================================================================
-    # PROPERTIES
-    # =====================================================================
 
     @property
     def categoria_final(self):
@@ -100,7 +86,7 @@ class ImportacaoOfx(BaseModel):
     @property
     def valor_disponivel(self):
         """Retorna o valor ainda disponível para conciliação"""
-        valor_total = abs(self.valor) * 100  # Converter para centavos
+        valor_total = abs(self.valor) * 100
         valor_usado = self.valor_utilizado_100 or 0
         return (valor_total - valor_usado) / 100
     
@@ -130,9 +116,6 @@ class ImportacaoOfx(BaseModel):
         """Verifica se a transação foi totalmente utilizada"""
         return self.valor_disponivel_100 <= 0
     
-    # =====================================================================
-    # MÉTODOS DE INSTÂNCIA (mutação direta sem commit)
-    # =====================================================================
 
     def adicionar_valor_utilizado(self, valor_centavos):
         """

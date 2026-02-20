@@ -15,11 +15,9 @@ class FornecedorMadeiraPostaModel(BaseModel):
     cliente_id = db.Column(db.Integer, db.ForeignKey("cli_cliente.id"), nullable=False)
     cliente = db.relationship("ClienteModel", backref=db.backref("madeiras_recebidas", lazy=True))
     
-    # Condicionado a transportadora 
     transportadora_id = db.Column(db.Integer, db.ForeignKey("transp_transportadora.id"), nullable=True)
     transportadora = db.relationship("TransportadoraModel", backref=db.backref("transportadora_vinculada", lazy=True))
 
-    # preços de Eucalipto por bitola
     euca_bitola_1_id = db.Column(db.Integer, nullable=True)
     euca_bitola_2_id = db.Column(db.Integer, nullable=True)
     euca_bitola_3_id = db.Column(db.Integer, nullable=True)
@@ -29,7 +27,6 @@ class FornecedorMadeiraPostaModel(BaseModel):
     euca_bitola_3_preco_100 = db.Column(db.Integer, nullable=True)
     euca_bitola_4_preco_100 = db.Column(db.Integer, nullable=True)
 
-    # preços de Pinus por bitola
     pinus_bitola_1_id = db.Column(db.Integer, nullable=True)
     pinus_bitola_2_id = db.Column(db.Integer, nullable=True)
     pinus_bitola_3_id = db.Column(db.Integer, nullable=True)

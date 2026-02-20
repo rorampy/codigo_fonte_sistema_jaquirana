@@ -107,7 +107,7 @@ def vendas_em_transito_filtrar_ajax():
         transportadora_venda=transportadora_venda,
         motorista_venda='',
         placa_venda='',
-        origem_venda='',  # Vendas em trânsito não têm origem
+        origem_venda='',
         data_inicio=data_inicio,
         data_fim=data_fim,
         pagina=pagina,
@@ -220,7 +220,6 @@ def vendas_em_transito_exportar_excel():
     data_inicio = request.args.get('data_inicio', '').strip()
     data_fim = request.args.get('data_fim', '').strip()
 
-    # Buscar todos os registros para exportar (sem limite de paginação)
     resultado = RegistroOperacionalModel.listar_vendas_filtrar(
         cliente_venda=cliente_venda,
         nf_venda=nf_venda,
@@ -233,7 +232,7 @@ def vendas_em_transito_exportar_excel():
         data_inicio=data_inicio,
         data_fim=data_fim,
         pagina=1,
-        por_pagina=10000,  # Limite alto para pegar todos os registros
+        por_pagina=10000,
         categoria_venda='transito'
     )
     

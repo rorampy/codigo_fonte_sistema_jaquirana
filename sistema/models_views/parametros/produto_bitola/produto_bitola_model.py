@@ -14,7 +14,6 @@ class ProdutoBitolaModel(BaseModel):
     bitola_id = db.Column(db.Integer, db.ForeignKey('z_sys_bitola.id'), nullable=False)
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
-    # Relacionamentos
     produto = db.relationship('ProdutoModel', backref='produto_bitolas', lazy=True)
     bitola = db.relationship('BitolaModel', backref='bitola_produtos', lazy=True)
     
@@ -91,14 +90,12 @@ class ProdutoBitolaModel(BaseModel):
         ).first()
         
         if relacionamento_existente:
-            # Se existir mas estiver inativo, reativar
             if not relacionamento_existente.ativo:
                 relacionamento_existente.ativo = True
                 db.session.commit()
                 return True
             return False
         
-        # Criar novo relacionamento
         novo_relacionamento = ProdutoBitolaModel(produto_id, bitola_id)
         db.session.add(novo_relacionamento)
         db.session.commit()

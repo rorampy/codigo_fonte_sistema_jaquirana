@@ -266,7 +266,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1"
     role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document"
@@ -281,7 +280,7 @@
           </div>
           <div class="modal-body">
             <div class="row">
-              <!-- Linha 1: Datas -->
+              
               <div class="col-md-6 mb-3">
                 <label class="form-label">Data Início</label>
                 <input type="date" name="dataInicio" class="form-control"
@@ -293,7 +292,6 @@
                   value="{{ dados_corretos.get('dataFim', '') }}">
               </div>
 
-              <!-- Linha 2: Placa e Motorista -->
               <div class="col-md-6 mb-3">
                 <label class="form-label">Placa</label>
                 <input type="text" name="placaCargaCliente" class="form-control"
@@ -306,7 +304,6 @@
                   value="{{ dados_corretos.get('motoristaCargaCliente', '') }}">
               </div>
 
-              <!-- Linha 3: Transportadora e Fornecedor -->
               <div class="col-md-6 mb-3">
                 <label class="form-label">Transportadora</label>
                 <input type="text" name="tranpostadoraCargaCliente"

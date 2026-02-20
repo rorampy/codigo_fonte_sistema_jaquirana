@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             EXTRATOR
           </div>
@@ -19,7 +19,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -295,11 +294,11 @@
         if (radioCPF.checked) {
           grupoCPF.forEach(el => el.style.display = 'block');
           grupoCNPJ.forEach(el => el.style.display = 'none');
-          limparCampos('grupoCNPJ'); // Limpa campos do grupo CNPJ
+          limparCampos('grupoCNPJ'); 
         } else {
           grupoCPF.forEach(el => el.style.display = 'none');
           grupoCNPJ.forEach(el => el.style.display = 'block');
-          limparCampos('grupoCPF'); // Limpa campos do grupo CPF
+          limparCampos('grupoCPF'); 
         }
       }
 
@@ -307,7 +306,7 @@
         radio.addEventListener('change', alternarCampos);
       });
 
-      alternarCampos(); // Configura o estado inicial dos campos
+      alternarCampos(); 
     });
   </script>
 

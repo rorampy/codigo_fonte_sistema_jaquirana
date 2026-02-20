@@ -255,7 +255,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table>
       <tr>
@@ -277,7 +277,6 @@
 
   <div class="relatorio-title">Relatório Prestação Contas Transportadora</div>
 
-  <!-- Filtros aplicados se existirem -->
   {% if dados_corretos %}
   <div class="filtros-aplicados">
     <div class="filtros-title">Filtros Aplicados</div>
@@ -360,7 +359,6 @@
   {% set transportadora = transportadora_group.grouper %}
   {% set registros_transportadora = transportadora_group.list %}
 
-  <!-- Seção da Transportadora -->
   <div class="group-break">
     <div class="section-title">
       Transportadora: {{ transportadora }}
@@ -369,7 +367,6 @@
       </span>
     </div>
 
-    <!-- Informações Bancárias da Transportadora -->
     {% if registros_transportadora and registros_transportadora[0].transportadora_obj %}
     {% set transportadora_obj = registros_transportadora[0].transportadora_obj %}
     {% if transportadora_obj.conta_bancaria or transportadora_obj.chave_pix %}
@@ -405,7 +402,6 @@
     {% endif %}
     {% endif %}
 
-    <!-- Tabela de cargas para esta transportadora -->
     <table class="no-break">
       <thead>
         <tr>
@@ -467,7 +463,6 @@
         </tr>
         {% endfor %}
 
-        <!-- Linhas de Total da Transportadora -->
         <tr class="subtotal">
           <td colspan="5"><strong>Total de cargas: {{ registros_transportadora|length }}</strong></td>
           <td class="valor-destaque"><strong>{{ registros_transportadora | selectattr('registro.peso_liquido_ticket') |
@@ -485,11 +480,11 @@
         </tr>
       </tbody>
     </table>
-  </div> <!-- Fecha group-break -->
+  </div> 
   {% endfor %}
 
   {% else %}
-  <!-- Estado vazio -->
+  
   <div style="text-align: center; padding: 50px 0;">
     <h3 style="color: #666;">Nenhum registro encontrado</h3>
     <p style="color: #999;">Não há registros de cargas disponíveis para os filtros selecionados.</p>

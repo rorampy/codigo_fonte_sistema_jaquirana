@@ -27,27 +27,26 @@ class DREModel:
     - 2.01.04 = Comissões (ComissionadoPagarModel)
     """
     
-    # Configuração das categorias automáticas (valores vindos das tabelas operacionais)
     CATEGORIAS_AUTOMATICAS = {
         '1.01.01': {
             'model': RegistroOperacionalModel,
             'campo_valor': 'valor_total_nota_100',
             'campo_data': 'data_entrega_ticket',
-            'filtro_operacional': 'solicitacao_nf_id',  # Exclui receitas avulsas
+            'filtro_operacional': 'solicitacao_nf_id',
             'descricao': 'Vendas NFe Peso Padrão'
         },
         '1.01.03': {
             'model': NfComplementarModel,
             'campo_valor': 'valor_total_nota_100',
             'campo_data': 'destinatario_data_emissao',
-            'filtro_operacional': 'cliente_id',  # Todas NF complementares são operacionais
+            'filtro_operacional': 'cliente_id',
             'descricao': 'Vendas de NFe Complementares'
         },
         '2.01.01': {
             'model': FornecedorPagarModel,
             'campo_valor': 'valor_total_a_pagar_100',
             'campo_data': 'data_entrega_ticket',
-            'filtro_operacional': 'solicitacao_id',  # Exclui despesas avulsas
+            'filtro_operacional': 'solicitacao_id',
             'descricao': 'Compra de Madeira'
         },
         '2.01.02': {
@@ -73,21 +72,17 @@ class DREModel:
         }
     }
     
-    # Mapeamento de código para tipo DRE
     TIPO_DRE_MAP = {
         '1.01': 'receitas_operacionais',
         '1.02': 'receitas_nao_operacionais',
         '2.01': 'custos_operacionais',
-        # Qualquer 2.xx (exceto 2.01) = despesas_operacionais
     }
     
-    # Códigos a ignorar no DRE (não impactam resultado)
     CODIGOS_IGNORADOS = [
-        '2.01.05',  # Colheita mecanizada
-        '3.',       # Transferências entre contas (não é receita nem despesa)
+        '2.01.05',
+        '3.',
     ]
     
-    # ==================== MÉTODOS PRINCIPAIS ====================
     
     @classmethod
     def gerar_dre(cls, data_inicio, data_fim):
@@ -97,16 +92,12 @@ class DREModel:
         Returns:
             dict: Estrutura completa do DRE com receitas, custos, despesas e resultados
         """
-        # 1. Obter valores por categoria
         valores = cls._calcular_valores_por_categoria(data_inicio, data_fim)
         
-        # 2. Organizar por seções do DRE
         dre = cls._organizar_estrutura_dre(valores)
         
-        # 3. Calcular totais e resultados
         cls._calcular_resultados(dre)
         
-        # 4. Adicionar período
         dre['periodo'] = {'data_inicio': data_inicio, 'data_fim': data_fim}
         
         return dre
@@ -118,7 +109,6 @@ class DREModel:
         """
         dre = cls.gerar_dre(data_inicio, data_fim)
         
-        # Filtrar itens para atividades de investimento/financiamento
         aplicacoes_financeiras = [i for i in dre['receitas']['nao_operacionais']['itens'] 
                                    if i['codigo'].startswith('1.02.01')]
         compra_floresta = [i for i in dre['custos']['operacionais']['itens'] 
@@ -126,23 +116,18 @@ class DREModel:
         retirada_capital = [i for i in dre['despesas']['operacionais']['itens'] 
                            if i['codigo'].startswith('2.02.05')]
         
-        # Calcular totais filtrados
         total_aplicacoes = sum(i['valor'] for i in aplicacoes_financeiras)
         total_compra_floresta = sum(i['valor'] for i in compra_floresta)
         total_retirada_capital = sum(i['valor'] for i in retirada_capital)
         
-        # Receitas sem aplicações financeiras
         receitas_nao_op_filtradas = dre['receitas']['nao_operacionais']['total'] - total_aplicacoes
         total_receitas_filtrado = dre['receitas']['operacionais']['total'] + receitas_nao_op_filtradas
         
-        # Custos sem compra de floresta
         custos_filtrados = dre['custos']['operacionais']['total'] - total_compra_floresta
         
-        # Resultados filtrados
         resultado_bruto = total_receitas_filtrado - custos_filtrados
         resultado_operacional = resultado_bruto - dre['despesas']['operacionais']['total']
         
-        # Atividades
         atividades_investimento = total_compra_floresta * -1
         atividades_financiamento = total_aplicacoes - total_retirada_capital
         variacao_caixa = resultado_operacional + atividades_investimento + atividades_financiamento
@@ -160,13 +145,11 @@ class DREModel:
             'atividades_investimento': {'total': atividades_investimento, 'itens': compra_floresta},
             'atividades_financiamento': {'total': atividades_financiamento, 'aplicacoes': aplicacoes_financeiras, 'retiradas': retirada_capital},
             'variacao_caixa': variacao_caixa,
-            # Chaves esperadas pelo template PDF
             'receitas_aplicacoes_financeiras': total_aplicacoes,
             'despesas_compra_floresta': total_compra_floresta,
             'despesas_retirada_capital': total_retirada_capital
         }
     
-    # ==================== MÉTODOS AUXILIARES ====================
     
     @classmethod
     def _calcular_valores_por_categoria(cls, data_inicio, data_fim):
@@ -178,10 +161,8 @@ class DREModel:
         """
         valores = {}
         
-        # 1. Buscar valores das categorias automáticas (tabelas operacionais)
         valores_automaticos = cls._buscar_valores_automaticos(data_inicio, data_fim)
         
-        # 2. Buscar IDs das categorias automáticas para excluir dos agendamentos
         ids_automaticas = set()
         for codigo in valores_automaticos.keys():
             cat = PlanoContaModel.query.filter_by(codigo=codigo, ativo=True, deletado=False).first()
@@ -194,9 +175,6 @@ class DREModel:
                     'hierarquia': cls._obter_hierarquia(cat)
                 }
         
-        # 3. Buscar valores dos agendamentos categorizados (exceto categorias automáticas)
-        # Status: 6=Categorizado, 8=Conciliado, 9=Liquidado, 10=Parcialmente Conciliado
-        # DRE é regime de competência: o valor categorizado entra independente do status de pagamento
         agendamentos = AgendamentoPagamentoModel.query.filter(
             AgendamentoPagamentoModel.ativo == True,
             AgendamentoPagamentoModel.deletado == False,
@@ -216,11 +194,9 @@ class DREModel:
                     cat_id = cat_info.get('categoria_id')
                     valor = cat_info.get('valor', 0)
                     
-                    # Pular categorias sem ID válido
                     if not cat_id:
                         continue
                     
-                    # Pular categorias automáticas
                     if cat_id in ids_automaticas:
                         continue
                     
@@ -259,8 +235,6 @@ class DREModel:
             filtro_op = config['filtro_operacional']
             
             try:
-                # Tratamento especial para NFs Complementares (1.01.03)
-                # Inclui emitidas + não emitidas (positivas E negativas)
                 if codigo == '1.01.03':
                     total = cls._calcular_nf_complementares_total(data_inicio, data_fim)
                     if total != 0:
@@ -271,8 +245,8 @@ class DREModel:
                     Model.ativo == True,
                     Model.deletado == False,
                     getattr(Model, campo_data).isnot(None),
-                    getattr(Model, filtro_op).isnot(None),  # Exclui lançamentos avulsos
-                    getattr(Model, campo_valor) > 0          # Exclui registros sem preço configurado
+                    getattr(Model, filtro_op).isnot(None),
+                    getattr(Model, campo_valor) > 0
                 )
                 
                 if data_inicio:
@@ -287,7 +261,7 @@ class DREModel:
                     valores[codigo] = total
                     
             except Exception as e:
-                print(f"[DRE] Erro ao buscar {codigo}: {e}")
+                pass
         
         return valores
     
@@ -312,9 +286,6 @@ class DREModel:
         total = 0
         
         try:
-            # Buscar TODOS os registros operacionais com diferença de peso,
-            # independente do status de emissão da NF Complementar.
-            # Usa data_entrega_ticket como data de competência.
             query = RegistroOperacionalModel.query.filter(
                 RegistroOperacionalModel.ativo == True,
                 RegistroOperacionalModel.deletado == False,
@@ -323,7 +294,6 @@ class DREModel:
                 RegistroOperacionalModel.peso_liquido_ticket.isnot(None),
                 RegistroOperacionalModel.preco_un_nf > 0,
                 RegistroOperacionalModel.data_entrega_ticket.isnot(None),
-                # Todas as diferenças de peso (positivas e negativas)
                 RegistroOperacionalModel.peso_liquido_ticket != RegistroOperacionalModel.peso_ton_nf
             )
             
@@ -343,7 +313,7 @@ class DREModel:
                 total += valor
             
         except Exception as e:
-            print(f"[DRE] Erro ao calcular NF Complementares: {e}")
+            pass
         
         return total
     
@@ -372,11 +342,9 @@ class DREModel:
             codigo = info['codigo']
             valor = info['valor']
             
-            # Ignorar categorias específicas
             if any(codigo.startswith(ign) for ign in cls.CODIGOS_IGNORADOS):
                 continue
             
-            # Ignorar valores zerados
             if valor == 0:
                 continue
             
@@ -388,7 +356,6 @@ class DREModel:
                 'hierarquia_completa': info['hierarquia']
             }
             
-            # Classificar por tipo
             tipo = cls._identificar_tipo_dre(codigo)
             
             if tipo == 'receitas_operacionais':
@@ -400,7 +367,7 @@ class DREModel:
             elif tipo == 'custos_operacionais':
                 dre['custos']['operacionais']['itens'].append(item)
                 dre['custos']['operacionais']['total'] += valor
-            else:  # despesas_operacionais
+            else:
                 dre['despesas']['operacionais']['itens'].append(item)
                 dre['despesas']['operacionais']['total'] += valor
         
@@ -411,7 +378,6 @@ class DREModel:
         """
         Calcula totais e resultados do DRE.
         """
-        # Totais por seção
         dre['receitas']['total'] = (
             dre['receitas']['operacionais']['total'] + 
             dre['receitas']['nao_operacionais']['total']
@@ -419,25 +385,19 @@ class DREModel:
         dre['custos']['total'] = dre['custos']['operacionais']['total']
         dre['despesas']['total'] = dre['despesas']['operacionais']['total']
         
-        # Resultados
         dre['resultado'] = {
-            # Margem de Contribuição = Receitas Operacionais - Custos Operacionais
             'margem_contribuicao': dre['receitas']['operacionais']['total'] - dre['custos']['operacionais']['total'],
             
-            # Resultado Bruto = Total Receitas - Total Custos
             'bruto': dre['receitas']['total'] - dre['custos']['total'],
             
-            # Resultado Operacional = Margem de Contribuição - Despesas Operacionais
             'operacional': 0,
             
-            # Resultado Líquido (por ora igual ao operacional)
             'liquido': 0
         }
         
         dre['resultado']['operacional'] = dre['resultado']['margem_contribuicao'] - dre['despesas']['operacionais']['total']
         dre['resultado']['liquido'] = dre['resultado']['operacional']
         
-        # Percentual da margem
         if dre['receitas']['operacionais']['total'] != 0:
             dre['resultado']['margem_contribuicao_percentual'] = (
                 dre['resultado']['margem_contribuicao'] / dre['receitas']['operacionais']['total']
@@ -453,20 +413,16 @@ class DREModel:
         if not codigo:
             return 'outros'
         
-        # Códigos 3.xx = Transferências (ignorar)
         if codigo.startswith('3.'):
             return 'outros'
         
-        # Verificar mapeamento direto
         for prefixo, tipo in cls.TIPO_DRE_MAP.items():
             if codigo.startswith(prefixo):
                 return tipo
         
-        # Padrão: 2.xx que não é 2.01 = despesas
         if codigo.startswith('2.'):
             return 'despesas_operacionais'
         
-        # 1.xx que não está mapeado = receitas não-operacionais
         if codigo.startswith('1.'):
             return 'receitas_nao_operacionais'
         
@@ -489,15 +445,12 @@ class DREModel:
         
         return ' > '.join(partes)
     
-    # ==================== COMPATIBILIDADE ====================
-    # Métodos para manter compatibilidade com código existente
     
     @classmethod
     def gerar_dre_analitico(cls, data_inicio, data_fim):
         """Alias para gerar_dre() - mantém compatibilidade."""
         dre = cls.gerar_dre(data_inicio, data_fim)
         
-        # Converter estrutura para formato esperado pelo template atual
         return {
             'periodo': dre['periodo'],
             'receitas': {
@@ -533,7 +486,6 @@ class DREModel:
         """Método de compatibilidade - retorna valores no formato antigo."""
         valores = cls._calcular_valores_por_categoria(data_inicio, data_fim)
         
-        # Converter para formato {categoria_id: valor}
         resultado = {}
         for cat_id, info in valores.items():
             if categoria_ids is None or cat_id in categoria_ids:

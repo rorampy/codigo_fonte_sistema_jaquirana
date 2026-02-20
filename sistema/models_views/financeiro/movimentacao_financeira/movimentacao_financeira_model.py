@@ -8,7 +8,6 @@ class MovimentacaoFinanceiraModel(BaseModel):
     __tablename__ = 'mov_movimentacao_financeira'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     
-    # 1 - Entrada | 2 - Saída | 3 - Cancelamento | 4 - Estorno credito | 5 - Estorno de saldo de conta
     tipo_movimentacao = db.Column(db.Integer, nullable=False)
 
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
@@ -25,39 +24,32 @@ class MovimentacaoFinanceiraModel(BaseModel):
 
     ativo = db.Column(db.Boolean, default=True, nullable=False)
 
-    # Indica se a movimentação foi gerada por conciliação bancária (pagamento em massa OFX)
     conciliacao_bancaria = db.Column(db.Boolean, default=False, nullable=False)
 
-    # Vínculo com a transação OFX (importacao_ofx) usada na conciliação bancária
     importacao_ofx_id = db.Column(db.Integer, db.ForeignKey('im_importacao_ofx.id'), nullable=True)
     importacao_ofx = db.relationship('ImportacaoOfx', foreign_keys=[importacao_ofx_id], backref=db.backref('movimentacoes_conciliadas_ofx', lazy=True))
 
-    # Campos de referências importantes para auditoria da conciliação bancária
     agendamento_id = db.Column(db.Integer, db.ForeignKey('fin_agendamento_pagamento.id'), nullable=True)
     agendamento = db.relationship('AgendamentoPagamentoModel', foreign_keys=[agendamento_id], backref=db.backref('movimentacoes_conciliadas_agendamento', lazy=True))
     
-    # Dados originais da transação OFX para auditoria
-    conciliacao_fitid = db.Column(db.String(255), nullable=True)  # FITID da transação OFX original
-    conciliacao_valor_original = db.Column(db.Integer, nullable=True)  # Valor original da transação OFX em centavos
-    conciliacao_descricao_ofx = db.Column(db.Text, nullable=True)  # Descrição original da transação OFX
-    conciliacao_data_transacao = db.Column(db.Date, nullable=True)  # Data da transação original do OFX
-    conciliacao_tipo_movimento = db.Column(db.String(50), nullable=True)  # Tipo do movimento (DEBIT/CREDIT)
+    conciliacao_fitid = db.Column(db.String(255), nullable=True)
+    conciliacao_valor_original = db.Column(db.Integer, nullable=True)
+    conciliacao_descricao_ofx = db.Column(db.Text, nullable=True)
+    conciliacao_data_transacao = db.Column(db.Date, nullable=True)
+    conciliacao_tipo_movimento = db.Column(db.String(50), nullable=True)
     
-    # Auditoria de quem e quando fez a conciliação
-    conciliacao_data_processamento = db.Column(db.DateTime, nullable=True)  # Data/hora do processamento da conciliação
-    conciliacao_observacoes = db.Column(db.Text, nullable=True)  # Observações sobre a conciliação
+    conciliacao_data_processamento = db.Column(db.DateTime, nullable=True)
+    conciliacao_observacoes = db.Column(db.Text, nullable=True)
     
-    # Referências para diferentes tipos de origem do agendamento
-    conciliacao_faturamento_id = db.Column(db.Integer, db.ForeignKey('fin_faturamento.id'), nullable=True)  # ID do faturamento se origem for faturamento
+    conciliacao_faturamento_id = db.Column(db.Integer, db.ForeignKey('fin_faturamento.id'), nullable=True)
     conciliacao_faturamento = db.relationship('FaturamentoModel', foreign_keys=[conciliacao_faturamento_id], backref=db.backref('movimentacoes_conciliadas_faturamento', lazy=True))
     
-    conciliacao_lancamento_avulso_id = db.Column(db.Integer, db.ForeignKey('lan_lancamento_avulso.id'), nullable=True)  # ID do lançamento avulso se origem for lançamento
+    conciliacao_lancamento_avulso_id = db.Column(db.Integer, db.ForeignKey('lan_lancamento_avulso.id'), nullable=True)
     conciliacao_lancamento_avulso = db.relationship('LancamentoAvulsoModel', foreign_keys=[conciliacao_lancamento_avulso_id], backref=db.backref('movimentacoes_conciliadas_lancamento', lazy=True))
     
-    conciliacao_tipo_origem = db.Column(db.String(50), nullable=True)  # 'FATURAMENTO' ou 'LANCAMENTO_AVULSO'
+    conciliacao_tipo_origem = db.Column(db.String(50), nullable=True)
     
-    # Dados adicionais para controle
-    conciliacao_valor_diferenca = db.Column(db.Integer, nullable=True)  # Diferença entre valor OFX e agendamento
+    conciliacao_valor_diferenca = db.Column(db.Integer, nullable=True)
     
     def __init__(
         self, tipo_movimentacao, usuario_id, data_movimentacao, valor_movimentacao_100=None, conta_bancaria_id=None, observacao_movimentacao=None, ativo=True,
@@ -76,7 +68,6 @@ class MovimentacaoFinanceiraModel(BaseModel):
         self.conciliacao_bancaria = conciliacao_bancaria
         self.importacao_ofx_id = importacao_ofx_id
         
-        # Campos de auditoria da conciliação
         self.agendamento_id = agendamento_id
         self.conciliacao_fitid = conciliacao_fitid
         self.conciliacao_valor_original = conciliacao_valor_original
@@ -160,7 +151,7 @@ class MovimentacaoFinanceiraModel(BaseModel):
             MovimentacaoFinanceiraModel.deletado == False,
             MovimentacaoFinanceiraModel.ativo == True,
             MovimentacaoFinanceiraModel.id == id,
-            MovimentacaoFinanceiraModel.tipo_movimentacao == 1  # Apenas entradas/recebimentos
+            MovimentacaoFinanceiraModel.tipo_movimentacao == 1
         ).first()
 
         return recebimento
@@ -179,19 +170,16 @@ class MovimentacaoFinanceiraModel(BaseModel):
         Lista movimentações financeiras.
         Se conta_id for informado, filtra pela conta. Caso contrário, lista de todas as contas.
         """
-        # base da query: somente movimentações ativas
         query = MovimentacaoFinanceiraModel.query.filter(
             MovimentacaoFinanceiraModel.ativo == True,
             MovimentacaoFinanceiraModel.deletado == False
         )
 
-        # se filtrou uma conta específica, aplica o filtro
         if conta_id and conta_id != 0:
             query = query.filter(
                 MovimentacaoFinanceiraModel.conta_bancaria_id == conta_id
             )
 
-        # ordena e retorna, limitando a 200 transações
         movimentacoes = (
             query
             .order_by(desc(MovimentacaoFinanceiraModel.id))
@@ -212,7 +200,6 @@ class MovimentacaoFinanceiraModel(BaseModel):
             MovimentacaoFinanceiraModel.deletado == False
         )
 
-        # Eager loading dos relacionamentos principais
         query = query.options(
             joinedload(MovimentacaoFinanceiraModel.conta_bancaria),
             joinedload(MovimentacaoFinanceiraModel.importacao_ofx),

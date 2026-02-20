@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             TAG
           </div>
@@ -32,7 +32,7 @@
       </div>
     </div>
   </div>
-  <!-- Page body -->
+  
   <div class="page-body">
     <div class="container-xl">
 
@@ -42,7 +42,7 @@
         <div class="card">
 
           {% if tags %}
-          <!-- Início Tabela -->
+          
           <div class="table-responsive">
             <table class="table table-vcenter card-table">
               <thead>
@@ -67,7 +67,7 @@
                   </td>
                   <td>
                     <div class="btn-list flex-nowrap">
-                      <!-- Botão: Editar conta -->
+                      
                       <a href="{{url_for('editar_tag', id=tag.id)}}" class="btn btn-icon btn-outline-warning"
                         data-bs-toggle="tooltip" data-bs-placement="top" title="Editar tag">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="24"
@@ -79,7 +79,6 @@
                         </svg>
                       </a>
 
-                      <!-- Botão: Excluir conta -->
                       <a href="#" class="btn btn-icon btn-outline-danger" data-bs-toggle="modal"
                         data-bs-target="#modal-excluir-{{ tag.id }}" title="Excluir tag">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="24"
@@ -94,7 +93,6 @@
                         </svg>
                       </a>
 
-                      <!-- Modal: Confirmar exclusão -->
                       <div class="modal modal-blur fade" id="modal-excluir-{{tag.id}}" tabindex="-1" role="dialog"
                         aria-hidden="true">
                         <div class="modal-dialog modal-sm modal-dialog-centered" role="document">

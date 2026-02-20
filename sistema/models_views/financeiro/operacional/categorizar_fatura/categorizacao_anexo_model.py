@@ -6,14 +6,12 @@ class AgendamentoAnexoPagamentoModel(BaseModel):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     
-    # Relacionamento com agendamento de pagamento
     agendamento_id = db.Column(db.Integer, db.ForeignKey('fin_agendamento_pagamento.id'), nullable=False)
     agendamento = db.relationship('AgendamentoPagamentoModel', backref=db.backref('anexos', lazy=True))
     
     upload_arquivo_id = db.Column(db.Integer, db.ForeignKey('upload_arquivo.id'), nullable=False)
     upload_arquivo = db.relationship('UploadArquivoModel', backref=db.backref('anexos_agendamento', lazy=True))
     
-    # Controle
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
     def __init__(self, agendamento_id, upload_arquivo_id):

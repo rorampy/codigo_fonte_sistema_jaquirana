@@ -14,7 +14,6 @@ def relatorio_cargas_fornecedor_floresta():
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
     dataHoje = datetime.now().strftime('%d-%m-%Y')
 
-    # Para exportações (POST), usar os dados do formulário
     if request.method == "POST":
         if any(request.form.values()) and not (request.form.get("exportar_pdf") or request.form.get("exportar_excel")):
             data_inicio = request.form.get("dataInicio")
@@ -40,7 +39,6 @@ def relatorio_cargas_fornecedor_floresta():
             )
             dados_corretos = request.form
         else:
-            # Para exportações, reaplicar os filtros baseados nos hidden fields do form
             data_inicio = request.form.get("dataInicio")
             data_fim = request.form.get("dataFim")
             placa = request.form.get("placaCargaCliente")
@@ -67,7 +65,6 @@ def relatorio_cargas_fornecedor_floresta():
                 registros = RegistroOperacionalModel.obter_registros_carga_fornecedor_floresta_produto()
             dados_corretos = request.form
     else:
-        # Para GET, usar args
         if any(request.args.values()):
             data_inicio = request.args.get("dataInicio")
             data_fim = request.args.get("dataFim")
@@ -131,7 +128,6 @@ def relatorio_cargas_fornecedor_floresta():
         for origem in sorted(registros_por_origem.keys()):
             registros_origem = registros_por_origem[origem]
             
-            # Linha de cabeçalho da origem
             dados_excel.append(
                 {
                     "Data Entrega": origem.upper(),
@@ -147,7 +143,6 @@ def relatorio_cargas_fornecedor_floresta():
                 }
             )
             
-            # Dados da origem
             for item in registros_origem:
                 registro = item['registro']
                 origem = item.get('origem', '')
@@ -178,7 +173,6 @@ def relatorio_cargas_fornecedor_floresta():
                     }
                 )
                             
-            # Linha de total por origem
             if registros_origem:
                 dados_excel.append(
                     {
@@ -195,7 +189,6 @@ def relatorio_cargas_fornecedor_floresta():
                     }
                 )
                 
-                # Linha em branco para separar origens
                 dados_excel.append(
                     {
                         "Data Entrega": "",

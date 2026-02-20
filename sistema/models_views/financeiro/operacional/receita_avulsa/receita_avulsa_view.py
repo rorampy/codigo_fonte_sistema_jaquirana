@@ -40,7 +40,6 @@ def listagem_faturamentos_receitas_avulsas():
     try:
         faturamentos = FaturamentoModel.obter_faturamentos_lancamentos_receitas_avulsas()
         
-        # Adicionar informação do usuário a cada faturamento
         for faturamento in faturamentos:
             if faturamento.usuario_id:
                 usuario = UsuarioModel.query.get(faturamento.usuario_id)
@@ -53,7 +52,6 @@ def listagem_faturamentos_receitas_avulsas():
         )
         
     except Exception as e:
-        print(f"[ERROR listagem_faturamentos_receitas_avulsas] {e}")
         flash(("Erro ao carregar listagem de faturamentos! Contate o suporte.", "error"))
         return redirect(url_for("listagem_faturamentos_receitas_avulsas"))
 
@@ -70,16 +68,13 @@ def detalhes_faturamento_receita_avulsa_ajax(id):
         if not faturamento.ativo:
             return jsonify({"erro": "Faturamento não encontrado"}), 404
         
-        # Buscar informações do usuário
         usuario = UsuarioModel.query.get(faturamento.usuario_id) if faturamento.usuario_id else None
         
-        # Formatar valores monetários
         def formatar_valor(valor_centavos):
             if valor_centavos is None:
                 return "R$ 0,00"
             return f"R$ {valor_centavos / 100:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         
-        # Preparar dados do faturamento de créditos
         dados_faturamento = {
             "codigo_faturamento": faturamento.codigo_faturamento,
             "data_cadastro": faturamento.data_cadastro.strftime("%d/%m/%Y %H:%M") if faturamento.data_cadastro else "",
@@ -89,7 +84,6 @@ def detalhes_faturamento_receita_avulsa_ajax(id):
             "total_receitas_avulsas": 1,
         }
 
-        # Receitas avulsas
         receita_avulsa = []
         if faturamento.lancamento_avulso:
             receita_avulsa.append({
@@ -107,7 +101,6 @@ def detalhes_faturamento_receita_avulsa_ajax(id):
         })
         
     except Exception as e:
-        print(f"[ERROR detalhes_faturamento_ajax] {e}")
         return jsonify({"erro": "Erro interno do servidor"}), 500
     
     
@@ -117,37 +110,30 @@ def detalhes_faturamento_receita_avulsa_ajax(id):
 def detalhes_categorizacao_faturamento_receita_avulsa_json(id):
     """Retorna JSON com os detalhes da categorização de um faturamento de Adiantamentos de Créditos"""
     try:
-        # Buscar o faturamento
         faturamento = FaturamentoModel.obter_faturamento_por_id(id)
         if not faturamento:
             return jsonify({'error': 'Faturamento não encontrado!'}), 404
             
-        # Verificar se é um faturamento de Adiantamentos de Créditos
         if faturamento.tipo_operacao != 2 or faturamento.direcao_financeira != 1:
             return jsonify({'error': 'Este não é um faturamento de receitas avulsas.'}), 400
 
-        # Buscar o agendamento de pagamento
         agendamento = db.session.query(AgendamentoPagamentoModel).filter_by(faturamento_id=id).first()
         if not agendamento:
             return jsonify({'error': 'Este faturamento ainda não foi categorizado.'}), 404
             
-        # Buscar dados relacionados
         pessoa = PessoaFinanceiroModel.obter_pessoa_por_id(agendamento.pessoa_financeiro_id)
         situacao = SituacaoPagamentoModel.obter_situacao_por_id(agendamento.situacao_pagamento_id)
         
-        # Obter detalhes específicos de créditos do faturamento
         detalhes = faturamento.obter_detalhes()
         creditos_fornecedores = detalhes.get("credito_fornecedor", [])
         creditos_transportadoras = detalhes.get("credito_transportadora", [])
         creditos_extratores = detalhes.get("credito_extrator", [])
 
-        # Formatar valores monetários
         def formatar_valor(valor_centavos):
             if valor_centavos is None:
                 return 0.0
             return float(valor_centavos / 100) if isinstance(valor_centavos, (int, float)) else 0.0
         
-        # Processar créditos de fornecedores para garantir campos corretos
         creditos_fornecedores_processados = []
         for credito in creditos_fornecedores:
             credito_processado = {
@@ -161,7 +147,6 @@ def detalhes_categorizacao_faturamento_receita_avulsa_json(id):
             }
             creditos_fornecedores_processados.append(credito_processado)
         
-        # Processar créditos de transportadoras para garantir campos corretos  
         creditos_transportadoras_processados = []
         for credito in creditos_transportadoras:
             credito_processado = {
@@ -175,7 +160,6 @@ def detalhes_categorizacao_faturamento_receita_avulsa_json(id):
             }
             creditos_transportadoras_processados.append(credito_processado)
 
-        # Processar créditos de extratores para garantir campos corretos  
         creditos_extratores_processados = []
         for credito in creditos_extratores:
             credito_processado = {
@@ -189,7 +173,6 @@ def detalhes_categorizacao_faturamento_receita_avulsa_json(id):
             }
             creditos_extratores_processados.append(credito_processado)
         
-        # Processar categorias
         categorias_processadas = []
         if agendamento.categorias_json:
             try:
@@ -200,7 +183,6 @@ def detalhes_categorizacao_faturamento_receita_avulsa_json(id):
                     categoria_detalhamento = cat.get('detalhamento', 'Não informado')
                     categoria_referencia = cat.get('referencia', 'Não informado')
                     
-                    # Se for ID numérico, buscar dados completos da categoria
                     if str(categoria_nome).isdigit():
                         plano_conta = PlanoContaModel.buscar_por_id(int(categoria_nome))
                         if plano_conta:
@@ -220,27 +202,22 @@ def detalhes_categorizacao_faturamento_receita_avulsa_json(id):
             except (json.JSONDecodeError, ValueError):
                 categorias_processadas = []
                 
-        # Processar centros de custo  
         centros_custo_processados = []
         if agendamento.centros_custo_json:
             try:
                 centros_custo = json.loads(agendamento.centros_custo_json)
-                print(f"[DEBUG] Centros de custo JSON: {centros_custo}")
                 
                 for cc in centros_custo:
                     centro_nome = cc.get('centro', 'Não informado')
                     
-                    # Se for ID numérico, buscar dados completos do centro de custo
                     if str(centro_nome).isdigit():
                         centro_custo_obj = CentroCustoModel.obter_centro_custo_por_id(int(centro_nome))
                         if centro_custo_obj:
                             centro_nome = centro_custo_obj.nome
                     
-                    # Converter valor de centavos para reais (baseado no exemplo: 32323 -> R$ 323,23)
                     valor_raw = cc.get('valor', 0)
                     valor_convertido = float(valor_raw) / 100 if isinstance(valor_raw, (int, float)) else 0.0
                     
-                    # Converter percentual
                     percentual_raw = cc.get('percentual', 0)
                     percentual_convertido = float(percentual_raw) if percentual_raw and str(percentual_raw).strip() else 0.0
                     
@@ -250,12 +227,9 @@ def detalhes_categorizacao_faturamento_receita_avulsa_json(id):
                         'percentual': percentual_convertido
                     })
                     
-                print(f"[DEBUG] Centros de custo processados: {centros_custo_processados}")
             except (json.JSONDecodeError, ValueError) as e:
-                print(f"[ERROR] Erro ao processar centros de custo: {e}")
                 centros_custo_processados = []
                 
-        # Buscar parcelas se houver parcelamento
         parcelas = []
         if agendamento.parcelamento_ativo:
             parcelas_obj = ParcelaCategorizacaoModel.obter_parcelas_por_agendamento(agendamento.id)
@@ -271,18 +245,15 @@ def detalhes_categorizacao_faturamento_receita_avulsa_json(id):
                     'situacao_nome': situacao_parcela.situacao if situacao_parcela else 'N/A'
                 })
         
-        # Calcular totais dos créditos
         valor_total_final = float(faturamento.valor_total / 100) if faturamento.valor_total else 0.0
         valor_bruto_total = float(faturamento.valor_bruto_total / 100) if faturamento.valor_bruto_total else valor_total_final
         
-        # Calcular totais por tipo de crédito
         total_creditos_fornecedores = sum(c['valor_credito'] for c in creditos_fornecedores_processados)
         total_creditos_transportadoras = sum(c['valor_credito'] for c in creditos_transportadoras_processados)
         total_creditos_extratores = sum(c['valor_credito'] for c in creditos_extratores_processados)
         
         valor_credito_total = total_creditos_fornecedores + total_creditos_transportadoras + total_creditos_extratores
 
-        # Montar resposta JSON específica para Adiantamentos de Créditos
         dados = {
             'categorizacao_id': agendamento.id,
             'faturamento': {
@@ -313,7 +284,6 @@ def detalhes_categorizacao_faturamento_receita_avulsa_json(id):
         return jsonify(dados)
         
     except Exception as e:
-        print(f"[ERRO] Erro ao buscar detalhes da categorização: {e}")
         return jsonify({'error': 'Erro interno do servidor. Tente novamente.'}), 500
 
 @app.route('/financeiro/operacional/receitas-avulsas/exportar-pdf/<int:faturamento_id>', methods=['GET','POST'])
@@ -322,39 +292,30 @@ def detalhes_categorizacao_faturamento_receita_avulsa_json(id):
 def exportar_receita_avulsa_pdf(faturamento_id):
     """Gera PDF do faturamento de receitas avulsas"""
     try:
-        # Buscar faturamento
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
-        # Verificar se é um faturamento de Adiantamentos de Créditos
         if faturamento.tipo_operacao != 2 or faturamento.direcao_financeira != 1:
             flash(("Este não é um faturamento de receitas avulsas.", "error"))
             return redirect(url_for("listagem_faturamentos_receitas_avulsas"))
         
-        # Processar dados do faturamento
         dados_processados = processar_dados_faturamento(faturamento)
         
-        # Dados adicionais para o template
         dados_extras = {
             'logo_path': obter_url_absoluta_de_imagem("logo.png"),
             'data_geracao': datetime.now().strftime('%d/%m/%Y %H:%M'),
             'usuario_geracao': current_user.nome if hasattr(current_user, 'nome') else 'Sistema'
         }
         
-        # Combinar todos os dados
         dados_template = {**dados_processados, **dados_extras}
         
-        # Renderizar template HTML específico para receitas avulsas
         html = render_template('financeiro/operacional/receitas/relatorio_faturamento/relatorio_faturamento.html', **dados_template)
 
-        # Gerar nome do arquivo
         codigo_fat = faturamento.codigo_faturamento
         nome_arquivo = f"receita_avulsa_{codigo_fat}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Gerar PDF
         return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo, orientacao="Portrait", abrir_em_nova_aba=True)
         
     except Exception as e:
-        print(f"[ERROR exportar_receita_avulsa_pdf] {e}")
         flash((f"Erro ao gerar PDF das receitas avulsas! Contate o suporte. {e}", "error"))
         return redirect(url_for("listagem_faturamentos_receitas_avulsas"))
 
@@ -365,39 +326,30 @@ def exportar_receita_avulsa_pdf(faturamento_id):
 def exportar_receita_avulsa_imagem(faturamento_id):
     """Gera imagem JPG do faturamento de receitas avulsas"""
     try:
-        # Buscar faturamento
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
-        # Verificar se é um faturamento de receitas avulsas
         if faturamento.tipo_operacao != 2 or faturamento.direcao_financeira != 1:
             flash(("Este não é um faturamento de receitas avulsas.", "error"))
             return redirect(url_for("listagem_faturamentos_receitas_avulsas"))
         
-        # Processar dados do faturamento
         dados_processados = processar_dados_faturamento(faturamento)
         
-        # Dados adicionais para o template
         dados_extras = {
             'logo_path': obter_url_absoluta_de_imagem("logo.png"),
             'data_geracao': datetime.now().strftime('%d/%m/%Y %H:%M'),
             'usuario_geracao': current_user.nome if hasattr(current_user, 'nome') else 'Sistema'
         }
         
-        # Combinar todos os dados
         dados_template = {**dados_processados, **dados_extras}
 
-        # Renderizar template HTML específico para Adiantamentos de Créditos (versão imagem)
         html = render_template('financeiro/operacional/receitas/relatorio_faturamento/relatorio_faturamento_imagem.html', **dados_template)
 
-        # Gerar nome do arquivo
         codigo_fat = faturamento.codigo_faturamento
         nome_arquivo = f"receita_avulsa_{codigo_fat}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Gerar IMAGEM
         return ManipulacaoArquivos.gerar_imagem_from_html(html, nome_arquivo, largura=1400, altura=1400)
         
     except Exception as e:
-        print(f"[ERROR exportar_receita_avulsa_imagem] {e}")
         flash((f"Erro ao gerar imagem das receitas avulsas! Contate o suporte. {e}", "error"))
         return redirect(url_for("listagem_faturamentos_receitas_avulsas"))
 
@@ -405,7 +357,6 @@ def exportar_receita_avulsa_imagem(faturamento_id):
 def processar_dados_faturamento(faturamento):
     """Processa dados do faturamento de receitas avulsas para uso nos templates"""
     
-    # Dados básicos do faturamento
     dados = {
         'faturamento': {
             'id': faturamento.id,
@@ -420,11 +371,9 @@ def processar_dados_faturamento(faturamento):
         }
     }
     
-    # Processar receitas avulsas
     receitas_processadas = []
     
     if faturamento.lancamento_avulso:
-        # Formatar valor
         valor_centavos = faturamento.lancamento_avulso.valor_movimentacao_100 or 0
         valor_reais = valor_centavos / 100 if valor_centavos else 0.0
         valor_formatado = f"R$ {valor_reais:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -444,7 +393,6 @@ def processar_dados_faturamento(faturamento):
     dados['receitas_avulsas'] = receitas_processadas
     dados['total_receitas_avulsas'] = len(receitas_processadas)
     
-    # Não há outros tipos de dados em receitas avulsas
     dados['fornecedores'] = {}
     dados['total_fornecedores'] = 0
     dados['transportadoras'] = {}
@@ -467,7 +415,6 @@ def agrupar_creditos_fornecedores_pdf(creditos_fornecedores):
         valor_centavos = credito.get('valor_credito_100', 0)
         valor_reais = valor_centavos / 100 if valor_centavos else 0.0
         
-        # Preparar dados do crédito
         credito_formatado = {
             'fornecedor_id': credito.get('fornecedor_id', 'N/A'),
             'fornecedor_identificacao': nome,
@@ -483,7 +430,6 @@ def agrupar_creditos_fornecedores_pdf(creditos_fornecedores):
         grupos[nome]['registros'].append(credito_formatado)
         grupos[nome]['total'] += valor_reais
     
-    # Formatar total de cada grupo
     for grupo in grupos.values():
         grupo['total_formatado'] = f"R$ {grupo['total']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     
@@ -500,7 +446,6 @@ def agrupar_creditos_transportadoras_pdf(creditos_transportadoras):
         valor_centavos = credito.get('valor_credito_100', 0)
         valor_reais = valor_centavos / 100 if valor_centavos else 0.0
         
-        # Preparar dados do crédito
         credito_formatado = {
             'transportadora_id': credito.get('transportadora_id', 'N/A'),
             'transportadora_identificacao': nome,
@@ -516,7 +461,6 @@ def agrupar_creditos_transportadoras_pdf(creditos_transportadoras):
         grupos[nome]['registros'].append(credito_formatado)
         grupos[nome]['total'] += valor_reais
     
-    # Formatar total de cada grupo
     for grupo in grupos.values():
         grupo['total_formatado'] = f"R$ {grupo['total']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     
@@ -533,7 +477,6 @@ def agrupar_creditos_extratores_pdf(creditos_extratores):
         valor_centavos = credito.get('valor_credito_100', 0)
         valor_reais = valor_centavos / 100 if valor_centavos else 0.0
         
-        # Preparar dados do crédito
         credito_formatado = {
             'extrator_id': credito.get('extrator_id', 'N/A'),
             'extrator_identificacao': nome,
@@ -549,7 +492,6 @@ def agrupar_creditos_extratores_pdf(creditos_extratores):
         grupos[nome]['registros'].append(credito_formatado)
         grupos[nome]['total'] += valor_reais
     
-    # Formatar total de cada grupo
     for grupo in grupos.values():
         grupo['total_formatado'] = f"R$ {grupo['total']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     

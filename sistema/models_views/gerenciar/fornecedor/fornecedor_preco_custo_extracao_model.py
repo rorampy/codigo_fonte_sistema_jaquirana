@@ -13,7 +13,7 @@ class FornecedorPrecoCustoExtracaoModel(BaseModel):
     produto = db.relationship('ProdutoModel', backref='produto_custo_extracao_fornecedor', lazy=True)
     bitola_id = db.Column(db.Integer, db.ForeignKey('z_sys_bitola.id'), nullable=False)
     bitola = db.relationship('BitolaModel', backref='bitola_custo_extracao_fornecedor', lazy=True)
-    custo_extracao_100 = db.Column(db.Integer, nullable=True)  # Custo de extração por 100 em centavos
+    custo_extracao_100 = db.Column(db.Integer, nullable=True)
 
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
@@ -86,13 +86,11 @@ class FornecedorPrecoCustoExtracaoModel(BaseModel):
         )
         
         if registro:
-            # Atualiza registro existente
             if custo_extracao_100 is not None:
                 registro.custo_extracao_100 = custo_extracao_100
             if extrator_id is not None:
                 registro.extrator_id = extrator_id
         else:
-            # Cria novo registro
             registro = FornecedorPrecoCustoExtracaoModel(
                 extrator_id=extrator_id,
                 fornecedor_id=fornecedor_id,

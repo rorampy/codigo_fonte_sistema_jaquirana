@@ -12,7 +12,7 @@
         </div>
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="d-flex gap-2">
-            <!-- Botões de Exportação -->
+            
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-exportar-excel">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -79,7 +79,7 @@
               selectattr('registro.peso_ton_nf') | list %}
 
               {% if registros_filtrados|length > 0 %}
-              {# captura índice do cliente #}
+              
               {% set clienteId = loop.index %}
               <div class="accordion-item">
                 <h2 class="accordion-header" id="heading-cliente-{{ clienteId }}">
@@ -96,7 +96,7 @@
 
                     {% for produto_group in
                     registros_filtrados|groupby('produto') %}
-                    {# captura índice do produto e gera groupId único #}
+                    
                     {% set produtoId = loop.index %}
                     {% set groupId = clienteId ~ 'p' ~ produtoId %}
 
@@ -334,7 +334,6 @@
     </div>
   </div>
 
-  <!-- Modal para upload de arquivo PDF -->
   <div class="modal modal-blur fade" id="modal-upload-pdf" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
       <form method="POST" action="{{ url_for('emitir_nfs_complementares_em_massa') }}" enctype="multipart/form-data"
@@ -347,10 +346,9 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <!-- Campo para IDs dos registros selecionados -->
+            
             <div id="registros-selecionados-container"></div>
             
-            <!-- Campo hidden para ID do cliente (será preenchido automaticamente) -->
             <input type="hidden" name="cliente_id_auto" id="cliente_id_auto">
 
             <div class="row">
@@ -417,7 +415,6 @@
     </div>
   </div>
 
-  <!-- Modal para Exportar Excel -->
   <div class="modal modal-blur fade" id="modal-exportar-excel" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <form method="POST" action="{{ url_for('exportar_nf_complementar_listagem_excel') }}">
@@ -466,7 +463,6 @@
     </div>
   </div>
 
-  <!-- Modal para Exportar PDF -->
   <div class="modal modal-blur fade" id="modal-exportar-pdf" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <form method="POST" action="{{ url_for('exportar_nf_complementar_listagem_pdf') }}">
@@ -537,7 +533,6 @@
       const svgError = `<svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-red icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v2m0 4v.01"/><path d="M5 19h14a2 2 0 0 0 1.84-2.75l-7.1-12.25a2 2 0 0 0-3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>`;
       const spinner = `<span class="spinner-border spinner-border-sm" role="status"></span>`;
 
-      // === Funções de Modal (igual ao seu código) ===
       function criarModal(status, icone, titulo, msg) {
         const id = 'mod-' + Date.now();
         const html = `
@@ -624,7 +619,6 @@
           .catch(() => null);
       }
 
-      // === Soma de diffs por grupo ===
       function updateGroupTotal(group) {
         const checkboxes = Array.from(
           document.querySelectorAll(`.registro-checkbox[data-group="${group}"]:checked`)
@@ -640,7 +634,7 @@
         
         const totalValorElement = document.getElementById(`totalValor-${group}`);
         if (totalValorElement) {
-          // Divide por 100 e formata como moeda BRL
+          
           const valorFormatado = (totalValor / 100).toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL'
@@ -649,22 +643,19 @@
         }
       }
 
-      // === Atualizar todos os totais ===
       function updateAllTotals() {
-        // Buscar todos os elementos de total e atualizar
+        
         document.querySelectorAll('[id^="totalDiff-"]').forEach(element => {
           const groupId = element.id.replace('totalDiff-', '');
           updateGroupTotal(groupId);
         });
       }
 
-      // === Delegação de eventos para checkboxes e select-all ===
       document.body.addEventListener('change', e => {
         if (e.target.matches('.registro-checkbox')) {
           const cliente = e.target.dataset.cliente;
           const group = e.target.dataset.group;
 
-          // Se este checkbox foi marcado, desmarcar todos de outros clientes
           if (e.target.checked) {
             document.querySelectorAll('.registro-checkbox').forEach(cb => {
               if (cb.dataset.cliente !== cliente && cb.checked) {
@@ -672,7 +663,6 @@
               }
             });
 
-            // Desmarcar select-all de outros clientes
             document.querySelectorAll('.select-all-cliente').forEach(cb => {
               if (cb.dataset.cliente !== cliente) {
                 cb.checked = false;
@@ -680,13 +670,11 @@
             });
           }
 
-          // Atualizar total do grupo atual
           if (group) {
             updateGroupTotal(group);
           }
           updateAllTotals();
 
-          // Atualizar estado do select-all do cliente atual
           const clienteCheckboxes = document.querySelectorAll(`.registro-checkbox[data-cliente="${cliente}"]:not(:disabled)`);
           const clienteCheckedBoxes = document.querySelectorAll(`.registro-checkbox[data-cliente="${cliente}"]:checked`);
           const selectAllCliente = document.querySelector(`.select-all-cliente[data-cliente="${cliente}"]`);
@@ -699,7 +687,6 @@
         if (e.target.matches('.select-all-cliente')) {
           const cliente = e.target.dataset.cliente;
 
-          // Se marcando select-all, desmarcar todos de outros clientes primeiro
           if (e.target.checked) {
             document.querySelectorAll('.registro-checkbox').forEach(cb => {
               if (cb.dataset.cliente !== cliente) {
@@ -714,7 +701,6 @@
             });
           }
 
-          // Marcar/desmarcar todos do cliente atual
           document.querySelectorAll(`.registro-checkbox[data-cliente="${cliente}"]`)
             .forEach(cb => { if (!cb.disabled) cb.checked = e.target.checked; });
 
@@ -722,7 +708,6 @@
         }
       });
 
-      // === Emissão em massa ===
       document.getElementById('btn-emitir-massa').addEventListener('click', async function () {
 
         const sel = Array.from(document.querySelectorAll('.registro-checkbox:checked'));
@@ -731,16 +716,14 @@
           return;
         }
 
-        // Verificar se todas as NFs selecionadas são do mesmo cliente
         const clientes = [...new Set(sel.map(cb => cb.dataset.cliente))];
         if (clientes.length > 1) {
           mostrarMensagem('warning', 'Todas as NFs selecionadas devem ser do mesmo cliente.');
           return;
         }
 
-        // Preencher container com inputs hidden dos IDs selecionados
         const container = document.getElementById('registros-selecionados-container');
-        container.innerHTML = ''; // Limpar inputs anteriores
+        container.innerHTML = ''; 
 
         let pesoTotalSelecionado = 0;
         let clienteIdSelecionado = null;
@@ -752,50 +735,42 @@
           input.value = checkbox.dataset.id;
           container.appendChild(input);
 
-          // Capturar o ID do cliente (todos são do mesmo cliente já validado)
           if (!clienteIdSelecionado) {
             clienteIdSelecionado = checkbox.getAttribute('data-cliente-id');
           }
 
-          // Somar peso dos registros selecionados (sempre positivo)
           const peso = Math.abs(parseFloat(checkbox.dataset.peso || 0));
           pesoTotalSelecionado += peso;
         });
 
-        // Atualizar campos do resumo
         document.getElementById('total-registros-selecionados').textContent = sel.length;
         document.getElementById('peso-total-selecionado').textContent = pesoTotalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('peso_total_hidden').value = pesoTotalSelecionado;
 
-        // Pré-selecionar o cliente automaticamente usando o ID
         const selectCliente = document.getElementById('cliente_id');
         document.getElementById('cliente_id_auto').value = clienteIdSelecionado;
         
         if (clienteIdSelecionado) {
           selectCliente.value = clienteIdSelecionado;
-          // Se estiver usando TomSelect, atualizar a instância
+          
           const tomSelectInstance = selectCliente.tomselect;
           if (tomSelectInstance) {
             tomSelectInstance.setValue(clienteIdSelecionado);
           }
         }
 
-        // Limpar arquivo
         document.getElementById('input-arquivo-pdf').value = '';
         document.getElementById('input-arquivo-pdf').classList.remove('is-invalid');
 
-        // Mostrar modal de upload
         const modalUpload = new bootstrap.Modal(document.getElementById('modal-upload-pdf'));
         modalUpload.show();
       });
 
-      // === Validação do formulário antes de enviar ===
       document.getElementById('form-emitir-nfs').addEventListener('submit', function (e) {
         const clienteSelect = document.getElementById('cliente_id');
         const arquivoInput = document.getElementById('input-arquivo-pdf');
         let valid = true;
 
-        // Validar cliente
         if (!clienteSelect.value) {
           valid = false;
           clienteSelect.classList.add('is-invalid');
@@ -804,7 +779,6 @@
           clienteSelect.classList.remove('is-invalid');
         }
 
-        // Validar arquivo
         if (!arquivoInput.files[0]) {
           valid = false;
           arquivoInput.classList.add('is-invalid');
@@ -816,7 +790,7 @@
           document.getElementById('erro-arquivo-pdf').textContent = 'Por favor, selecione apenas arquivos PDF.';
           mostrarMensagem('warning', 'O arquivo deve ser um PDF válido.');
         } else {
-          const tamanhoMaximo = 10 * 1024 * 1024; // 10MB
+          const tamanhoMaximo = 10 * 1024 * 1024; 
           if (arquivoInput.files[0].size > tamanhoMaximo) {
             valid = false;
             arquivoInput.classList.add('is-invalid');
@@ -828,28 +802,25 @@
         }
 
         if (!valid) {
-          e.preventDefault(); // Impedir envio do formulário
+          e.preventDefault(); 
         } else {
-          // Se válido, desabilitar botão para evitar duplo envio
+          
           const btnSubmit = document.getElementById('btn-confirmar-emissao');
           btnSubmit.disabled = true;
           btnSubmit.innerHTML = spinner + ' Processando...';
         }
       });
 
-      // === Limpar validação quando arquivo for selecionado ===
       document.getElementById('input-arquivo-pdf').addEventListener('change', function () {
         if (this.files.length > 0) {
           this.classList.remove('is-invalid');
         }
       });
 
-      // === Tooltips do Bootstrap ===
       document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el =>
         new bootstrap.Tooltip(el, { trigger: 'hover focus', html: true })
       );
       
-      // === Inicializar TomSelect para modais de exportação ===
       new TomSelect('#clienteExportExcel', {
         create: false,
         allowEmptyOption: true,

@@ -1,4 +1,4 @@
-<!-- Modal para Reverter Conciliação -->
+
 <div class="modal modal-blur fade" id="modalReverterConciliacao" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
@@ -10,7 +10,7 @@
       </div>
 
       <div class="modal-body">
-        <!-- Carregando -->
+        
         <div id="reverterCarregando" class="text-center py-4">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Carregando...</span>
@@ -18,9 +18,8 @@
           <p class="mt-2">Carregando detalhes da conciliação...</p>
         </div>
 
-        <!-- Conteúdo do Modal -->
         <div id="reverterConteudo" style="display: none;">
-          <!-- Resumo da Operação -->
+          
           <div class="card mb-3">
             <div class="card-header">
               <h3 class="card-title">
@@ -29,7 +28,7 @@
             </div>
             <div class="card-body">
               <div class="row">
-                <!-- Informações da Transação -->
+                
                 <div class="col-md-12">
                   <h4 class="text-primary mb-3">
                     Transação OFX
@@ -54,7 +53,6 @@
                   </table>
                 </div>
 
-                <!-- Detalhes da Conciliação -->
                 <div class="col-md-6 d-none">
                   <h4 class="text-warning mb-3">
                     Conciliação Atual
@@ -80,7 +78,6 @@
             </div>
           </div>
 
-          <!-- Agendamentos Vinculados -->
           <div id="reverterAgendamentosContainer" class="card mb-3" style="display: none;">
             <div class="card-header">
               <h3 class="card-title">
@@ -99,14 +96,13 @@
                     </tr>
                   </thead>
                   <tbody id="reverterAgendamentosList">
-                    <!-- Agendamentos serão inseridos aqui via JavaScript -->
+                    
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
 
-          <!-- Movimentações Vinculadas -->
           <div id="reverterMovimentacoesContainer" class="card mb-3" style="display: none;">
             <div class="card-header">
               <h3 class="card-title">
@@ -124,14 +120,13 @@
                     </tr>
                   </thead>
                   <tbody id="reverterMovimentacoesList">
-                    <!-- Movimentações serão inseridas aqui via JavaScript -->
+                    
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
 
-          <!-- Aviso de Consequências -->
           <div class="alert alert-warning">
             <h4 class="alert-heading">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -152,7 +147,6 @@
             </ul>
           </div>
 
-          <!-- Confirmação -->
           <div class="form-check p-3 bg-light rounded">
             <div class="d-flex justify-content-end">
               <input class="form-check-input mr-2" type="checkbox" id="confirmarReversao">
@@ -163,7 +157,6 @@
           </div>
         </div>
 
-        <!-- Erro -->
         <div id="reverterErro" style="display: none;" class="alert alert-danger">
           <h4 class="alert-heading">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -204,7 +197,6 @@
   </div>
 </div>
 
-<!-- Modal de Sucesso -->
 <div class="modal modal-blur fade" id="modal-reversao-sucesso" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -236,7 +228,6 @@
   </div>
 </div>
 
-<!-- Modal de Erro -->
 <div class="modal modal-blur fade" id="modal-reversao-erro" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
     <div class="modal-content">

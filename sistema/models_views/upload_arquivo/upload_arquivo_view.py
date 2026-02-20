@@ -20,31 +20,26 @@ def upload_arquivo(arquivo, pasta_destino, nome_referencia=""):
     - ID do arquivo salvo no banco, ou None se não houver upload.
     """
     if not arquivo or not arquivo.filename:
-        return None  # Retorna None se nenhum arquivo foi enviado
+        return None
     
     if nome_referencia == "":
         nome_referencia = ''.join(random.choices(string.ascii_uppercase, k=6))
 
-    # Gera um nome seguro e único para o arquivo
     nome_arquivo = f'{DataHora.obter_data_atual_padrao_en()}_{nome_referencia}_{arquivo.filename}'
     filename = secure_filename(nome_arquivo)
 
-    # Define o caminho completo onde o arquivo será salvo
     file_path = os.path.join(app.config[f'{pasta_destino}'], filename)
 
-    # Salva o arquivo no caminho especificado
     arquivo.save(file_path)
 
-    # Obtém extensão e tamanho do arquivo
     extensao = os.path.splitext(arquivo.filename)[1]
     tamanho = os.path.getsize(file_path)
 
-    # Salva informações do arquivo no banco de dados
     arquivo_model = UploadArquivoModel(filename, file_path, extensao, tamanho)
     db.session.add(arquivo_model)
     db.session.commit()
 
-    return arquivo_model  # Retorna o objeto do arquivo salvo
+    return arquivo_model
 
 @app.route('/upload-banner-portal', methods=['POST'])
 def upload_banner_portal():
@@ -54,32 +49,24 @@ def upload_banner_portal():
 
     for file in files:
         if file.filename == '':
-            continue  # Ignora arquivos sem nome
+            continue
         
         if file and UploadArquivoModel.validar_extensao_imagem(file.filename):
             
             numero_aleatorio = random.randint(1,99)
             
-            # montando o nome do arquivo com outros atributos para evitar arquivo com mesmo nome
             nome_arquivo = f'{str(DataHora.obter_data_atual_padrao_en())}_{numero_aleatorio}_{file.filename}'
                 
-            # Obtém o nome seguro do arquivo (evita problemas de segurança)
             filename = secure_filename(nome_arquivo)
                 
-            # Junta o caminho da pasta de destino com o nome seguro do arquivo
             file_path = os.path.join(app.config['UPLOAD_BANNERS'], filename)
                 
-            # Salva o arquivo no caminho especificado
             file.save(file_path)
                     
-            # Obtém a extensão do arquivo usando a função splitext 
-            # Se quiser pegar sem ponto add [1:] após [1]
             extensao = os.path.splitext(file.filename)[1]
                     
-            # Obtém o tamanho do arquivo (em bytes) usando a função getsize    
             tamanho = os.path.getsize(file_path) 
                     
-            # armazenando o arquivo no banco
             arquivo = UploadArquivoModel(filename, file_path, extensao, tamanho)
             db.session.add(arquivo)
             db.session.commit()

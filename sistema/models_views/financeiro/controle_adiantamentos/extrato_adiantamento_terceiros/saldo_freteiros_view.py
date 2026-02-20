@@ -16,7 +16,6 @@ from sistema.models_views.configuracoes_gerais.categorizacao_fiscal.categorizaca
 from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
 from sistema._utilitarios import *
 
-# === Nova Arquitetura de Créditos ===
 from sistema.models_views.financeiro.controle_adiantamentos.servico_creditos import ServicoCreditos
 from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import (
     TransacaoCreditoModel, TipoTransacaoCredito, TipoPessoa
@@ -44,7 +43,6 @@ def saldo_freteiros():
     else:
         transportadoras = TransportadoraModel.listar_transportadoras()
 
-    # === Usando nova arquitetura via ServicoCreditos ===
     for t in transportadoras:
         t.valor_credito_100 = ServicoCreditos.obter_saldo_transportadora(t.id)
 
@@ -58,7 +56,6 @@ def saldo_freteiros():
 @login_required
 @requires_roles
 def extrato_freteiro(id):
-    # === Usando nova arquitetura via ServicoCreditos ===
     extrato = ServicoCreditos.obter_historico_transportadora(id)
     transportadora = TransportadoraModel.obter_transportadora_por_id(id)
 
@@ -92,7 +89,6 @@ def lancar_credito_freteiro(id):
             return redirect(url_for("saldo_freteiros"))
         
         contas_bancarias = ContaBancariaModel.obter_contas_bancarias_ativas()
-        # === Usando nova arquitetura via ServicoCreditos ===
         saldo_credito_valor = ServicoCreditos.obter_saldo_transportadora(transportadora.id)
 
         if request.method == 'POST':
@@ -119,14 +115,12 @@ def lancar_credito_freteiro(id):
 
                 valor_credito_formatado = int(ValoresMonetarios.converter_string_brl_para_float(valor_credito) * 100)
                 
-                # Se o tipo for negativo, aplicar o sinal negativo ao valor
                 if tipo_valor == "negativo":
                     valor_credito_formatado = -1 * valor_credito_formatado
 
-                # === Usar ServicoCreditos para lançamento (compatível com legado e novo) ===
                 resultado_lancamento = ServicoCreditos.lancar_credito_transportadora(
                     transportadora_id=transportadora.id,
-                    valor_100=valor_credito_formatado,  # Mantém o sinal (positivo ou negativo)
+                    valor_100=valor_credito_formatado,
                     descricao=descricao,
                     usuario_id=current_user.id,
                     data_movimentacao=datetime.strptime(data_movimentacao, '%Y-%m-%d').date() if isinstance(data_movimentacao, str) else data_movimentacao,
@@ -134,22 +128,20 @@ def lancar_credito_freteiro(id):
                     conta_bancaria_id=int(contaBancaria) if contaBancaria else None,
                 )
 
-                # Registrar pontuação de cadastro
                 acao = TipoAcaoEnum.CADASTRO
                 PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                     current_user.id, acao, acao.pontos, modulo="lancamento_credito_freteiro"
                 )
 
                 valor_faturamento = abs(valor_credito_formatado)
-                # Determinar tipo de operação e direção baseado no tipo de valor
                 if tipo_valor == "positivo":
-                    tipo_operacao = 3  # Crédito
-                    direcao_financeira = 2  # Despesa (empresa paga crédito ao freteiro)
+                    tipo_operacao = 3
+                    direcao_financeira = 2
                     valor_despesa = valor_faturamento
                     valor_receita = 0
-                else:  # tipo_valor == "negativo" - Débito (freteiro deve para MBR)
-                    tipo_operacao = 4  # Débito
-                    direcao_financeira = 1  # Receita (freteiro deve à empresa)
+                else:
+                    tipo_operacao = 4
+                    direcao_financeira = 1
                     valor_despesa = 0
                     valor_receita = valor_faturamento
                 
@@ -162,13 +154,12 @@ def lancar_credito_freteiro(id):
                     codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
                     tipo_operacao=tipo_operacao,
                     direcao_financeira=direcao_financeira,
-                    situacao_pagamento_id=7, # A categorizar
+                    situacao_pagamento_id=7,
                 )
 
                 db.session.add(faturamento)
                 db.session.flush()
                 
-                # === Atualizar faturamento_origem_id na transação de crédito ===
                 transacao_nova_id = resultado_lancamento.get('novo_id')
                 if transacao_nova_id:
                     transacao = TransacaoCreditoModel.query.get(transacao_nova_id)
@@ -177,7 +168,6 @@ def lancar_credito_freteiro(id):
 
                 conta_identificacao = ContaBancariaModel.obter_conta_por_id(contaBancaria)
                 
-                # === Registrar vínculo na nova arquitetura ===
                 extrato_legado_id = resultado_lancamento.get('legado_id')
                 
                 detalhes_credito_transportadora = [{
@@ -211,7 +201,6 @@ def lancar_credito_freteiro(id):
                 return redirect(url_for("saldo_freteiros"))
 
     except Exception as e:
-        print(e)
         flash(('Houve um erro ao tentar cadastrar crédito para o freteiro! Entre em contato com o suporte.', 'warning'))
         return redirect(url_for('saldo_freteiros'))
     return render_template(
@@ -253,7 +242,6 @@ def excluir_credito_freteiro(credito_id):
         return redirect(url_for("saldo_freteiros"))
         
     except Exception as e:
-        print(f"[ERRO excluir_credito_freteiro]: {e}")
         flash(("Erro ao excluir crédito. Entre em contato com o suporte.", "danger"))
         return redirect(url_for("saldo_freteiros"))
 
@@ -271,19 +259,16 @@ def editar_credito_freteiro(credito_id):
     validacao_campos_erros = {}
     
     try:
-        # Buscar crédito
         credito = TransacaoCreditoModel.query.get(credito_id)
         if not credito:
             flash(("Crédito não encontrado!", "warning"))
             return redirect(url_for("saldo_freteiros"))
         
-        # Buscar transportadora
         transportadora = TransportadoraModel.obter_transportadora_por_id(credito.transportadora_id)
         if not transportadora:
             flash(("Freteiro não encontrado!", "warning"))
             return redirect(url_for("saldo_freteiros"))
         
-        # Verificar se pode editar
         if credito.valor_utilizado_100 and credito.valor_utilizado_100 > 0:
             flash(("Este crédito já foi utilizado e não pode ser editado!", "warning"))
             return redirect(url_for("extrato_freteiro", id=transportadora.id))
@@ -301,14 +286,12 @@ def editar_credito_freteiro(credito_id):
                 dados_corretos={},
             )
         
-        # POST: Processar edição
         valor_credito = request.form.get("valor_credito")
         descricao = request.form.get("descricao")
         data_movimentacao = request.form.get("data_movimentacao")
         transportadora_id = request.form.get("transportadora_id")
         tipo_valor = request.form.get("tipo_valor", "positivo")
         
-        # Validação de campos obrigatórios
         campos = {
             "data_movimentacao": ["Data movimentação", data_movimentacao],
             "valor_credito": ["Valor", valor_credito],
@@ -329,17 +312,14 @@ def editar_credito_freteiro(credito_id):
                 dados_corretos=request.form,
             )
         
-        # Converter valor de BRL para centavos
         valor_100 = None
         if valor_credito:
             valor_100 = int(ValoresMonetarios.converter_string_brl_para_float(valor_credito) * 100)
-            # Aplicar sinal negativo se tipo for negativo
             if tipo_valor == "negativo":
                 valor_100 = -abs(valor_100)
             else:
                 valor_100 = abs(valor_100)
         
-        # Converter data
         data_mov = None
         if data_movimentacao:
             data_mov = datetime.strptime(data_movimentacao, '%Y-%m-%d').date()
@@ -356,7 +336,6 @@ def editar_credito_freteiro(credito_id):
         if resultado['sucesso']:
             flash((resultado['mensagem'], "success"))
             
-            # Registrar pontuação de edição
             try:
                 PontuacaoUsuarioModel.registrar_acao(
                     usuario_id=current_user.id,
@@ -365,7 +344,7 @@ def editar_credito_freteiro(credito_id):
                     descricao=f"Edição de lançamento de crédito ID {credito_id}"
                 )
             except:
-                pass  # Não falhar se pontuação der erro
+                pass
         else:
             flash((resultado['mensagem'], "warning"))
         
@@ -374,7 +353,6 @@ def editar_credito_freteiro(credito_id):
         return redirect(url_for("saldo_freteiros"))
         
     except Exception as e:
-        print(f"[ERRO editar_credito_freteiro]: {e}")
         import traceback
         traceback.print_exc()
         flash(("Erro ao editar crédito. Entre em contato com o suporte.", "danger"))

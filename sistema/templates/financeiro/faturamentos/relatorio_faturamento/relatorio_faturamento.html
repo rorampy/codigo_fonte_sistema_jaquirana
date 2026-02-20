@@ -289,7 +289,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table>
       <tr>
@@ -306,7 +306,6 @@
 
   <div class="relatorio-title">Relatório de Faturamento</div>
 
-  <!-- Dados do Faturamento -->
   <div class="section-title">DADOS DO FATURAMENTO</div>
   <div class="">
     <span class="mr-1"><strong style="color: #155724;">Código:</strong> {{ faturamento.codigo_faturamento }}</span>
@@ -316,19 +315,15 @@
     {% endif %}
   </div>
 
-
-  <!-- Dados agrupados por Cliente e Produto -->
   {% if clientes %}
   {% for cliente_data in clientes %}
 
   {% for produto_data in cliente_data.produtos %}
 
-  <!-- Título do Cliente e Produto na mesma linha -->
   <div class="section-title">
     Cliente: {{ cliente_data.cliente }} | Produto: {{ produto_data.produto }}
   </div>
 
-  <!-- Fornecedores deste Cliente/Produto -->
   {% if produto_data.registros.fornecedores %}
   <div>
     {% set fornecedores_agrupados = {} %}
@@ -387,7 +382,6 @@
   </div>
   {% endif %}
 
-  <!-- Transportadoras deste Cliente/Produto -->
   {% if produto_data.registros.transportadoras %}
   <div>
     {% set transportadoras_agrupadas = {} %}
@@ -449,7 +443,6 @@
   </div>
   {% endif %}
 
-  <!-- Extratores deste Cliente/Produto -->
   {% if produto_data.registros.extratores %}
   <div>
     {% set extratores_agrupados = {} %}
@@ -510,7 +503,6 @@
   </div>
   {% endif %}
 
-  <!-- Comissionados deste Cliente/Produto -->
   {% if produto_data.registros.comissionados %}
   <div>
     {% set comissionados_agrupados = {} %}
@@ -571,7 +563,6 @@
   </div>
   {% endif %}
 
-  <!-- Cargas a Receber deste Cliente/Produto -->
   {% if produto_data.registros.cargas_a_receber %}
   <div>
     <h4 style="color: #1c5f20; margin: 10px 0;">Cargas a Receber</h4>
@@ -610,7 +601,6 @@
   {% endfor %}
   {% endif %}
 
-  <!-- Créditos Utilizados -->
   {% if faturamento.utilizou_credito and creditos_utilizados %}
   <div class="section-title">ADIANTAMENTOS UTILIZADOS</div>
   <table>
@@ -648,9 +638,6 @@
     </tbody>
   </table>
   {% endif %}
-
-
-  <!-- Total Geral -->
 
   <div class="section-title">RESUMO FINAL DO FATURAMENTO</div>
   <table>
@@ -703,7 +690,6 @@
         <td class="valor-destaque">{{ "%.2f"|format(totais.total_toneladas if totais.total_toneladas else 0) }} Ton</td>
       </tr>
 
-
       {% if faturamento.valor_credito_aplicado > 0 %}
       <tr>
         <td>Adiantamento Aplicado</td>
@@ -719,14 +705,12 @@
     </tbody>
   </table>
 
-  <!-- Listagem de adiantamentos creditos em aberto para as entidades vinculadas ao faturamento -->
   <div class="section-title">{% if not creditos_em_aberto or not (creditos_em_aberto.fornecedores or creditos_em_aberto.transportadoras or
   creditos_em_aberto.extratores or creditos_em_aberto.comissionados) %} NENHUM ADIANTAMENTO {%else%} ADIANTAMENTOS {%endif%}EM ABERTO</div>
 
   {% if creditos_em_aberto and (creditos_em_aberto.fornecedores or creditos_em_aberto.transportadoras or
   creditos_em_aberto.extratores or creditos_em_aberto.comissionados) %}
 
-  <!-- Fornecedores com crédito em aberto -->
   {% if creditos_em_aberto.fornecedores %}
   <div style="margin: 20px 0;">
     <h4 style="color: #1c5f20; margin: 10px 0; font-size: 14px;">Fornecedores</h4>
@@ -758,7 +742,6 @@
   </div>
   {% endif %}
 
-  <!-- Transportadoras com crédito em aberto -->
   {% if creditos_em_aberto.transportadoras %}
   <div style="margin: 20px 0;">
     <h4 style="color: #1c5f20; margin: 10px 0; font-size: 14px;">Transportadoras</h4>
@@ -787,7 +770,7 @@
       </tbody>
     </table>
   </div>
-  {% endif %} <!-- Extratores com crédito em aberto -->
+  {% endif %} 
   {% if creditos_em_aberto.extratores %}
   <div style="margin: 20px 0;">
     <h4 style="color: #1c5f20; margin: 10px 0; font-size: 14px;">Extratores</h4>
@@ -819,7 +802,6 @@
   </div>
   {% endif %}
 
-  <!-- Comissionados com crédito em aberto -->
   {% if creditos_em_aberto.comissionados %}
   <div style="margin: 20px 0;">
     <h4 style="color: #1c5f20; margin: 10px 0; font-size: 14px;">Comissionados</h4>
@@ -851,7 +833,6 @@
   </div>
   {% endif %}
 
-  <!-- Total geral de créditos em aberto -->
   <div style="margin: 20px 0;">
     <table>
       <tr class="total-principal">
@@ -866,7 +847,7 @@
     </table>
   </div>
   {% else %}
-  <!-- Mensagem quando não há adiantamentos em aberto -->
+  
   <div class="oculto"
     style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; text-align: center;">
     <p style="margin: 0; color: #6c757d; font-style: italic; font-size: 13px;">

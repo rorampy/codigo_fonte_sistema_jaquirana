@@ -31,12 +31,10 @@ class ComissionadoPagarModel(BaseModel):
 
     utiliza_credito = db.Column(db.Boolean, nullable=True)
 
-    # Caso utiliza credito
     valor_credito_100 = db.Column(db.Integer, nullable=True)
 
     utiliza_saldo_movimentacao = db.Column(db.Boolean, nullable=True)
 
-    # Guarda valor saldo debitado
     valor_saldo_debitado_100 = db.Column(db.Integer, nullable=True)
 
     comprovante_pagamento_complementar_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
@@ -57,7 +55,6 @@ class ComissionadoPagarModel(BaseModel):
     preco_custo_bitola_100 = db.Column(db.Integer, nullable=False)
     valor_total_a_pagar_100 = db.Column(db.Integer, nullable=False)
 
-    # Associação com movimentação financeira de pagamento em massa (conciliada)
     movimentacao_financeira_id = db.Column(db.Integer, db.ForeignKey('mov_movimentacao_financeira.id'), nullable=True)
     movimentacao_financeira = db.relationship('MovimentacaoFinanceiraModel', foreign_keys=[movimentacao_financeira_id], backref=db.backref('comissionados_pagos_massa', lazy=True))
 
@@ -313,13 +310,13 @@ class ComissionadoPagarModel(BaseModel):
                 MovimentacaoFinanceiraModel,
                 and_(
                     MovimentacaoFinanceiraModel.comissionado_pagamento_id == ComissionadoPagarModel.id,
-                    MovimentacaoFinanceiraModel.tipo_movimentacao == 2,  # saída/pagamento
+                    MovimentacaoFinanceiraModel.tipo_movimentacao == 2,
                 )
             )
             .filter(
                 ComissionadoPagarModel.deletado == False,
                 ComissionadoPagarModel.ativo == True,
-                ComissionadoPagarModel.situacao_pagamento_id == 1,  # somente pagos
+                ComissionadoPagarModel.situacao_pagamento_id == 1,
             )
         )
 
@@ -419,11 +416,9 @@ class ComissionadoPagarModel(BaseModel):
         )
         from sistema.models_views.gerenciar.fornecedor.fornecedor_comissionado_model import FornecedorComissionadoModel
 
-        # Determinar o campo de data para o filtro
         if tipo_data_filtro == 'data_emissao':
             campo_data = RegistroOperacionalModel.destinatario_data_emissao
         else:
-            # Padrão: data de entrega do ticket
             campo_data = RegistroOperacionalModel.data_entrega_ticket
 
         query = (
@@ -452,7 +447,6 @@ class ComissionadoPagarModel(BaseModel):
             )
         )
 
-        # Aplica filtros de data
         if data_inicio and data_fim:
             query = query.filter(
                 campo_data.isnot(None),
@@ -469,7 +463,6 @@ class ComissionadoPagarModel(BaseModel):
                 campo_data <= data_fim,
             )
 
-        # JOINs condicionais - só quando necessários
         if cliente:
             query = query.join(ClienteModel, CargaModel.cliente).filter(ClienteModel.identificacao.ilike(f"%{cliente}%"))
 
@@ -554,7 +547,6 @@ class ComissionadoPagarModel(BaseModel):
             List: Lista de comissionados a pagar no período
         """
         query = ComissionadoPagarModel.query
-        # Aplicar filtros de data se fornecidos
         if data_inicio or data_fim:        
             if data_inicio:
                 query = query.filter(ComissionadoPagarModel.data_entrega_ticket >= data_inicio)
@@ -563,9 +555,7 @@ class ComissionadoPagarModel(BaseModel):
                 data_fim_inclusiva = data_fim + timedelta(days=1)
                 query = query.filter(ComissionadoPagarModel.data_entrega_ticket < data_fim_inclusiva)
         
-        # Filtrar apenas registros com data de entrega
         query = query.filter(ComissionadoPagarModel.data_entrega_ticket.isnot(None))
         
-        # Ordenar por data de entrega mais recente primeiro
         query = query.order_by(ComissionadoPagarModel.data_entrega_ticket.desc())
         return query.all()

@@ -1,17 +1,3 @@
-{# 
-  Include reutilizável: modal de filtros para relatórios AP/AR.
-  Variáveis esperadas:
-    - url_filtro       : url_for do endpoint de listagem (GET)
-    - dados_corretos   : request.args ou request.form
-    - pessoas          : lista de PessoaFinanceiroModel
-    - planos_contas    : lista de PlanoContaModel
-    - centros_custo    : lista de CentroCustoModel
-    - situacoes        : lista de SituacaoPagamentoModel
-    - contas_bancarias : lista de ContaBancariaModel
-    - label_entidade   : "Fornecedor" ou "Cliente"
-    - tipo_relatorio   : "emissoes", "baixas" ou "pendentes"
-    - direcao          : "ap" ou "ar"
-#}
 
 {% set is_pendentes  = (tipo_relatorio == 'pendentes') %}
 {% set ar_pendentes  = (direcao == 'ar' and tipo_relatorio == 'pendentes') %}
@@ -27,7 +13,6 @@
         <div class="modal-body">
           <div class="row g-3">
 
-            {# --- Período --- #}
             <div class="col-md-6">
               <label class="form-label">Data Início</label>
               <input type="date" name="dataInicio" class="form-control"
@@ -39,7 +24,6 @@
                 value="{{ dados_corretos.get('dataFim', '') }}">
             </div>
 
-            {# --- Pessoa (Fornecedor / Cliente) --- #}
             <div class="col-md-6">
               <label class="form-label">{{ label_entidade }}</label>
               <select id="filtro-pessoa" name="pessoaId" class="form-select">
@@ -52,7 +36,6 @@
               </select>
             </div>
 
-            {# --- Situação --- #}
             <div class="col-md-6">
               <label class="form-label">Situação</label>
               <select id="filtro-situacao" name="situacaoId" class="form-select">
@@ -65,7 +48,6 @@
               </select>
             </div>
 
-            {# --- Código Faturamento --- #}
             <div class="col-md-4">
               <label class="form-label">Código Faturamento</label>
               <input type="text" name="codigoFaturamento" class="form-control" 
@@ -73,7 +55,6 @@
                      value="{{ dados_corretos.get('codigoFaturamento', '') }}">
             </div>
 
-            {# --- Nota Fiscal --- #}
             <div class="col-md-4">
               <label class="form-label">Nota Fiscal</label>
               <input type="text" name="notaFiscal" class="form-control" 
@@ -81,7 +62,6 @@
                      value="{{ dados_corretos.get('notaFiscal', '') }}">
             </div>
 
-            {# --- Descrição (Lançamento Avulso) --- #}
             <div class="col-md-4">
               <label class="form-label">Descrição Avulso</label>
               <input type="text" name="descricaoAvulso" class="form-control" 
@@ -89,7 +69,6 @@
                      value="{{ dados_corretos.get('descricaoAvulso', '') }}">
             </div>
 
-            {# --- Plano de Contas --- #}
             {% if not ar_pendentes %}
             <div class="col-md-6">
               <label class="form-label">Plano de Contas</label>
@@ -104,7 +83,6 @@
             </div>
             {% endif %}
 
-            {# --- Centro de Custo --- #}
             {% if not is_pendentes %}
             <div class="col-md-6">
               <label class="form-label">Centro de Custo</label>
@@ -119,7 +97,6 @@
             </div>
             {% endif %}
 
-            {# --- Conta Bancária (filtro por banco de pagamento/recebimento) --- #}
             <div class="col-md-6">
               <label class="form-label">Conta Bancária</label>
               <select id="filtro-conta-bancaria" name="contaBancariaId" class="form-select">
@@ -154,7 +131,6 @@
   </div>
 </div>
 
-{# --- Tom Select nos selects do modal de filtros --- #}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var tomSelectConfig = {

@@ -209,7 +209,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table>
       <tr>
@@ -228,7 +228,6 @@
 
   <div class="relatorio-title">Relatório Simplificado - Precificação</div>
 
-  <!-- Dados do Produto -->
   <div class="section-title">DADOS DO PRODUTO</div>
   <div class="simple-info">
     <strong>Produto:</strong> {{ dados.produto or '-' }}
@@ -245,8 +244,6 @@
     {% endif %}
   </div>
 
-
-  <!-- Receitas -->
   <div class="section-title">RECEITAS</div>
   <div class="simple-info">
     <strong>Quantidade Ton:</strong> <span class="valor-destaque">{{ dados.quantidade }} Ton</span>
@@ -260,7 +257,6 @@
       }}</span>
   </div>
 
-  <!-- Custos -->
   <div class="section-title">CUSTOS</div>
   <table>
     <thead>
@@ -305,7 +301,6 @@
     </tbody>
   </table>
 
-  <!-- Relação Fiscal -->
   <div class="section-title">RELAÇÃO FISCAL</div>
   {% set total_creditos = calculo.operacoes.compra.icms + calculo.operacoes.frete.icms + calculo.operacoes.extracao.icms
   + calculo.operacoes.comissao.icms + calculo.operacoes.compra.pis + calculo.operacoes.frete.pis +
@@ -324,7 +319,6 @@
     <strong>Diferença Liquida</strong> <span class="valor-destaque">{{ diferenca_liquida | formatar_float_para_brl }} {% if diferenca_liquida > 0 %} | Imposto a Pagar{% else %} | Imposto a Restituir{% endif %}</span>
   </div>
 
-  <!-- Resultado -->
   <div class="section-title">RESULTADO</div>
   <table>
     <thead>

@@ -547,7 +547,6 @@
     </div>
   </div>
 
-  <!-- Modal para Recebimentos em Massa -->
   {% for mov in movimentacoes %}
   {% if mov.tipo_movimentacao == 1 and mov.conciliacao_bancaria and mov.importacao_ofx and mov.recebimentos_massa is
   defined and mov.recebimentos_massa|length > 0 %}
@@ -644,7 +643,6 @@
   {% endif %}
   {% endfor %}
 
-  <!-- Modal para Fornecedores em Massa -->
   {% for mov in movimentacoes %}
   {% if mov.tipo_movimentacao == 2 and mov.conciliacao_bancaria and mov.importacao_ofx and mov.fornecedores_pagos_massa
   is defined and mov.fornecedores_pagos_massa|length > 0 %}
@@ -726,7 +724,6 @@
   {% endif %}
   {% endfor %}
 
-  <!-- Modal para Transportadoras em Massa -->
   {% for mov in movimentacoes %}
   {% if mov.tipo_movimentacao == 2 and mov.conciliacao_bancaria and mov.importacao_ofx and
   mov.transportadoras_pagas_massa is defined and mov.transportadoras_pagas_massa|length > 0 %}
@@ -809,7 +806,6 @@
   {% endif %}
   {% endfor %}
 
-  <!-- Modal para Extratores em Massa -->
   {% for mov in movimentacoes %}
   {% if mov.tipo_movimentacao == 2 and mov.conciliacao_bancaria and mov.importacao_ofx and mov.extratores_pagos_massa is
   defined and mov.extratores_pagos_massa|length > 0 %}
@@ -891,7 +887,6 @@
   {% endif %}
   {% endfor %}
 
-  <!-- Modal para Comissionados em Massa -->
   {% for mov in movimentacoes %}
   {% if mov.tipo_movimentacao == 2 and mov.conciliacao_bancaria and mov.importacao_ofx and mov.comissionados_pagos_massa is
   defined and mov.comissionados_pagos_massa|length > 0 %}

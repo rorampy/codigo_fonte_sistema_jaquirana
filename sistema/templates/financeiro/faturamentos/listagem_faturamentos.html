@@ -38,7 +38,7 @@
         </div>
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="d-flex gap-2">
-            <!-- Botões de filtro rápido -->
+            
             <a href="{{ url_for('listagem_faturamentos_cargas_a_pagar', situacaoFaturamento='') }}"
               class="btn btn-outline-primary">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -107,7 +107,6 @@
 
       {% include 'estrutura/mensagens_flash.html' %}
 
-      <!-- Indicador dos filtros aplicados -->
       <div class="col-12 mb-3">
         <div class="alert alert-info d-flex align-items-center bg-white" role="alert">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -157,7 +156,7 @@
                   <th style="text-align: center;">Peso (t)</th>
                   <th style="text-align: center;">Crédito Aplicado</th>
                   <th style="text-align: center;">Valor Total</th>
-                  <!-- <th style="text-align: center;">Utilizou Crédito</th>-->
+                  
                   <th style="text-align: center;">Situação</th>
                   <th style="text-align: center;">Ações</th>
                 </tr>
@@ -352,7 +351,7 @@
                         {% endif %}
                       </div>
                     </div>
-                    <!-- Modais de confirmação -->
+                    
                     {% if dados_corretos.get('situacaoFaturamento')|string != '8' %}
                     <div class="modal modal-blur fade" id="modal-desativar-{{faturamento.id}}" tabindex="-1"
                       role="dialog" aria-hidden="true">
@@ -465,7 +464,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document" style="display: grid;">
       <form action="" method="GET">
@@ -508,7 +506,7 @@
               Limpar Filtros
             </a>
             <button type="submit" class="btn btn-primary btn-5 ms-auto">
-              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="icon icon-2">
@@ -543,7 +541,7 @@
           </div>
 
           <div id="conteudo-dados-bancarios" class="p-4">
-            <!-- Conteúdo será preenchido dinamicamente -->
+            
           </div>
         </div>
 
@@ -594,7 +592,7 @@
           <div id="conteudo-faturamento" style="display: none;">
 
             <div class="p-4">
-              <!-- Fornecedores -->
+              
               <div class="mb-5" id="secao-fornecedores">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                   <div class="d-flex align-items-center">
@@ -611,7 +609,6 @@
                 <div id="lista-fornecedores"></div>
               </div>
 
-              <!-- Transportadoras -->
               <div id="secao-transportadoras">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                   <div class="d-flex align-items-center">
@@ -627,7 +624,7 @@
                 </div>
                 <div id="lista-transportadoras"></div>
               </div>
-              <!-- Extratores -->
+              
               <div id="secao-extratores">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                   <div class="d-flex align-items-center">
@@ -643,7 +640,7 @@
                 </div>
                 <div id="lista-extratores"></div>
               </div>
-              <!-- Comissionados -->
+              
               <div id="secao-comissionados">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                   <div class="d-flex align-items-center">
@@ -659,7 +656,7 @@
                 </div>
                 <div id="lista-comissionados"></div>
               </div>
-              <!-- Receitas Avulsas -->
+              
               <div id="secao-receitas-avulsas">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                   <div class="d-flex align-items-center">
@@ -675,7 +672,7 @@
                 </div>
                 <div id="lista-receitas-avulsas"></div>
               </div>
-              <!-- Despesas Avulsas -->
+              
               <div id="secao-despesas-avulsas">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                   <div class="d-flex align-items-center">
@@ -691,7 +688,7 @@
                 </div>
                 <div id="lista-despesas-avulsas"></div>
               </div>
-              <!-- Créditos Utilizados -->
+              
               <div id="secao-creditos-utilizados">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                   <div class="d-flex align-items-center">
@@ -707,7 +704,7 @@
                 </div>
                 <div id="lista-creditos-utilizados"></div>
               </div>
-              <!-- Resumo Financeiro Destacado -->
+              
               <div class="p-4"
                 style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-top: 1px solid #dee2e6;">
                 <div class="row g-4">
@@ -784,7 +781,6 @@
     </div>
   </div>
 
-  <!-- Modal Exportar PDF -->
   <div class="modal modal-blur fade" id="modal-exportar-pdf" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -833,20 +829,18 @@
     </div>
   </div>
 
-
 </div>
 
 {% include 'estrutura/footer.html' %}
 </div>
 
 <script>
-  // Variável global para o modal PDF
+  
   let faturamentoParaPDF = null;
   let faturamentoParaImagem = null;
 
-  // Inicialização quando DOM carregar
   document.addEventListener('DOMContentLoaded', function () {
-    // Inicializar TomSelect
+    
     document.querySelectorAll('select.form-select').forEach(function (select) {
       new TomSelect(select, {
         create: false,
@@ -855,7 +849,6 @@
       });
     });
 
-    // Event listeners para visualizar faturamentos
     document.querySelectorAll('[data-faturamento-id]').forEach(button => {
       button.addEventListener('click', function () {
         const faturamentoId = this.getAttribute('data-faturamento-id');
@@ -863,19 +856,15 @@
       });
     });
 
-    // Carregar beneficiários para cada faturamento
     carregarBeneficiariosFaturamentos();
 
-    // Carregar clientes para cada faturamento
     carregarClientesFaturamentos();
 
-    // Carregar peso total para cada faturamento
     carregarPesosFaturamentos();
   });
 
-  // ===== FUNÇÃO PARA CARREGAR BENEFICIÁRIOS =====
   function carregarBeneficiariosFaturamentos() {
-    // Buscar todos os elementos de beneficiários na tabela
+    
     document.querySelectorAll('[id^="beneficiario-"]').forEach(elemento => {
       const faturamentoId = elemento.id.replace('beneficiario-', '');
       carregarBeneficiarioFaturamento(faturamentoId);
@@ -883,14 +872,13 @@
   }
 
   function carregarClientesFaturamentos() {
-    // Buscar todos os elementos de clientes na tabela
+    
     document.querySelectorAll('[id^="cliente-"]').forEach(elemento => {
       const faturamentoId = elemento.id.replace('cliente-', '');
       carregarClienteFaturamento(faturamentoId);
     });
   }
 
-  // ===== FUNÇÃO PARA CARREGAR PESO TOTAL =====
   function carregarPesosFaturamentos() {
     document.querySelectorAll('[id^="peso-"]').forEach(elemento => {
       const faturamentoId = elemento.id.replace('peso-', '');
@@ -920,7 +908,6 @@
 
     let pesoTotal = 0.0;
 
-    // Somar peso_ticket de fornecedores
     if (data.fornecedores && data.fornecedores.length > 0) {
       data.fornecedores.forEach(item => {
         const peso = parseFloat(item.peso_ticket);
@@ -928,7 +915,6 @@
       });
     }
 
-    // Somar peso_ticket de transportadoras
     if (data.transportadoras && data.transportadoras.length > 0) {
       data.transportadoras.forEach(item => {
         const peso = parseFloat(item.peso_ticket);
@@ -936,7 +922,6 @@
       });
     }
 
-    // Somar peso_ticket de extratores
     if (data.extratores && data.extratores.length > 0) {
       data.extratores.forEach(item => {
         const peso = parseFloat(item.peso_ticket);
@@ -944,7 +929,6 @@
       });
     }
 
-    // Somar peso_ticket de comissionados
     if (data.comissionados && data.comissionados.length > 0) {
       data.comissionados.forEach(item => {
         const peso = parseFloat(item.peso_ticket);
@@ -962,7 +946,7 @@
   }
 
   function carregarClienteFaturamento(faturamentoId) {
-    // Fazer requisição direta sempre
+    
     fetch(`/financeiro/faturamentos/detalhes/${faturamentoId}`)
       .then(response => response.text())
       .then(text => {
@@ -980,7 +964,7 @@
           }
           processarClientes(faturamentoId, data);
         } catch (e) {
-          // Se não for JSON válido, definir como "N/A" silenciosamente
+          
           const elemento = document.getElementById(`cliente-${faturamentoId}`);
           if (elemento) {
             const nomeElemento = elemento.querySelector('.cliente-nome');
@@ -991,7 +975,7 @@
         }
       })
       .catch(() => {
-        // Em caso de erro, definir como "N/A" silenciosamente
+        
         const elemento = document.getElementById(`cliente-${faturamentoId}`);
         if (elemento) {
           const nomeElemento = elemento.querySelector('.cliente-nome');
@@ -1003,7 +987,7 @@
   }
 
   function carregarBeneficiarioFaturamento(faturamentoId) {
-    // Fazer requisição direta sempre
+    
     fetch(`/financeiro/faturamentos/detalhes/${faturamentoId}`)
       .then(response => response.text())
       .then(text => {
@@ -1021,7 +1005,7 @@
           }
           processarBeneficiarios(faturamentoId, data);
         } catch (e) {
-          // Se não for JSON válido, definir como "N/A" silenciosamente
+          
           const elemento = document.getElementById(`beneficiario-${faturamentoId}`);
           if (elemento) {
             const nomeElemento = elemento.querySelector('.beneficiario-nome');
@@ -1032,7 +1016,7 @@
         }
       })
       .catch(() => {
-        // Em caso de erro, definir como "N/A" silenciosamente
+        
         const elemento = document.getElementById(`beneficiario-${faturamentoId}`);
         if (elemento) {
           const nomeElemento = elemento.querySelector('.beneficiario-nome');
@@ -1047,7 +1031,6 @@
     const elemento = document.getElementById(`beneficiario-${faturamentoId}`);
     const nomeElemento = elemento.querySelector('.beneficiario-nome');
 
-    // Coletar todos os nomes únicos organizados por categoria
     const beneficiarios = {
       fornecedores: new Set(),
       transportadoras: new Set(),
@@ -1055,7 +1038,6 @@
       comissionados: new Set()
     };
 
-    // Adicionar fornecedores
     if (data.fornecedores && data.fornecedores.length > 0) {
       data.fornecedores.forEach(f => {
         if (f.fornecedor_identificacao) {
@@ -1064,7 +1046,6 @@
       });
     }
 
-    // Adicionar transportadoras  
     if (data.transportadoras && data.transportadoras.length > 0) {
       data.transportadoras.forEach(t => {
         if (t.transportadora_identificacao) {
@@ -1073,7 +1054,6 @@
       });
     }
 
-    // Adicionar extratores
     if (data.extratores && data.extratores.length > 0) {
       data.extratores.forEach(e => {
         if (e.nome) {
@@ -1082,7 +1062,6 @@
       });
     }
 
-    // Adicionar comissionados
     if (data.comissionados && data.comissionados.length > 0) {
       data.comissionados.forEach(c => {
         if (c.nome) {
@@ -1091,11 +1070,9 @@
       });
     }
 
-    // Converter Sets para Arrays e coletar todos os nomes únicos
     const todosNomes = new Set();
     let primeiroNome = null;
 
-    // Coletar todos os nomes únicos e pegar o primeiro
     Object.values(beneficiarios).forEach(categoria => {
       Array.from(categoria).forEach(nome => {
         if (!primeiroNome) primeiroNome = nome;
@@ -1108,13 +1085,12 @@
     if (nomesArray.length === 0) {
       nomeElemento.textContent = 'N/A';
     } else if (nomesArray.length === 1) {
-      // Apenas um nome, não precisa de tooltip
+      
       nomeElemento.textContent = primeiroNome;
     } else {
-      // Múltiplos nomes, mostrar o primeiro e criar tooltip
+      
       nomeElemento.textContent = primeiroNome;
 
-      // Criar tooltip organizado por categoria usando HTML
       let tooltipHtml = '<div style="text-align: left;">';
 
       if (beneficiarios.fornecedores.size > 0) {
@@ -1150,10 +1126,8 @@
 
       tooltipHtml += '</div>';
 
-      // Adicionar ícone indicativo de mais informações
       nomeElemento.innerHTML = `${primeiroNome} <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-primary"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`;
 
-      // Inicializar tooltip do Bootstrap com HTML habilitado
       new bootstrap.Tooltip(elemento, {
         html: true,
         title: tooltipHtml,
@@ -1166,10 +1140,8 @@
     const elemento = document.getElementById(`cliente-${faturamentoId}`);
     const nomeElemento = elemento.querySelector('.cliente-nome');
 
-    // Coletar todos os clientes únicos
     const clientes = new Set();
 
-    // Extrair clientes de fornecedores
     if (data.fornecedores && data.fornecedores.length > 0) {
       data.fornecedores.forEach(f => {
         const cliente = f.cliente || f.cliente_identificacao || f.cliente_nome;
@@ -1179,7 +1151,6 @@
       });
     }
 
-    // Extrair clientes de transportadoras
     if (data.transportadoras && data.transportadoras.length > 0) {
       data.transportadoras.forEach(t => {
         const cliente = t.cliente || t.cliente_identificacao || t.cliente_nome;
@@ -1189,7 +1160,6 @@
       });
     }
 
-    // Extrair clientes de extratores
     if (data.extratores && data.extratores.length > 0) {
       data.extratores.forEach(e => {
         const cliente = e.cliente || e.cliente_identificacao || e.cliente_nome;
@@ -1199,7 +1169,6 @@
       });
     }
 
-    // Extrair clientes de comissionados
     if (data.comissionados && data.comissionados.length > 0) {
       data.comissionados.forEach(c => {
         const cliente = c.cliente || c.cliente_identificacao || c.cliente_nome;
@@ -1214,23 +1183,20 @@
     if (clientesArray.length === 0) {
       nomeElemento.textContent = 'N/A';
     } else if (clientesArray.length === 1) {
-      // Apenas um cliente, não precisa de tooltip
+      
       nomeElemento.textContent = clientesArray[0];
     } else {
-      // Múltiplos clientes, mostrar o primeiro e criar tooltip
+      
       nomeElemento.textContent = clientesArray[0];
 
-      // Criar tooltip com lista de clientes
       let tooltipHtml = '<div style="text-align: left;"><strong>Clientes:</strong><br>';
       clientesArray.forEach(nome => {
         tooltipHtml += `• ${nome}<br>`;
       });
       tooltipHtml += '</div>';
 
-      // Adicionar ícone indicativo de mais informações
       nomeElemento.innerHTML = `${clientesArray[0]} <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-primary"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`;
 
-      // Inicializar tooltip do Bootstrap com HTML habilitado
       new bootstrap.Tooltip(elemento, {
         html: true,
         title: tooltipHtml,
@@ -1238,8 +1204,6 @@
       });
     }
   }
-
-  // ===== FUNÇÕES PRINCIPAIS =====
 
   function visualizarFaturamento(id) {
     const modal = new bootstrap.Modal(document.getElementById('modal-faturamento'));
@@ -1267,14 +1231,13 @@
   }
 
   function processarDadosModal(data) {
-    // Preencher informações
+    
     document.getElementById('info-data').textContent = data.faturamento.data_cadastro;
     document.getElementById('info-valor-bruto').textContent = data.faturamento.valor_bruto_total;
     document.getElementById('info-valor-credito').textContent = data.faturamento.valor_credito_aplicado;
     document.getElementById('info-valor-total').textContent = data.faturamento.valor_total;
     document.getElementById('modal-faturamento-id').textContent = data.faturamento.codigo_faturamento;
 
-    // Processar dados
     processarFornecedores(data.fornecedores || []);
     processarTransportadoras(data.transportadoras || []);
     processarExtratores(data.extratores || []);
@@ -1283,10 +1246,8 @@
     processarDespesasAvulsas(data.despesas_avulsas || []);
     processarCreditosUtilizados(data.creditos_utilizados || []);
 
-    // Verificar se não há dados para mostrar mensagem informativa
     verificarDadosVazios(data.fornecedores || [], data.transportadoras || [], data.extratores || [], data.comissionados || [], data.receitas_avulsas || [], data.despesas_avulsas || [], data.creditos_utilizados || []);
 
-    // Contadores
     document.getElementById('total-fornecedores').textContent = data.faturamento.total_fornecedores;
     document.getElementById('total-transportadoras').textContent = data.faturamento.total_transportadoras;
     document.getElementById('total-extratores').textContent = data.faturamento.total_extratores;
@@ -1306,16 +1267,14 @@
     container.innerHTML = '';
 
     if (!fornecedores.length) {
-      // Esconder a seção inteira quando não há fornecedores
+      
       secaoFornecedores.style.display = 'none';
       document.getElementById('total-valor-fornecedores').textContent = 'R$ 0,00';
       return;
     }
 
-    // Mostrar a seção quando há fornecedores
     secaoFornecedores.style.display = 'block';
 
-    // Agrupar e processar
     const grupos = {};
     let totalGeral = 0;
 
@@ -1333,7 +1292,6 @@
     document.getElementById('total-valor-fornecedores').textContent =
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
 
-    // Criar grupos
     Object.entries(grupos).forEach(([nome, grupo]) => {
       const card = document.createElement('div');
       card.className = 'card mb-4 shadow-sm';
@@ -1395,16 +1353,14 @@
     container.innerHTML = '';
 
     if (!transportadoras.length) {
-      // Esconder a seção inteira quando não há transportadoras
+      
       secaoTransportadoras.style.display = 'none';
       document.getElementById('total-valor-transportadoras').textContent = 'R$ 0,00';
       return;
     }
 
-    // Mostrar a seção quando há transportadoras
     secaoTransportadoras.style.display = 'block';
 
-    // Agrupar e processar
     const grupos = {};
     let totalGeral = 0;
 
@@ -1422,9 +1378,7 @@
     document.getElementById('total-valor-transportadoras').textContent =
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
 
-    // Criar grupos
     Object.entries(grupos).forEach(([nome, grupo]) => {
-      console.log('nome', nome);
       const card = document.createElement('div');
       card.className = 'card mb-4 shadow-sm';
       card.style.borderRadius = '12px';
@@ -1485,16 +1439,14 @@
     container.innerHTML = '';
 
     if (!extratores.length) {
-      // Esconder a seção inteira quando não há extratores
+      
       secaoExtratores.style.display = 'none';
       document.getElementById('total-valor-extratores').textContent = 'R$ 0,00';
       return;
     }
 
-    // Mostrar a seção quando há extratores
     secaoExtratores.style.display = 'block';
 
-    // Agrupar e processar
     const grupos = {};
     let totalGeral = 0;
 
@@ -1512,9 +1464,7 @@
     document.getElementById('total-valor-extratores').textContent =
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
 
-    // Criar grupos
     Object.entries(grupos).forEach(([nome, grupo]) => {
-      console.log('nome', nome);
       const card = document.createElement('div');
       card.className = 'card mb-4 shadow-sm';
       card.style.borderRadius = '12px';
@@ -1575,16 +1525,14 @@
     container.innerHTML = '';
 
     if (!comissionados.length) {
-      // Esconder a seção inteira quando não há comissionados
+      
       secaoComissionados.style.display = 'none';
       document.getElementById('total-valor-comissionados').textContent = 'R$ 0,00';
       return;
     }
 
-    // Mostrar a seção quando há comissionados
     secaoComissionados.style.display = 'block';
 
-    // Agrupar e processar
     const grupos = {};
     let totalGeral = 0;
 
@@ -1602,9 +1550,7 @@
     document.getElementById('total-valor-comissionados').textContent =
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
 
-    // Criar grupos
     Object.entries(grupos).forEach(([nome, grupo]) => {
-      console.log('nome', nome);
       const card = document.createElement('div');
       card.className = 'card mb-4 shadow-sm';
       card.style.borderRadius = '12px';
@@ -1665,13 +1611,12 @@
     container.innerHTML = '';
 
     if (!receitasAvulsas.length) {
-      // Esconder a seção inteira quando não há receitas avulsas
+      
       secaoReceitasAvulsas.style.display = 'none';
       document.getElementById('total-valor-receitas-avulsas').textContent = 'R$ 0,00';
       return;
     }
 
-    // Mostrar a seção quando há receitas avulsas
     secaoReceitasAvulsas.style.display = 'block';
 
     let totalGeral = 0;
@@ -1684,7 +1629,6 @@
     document.getElementById('total-valor-receitas-avulsas').textContent =
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
 
-    // Criar card único para receitas avulsas
     const card = document.createElement('div');
     card.className = 'card mb-4 shadow-sm';
     card.style.borderRadius = '12px';
@@ -1738,13 +1682,12 @@
     container.innerHTML = '';
 
     if (!despesasAvulsas.length) {
-      // Esconder a seção inteira quando não há despesas avulsas
+      
       secaoDespesasAvulsas.style.display = 'none';
       document.getElementById('total-valor-despesas-avulsas').textContent = 'R$ 0,00';
       return;
     }
 
-    // Mostrar a seção quando há despesas avulsas
     secaoDespesasAvulsas.style.display = 'block';
 
     let totalGeral = 0;
@@ -1757,7 +1700,6 @@
     document.getElementById('total-valor-despesas-avulsas').textContent =
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
 
-    // Criar card único para despesas avulsas
     const card = document.createElement('div');
     card.className = 'card mb-4 shadow-sm';
     card.style.borderRadius = '12px';
@@ -1811,13 +1753,12 @@
     container.innerHTML = '';
 
     if (!creditosUtilizados.length) {
-      // Esconder a seção inteira quando não há créditos utilizados
+      
       secaoCreditosUtilizados.style.display = 'none';
       document.getElementById('total-valor-creditos-utilizados').textContent = 'R$ 0,00';
       return;
     }
 
-    // Mostrar a seção quando há créditos utilizados
     secaoCreditosUtilizados.style.display = 'block';
 
     let totalGeral = 0;
@@ -1830,7 +1771,6 @@
     document.getElementById('total-valor-creditos-utilizados').textContent =
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
 
-    // Criar card único para créditos utilizados
     const card = document.createElement('div');
     card.className = 'card mb-4 shadow-sm';
     card.style.borderRadius = '12px';
@@ -1877,8 +1817,6 @@
     container.appendChild(card);
   }
 
-  // ===== FUNÇÕES DE DADOS BANCÁRIOS =====
-
   function copiarDadosBancariosFaturamento(faturamentoId) {
     const modalElement = document.getElementById('modal-dados-bancarios');
     let modal;
@@ -1887,19 +1825,17 @@
       if (window.bootstrap && window.bootstrap.Modal) {
         modal = new bootstrap.Modal(modalElement);
       } else {
-        // Fallback manual
+        
         modalElement.style.display = 'block';
         modalElement.classList.add('show');
         document.body.classList.add('modal-open');
       }
     } catch (error) {
-      console.log('Erro ao abrir modal:', error);
       modalElement.style.display = 'block';
       modalElement.classList.add('show');
       document.body.classList.add('modal-open');
     }
 
-    // Mostrar loading
     document.getElementById('loading-dados-bancarios').style.display = 'block';
     document.getElementById('conteudo-dados-bancarios').innerHTML = '';
 
@@ -1919,7 +1855,6 @@
 
         mostrarDadosBancarios(data);
 
-        // Configurar botão copiar todos
         document.getElementById('btn-copiar-todos').onclick = function () {
           copiarTodosDados(data);
         };
@@ -1934,7 +1869,6 @@
   function copiarDadosBancarios(tipo, nome, id) {
     const modal = new bootstrap.Modal(document.getElementById('modal-dados-bancarios'));
 
-    // Mostrar loading
     document.getElementById('loading-dados-bancarios').style.display = 'block';
     document.getElementById('conteudo-dados-bancarios').innerHTML = '';
 
@@ -1950,7 +1884,6 @@
           return;
         }
 
-        // Simular estrutura de dados única
         const dadosFormatados = {};
         if (tipo === 'fornecedor') {
           dadosFormatados.fornecedores = [data];
@@ -1968,7 +1901,6 @@
 
         mostrarDadosBancarios(dadosFormatados);
 
-        // Configurar botão copiar
         document.getElementById('btn-copiar-todos').onclick = function () {
           copiarDadosIndividual(tipo.toUpperCase(), data);
         };
@@ -1984,7 +1916,6 @@
     const container = document.getElementById('conteudo-dados-bancarios');
     let html = '';
 
-    // Mostrar fornecedores
     if (data.fornecedores && data.fornecedores.length > 0) {
       html += `
         <div class="mb-4">
@@ -2000,7 +1931,6 @@
       html += '</div>';
     }
 
-    // Mostrar transportadoras
     if (data.transportadoras && data.transportadoras.length > 0) {
       html += `
         <div class="mb-4">
@@ -2016,7 +1946,6 @@
       html += '</div>';
     }
 
-    // Mostrar extratores
     if (data.extratores && data.extratores.length > 0) {
       html += `
         <div class="mb-4">
@@ -2032,7 +1961,6 @@
       html += '</div>';
     }
 
-    // Mostrar comissionados
     if (data.comissionados && data.comissionados.length > 0) {
       html += `
         <div class="mb-4">
@@ -2048,7 +1976,6 @@
       html += '</div>';
     }
 
-    // Mostrar receitas avulsas
     if (data.receitas_avulsas && data.receitas_avulsas.length > 0) {
       html += `
         <div class="mb-4">
@@ -2064,7 +1991,6 @@
       html += '</div>';
     }
 
-    // Mostrar despesas avulsas
     if (data.despesas_avulsas && data.despesas_avulsas.length > 0) {
       html += `
         <div class="mb-4">
@@ -2179,14 +2105,12 @@
       </div>
     `;
 
-    // Esconder botão copiar todos
     document.getElementById('btn-copiar-todos').style.display = 'none';
   }
 
   function copiarTodosDados(data) {
     let dadosBancarios = '';
 
-    // Processar fornecedores
     if (data.fornecedores && data.fornecedores.length > 0) {
       dadosBancarios += '=== FORNECEDORES ===\n\n';
       data.fornecedores.forEach(fornecedor => {
@@ -2195,7 +2119,6 @@
       });
     }
 
-    // Processar transportadoras
     if (data.transportadoras && data.transportadoras.length > 0) {
       dadosBancarios += '=== TRANSPORTADORAS ===\n\n';
       data.transportadoras.forEach(transportadora => {
@@ -2204,7 +2127,6 @@
       });
     }
 
-    // Processar extratores
     if (data.extratores && data.extratores.length > 0) {
       dadosBancarios += '=== EXTRATORES ===\n\n';
       data.extratores.forEach(extrator => {
@@ -2213,7 +2135,6 @@
       });
     }
 
-    // Processar comissionados
     if (data.comissionados && data.comissionados.length > 0) {
       dadosBancarios += '=== COMISSIONADOS ===\n\n';
       data.comissionados.forEach(comissionado => {
@@ -2252,20 +2173,16 @@ Conta: ${conta}
 PIX: ${pix}`;
   }
 
-  // ===== FUNÇÃO DE REVERTER CONCILIAÇÃO =====
-
   function confirmarReverterConciliacao(faturamentoId) {
-    // Fechar o modal de confirmação
+    
     const modal = document.getElementById(`modal-reverter-conciliacao-${faturamentoId}`);
     const bsModal = bootstrap.Modal.getInstance(modal);
     if (bsModal) {
       bsModal.hide();
     }
 
-    // Mostrar loading
     mostrarNotificacao('Revertendo conciliação...', 'info');
 
-    // Fazer requisição para reverter
     fetch(`/${faturamentoId}`, {
       method: 'POST',
       headers: {
@@ -2276,7 +2193,7 @@ PIX: ${pix}`;
       .then(data => {
         if (data.sucesso) {
           mostrarNotificacao(data.mensagem || 'Conciliação revertida com sucesso!', 'success');
-          // Recarregar a página após 1 segundo
+          
           setTimeout(() => {
             window.location.reload();
           }, 1000);
@@ -2290,8 +2207,6 @@ PIX: ${pix}`;
       });
   }
 
-  // ===== FUNÇÕES DE EXPORTAR PDF =====
-
   function abrirModalExportarPDF(faturamentoId) {
     faturamentoParaPDF = faturamentoId;
     faturamentoParaImagem = null;
@@ -2302,37 +2217,32 @@ PIX: ${pix}`;
       return;
     }
 
-    // Restaurar título original do modal
     const modalTitle = modalElement.querySelector('.modal-title');
     modalTitle.innerHTML = `
     Exportar Faturamento para PDF
   `;
 
-    // Restaurar texto do botão e limpar event listeners
     const btnGerar = document.getElementById('btn-gerar-pdf');
     btnGerar.innerHTML = `
     Gerar PDF
   `;
 
-    // Limpar todos os event listeners e definir apenas um
     btnGerar.replaceWith(btnGerar.cloneNode(true));
     const newBtnGerar = document.getElementById('btn-gerar-pdf');
     newBtnGerar.onclick = function () {
       gerarPDFFaturamento();
     };
 
-
     try {
       if (window.bootstrap && window.bootstrap.Modal) {
         const modal = new bootstrap.Modal(modalElement);
         modal.show();
       } else {
-        // Fallback manual
+        
         modalElement.style.display = 'block';
         modalElement.classList.add('show');
         document.body.classList.add('modal-open');
 
-        // Criar backdrop
         if (!document.querySelector('.modal-backdrop')) {
           const backdrop = document.createElement('div');
           backdrop.className = 'modal-backdrop fade show';
@@ -2340,8 +2250,7 @@ PIX: ${pix}`;
         }
       }
     } catch (error) {
-      console.log('Erro ao abrir modal PDF:', error);
-      // Fallback final
+      
       modalElement.style.display = 'block';
       modalElement.classList.add('show');
       document.body.classList.add('modal-open');
@@ -2354,7 +2263,6 @@ PIX: ${pix}`;
       return;
     }
 
-    // Coletar opções do modal
     const opcoes = {
       ocultar_fornecedores: document.getElementById('ocultar-fornecedores')?.checked || false,
       ocultar_transportadoras: document.getElementById('ocultar-transportadoras')?.checked || false,
@@ -2363,13 +2271,11 @@ PIX: ${pix}`;
       ocultar_despesas_avulsas: document.getElementById('ocultar-despesas-avulsas')?.checked || false
     };
 
-    // Criar formulário para enviar via POST
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = `/financeiro/cargas-a-pagar/exportar-pdf/${faturamentoParaPDF}`;
-    form.target = '_blank'; // Abrir em nova aba
+    form.target = '_blank'; 
 
-    // Adicionar dados das opções
     Object.keys(opcoes).forEach(key => {
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -2378,7 +2284,6 @@ PIX: ${pix}`;
       form.appendChild(input);
     });
 
-    // Adicionar CSRF token se necessário
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
     if (csrfToken) {
       const input = document.createElement('input');
@@ -2388,25 +2293,21 @@ PIX: ${pix}`;
       form.appendChild(input);
     }
 
-    // Enviar formulário
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
 
-    // Fechar modal
     fecharModalSeguro('modal-exportar-pdf');
 
     mostrarNotificacao('PDF sendo gerado...', 'info');
   }
-
-  // ===== FUNÇÕES AUXILIARES =====
 
   function fecharModalSeguro(modalId) {
     const modalElement = document.getElementById(modalId);
     if (!modalElement) return;
 
     try {
-      // Tentar Bootstrap Modal
+      
       if (window.bootstrap && window.bootstrap.Modal) {
         const modalInstance = bootstrap.Modal.getInstance(modalElement);
         if (modalInstance) {
@@ -2418,25 +2319,21 @@ PIX: ${pix}`;
         return;
       }
 
-      // Fallback manual
       modalElement.style.display = 'none';
       modalElement.classList.remove('show');
       document.body.classList.remove('modal-open');
 
-      // Remover backdrop se existir
       const backdrop = document.querySelector('.modal-backdrop');
       if (backdrop) {
         backdrop.remove();
       }
 
     } catch (error) {
-      console.log('Erro ao fechar modal:', error);
-      // Fallback final
+      
       modalElement.style.display = 'none';
       modalElement.classList.remove('show');
       document.body.classList.remove('modal-open');
 
-      // Remover backdrop
       const backdrop = document.querySelector('.modal-backdrop');
       if (backdrop) {
         backdrop.remove();
@@ -2445,14 +2342,14 @@ PIX: ${pix}`;
   }
 
   function mostrarNotificacao(mensagem, tipo = 'info') {
-    // Toast simples do Tabler (se não tiver, usar fallback)
+    
     if (typeof window.Tabler !== 'undefined' && window.Tabler.toast) {
       window.Tabler.toast({
         message: mensagem,
         type: tipo
       });
     } else {
-      // Fallback: criar toast manual
+      
       const toast = document.createElement('div');
       toast.className = `bg-white alert alert-${tipo === 'success' ? 'success' : tipo === 'warning' ? 'warning' : tipo === 'error' ? 'danger' : 'info'} alert-dismissible`;
       toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
@@ -2463,7 +2360,6 @@ PIX: ${pix}`;
 
       document.body.appendChild(toast);
 
-      // Auto remover após 4 segundos
       setTimeout(() => {
         if (toast.parentElement) {
           toast.remove();
@@ -2472,31 +2368,26 @@ PIX: ${pix}`;
     }
   }
 
-  // ======== FUNÇÃO DE EXPORTAR IMG ======
-
   function abrirModalExportarImagem(faturamentoId) {
     faturamentoParaImagem = faturamentoId;
-    faturamentoParaPDF = null; // Limpar variável de PDF
+    faturamentoParaPDF = null; 
 
-    const modalElement = document.getElementById('modal-exportar-pdf'); // Reutilizar o mesmo modal
+    const modalElement = document.getElementById('modal-exportar-pdf'); 
     if (!modalElement) {
       console.error('Modal de exportar não encontrado');
       return;
     }
 
-    // Alterar título do modal para imagem
     const modalTitle = modalElement.querySelector('.modal-title');
     modalTitle.innerHTML = `
     Exportar Faturamento para Imagem
   `;
 
-    // Alterar texto do botão e limpar event listeners
     const btnGerar = document.getElementById('btn-gerar-pdf');
     btnGerar.innerHTML = `
     Gerar Imagem
   `;
 
-    // Limpar todos os event listeners e definir apenas um
     btnGerar.replaceWith(btnGerar.cloneNode(true));
     const newBtnGerar = document.getElementById('btn-gerar-pdf');
     newBtnGerar.onclick = function () {
@@ -2519,14 +2410,11 @@ PIX: ${pix}`;
         }
       }
     } catch (error) {
-      console.log('Erro ao abrir modal imagem:', error);
       modalElement.style.display = 'block';
       modalElement.classList.add('show');
       document.body.classList.add('modal-open');
     }
   }
-
-  // Gerar imagem do faturamento
 
   function gerarImagemFaturamento() {
     if (!faturamentoParaImagem) {
@@ -2534,7 +2422,6 @@ PIX: ${pix}`;
       return;
     }
 
-    // Coletar opções do modal (mesmo do PDF)
     const opcoes = {
       ocultar_fornecedores: document.getElementById('ocultar-fornecedores')?.checked || false,
       ocultar_transportadoras: document.getElementById('ocultar-transportadoras')?.checked || false,
@@ -2543,13 +2430,11 @@ PIX: ${pix}`;
       ocultar_despesas_avulsas: document.getElementById('ocultar-despesas-avulsas')?.checked || false
     };
 
-    // Criar formulário para enviar via POST
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = `/financeiro/cargas-a-pagar/exportar-imagem/${faturamentoParaImagem}`; // Nova rota
+    form.action = `/financeiro/cargas-a-pagar/exportar-imagem/${faturamentoParaImagem}`; 
     form.target = '_blank';
 
-    // Adicionar dados das opções
     Object.keys(opcoes).forEach(key => {
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -2558,7 +2443,6 @@ PIX: ${pix}`;
       form.appendChild(input);
     });
 
-    // Adicionar CSRF token se necessário
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
     if (csrfToken) {
       const input = document.createElement('input');
@@ -2568,18 +2452,14 @@ PIX: ${pix}`;
       form.appendChild(input);
     }
 
-    // Enviar formulário
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
 
-    // Fechar modal
     fecharModalSeguro('modal-exportar-pdf');
 
     mostrarNotificacao('Imagem sendo gerada...', 'info');
   }
-
-  // ===== FUNÇÃO PARA VERIFICAR DADOS VAZIOS =====
 
   function verificarDadosVazios(fornecedores, transportadoras, extratores, comissionados, receitasAvulsas, despesasAvulsas, creditosUtilizados) {
     const temFornecedores = fornecedores && fornecedores.length > 0;
@@ -2590,7 +2470,6 @@ PIX: ${pix}`;
     const temDespesasAvulsas = despesasAvulsas && despesasAvulsas.length > 0;
     const temCreditosUtilizados = creditosUtilizados && creditosUtilizados.length > 0;
 
-    // Se não há nenhum tipo de dados, criar mensagem informativa
     if (!temFornecedores && !temTransportadoras && !temExtratores && !temComissionados && !temReceitasAvulsas && !temDespesasAvulsas && !temCreditosUtilizados) {
       const conteudoFaturamento = document.querySelector('#conteudo-faturamento .p-4');
       if (conteudoFaturamento) {
@@ -2615,7 +2494,6 @@ PIX: ${pix}`;
 
 </script>
 
-<!-- Modal de Categorização Simples -->
 <div class="modal modal-blur fade" id="modal-categorizacao" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -2636,7 +2514,7 @@ PIX: ${pix}`;
         </div>
 
         <div id="conteudo-categorizacao" style="display: none;">
-          <!-- O conteúdo será carregado via JavaScript -->
+          
         </div>
       </div>
 
@@ -2669,15 +2547,14 @@ PIX: ${pix}`;
   let categoriaId = null;
 
   function carregarCategorizacao(faturamentoId) {
-    // Mostrar loading
+    
     document.getElementById('loading-categorizacao').style.display = 'block';
     document.getElementById('conteudo-categorizacao').style.display = 'none';
 
-    // Fazer requisição
     fetch(`/faturamento/categorizacao/detalhes-json/${faturamentoId}`)
       .then(response => response.json())
       .then(data => {
-        // Esconder loading
+        
         document.getElementById('loading-categorizacao').style.display = 'none';
 
         if (data.error) {
@@ -2688,8 +2565,8 @@ PIX: ${pix}`;
             </div>
           `;
         } else {
-          // Montar HTML com os dados
-          categoriaId = data.categorizacao_id; // Guardar categoriaId para edição
+          
+          categoriaId = data.categorizacao_id; 
           document.getElementById('conteudo-categorizacao').innerHTML = montarHtmlCategorizacao(data);
         }
 
@@ -2708,14 +2585,14 @@ PIX: ${pix}`;
   }
 
   function montarHtmlCategorizacao(data) {
-    // Usar valores vindos do backend
+    
     const valorBrutoTotal = (data.faturamento.valor_bruto_total || data.faturamento.valor_total) / 100;
     const valorCreditoTotal = (data.faturamento.valor_credito_total || 0) / 100;
     const valorFinalTotal = data.faturamento.valor_total / 100;
 
     let html = `
     <div class="p-4">
-      <!-- Resumo Superior com 4 cards -->
+      
       <div class="row g-3 mb-4">
         <div class="col-3">
           <div class="text-center p-3" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
@@ -2772,7 +2649,6 @@ PIX: ${pix}`;
 
       <hr class="my-4">
 
-      <!-- Informações do Pagamento -->
       <div class="mb-4">
         <div class="row g-4">
           <div class="col-md-4">
@@ -2796,7 +2672,6 @@ PIX: ${pix}`;
         </div>
       </div>`;
 
-    // Seção de Fornecedores
     if (data.faturamento.fornecedores && data.faturamento.fornecedores.length > 0) {
       const totalFornecedores = data.faturamento.fornecedores.reduce((total, f) => total + (f.valor || 0), 0) / 100;
 
@@ -2843,7 +2718,6 @@ PIX: ${pix}`;
       </div>`;
     }
 
-    // Seção de Transportadoras
     if (data.faturamento.transportadoras && data.faturamento.transportadoras.length > 0) {
       const totalTransportadoras = data.faturamento.transportadoras.reduce((total, t) => total + (t.valor || 0), 0) / 100;
 
@@ -2890,7 +2764,6 @@ PIX: ${pix}`;
       </div>`;
     }
 
-    // Seção de Extratores
     if (data.faturamento.extratores && data.faturamento.extratores.length > 0) {
       const totalExtratores = data.faturamento.extratores.reduce((total, t) => total + (t.valor || 0), 0) / 100;
 
@@ -2937,7 +2810,6 @@ PIX: ${pix}`;
       </div>`;
     }
 
-    // Seção de Comissionados
     if (data.faturamento.comissionados && data.faturamento.comissionados.length > 0) {
       const totalComissionados = data.faturamento.comissionados.reduce((total, t) => total + (t.valor || 0), 0) / 100;
 
@@ -2984,7 +2856,6 @@ PIX: ${pix}`;
       </div>`;
     }
 
-    // Seção de Receitas Avulsas
     if (data.receitas_avulsas && data.receitas_avulsas.length > 0) {
       const totalReceitas = data.receitas_avulsas.reduce((total, r) => {
         const valor = parseFloat(r.valor.replace(/[R$\s.]/g, '').replace(',', '.'));
@@ -3029,7 +2900,6 @@ PIX: ${pix}`;
       </div>`;
     }
 
-    // Seção de Despesas Avulsas
     if (data.despesas_avulsas && data.despesas_avulsas.length > 0) {
       const totalDespesas = data.despesas_avulsas.reduce((total, d) => {
         const valor = parseFloat(d.valor.replace(/[R$\s.]/g, '').replace(',', '.'));
@@ -3072,7 +2942,7 @@ PIX: ${pix}`;
           </table>
         </div>
       </div>`;
-    }    // Seção de Categorização por Conta
+    }    
     if (data.categorias && data.categorias.length > 0) {
       html += `
       <div class="mb-4">
@@ -3122,7 +2992,7 @@ PIX: ${pix}`;
         </div>
       </div>`;
     }
-    // Seção de Centros de Custo (se houver)
+    
     if (data.centros_custo && data.centros_custo.length > 0) {
       html += `
       <div class="mb-4">
@@ -3159,7 +3029,6 @@ PIX: ${pix}`;
       </div>`;
     }
 
-    // Seção de Parcelas
     if (data.parcelas && data.parcelas.length > 0) {
       html += `
       <div class="mb-4">
@@ -3202,7 +3071,6 @@ PIX: ${pix}`;
   }
 </script>
 
-<!-- Modal para confirmar exclusão de faturamento -->
 <div class="modal modal-blur fade" id="modal-excluir-faturamento" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -3231,7 +3099,6 @@ PIX: ${pix}`;
       return;
     }
 
-    // Fechar o modal atual
     const modal = document.getElementById('modal-categorizacao');
     if (modal) {
       const modalInstance = bootstrap.Modal.getInstance(modal);

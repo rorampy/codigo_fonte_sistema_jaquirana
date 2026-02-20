@@ -5,7 +5,6 @@ from sistema.models_views.gerenciar.cliente.cliente_model import ClienteModel
 from sistema.models_views.gerenciar.veiculo.veiculo_model import VeiculoModel
 from sistema.models_views.gerenciar.motorista.motorista_model import MotoristaModel
 
-# Nunca utilizada
 class LancarEmissaoNotaFiscalModel(BaseModel):
     """
     Model para registro de lançamentos de nf
@@ -34,7 +33,6 @@ class LancarEmissaoNotaFiscalModel(BaseModel):
     
     valor_total_nota_100 = db.Column(db.Integer, nullable=True)
 
-    # Novos campos para dados do Transportador
     transportador_nome = db.Column(db.String(200), nullable=True)
     transportador_cnpj_cpf = db.Column(db.String(20), nullable=True)
     transportador_insc_estadual = db.Column(db.String(50), nullable=True)

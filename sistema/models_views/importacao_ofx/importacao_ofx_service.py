@@ -15,9 +15,6 @@ from sistema._utilitarios import *
 class ImportacaoOfxService:
     """Service com métodos estáticos para operações de Importação OFX."""
 
-    # =====================================================================
-    # CONSULTAS SIMPLES
-    # =====================================================================
 
     @staticmethod
     def obter_transacao_por_fitid(fitid):
@@ -138,9 +135,6 @@ class ImportacaoOfxService:
             query = query.filter(ImportacaoOfx.batch_importacao == batch_id)
         return query.order_by(ImportacaoOfx.data_conciliacao.desc()).limit(limit).all()
 
-    # =====================================================================
-    # BATCH E IMPORTAÇÃO
-    # =====================================================================
 
     @staticmethod
     def obter_ultimo_batch_importacao(conta_bancaria_id=None):
@@ -157,7 +151,6 @@ class ImportacaoOfxService:
             ultima_transacao = query.order_by(ImportacaoOfx.data_importacao.desc()).first()
             return ultima_transacao.batch_importacao if ultima_transacao else None
         except Exception as e:
-            print(f"[ERRO] Erro ao obter último batch: {e}")
             return None
 
     @staticmethod
@@ -171,23 +164,19 @@ class ImportacaoOfxService:
         try:
             db.session.execute(db.text(f"TRUNCATE TABLE {ImportacaoOfx.__tablename__}"))
             db.session.commit()
-            print("[INFO] Tabela de transações OFX truncada com sucesso (IDs redefinidos)")
             return True
         except Exception as e:
             db.session.rollback()
             try:
-                print(f"[WARNING] TRUNCATE falhou, tentando DELETE: {e}")
                 db.session.query(ImportacaoOfx).delete()
                 try:
                     db.session.execute(db.text(f"ALTER TABLE {ImportacaoOfx.__tablename__} AUTO_INCREMENT = 1"))
                 except:
                     pass
                 db.session.commit()
-                print("[INFO] Tabela limpa com DELETE e auto_increment redefinido")
                 return True
             except Exception as e2:
                 db.session.rollback()
-                print(f"[ERRO] Erro ao limpar tabela OFX: {e2}")
                 return False
 
     @staticmethod
@@ -267,9 +256,8 @@ class ImportacaoOfxService:
             total_inseridas = len(transacoes_obj)
             total_duplicadas = len(transacoes_data) - total_inseridas
 
-            print(f"[INFO] {total_inseridas} transações OFX inseridas com sucesso (Batch: {batch_id})")
             if total_duplicadas > 0:
-                print(f"[INFO] {total_duplicadas} transações duplicadas ignoradas para esta conta bancária")
+                pass
 
             resultado = {'total': total_inseridas, 'batch_id': batch_id}
             if total_duplicadas > 0:
@@ -280,12 +268,8 @@ class ImportacaoOfxService:
 
         except Exception as e:
             db.session.rollback()
-            print(f"[ERRO] Erro ao inserir transações OFX: {e}")
             return False, str(e)
 
-    # =====================================================================
-    # ESTATÍSTICAS E RESUMOS
-    # =====================================================================
 
     @staticmethod
     def obter_resumo_importacao(data_inicio=None, data_fim=None, batch_id=None, conciliado=None,
@@ -360,7 +344,6 @@ class ImportacaoOfxService:
 
             return resumo
         except Exception as e:
-            print(f"[ERRO] Erro ao obter resumo da importação: {e}")
             return None
 
     @staticmethod
@@ -393,7 +376,6 @@ class ImportacaoOfxService:
             return historico
 
         except Exception as e:
-            print(f"[ERRO] Erro ao obter histórico de importações: {e}")
             return []
 
     @staticmethod
@@ -411,7 +393,6 @@ class ImportacaoOfxService:
             ).group_by(categoria_final, ImportacaoOfx.tipo_movimento).all()
             return resultado
         except Exception as e:
-            print(f"[ERRO] Erro ao obter estatísticas por categoria: {e}")
             return []
 
     @staticmethod
@@ -443,12 +424,8 @@ class ImportacaoOfxService:
             }
 
         except Exception as e:
-            print(f"[ERRO] Erro ao obter estatísticas de transações: {str(e)}")
             return {'total': 0, 'conciliadas': 0, 'nao_conciliadas': 0}
 
-    # =====================================================================
-    # UTILITÁRIOS
-    # =====================================================================
 
     @staticmethod
     def calcular_diferenca(valor_ofx, valores_conciliados):
@@ -463,9 +440,6 @@ class ImportacaoOfxService:
         except:
             return 0
 
-    # =====================================================================
-    # PROCESSAMENTO E CONCILIAÇÃO
-    # =====================================================================
 
     @staticmethod
     def marcar_como_processado(transacao, categoria_manual=None, observacoes=None):
@@ -480,7 +454,6 @@ class ImportacaoOfxService:
             return True
         except Exception as e:
             db.session.rollback()
-            print(f"[ERRO] Erro ao marcar transação como processada: {e}")
             return False
 
     @staticmethod
@@ -520,7 +493,6 @@ class ImportacaoOfxService:
 
         except Exception as e:
             db.session.rollback()
-            print(f"[ERRO] Erro ao salvar dados de conciliação: {e}")
             return False
 
     @staticmethod
@@ -540,7 +512,6 @@ class ImportacaoOfxService:
             from sistema.models_views.financeiro.movimentacao_financeira.movimentacao_financeira_model import MovimentacaoFinanceiraModel
             from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
 
-            # Restaurar status dos agendamentos para situação 6
             if dados.get('agendamentos_ids'):
                 for agendamento_id in dados['agendamentos_ids']:
                     agendamento = AgendamentoPagamentoModel.obter_agendamento_por_id(agendamento_id)
@@ -549,7 +520,6 @@ class ImportacaoOfxService:
                         agendamento.valor_conciliado_100 = None
                         db.session.add(agendamento)
 
-            # Restaurar status dos faturamentos para situação 6
             if dados.get('faturamentos_ids'):
                 for faturamento_id in dados['faturamentos_ids']:
                     faturamento = FaturamentoModel.obter_faturamento_por_id(faturamento_id)
@@ -557,7 +527,6 @@ class ImportacaoOfxService:
                         faturamento.situacao_pagamento_id = 6
                         db.session.add(faturamento)
 
-            # Restaurar status dos lançamentos avulsos para situação 6
             if dados.get('lancamentos_avulsos_ids'):
                 for lancamento_id in dados['lancamentos_avulsos_ids']:
                     lancamento = LancamentoAvulsoModel.obter_lancamento_por_id(lancamento_id)
@@ -565,7 +534,6 @@ class ImportacaoOfxService:
                         lancamento.situacao_pagamento_id = 6
                         db.session.add(lancamento)
 
-            # Criar movimentação de contrapartida para reversão
             if dados.get('movimentacoes_ids'):
                 conta_bancaria_id = None
 
@@ -574,7 +542,6 @@ class ImportacaoOfxService:
                     if movimentacao:
                         if conta_bancaria_id is None:
                             conta_bancaria_id = movimentacao.conta_bancaria_id
-                        # Desativar a movimentação original para não duplicar no relatório
                         movimentacao.ativo = False
                         movimentacao.deletado = True
 
@@ -597,7 +564,6 @@ class ImportacaoOfxService:
                     )
                     db.session.add(movimentacao_reversao)
 
-            # Atualizar saldo da conta bancária (reverter o impacto)
             from sistema.models_views.financeiro.movimentacao_financeira.saldo_movimentacao_financeira_model import SaldoMovimentacaoFinanceiraModel
 
             valor_agendamento = dados.get('valor_agendamento', 0)
@@ -619,7 +585,6 @@ class ImportacaoOfxService:
                         saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
                         db.session.add(saldo_conta)
 
-            # Limpar dados da conciliação
             transacao.tipo_conciliacao = None
             transacao.pagamento_id = None
             transacao.data_conciliacao = None
@@ -634,5 +599,4 @@ class ImportacaoOfxService:
         except Exception as e:
             db.session.rollback()
             error_msg = f"Erro ao reverter conciliação: {str(e)}"
-            print(f"[ERRO] {error_msg}")
             return False, error_msg

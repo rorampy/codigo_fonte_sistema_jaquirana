@@ -27,9 +27,6 @@ from sistema.models_views.configuracoes_gerais.conta_bancaria.conta_bancaria_mod
 from .contas_ap_ar_service import ContasAPARService
 
 
-# =============================================================================
-# HELPERS
-# =============================================================================
 
 def _extrair_filtros():
     """Extrai filtros do request (GET ou POST)."""
@@ -60,9 +57,6 @@ def _contexto_base(direcao='ap'):
     }
 
 
-# =============================================================================
-# AP — EMISSÕES
-# =============================================================================
 
 @app.route('/relatorios/contas-a-pagar/emissoes', methods=['GET'])
 @login_required
@@ -133,9 +127,6 @@ def relatorio_ap_emissoes_excel():
     )
 
 
-# =============================================================================
-# AR — EMISSÕES
-# =============================================================================
 
 @app.route('/relatorios/contas-a-receber/emissoes', methods=['GET'])
 @login_required

@@ -68,7 +68,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
@@ -223,7 +222,6 @@
                     </div>
                     {% endfor %}
                     
-                    <!-- Totalizador da Transportadora -->
                     {% if totalizadores and totalizadores.por_transportadora and origem in totalizadores.por_transportadora %}
                     <div class="p-3 bg-light border-top">
                       <div class="d-flex justify-content-end align-items-center gap-3">
@@ -243,7 +241,6 @@
               {% endfor %}
             </div>
             
-            <!-- Totalizador Geral (somente se houver mais de uma transportadora) -->
             {% if totalizadores and totalizadores.quantidade_transportadoras > 1 %}
             <div class="card mt-3">
               <div class="card-body p-3" style="background-color: #1e3a5f;">
@@ -261,7 +258,7 @@
             {% endif %}
             
             {% else %}
-            <!-- mensagem de nenhum dado -->
+            
             <div class="area-info-card"
               style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">
               <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
@@ -275,7 +272,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
       <form action="{{ url_for('relatorio_a_pagar_fretes') }}" method="GET">
@@ -286,7 +282,7 @@
           </div>
           <div class="modal-body">
             <div class="row">
-              <!-- Linha 1: Datas -->
+              
               <div class="col-md-6 mb-3">
                 <label class="form-label">Data Início</label>
                 <input type="date" name="dataInicio" class="form-control"
@@ -297,7 +293,6 @@
                 <input type="date" name="dataFim" class="form-control" value="{{ dados_corretos.get('dataFim', '') }}">
               </div>
 
-              <!-- Linha 2: Placa e Motorista -->
               <div class="col-md-4 mb-3">
                 <label class="form-label">Placa</label>
                 <input type="text" name="placaCargaCliente" class="form-control"
@@ -309,7 +304,6 @@
                   value="{{ dados_corretos.get('motoristaCargaCliente', '') }}">
               </div>
 
-              <!-- Linha 3: Transportadora e Fornecedor -->
               <div class="col-md-4 mb-3">
                 <label class="form-label">Transportadora</label>
                 <input type="text" name="tranpostadoraCargaCliente" class="form-control"

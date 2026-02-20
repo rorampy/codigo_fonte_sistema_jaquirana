@@ -33,7 +33,6 @@ class DashboardModel:
     - Mapeamento de produtos
     """
     
-    # Configurações de grupos de produtos
     GRUPOS_PRODUTOS = [
         "eucalipto_torete",
         "pinus_torete", 
@@ -52,7 +51,6 @@ class DashboardModel:
         "Biomassa"
     ]
     
-    # Data de início para cálculos cumulativos
     DATA_INICIO_CUMULATIVO = datetime(2025, 1, 1)
     
     @staticmethod
@@ -72,12 +70,11 @@ class DashboardModel:
             (bitola or "").lower().strip().replace("-", "_").replace("+", "_mais")
         )
         
-        # Lógica específica para cada tipo de produto
         if "biomassa" in chave_prod or chave_bit == "cavaco":
             return "cavaco"
         elif "eucalipto" in chave_prod:
             return f"eucalipto_{chave_bit}"
-        else:  # pinus por padrão
+        else:
             return f"pinus_{chave_bit}"
     
     @classmethod
@@ -96,7 +93,6 @@ class DashboardModel:
         dias_do_mes = list(range(1, monthrange(ano, mes)[1] + 1))
         data_por_grupo = {g: {d: 0 for d in dias_do_mes} for g in cls.GRUPOS_PRODUTOS}
 
-        # Query para vendas diárias
         query_dia = (
             db.session.query(
                 extract("day", RegistroOperacionalModel.data_entrega_ticket).label("dia"),
@@ -119,13 +115,11 @@ class DashboardModel:
             .all()
         )
 
-        # Processa dados da query
         for dia, nome, bitola, total in query_dia:
             chave = cls.mapear_produto_chave(nome, bitola)
             if chave in data_por_grupo:
                 data_por_grupo[chave][int(dia)] += float(total)
 
-        # Prepara dados para frontend
         labels = [str(d) for d in dias_do_mes]
         dados_front = {
             g: [round(data_por_grupo[g][d], 2) for d in dias_do_mes] 
@@ -171,7 +165,6 @@ class DashboardModel:
             .all()
         )
 
-        # Agrupa totais por produto
         for nome, bitola, total in query_venda_acumulada:
             chave = cls.mapear_produto_chave(nome, bitola)
             if chave in acumulado_venda:
@@ -212,7 +205,6 @@ class DashboardModel:
             .all()
         )
 
-        # Agrupa totais cumulativos por produto
         for nome, bitola, total in query_venda_acumulada_mes:
             chave = cls.mapear_produto_chave(nome, bitola)
             if chave in acumulado_venda_mes:
@@ -235,13 +227,11 @@ class DashboardModel:
         hoje = datetime.today()
         dias_do_mes = list(range(1, monthrange(ano, mes)[1] + 1))
         
-        # Define até que dia exibir
         if ano == hoje.year and mes == hoje.month:
             hoje_dia = hoje.day
         else:
             hoje_dia = monthrange(ano, mes)[1]
 
-        # Obtém pontuações diárias
         pontuacoes = (
             db.session.query(
                 func.day(PontuacaoUsuarioModel.data_cadastro).label("dia"),
@@ -258,13 +248,11 @@ class DashboardModel:
             .all()
         )
 
-        # Organiza pontuações por usuário
         pontos_por_usuario = {}
         for dia, usuario, pts in pontuacoes:
             pontos_por_usuario.setdefault(usuario, {d: 0.0 for d in dias_do_mes})
             pontos_por_usuario[usuario][int(dia)] += float(pts)
 
-        # Prepara dados para gráfico acumulativo
         dados_usuarios_front = []
         for usuario, mapa in pontos_por_usuario.items():
             acumul = 0.0
@@ -278,7 +266,6 @@ class DashboardModel:
                     serie.append({"x": str(d), "y": None, "label": ""})
             dados_usuarios_front.append({"name": usuario, "data": serie})
 
-        # Verifica se há pontuação para exibir
         tem_pontuacao = any(
             any(p["y"] not in (None, 0) for p in usr["data"])
             for usr in dados_usuarios_front
@@ -325,7 +312,6 @@ class DashboardModel:
             .all()
         )
 
-        # Agrupa totais de contra-notas por produto
         for nome, bitola, total in query_contra_acumulada:
             chave = cls.mapear_produto_chave(nome, bitola)
             if chave in contra_por_grupo_mes:
@@ -350,7 +336,6 @@ class DashboardModel:
         ano = ano or hoje.year
         mes = mes or hoje.month
         
-        # Coleta todos os dados
         data_por_grupo, labels, dados_front, mostrar_graficos = cls.obter_vendas_por_dia(ano, mes, empresa_id)
         valores_acumulados = cls.obter_vendas_acumuladas_mes(ano, mes, empresa_id)
         valores_acumulados_mes = cls.obter_vendas_acumuladas_cumulativas(empresa_id)
@@ -358,25 +343,20 @@ class DashboardModel:
         valores_contra_acumulados = cls.obter_contra_notas_acumuladas(empresa_id)
         
         return {
-            # Dados de vendas
             'labels': labels,
             'dados_front': dados_front,
             'valores_acumulados': valores_acumulados,
             'valores_acumulados_mes': valores_acumulados_mes,
             'mostrar_linhas_graficas': mostrar_graficos,
             
-            # Dados de produtividade
             'dados_usuarios_front': dados_usuarios_front,
             'tem_pontuacao': tem_pontuacao,
             
-            # Dados de contra-notas
             'valores_contra_acumulados': valores_contra_acumulados,
             
-            # Configurações
             'produtos_labels': cls.PRODUTOS_LABELS,
             'grupos': cls.GRUPOS_PRODUTOS,
             
-            # Parâmetros
             'ano': ano,
             'mes': mes,
             'empresa_selecionada_id': empresa_id

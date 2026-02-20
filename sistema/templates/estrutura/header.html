@@ -11,7 +11,6 @@
       </a>
     </div>
 
-    <!-- Seção superior com controles -->
     <div class="navbar-nav flex-row d-lg-none">
       <div class="d-none d-lg-flex">
         <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Ativar modo escuro" data-bs-toggle="tooltip"
@@ -81,7 +80,6 @@
       </div>
     </div>
 
-    <!-- Menu principal -->
     <div class="collapse navbar-collapse" id="sidebar-menu">
       <ul class="navbar-nav pt-lg-3">
         <li class="nav-item 
@@ -123,7 +121,6 @@
             </span>
           </a>
         </li>
-
 
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#navbar-base" data-bs-toggle="dropdown" data-bs-auto-close="outside"
@@ -177,8 +174,6 @@
             </div>
           </div>
         </li>
-
-
 
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#navbar-base" data-bs-toggle="dropdown" data-bs-auto-close="outside"
@@ -741,7 +736,6 @@
   </div>
 </aside>
 
-<!-- Filtro -->
 <div class="modal modal-blur fade" id="modal-movimentacaoes-financeiras" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-md modal-dialog-centered" role="document" style="display: grid;">
     <form action="{{url_for('exportar_movimentacaoes_financeiras')}}" method="get" target="_blank">
@@ -762,7 +756,7 @@
               <input type="date" id="dataFim" name="data_fim" class="form-control">
             </div>
             <div class="col-md-12 mb-3">
-              <!-- Seletor de empresa -->
+              
               <label class="form-label" for="selectConta"><strong>Conta
                   Bancária Relacionada:</strong></label>
               <select name="conta_bancaria_id" class="form-select">
@@ -804,7 +798,6 @@
   </div>
 </div>
 
-<!-- Modal Cargas Gerais por Clientes -->
 <div class="modal modal-blur fade" id="modal-cargas-gerais-cliente" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <form action="{{ url_for('relatorio_cargas_gerais_cliente') }}" method="POST" target="_blank">

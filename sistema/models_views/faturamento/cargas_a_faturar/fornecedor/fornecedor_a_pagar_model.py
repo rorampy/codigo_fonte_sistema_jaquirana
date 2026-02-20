@@ -36,12 +36,10 @@ class FornecedorPagarModel(BaseModel):
 
     utiliza_credito = db.Column(db.Boolean, nullable=True)
 
-    # Caso utiliza credito
     valor_credito_100 = db.Column(db.Integer, nullable=True)
 
     utiliza_saldo_movimentacao = db.Column(db.Boolean, nullable=True)
 
-    # Guarda valor saldo debitado
     valor_saldo_debitado_100 = db.Column(db.Integer, nullable=True)
 
     comprovante_pagamento_complementar_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
@@ -250,8 +248,8 @@ class FornecedorPagarModel(BaseModel):
             .filter(
                 FornecedorPagarModel.deletado == False,
                 FornecedorPagarModel.ativo == True,
-                FornecedorPagarModel.situacao_pagamento_id == 1,  # somente pagos
-                MovimentacaoFinanceiraModel.tipo_movimentacao == 2,  # saída/pagamento
+                FornecedorPagarModel.situacao_pagamento_id == 1,
+                MovimentacaoFinanceiraModel.tipo_movimentacao == 2,
             )
         )
 
@@ -287,7 +285,7 @@ class FornecedorPagarModel(BaseModel):
             .filter(
                 FornecedorPagarModel.deletado == False,
                 FornecedorPagarModel.ativo == True,
-                FornecedorPagarModel.situacao_pagamento_id == 2,  # somente pendentes
+                FornecedorPagarModel.situacao_pagamento_id == 2,
             )
             .order_by(
                 case((FornecedorCadastroModel.identificacao == None, 1), else_=0),
@@ -374,11 +372,9 @@ class FornecedorPagarModel(BaseModel):
             )
         )
 
-        # Seleciona o campo de data conforme o tipo de filtro
         if tipo_data_filtro == 'data_emissao':
             campo_data = RegistroOperacionalModel.destinatario_data_emissao
         else:
-            # Padrão: data de entrega do ticket
             campo_data = RegistroOperacionalModel.data_entrega_ticket
 
         if data_inicio and data_fim:
@@ -397,7 +393,6 @@ class FornecedorPagarModel(BaseModel):
                 campo_data <= data_fim,
             )
 
-        # Aplicar filtros
         if cliente:
             query = query.filter(ClienteModel.identificacao.ilike(f"%{cliente}%"))
 
@@ -493,7 +488,6 @@ class FornecedorPagarModel(BaseModel):
             )
         )
 
-        # Se datas forem fornecidas, aplica o filtro
         if data_inicio and data_fim:
             query = query.filter(
                 FornecedorPagarModel.data_entrega_ticket.isnot(None),
@@ -554,7 +548,6 @@ class FornecedorPagarModel(BaseModel):
         if incompleto:
             query = query.filter(FornecedorPagarModel.incompleto == incompleto)
 
-        # Ordenação
         query = query.order_by(
             case((FornecedorCadastroModel.identificacao == None, 1), else_=0),
             FornecedorCadastroModel.identificacao.asc(),
@@ -594,7 +587,6 @@ class FornecedorPagarModel(BaseModel):
             List: Lista de fornecedores a pagar no período
         """
         query = FornecedorPagarModel.query
-        # Aplicar filtros de data se fornecidos
         if data_inicio or data_fim:        
             if data_inicio:
                 query = query.filter(FornecedorPagarModel.data_entrega_ticket >= data_inicio)
@@ -603,9 +595,7 @@ class FornecedorPagarModel(BaseModel):
                 data_fim_inclusiva = data_fim + timedelta(days=1)
                 query = query.filter(FornecedorPagarModel.data_entrega_ticket < data_fim_inclusiva)
         
-        # Filtrar apenas registros com data de entrega
         query = query.filter(FornecedorPagarModel.data_entrega_ticket.isnot(None))
         
-        # Ordenar por data de entrega mais recente primeiro
         query = query.order_by(FornecedorPagarModel.data_entrega_ticket.desc())
         return query.all()

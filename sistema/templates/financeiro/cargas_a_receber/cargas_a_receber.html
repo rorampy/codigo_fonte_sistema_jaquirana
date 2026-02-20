@@ -12,7 +12,7 @@
         </div>
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="d-flex gap-2">
-            <!-- Botão de Recebimento em Massa -->
+            
             <button id="btn-informar-recebimento-massa" class="btn btn-outline-success" disabled>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -119,7 +119,7 @@
                               {% for item in registros_produto %}
                               <tr>
                                 <td class="text-center">
-                                  <!-- CHECKBOX DESABILITADO PARA REGISTROS JÁ RECEBIDOS, FATURADOS OU LIQUIDADOS -->
+                                  
                                   <input type="checkbox" class="form-check-input registro-checkbox"
                                     data-id="{{ item.registro.id }}" data-group="{{ groupId }}"
                                     data-diff="{{ item.registro.valor_total_nota_100 / 100 or 0 }}" {% if
@@ -276,7 +276,7 @@
           </div>
           <div class="modal-body">
             <div class="row">
-              <!-- Toggle entre Filtro Semanal e Por Data -->
+              
               <div class="col-12 mb-3">
                 <label class="form-label">Tipo de Filtro</label>
                 <div class="form-selectgroup form-selectgroup-boxes d-flex flex-row">
@@ -309,7 +309,6 @@
                 </div>
               </div>
 
-              <!-- Filtro Semanal -->
               <div id="filtro-semanal" class="col-12 mb-3" {% if dados_corretos.get('tipo_filtro')=='data' %}style="display: none;"{% endif %}>
                 <label class="form-label">Selecionar Período</label>
                 <select name="semanaSelecionada" class="form-select" id="semanaSelecionada">
@@ -326,7 +325,6 @@
                 </select>
               </div>
 
-              <!-- Filtro por Data -->
               <div id="filtro-data" class="row" {% if dados_corretos.get('tipo_filtro') !='data' %}style="display: none;"{% endif %}>
                 <div class="col-md-4 mb-3">
                   <label class="form-label">Tipo de Data</label>
@@ -432,7 +430,6 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
 
-      // Inicializa Tom Select nos outros selects
       document.querySelectorAll('select.form-select').forEach(function (select) {
         new TomSelect(select, {
         });
@@ -517,7 +514,6 @@
         }
       });
 
-      // Novo fluxo: recebimento em massa redireciona para tela de confirmação (GET)
       const btnRecebimentoMassa = document.getElementById('btn-informar-recebimento-massa');
       if (btnRecebimentoMassa) {
         btnRecebimentoMassa.addEventListener('click', function () {
@@ -526,7 +522,7 @@
             mostrarMensagem('warning', 'Selecione pelo menos um registro válido para recebimento!');
             return;
           }
-          // Redireciona para a tela de confirmação em massa (GET)
+          
           window.location.href = `{{ url_for('informar_recebimento_massa') }}?ids_registros=${selecionados.join(',')}`;
         });
         updateRecebimentoMassaButton();
@@ -635,7 +631,6 @@
         }
       }
 
-      // Novo fluxo: ação individual redireciona para tela de recebimento
       window.informarPagamentoIndividual = (id, btn) => {
         window.location.href = urls.informarIndividual(id);
       };
@@ -695,7 +690,6 @@
         }
       };
 
-      // Inicializar filtros de semana/data
       inicializarFiltros();
 
       function inicializarFiltros() {
@@ -719,10 +713,8 @@
           }
         }
 
-        // Aplicar estado inicial baseado nos radio buttons já configurados pelo backend
         alternarFiltros();
 
-        // Event listeners
         radioSemanal.addEventListener('click', alternarFiltros);
         radioData.addEventListener('click', alternarFiltros);
         radioSemanal.addEventListener('change', alternarFiltros);

@@ -9,18 +9,16 @@ class FornecedorCadastroModel(BaseModel):
     __tablename__ = 'for_fornecedor_cadastro'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     
-    # Cadastro funrural 1- Sim | 2- Não
     funrural = db.Column(db.Boolean, default=True, nullable=False)
-    # Cadastro senar 1- Sim | 2- Não
     senar = db.Column(db.Boolean, default=False, nullable=False)
     arquivo_senar_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     arquivo_senar = db.relationship("UploadArquivoModel", foreign_keys=[arquivo_senar_id], backref=db.backref("arquivo_senar_fornecedor_cadastro", lazy=True))
     imposto_id = db.Column(db.Integer, db.ForeignKey("z_sys_imposto.id"), nullable=True)
     imposto = db.relationship("ImpostoModel", backref=db.backref("imposto_fornecedor_cadastro", lazy=True))
     
-    classe_fornecedor = db.Column(db.Boolean, nullable=False, default=False) # 1- Floresta | 0- Terceiro
+    classe_fornecedor = db.Column(db.Boolean, nullable=False, default=False)
     valor_contrato_100 = db.Column(db.Integer, nullable=True)
-    estimativa_tonelada = db.Column(db.Float, nullable=True) # Estimativa de Tonelada
+    estimativa_tonelada = db.Column(db.Float, nullable=True)
     
     controle_entrada = db.Column(db.Boolean, default=True)
     
@@ -31,35 +29,25 @@ class FornecedorCadastroModel(BaseModel):
     contrato_fornecedor_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     contrato_fornecedor = db.relationship("UploadArquivoModel", foreign_keys=[contrato_fornecedor_id], backref=db.backref("contrato_fornecedor_cadastro", lazy=True))
 
-    # Possui madeira posta? 1- Sim | 2- Não
     madeira_posta = db.Column(db.Boolean, default=False, nullable=False)
 
-    # Possui comissionado? 1- Sim | 2- Não
     possui_comissionado = db.Column(db.Boolean, default=False, nullable=False)
 
-    # possui custo de extração? 1- Sim | 2- Não
     custo_extracao = db.Column(db.Boolean, default=False, nullable=False)
     
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
-    # ==================== Relações ====================
     
-    # relacionamento 1:N -> cada fornecedor pode ter vários preços de madeira posta normalizados
     fornecedor_madeira_posta = db.relationship("FornecedorMadeiraPostaPrecoBitolaModel", backref="fornecedor_madeira_posta", cascade="all, delete-orphan", lazy=True)
     
-    # relacionamento 1:N -> cada fornecedor pode ter várias tags
     fornecedor_tags = db.relationship("FornecedorTag", backref="fornecedor_rel", cascade="all, delete-orphan", lazy=True)
     
-    # relacionamento 1:N -> cada fornecedor pode ter vários preços de custo por bitola
     fornecedor_precos_custo_bitolas = db.relationship("FornecedorPrecoCustoBitolaModel", backref="fornecedor", cascade="all, delete-orphan", lazy=True)
     
-    # relacionamento 1:N -> cada fornecedor pode ter vários custos de extração por bitola
     fornecedor_custos_extracao = db.relationship("FornecedorPrecoCustoExtracaoModel", backref="fornecedor_extracao", cascade="all, delete-orphan", lazy=True)
 
-    # relacionamento 1:1 -> cada fornecedor pode ter uma conta bancária vinculada
     fornecedor_conta_bancaria = db.relationship("FornecedorContaBancariaModel", backref="fornecedor_rel_conta_bancaria", cascade="all, delete-orphan", uselist=False)
 
-    # relacionamento 1:1 -> cada fornecedor pode ter um crédito definido
     fornecedor_credito = db.relationship("FornecedorCreditoModel", backref="fornecedor_rel_credito", cascade="all, delete-orphan", uselist=False)
 
     
@@ -233,7 +221,6 @@ class FornecedorCadastroModel(BaseModel):
                 'fornecedor': None
             }
         
-        # Obtém o fornecedor da nova tabela normalizada
         fornecedor = FornecedorCadastroModel.obter_fornecedor_por_id(fornecedor_identificacao)
         
         if not fornecedor:
@@ -248,7 +235,6 @@ class FornecedorCadastroModel(BaseModel):
         preco_custo_extrator = None
         origem_incompleta = False
 
-        # Mapear produto string para produto_id
         produto_map = {
             "Eucalipto": 1,
             "Pinus": 2,
@@ -264,11 +250,9 @@ class FornecedorCadastroModel(BaseModel):
                 'fornecedor': fornecedor
             }
 
-        # Se o fornecedor possui madeira posta, cliente_id foi fornecido e busca preços de madeira posta
         if fornecedor.madeira_posta and cliente_id:
             from sistema.models_views.gerenciar.fornecedor.fornecedor_madeira_posta_preco_bitola_model import FornecedorMadeiraPostaPrecoBitolaModel
             
-            # Query para buscar preço de madeira posta
             query = FornecedorMadeiraPostaPrecoBitolaModel.query.filter(
                 FornecedorMadeiraPostaPrecoBitolaModel.fornecedor_id == fornecedor.id,
                 FornecedorMadeiraPostaPrecoBitolaModel.cliente_id == cliente_id,
@@ -278,7 +262,6 @@ class FornecedorCadastroModel(BaseModel):
                 FornecedorMadeiraPostaPrecoBitolaModel.deletado == False
             )
             
-            # Adiciona filtro de transportadora se fornecida
             if transportadora_id:
                 query = query.filter(FornecedorMadeiraPostaPrecoBitolaModel.transportadora_id == transportadora_id)
             
@@ -286,17 +269,14 @@ class FornecedorCadastroModel(BaseModel):
             
             if madeira_posta and madeira_posta.preco_madeira_posta_100:
                 preco_custo = madeira_posta.preco_madeira_posta_100
-                # Para madeira posta, não há custo de extração separado
                 preco_custo_extrator = 0
             else:
                 origem_incompleta = True
         
-        # Se não é madeira posta ou não encontrou dados de madeira posta, usa preços normais
         if preco_custo is None:
             from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_bitola_model import FornecedorPrecoCustoBitolaModel
             from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_extracao_model import FornecedorPrecoCustoExtracaoModel
             
-            # Busca preço de custo normal
             preco_custo_obj = FornecedorPrecoCustoBitolaModel.query.filter(
                 FornecedorPrecoCustoBitolaModel.fornecedor_id == fornecedor.id,
                 FornecedorPrecoCustoBitolaModel.produto_id == produto_id,
@@ -310,7 +290,6 @@ class FornecedorCadastroModel(BaseModel):
             else:
                 origem_incompleta = True
             
-            # Busca custo de extração se o fornecedor tem extração
             if fornecedor.custo_extracao:
                 custo_extracao_obj = FornecedorPrecoCustoExtracaoModel.query.filter(
                     FornecedorPrecoCustoExtracaoModel.fornecedor_id == fornecedor.id,

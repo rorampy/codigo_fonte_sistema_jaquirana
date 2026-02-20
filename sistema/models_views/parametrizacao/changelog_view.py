@@ -6,7 +6,6 @@ from ...models_views.parametrizacao.changelog_model import ChangelogModel
 from ..._utilitarios import ValidaForms
 
 
-# Processador de contexto, fornece a consulta em todo o escopo do projeto
 @app.context_processor
 def get_artigos():
     item_mais_recente = ChangelogModel.obter_numero_versao_changelog_mais_recente()

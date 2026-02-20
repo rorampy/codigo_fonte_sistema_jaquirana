@@ -29,7 +29,6 @@ from sistema._utilitarios import *
 from datetime import datetime, date
 from sistema._utilitarios import *
 
-# ==================== Métodos Auxiliares para Conciliação OFX ====================
 
 def _extrair_filtros_conciliacao(conta_bancaria_id=None):
     """
@@ -38,7 +37,6 @@ def _extrair_filtros_conciliacao(conta_bancaria_id=None):
     Returns:
         dict: Dicionário com todos os filtros validados
     """
-    # Parâmetros 
     filtros = {
         'data_inicio': request.args.get('dataInicio', '').strip(),
         'data_fim': request.args.get('dataFim', '').strip(), 
@@ -53,11 +51,9 @@ def _extrair_filtros_conciliacao(conta_bancaria_id=None):
         'conta_bancaria_id': conta_bancaria_id
     }
     
-    # Limpar valor se for placeholder padrão
     if filtros['valor'] == 'R$ 0,00':
         filtros['valor'] = ''
     
-    # Converter status de conciliação
     filtros['conciliado_bool'] = filtros['conciliado'] == 'sim'
     filtros['ofx_ignorada_bool'] = filtros['ofx_ignorada'] == 'sim'
     filtros['parcial_bool'] = filtros['conciliado'] == 'parcial'
@@ -75,29 +71,22 @@ def _buscar_transacoes_com_filtros(filtros):
     Returns:
         dict: Resultado contendo transações, totais e informações de paginação
     """
-    # Query base das transações
     transacoes = ImportacaoOfx.query
     
-    # Filtrar transações não deletadas por padrão
     transacoes = transacoes.filter(ImportacaoOfx.deletado == False)
     
-    # Aplicar filtro de conciliação
     if filtros['parcial_bool']:
-        # Mostrar apenas transações parcialmente conciliadas
         transacoes = transacoes.filter(
             ImportacaoOfx.conciliacao_parcial == True,
             ImportacaoOfx.conciliado == False
         )
     else:
-        # Filtro normal (sim/não)
         conciliado_val = filtros['conciliado_bool']
         transacoes = transacoes.filter(ImportacaoOfx.conciliado == conciliado_val)
     
-    # Filtro de ofx_deletada (ignorada)
     ofx_ignorada_val = filtros['ofx_ignorada_bool']
     transacoes = transacoes.filter(ImportacaoOfx.ofx_deletada == ofx_ignorada_val)
     
-    # Aplicar filtros (exatamente igual ao original)
     if filtros['data_inicio']:
         transacoes = transacoes.filter(ImportacaoOfx.data_transacao >= filtros['data_inicio'])
     if filtros['data_fim']:
@@ -111,16 +100,12 @@ def _buscar_transacoes_com_filtros(filtros):
     if filtros['conta_bancaria_id']:
         transacoes = transacoes.filter(ImportacaoOfx.conta_bancaria_id == filtros['conta_bancaria_id'])
     
-    # Filtro de tipo de movimentação
     if filtros['tipo_movimentacao']:
         if filtros['tipo_movimentacao'] == 'entrada':
-            # Filtrar apenas valores positivos
             transacoes = transacoes.filter(ImportacaoOfx.valor > 0)
         elif filtros['tipo_movimentacao'] == 'saida':
-            # Filtrar apenas valores negativos
             transacoes = transacoes.filter(ImportacaoOfx.valor < 0)
 
-    # Paginação (exatamente igual ao original)
     total_transacoes = transacoes.count()
     transacoes = transacoes.order_by(ImportacaoOfx.data_transacao.desc(), ImportacaoOfx.id.desc())\
                            .offset((filtros['pagina']-1)*filtros['por_pagina'])\
@@ -144,7 +129,6 @@ def _carregar_estruturas_formularios():
     Returns:
         dict: Dicionário com todas as estruturas carregadas
     """
-    # Estruturas básicas
     estruturas = {
         'estrutura_plano_contas': PlanoContaModel.obter_estrutura_plana_hierarquica(),
         'centros_custo': CentroCustoModel.obter_centro_custos_ativos(),
@@ -152,7 +136,6 @@ def _carregar_estruturas_formularios():
         'pessoas_financeiro': PessoaFinanceiroModel.listar_pessoas_ativas()
     }
     
-    # Processar documentos formatados para pessoas
     for pessoa in estruturas['pessoas_financeiro']:
         if pessoa.numero_documento and len(pessoa.numero_documento.strip()) > 0:
             if len(pessoa.numero_documento) == 14:
@@ -179,17 +162,13 @@ def _processar_categorias_por_transacao(transacoes):
     
     for transacao in transacoes:
         eh_receita = transacao.valor > 0
-        # Para receitas: tipos 1 (Receitas) e 3 (Misto)
-        # Para despesas: tipos 2 (Despesas) e 3 (Misto)
-        tipos_plano_conta = [1, 3] if eh_receita else [2, 3]  # 1 = Receitas, 2 = Despesas, 3 = Misto
+        tipos_plano_conta = [1, 3] if eh_receita else [2, 3]
         
-        # Obter estrutura com folhas para cada tipo individualmente
         categorias_filtradas = []
         for tipo_individual in tipos_plano_conta:
-            categorias_tipo = obter_estrutura_com_folhas([tipo_individual])  # Passar como lista unitária
+            categorias_tipo = obter_estrutura_com_folhas([tipo_individual])
             categorias_filtradas.extend(categorias_tipo)
         
-        # Remover duplicatas mantendo ordem (caso tipo 3 apareça em ambas)
         categorias_unicas = []
         ids_vistos = set()
         for cat in categorias_filtradas:
@@ -242,7 +221,7 @@ def _preparar_dados_conta_instituicao(transacoes):
     
     conta_info = {
         'bank_id': getattr(transacao_mais_recente, 'banco_id', ''),
-        'branch_id': '',  # Pode ser implementado se disponível no OFX
+        'branch_id': '',
         'account_id': getattr(transacao_mais_recente, 'conta_id', '')
     }
     
@@ -291,7 +270,6 @@ def _preparar_estatisticas(resumo_bd):
     }
 
 
-# ==================== Rota Principal de Conciliação OFX ====================
 @app.route("/financeiro/movimentacoes-financeiras/conciliacao-ofx/<int:conta_id>", methods=["GET", "POST"])
 @login_required
 @requires_roles
@@ -301,49 +279,36 @@ def conciliacao_ofx(conta_id):
     Implementa sistema completo de filtros, paginação e estruturas para formulários
     """
     try:
-        # Verificar se existe importação OFX
         batch_id = session.get('current_batch_id') or ImportacaoOfxService.obter_ultimo_batch_importacao(conta_bancaria_id=conta_id)
         if not batch_id:
             flash(('Nenhum arquivo OFX foi importado. Importe um arquivo primeiro.', 'warning'))
             return redirect(url_for('importar_ofx'))
         
-        # Extrair e validar filtros
         filtros = _extrair_filtros_conciliacao(conta_bancaria_id=conta_id)
         
-        # Buscar transações com filtros aplicados
         resultado_paginacao = _buscar_transacoes_com_filtros(filtros)
         
-        # Carregar estruturas de dados para formulários
         estruturas = _carregar_estruturas_formularios()
         
-        # Adicionar estrutura_plano completa (igual ao listagem_ofx)
         estruturas['estrutura_plano'] = PlanoContaModel.obter_estrutura_plana_hierarquica()
         
-        # Processar categorias específicas por transação
         categorias_por_transacao = _processar_categorias_por_transacao(resultado_paginacao['transacoes'])
         
-        # Obter resumo estatístico
         resumo_bd = _obter_resumo_importacao(filtros)
         
-        # Preparar dados de conta/instituição
         conta_info, instituicao_info, periodo_info = _preparar_dados_conta_instituicao(resultado_paginacao['transacoes'])
         
-        # Preparar estatísticas formatadas
         estatisticas = _preparar_estatisticas(resumo_bd)
         
-        # Renderizar template com todos os dados organizados
         return render_template("financeiro/contas_bancarias/conciliacao_ofx.html",
-            # Dados principais
             transacoes_ofx=resultado_paginacao['transacoes'],
             
-            # Paginação
             pagina=resultado_paginacao['pagina'],
             total_paginas=resultado_paginacao['total_paginas'],
             total_transacoes=resultado_paginacao['total_transacoes'],
             por_pagina=resultado_paginacao['por_pagina'],
             batch_id=batch_id,
             
-            # Filtros individuais (igual ao listagem_ofx original)
             filtro_conciliado=filtros['conciliado'],
             filtro_ofx_ignorada=filtros['ofx_ignorada'],
             filtro_fitid=filtros['fitid'],
@@ -353,7 +318,6 @@ def conciliacao_ofx(conta_id):
             filtro_data_inicio=filtros['data_inicio'],
             filtro_data_fim=filtros['data_fim'],
             
-            # Estruturas para formulários
             estrutura_plano_contas=estruturas['estrutura_plano_contas'],
             estrutura_plano=estruturas['estrutura_plano'], 
             centros_custo=estruturas['centros_custo'],
@@ -361,24 +325,20 @@ def conciliacao_ofx(conta_id):
             contas_bancarias=estruturas['contas_bancarias'],
             categorias_por_transacao=categorias_por_transacao,
             
-            # Dados da importação
             resumo=resumo_bd or {},
             arquivo_nome=resumo_bd.get('arquivo_nome', '') if resumo_bd else '',
             data_importacao=_formatar_data_importacao(resumo_bd),
             estatisticas=estatisticas,
             
-            # Informações da conta/instituição
             conta_info=conta_info,
             instituicao_info=instituicao_info,
             periodo_info=periodo_info,
             
-            # ID da conta para URLs
             conta_id=conta_id
         )
         
     except Exception as e:
         flash(('Erro ao carregar dados de conciliação OFX. Tente novamente.', 'danger'))
-        print(f"[ERROR] Erro na conciliação OFX: {str(e)}")
         return redirect(url_for('conciliacao_contas_bancarias'))
 
 
@@ -410,10 +370,8 @@ def excluir_ativar_transacao_visualizacao(transacao_id):
             flash((mensagem_sucesso, 'success'))
             return redirect(url_for('conciliacao_ofx', conta_id=importacao.conta_bancaria_id))
     except Exception as e:
-        print(f"[ERROR] Erro ao excluir/ativar transação da visualização: {str(e)}")
         flash(('Erro ao processar exclusão/ativação da transação. Tente novamente.', 'danger'))
         db.session.rollback()
-        # Obter conta_bancaria_id da transação para redirect
         try:
             importacao = ImportacaoOfx.query.get(transacao_id)
             conta_id = importacao.conta_bancaria_id if importacao else None
@@ -423,7 +381,6 @@ def excluir_ativar_transacao_visualizacao(transacao_id):
             pass
         return redirect(url_for('conciliacao_contas_bancarias'))
 
-# ==================== Endpoints AJAX ====================
 
 @app.route("/api/sugestoes-ofx", methods=["POST"])
 @login_required
@@ -438,7 +395,6 @@ def obter_sugestoes_ofx():
         transacao_id = data.get('transacao_id')
         transacoes_ids = data.get('transacoes_ids') 
         
-        # Determinar se é busca individual ou em lote
         if transacoes_ids and isinstance(transacoes_ids, list):
             return processar_sugestoes_lote(transacoes_ids)
         elif transacao_id:
@@ -451,7 +407,6 @@ def obter_sugestoes_ofx():
             }), 400
             
     except Exception as e:
-        print(f"[ERROR] Erro ao buscar sugestões OFX: {str(e)}")
         return jsonify({
             'success': False,
             'error': 'Erro interno do servidor',
@@ -467,23 +422,18 @@ def buscar_agendamentos_para_conciliacao():
     """
     try:
         data = request.get_json()
-        # Dados da transação OFX
         eh_credito = data.get('is_credit', False) == 'true'
-        conta_bancaria_id = data.get('conta_bancaria_id')  # Adicionar conta bancária
+        conta_bancaria_id = data.get('conta_bancaria_id')
 
-        # Se não houver conta_bancaria_id nos dados, tentar obter da sessão ou usar conta principal
         if not conta_bancaria_id:
-            # Tentar obter da sessão ou usar conta principal
             from sistema.models_views.configuracoes_gerais.conta_bancaria.conta_bancaria_model import ContaBancariaModel
             conta_principal = ContaBancariaModel.verifica_conta_bancaria_principal()
             if conta_principal:
                 conta_bancaria_id = conta_principal.id
             else:
-                # Se ainda não tiver conta, buscar a primeira conta ativa
                 primeira_conta = ContaBancariaModel.query.filter_by(ativo=True, deletado=False).first()
                 conta_bancaria_id = primeira_conta.id if primeira_conta else None
 
-        # Validar se conseguiu obter uma conta
         if not conta_bancaria_id:
             return jsonify({
                 'success': False,
@@ -491,17 +441,15 @@ def buscar_agendamentos_para_conciliacao():
                 'agendamentos': [],
                 'total': 0
             }), 400
-        # Filtros de busca
         valor_min = data.get('valor_min')
         valor_max = data.get('valor_max')
         data_inicio = data.get('data_inicio')
         data_fim = data.get('data_fim')
-        categoria_id = data.get('categoria')  # ID da categoria selecionada
-        beneficiario_id = data.get('beneficiario_id')  # ID do beneficiário selecionado
-        descricao = data.get('descricao') or ''  # Filtro de descrição - usar 'or' para evitar None
-        descricao = descricao.strip() if descricao else ''  # Aplicar strip apenas se não for None
+        categoria_id = data.get('categoria')
+        beneficiario_id = data.get('beneficiario_id')
+        descricao = data.get('descricao') or ''
+        descricao = descricao.strip() if descricao else ''
         
-        # Converter valores para float se não estiverem vazios
         try:
             valor_min = float(valor_min) if valor_min and valor_min != '' else None
         except (ValueError, TypeError):
@@ -513,9 +461,6 @@ def buscar_agendamentos_para_conciliacao():
             valor_max = None
     
         
-        # Buscar agendamentos com filtros usando método que já retorna formatado
-        # O método buscar_agendamentos_com_filtros agora retorna dados já formatados
-        # usando a mesma estrutura de obter_agendamentos_recentes_formatados
         agendamentos_formatados = AgendamentoPagamentoModel.buscar_agendamentos_com_filtros(
             eh_credito=eh_credito,
             valor_min=valor_min,
@@ -538,8 +483,6 @@ def buscar_agendamentos_para_conciliacao():
         })
         
     except Exception as e:
-        print(f"[ERROR] Erro ao buscar agendamentos para conciliação: {str(e)}")
-        print(f"[ERROR] Dados recebidos: {request.get_json()}")
         return jsonify({
             'success': False,
             'error': f'Erro interno do servidor: {str(e)}',
@@ -557,9 +500,8 @@ def processar_conciliacao_massa():
     try:
         data = request.get_json()
         
-        # Dados recebidos do frontend
         transacao_id = data.get('transacao_id')
-        agendamentos_ids = data.get('agendamentos_ids', [])  # Lista de IDs dos agendamentos
+        agendamentos_ids = data.get('agendamentos_ids', [])
         observacoes = data.get('observacoes', '')
         
         if not transacao_id or not agendamentos_ids:
@@ -568,7 +510,6 @@ def processar_conciliacao_massa():
                 'message': 'Dados obrigatórios não fornecidos'
             }), 400
         
-        # Buscar a transação OFX
         from sistema.models_views.importacao_ofx.importacao_ofx_model import ImportacaoOfx
         transacao = ImportacaoOfx.query.get(transacao_id)
         if not transacao:
@@ -577,14 +518,12 @@ def processar_conciliacao_massa():
                 'message': 'Transação não encontrada'
             }), 404
         
-        # Validar se transação já foi totalmente conciliada (permitir parcial)
         if transacao.conciliado and not transacao.conciliacao_parcial:
             return jsonify({
                 'success': False,
                 'message': 'Esta transação já foi totalmente conciliada'
             }), 400
         
-        # Buscar todos os agendamentos
         agendamentos = AgendamentoPagamentoModel.query.filter(
             AgendamentoPagamentoModel.id.in_(agendamentos_ids),
             AgendamentoPagamentoModel.conta_bancaria_id == transacao.conta_bancaria_id,
@@ -596,7 +535,6 @@ def processar_conciliacao_massa():
                 'message': 'Alguns agendamentos não foram encontrados'
             }), 404
         
-        # Validar se algum agendamento já foi totalmente conciliado
         agendamentos_totalmente_conciliados = [ag for ag in agendamentos if ag.situacao_pagamento_id == 8]
         if agendamentos_totalmente_conciliados:
             codigos_conciliados = [str(ag.id) for ag in agendamentos_totalmente_conciliados]
@@ -605,9 +543,6 @@ def processar_conciliacao_massa():
                 'message': f'Os seguintes agendamentos já foram totalmente conciliados'
             }), 400
         
-        # Calcular valor total dos agendamentos selecionados usando valores restantes
-        # Para agendamentos parcialmente conciliados (status 10), usa o valor pendente
-        # Para agendamentos não conciliados, usa o valor total
         valor_total_agendamentos = sum(
             ag.valor_pendente_conciliacao_100 if ag.situacao_pagamento_id == 10 
             else ag.valor_total_100 
@@ -616,20 +551,8 @@ def processar_conciliacao_massa():
         valor_transacao_centavos = int(abs(transacao.valor * 100))
         valor_disponivel_transacao = transacao.valor_disponivel_100
         
-        # =============================================================
-        # SISTEMA DE PAGAMENTO AUTOMÁTICO EM MASSA
-        # =============================================================
-        # Esta lógica implementa um sistema que automaticamente:
-        # 1. Detecta quando agendamentos excedem o valor da transação
-        # 2. Calcula proporcionalmente quanto pagar de cada agendamento  
-        # 3. Distribui o valor disponível de forma justa entre todos
-        # 4. Mantém controle preciso dos valores já utilizados
-        # =============================================================
         
         if valor_total_agendamentos > valor_disponivel_transacao:
-            # CONCILIAÇÃO PROPORCIONAL AUTOMÁTICA
-            # Quando o total dos agendamentos é maior que o valor disponível,
-            # o sistema calcula automaticamente a proporção a ser paga de cada um
             
             if valor_disponivel_transacao <= 0:
                 valor_ja_utilizado = transacao.valor_utilizado_100 or 0
@@ -640,40 +563,23 @@ def processar_conciliacao_massa():
                               f'Já utilizado: {ValoresMonetarios.converter_float_brl_positivo(valor_ja_utilizado/100)}.'
                 }), 400
             
-            # Calcular fator proporcional: quanto % do valor de cada agendamento será pago
-            # Exemplo: Se tenho R$ 100 disponível e R$ 200 em agendamentos, 
-            # cada agendamento receberá 50% do seu valor (100/200 = 0.5)
             fator_proporcional = valor_disponivel_transacao / valor_total_agendamentos
             conciliacao_proporcional = True
             valor_efetivo_conciliado = valor_disponivel_transacao
         else:
-            # CONCILIAÇÃO TOTAL NORMAL
-            # Quando o valor disponível é suficiente para todos os agendamentos
             fator_proporcional = 1.0
             conciliacao_proporcional = False
             valor_efetivo_conciliado = valor_total_agendamentos
         
-        # Determinar tipo de movimentação (1=Entrada, 2=Saída)
         tipo_movimentacao = 1 if transacao.valor > 0 else 2
         
-        # Processar cada agendamento
         from datetime import datetime
         faturamentos_conciliados = []
         lancamentos_conciliados = []
         movimentacoes_criadas = []
         
         for agendamento in agendamentos:
-            # =============================================================
-            # PROCESSAMENTO INDIVIDUAL DE CADA AGENDAMENTO
-            # =============================================================
-            # Para cada agendamento selecionado:
-            # 1. Identifica origem (faturamento ou lançamento avulso)
-            # 2. Calcula valor proporcional a ser pago
-            # 3. Cria movimentação financeira com auditoria completa
-            # 4. Atualiza status do agendamento (parcial ou total)
-            # =============================================================
             
-            # Determinar tipo de origem e IDs para rastreabilidade
             tipo_origem = None
             faturamento_id = None
             lancamento_avulso_id = None
@@ -689,60 +595,46 @@ def processar_conciliacao_massa():
                 if lancamento_avulso_id not in lancamentos_conciliados:
                     lancamentos_conciliados.append(lancamento_avulso_id)
             
-            # Aplicar fator proporcional ao valor restante do agendamento
-            # Para agendamentos parcialmente conciliados (status 10), usa o valor pendente
-            # Para agendamentos não conciliados, usa o valor total
-            # Em conciliação total: fator = 1.0 (100% do valor restante)
-            # Em conciliação proporcional: fator < 1.0 (% calculado automaticamente)
             valor_base_agendamento = (
                 agendamento.valor_pendente_conciliacao_100 if agendamento.situacao_pagamento_id == 10 
                 else agendamento.valor_total_100
             )
             valor_proporcional_agendamento = int(valor_base_agendamento * fator_proporcional)
             
-            # Calcular diferença para controle de auditoria
             valor_diferenca = valor_transacao_centavos - valor_efetivo_conciliado
             valor_diferenca_proporcional = int((valor_proporcional_agendamento / valor_efetivo_conciliado) * valor_diferenca) if valor_diferenca != 0 else 0
             
-            # Criar a movimentação financeira com todos os campos de auditoria
             nova_movimentacao = MovimentacaoFinanceiraModel(
                 tipo_movimentacao=tipo_movimentacao,
                 usuario_id=current_user.id,
                 data_movimentacao=transacao.data_transacao,
                 conta_bancaria_id=agendamento.conta_bancaria_id,
-                valor_movimentacao_100=valor_proporcional_agendamento,  # Usar valor proporcional
+                valor_movimentacao_100=valor_proporcional_agendamento,
                 ativo=True,
                 conciliacao_bancaria=True,
                 
-                # Campos de auditoria da conciliação
                 importacao_ofx_id=transacao_id,
                 agendamento_id=agendamento.id,
                 
-                # Dados originais da transação OFX
                 conciliacao_fitid=transacao.fitid,
                 conciliacao_valor_original=valor_transacao_centavos,
                 conciliacao_descricao_ofx=transacao.memo or transacao.descricao_limpa,
                 conciliacao_data_transacao=transacao.data_transacao,
                 conciliacao_tipo_movimento=transacao.tipo_movimento,
                 
-                # Auditoria da conciliação
                 conciliacao_data_processamento=datetime.now(),
                 conciliacao_observacoes=f'CONCILIAÇÃO EM MASSA {"PROPORCIONAL" if conciliacao_proporcional else "TOTAL"}: {observacoes}' if observacoes else f'CONCILIAÇÃO EM MASSA {"PROPORCIONAL" if conciliacao_proporcional else "TOTAL"}',
                 
-                # Referências de origem
                 conciliacao_faturamento_id=faturamento_id,
                 conciliacao_lancamento_avulso_id=lancamento_avulso_id,
                 conciliacao_tipo_origem=tipo_origem,
                 
-                # Controle de diferenças
                 conciliacao_valor_diferenca=valor_diferenca_proporcional
             )
             
             db.session.add(nova_movimentacao)
             movimentacoes_criadas.append(nova_movimentacao)
             
-            # Atualizar agendamento baseado no valor conciliado
-            # Sempre usar adicionar_valor_conciliado para manter controle preciso
             if not agendamento.adicionar_valor_conciliado(valor_proporcional_agendamento):
                 db.session.rollback()
                 return jsonify({
@@ -750,7 +642,6 @@ def processar_conciliacao_massa():
                     'message': f'Erro interno: não foi possível adicionar valor conciliado ao agendamento {agendamento.id}'
                 }), 500
             
-            # Definir situação baseada no status da conciliação após adicionar valor
             agendamento.situacao_pagamento_id = 8 if agendamento.esta_totalmente_conciliado else 10
             
             db.session.add(agendamento)
@@ -764,11 +655,9 @@ def processar_conciliacao_massa():
                 modulo='conciliacao_bancaria'
             )
         
-        # Marcar faturamentos como conciliados (apenas se todos os agendamentos foram totalmente conciliados)
         for faturamento_id in faturamentos_conciliados:
             faturamento = FaturamentoModel.query.get(faturamento_id)
             if faturamento:
-                # Verificar se todos os agendamentos do faturamento estão conciliados
                 agendamentos_faturamento = AgendamentoPagamentoModel.obter_agendamentos_por_faturamento(faturamento_id)
                 todos_conciliados = all(ag.esta_totalmente_conciliado for ag in agendamentos_faturamento)
                 
@@ -776,39 +665,32 @@ def processar_conciliacao_massa():
                     faturamento.situacao_pagamento_id = 8
                     db.session.add(faturamento)
         
-        # Marcar lançamentos avulsos como conciliados (apenas se totalmente conciliados)
         for lancamento_id in lancamentos_conciliados:
             lancamento_avulso = LancamentoAvulsoModel.query.get(lancamento_id)
             if lancamento_avulso:
-                # Buscar o agendamento do lançamento para verificar se está totalmente conciliado
                 agendamento_lancamento = AgendamentoPagamentoModel.query.filter_by(lancamento_avulso_id=lancamento_id).first()
                 if agendamento_lancamento and agendamento_lancamento.esta_totalmente_conciliado:
                     lancamento_avulso.situacao_pagamento_id = 8
                     db.session.add(lancamento_avulso)
         
-        # Atualizar valor utilizado da transação (usar valor efetivamente conciliado)
         if not transacao.adicionar_valor_utilizado(valor_efetivo_conciliado):
             return jsonify({
                 'success': False,
                 'message': 'Erro interno: não foi possível atualizar valor utilizado da transação'
             }), 500
 
-        # Marcar transação OFX como conciliada e salvar dados para reversão
         movimentacoes_ids = []
         
-        # Commit primeiro para obter os IDs das novas movimentações
         db.session.flush()
         for mov in movimentacoes_criadas:
             if mov.id:
                 movimentacoes_ids.append(mov.id)
         
-        # Determinar tipo de conciliação baseado no tipo processado
         if conciliacao_proporcional:
             tipo_conciliacao = 'AGENDAMENTO_MASSA_PROPORCIONAL'
         else:
             tipo_conciliacao = 'AGENDAMENTO_MASSA_TOTAL' if transacao.esta_totalmente_utilizada else 'AGENDAMENTO_MASSA_PARCIAL'
         
-        # Salvar dados da conciliação no formato JSON
         sucesso_salvamento = ImportacaoOfxService.salvar_dados_conciliacao(
             transacao=transacao,
             tipo_conciliacao=tipo_conciliacao,
@@ -816,7 +698,7 @@ def processar_conciliacao_massa():
             faturamentos_ids=faturamentos_conciliados,
             movimentacoes_ids=movimentacoes_ids,
             lancamentos_avulsos_ids=lancamentos_conciliados,
-            valor_agendamento=valor_efetivo_conciliado,  # Salva o valor efetivamente conciliado
+            valor_agendamento=valor_efetivo_conciliado,
             usuario_id=current_user.id,
             observacoes=f'{"MASSA PROPORCIONAL" if conciliacao_proporcional else "MASSA TOTAL"}: {observacoes}' if observacoes else f'{"Conciliação em massa proporcional" if conciliacao_proporcional else "Conciliação em massa total"}'
         )
@@ -828,7 +710,6 @@ def processar_conciliacao_massa():
                 'message': 'Erro ao salvar dados de conciliação para reversão'
             }), 500
         
-        # Observações detalhadas da conciliação
         obs_conciliacao = f'Conciliação em massa {"PROPORCIONAL" if conciliacao_proporcional else "TOTAL"} com {len(agendamentos)} agendamento(s)'
         
         if conciliacao_proporcional:
@@ -850,21 +731,18 @@ def processar_conciliacao_massa():
         transacao.observacoes_conciliacao = obs_conciliacao
         db.session.add(transacao)
         
-        # Atualizar saldo da conta bancária (usar a primeira movimentação como referência)
         if movimentacoes_criadas:
             primeira_movimentacao = movimentacoes_criadas[0]
             conta_bancaria_id = primeira_movimentacao.conta_bancaria_id
             
             from sistema.models_views.financeiro.movimentacao_financeira.saldo_movimentacao_financeira_model import SaldoMovimentacaoFinanceiraModel
             
-            # Buscar o registro de saldo da conta
             saldo_conta = SaldoMovimentacaoFinanceiraModel.query.filter(
                 SaldoMovimentacaoFinanceiraModel.conta_bancaria_id == conta_bancaria_id,
                 SaldoMovimentacaoFinanceiraModel.ativo == True,
                 SaldoMovimentacaoFinanceiraModel.deletado == False
             ).first()
             
-            # Se não existir registro de saldo, criar um
             if not saldo_conta:
                 saldo_conta = SaldoMovimentacaoFinanceiraModel(
                     data_movimentacao=transacao.data_transacao,
@@ -874,22 +752,18 @@ def processar_conciliacao_massa():
                 )
                 db.session.add(saldo_conta)
             
-            # Atualizar o saldo baseado no tipo de movimentação (usar valor efetivamente conciliado)
-            if tipo_movimentacao == 1:  # Entrada/Crédito - AUMENTA o saldo
+            if tipo_movimentacao == 1:
                 saldo_conta.valor_total_saldo_100 += valor_efetivo_conciliado
-            elif tipo_movimentacao == 2:  # Saída/Débito - DIMINUI o saldo
+            elif tipo_movimentacao == 2:
                 saldo_conta.valor_total_saldo_100 -= valor_efetivo_conciliado
             
-            # Atualizar a data da última movimentação do saldo
             saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
             db.session.add(saldo_conta)
         
         db.session.commit()
         
-        # Preparar mensagem de sucesso detalhada
         status_transacao = "totalmente utilizada" if transacao.esta_totalmente_utilizada else f"parcialmente utilizada ({transacao.percentual_utilizado:.1f}%)"
         
-        # Contar agendamentos por status após a conciliação
         agendamentos_totalmente_conciliados = sum(1 for ag in agendamentos if ag.esta_totalmente_conciliado)
         agendamentos_parcialmente_conciliados = len(agendamentos) - agendamentos_totalmente_conciliados
         
@@ -915,7 +789,6 @@ def processar_conciliacao_massa():
         
         mensagem_sucesso += f'Transação {status_transacao}.'
         
-        # Contar apenas faturamentos/lançamentos que foram efetivamente marcados como conciliados
         faturamentos_marcados_conciliados = 0
         for faturamento_id in faturamentos_conciliados:
             faturamento = FaturamentoModel.query.get(faturamento_id)
@@ -953,7 +826,6 @@ def processar_conciliacao_massa():
                 'transacao_percentual_utilizado': float(transacao.percentual_utilizado),
                 'transacao_valor_disponivel': transacao.valor_disponivel_100,
                 'diferenca_valor': valor_transacao_centavos - valor_efetivo_conciliado,
-                # Informações detalhadas dos agendamentos processados
                 'agendamentos_detalhes': [
                     {
                         'id': ag.id,
@@ -985,7 +857,6 @@ def processar_conciliacao():
     try:
         data = request.get_json()
         
-        # Dados recebidos do frontend
         transacao_id = data.get('transacao_id')
         agendamento_id = data.get('agendamento_id')
         observacoes = data.get('observacoes', '')
@@ -997,7 +868,6 @@ def processar_conciliacao():
                 'message': 'Dados obrigatórios não fornecidos'
             }), 400
         
-        # Buscar a transação OFX
         from sistema.models_views.importacao_ofx.importacao_ofx_model import ImportacaoOfx
         transacao = ImportacaoOfx.query.get(transacao_id)
 
@@ -1007,7 +877,6 @@ def processar_conciliacao():
                 'message': 'Transação não encontrada'
             }), 404
         
-        # Buscar o agendamento e validar se pertence à mesma conta bancária
         agendamento = AgendamentoPagamentoModel.query.filter(
             AgendamentoPagamentoModel.id == agendamento_id,
             AgendamentoPagamentoModel.conta_bancaria_id == transacao.conta_bancaria_id
@@ -1018,48 +887,30 @@ def processar_conciliacao():
                 'message': 'Agendamento não encontrado ou não pertence à mesma conta bancária'
             }), 404
         
-        # Validar se transação já foi totalmente conciliada (permitir parcial)
         if transacao.conciliado and not transacao.conciliacao_parcial:
             return jsonify({
                 'success': False,
                 'message': 'Esta transação já foi totalmente conciliada'
             }), 400
         
-        # Validar se agendamento já foi conciliado
         if agendamento.situacao_pagamento_id == 8:
             return jsonify({
                 'success': False,
                 'message': 'Este agendamento já foi totalmente conciliado'
             }), 400
             
-        # =============================================================
-        # SISTEMA DE PAGAMENTO AUTOMÁTICO INTELIGENTE - INDIVIDUAL
-        # =============================================================
-        # Esta lógica implementa um sistema que automaticamente:
-        # 1. Detecta quando um agendamento excede o valor da transação
-        # 2. Concilia automaticamente o valor disponível (pagamento parcial)
-        # 3. Mantém controle preciso do que foi pago e do que resta
-        # 4. Permite múltiplas conciliações até completar o pagamento
-        # 5. PERMITE CONTINUAR CONCILIANDO agendamentos parcialmente pagos
-        # =============================================================
         
-        # Para agendamentos parcialmente conciliados, usar valor restante
-        if agendamento.situacao_pagamento_id == 10:  # Parcialmente conciliado
+        if agendamento.situacao_pagamento_id == 10:
             valor_agendamento_centavos = agendamento.valor_pendente_conciliacao_100
         else:
             valor_agendamento_centavos = agendamento.valor_total_100
             
         valor_disponivel_transacao = transacao.valor_disponivel_100
         
-        # Verificar se conseguimos conciliar totalmente o valor restante
         if valor_agendamento_centavos > valor_disponivel_transacao:
-            # CONCILIAÇÃO PARCIAL AUTOMÁTICA
-            # O sistema automaticamente concilia apenas o valor disponível,
-            # permitindo que o restante seja conciliado posteriormente
             valor_a_conciliar = valor_disponivel_transacao
             conciliacao_parcial = True
             
-            # Validar se há valor disponível suficiente
             if valor_disponivel_transacao <= 0:
                 valor_ja_utilizado = transacao.valor_utilizado_100 or 0
                 valor_total_transacao = int(abs(transacao.valor * 100))
@@ -1071,15 +922,11 @@ def processar_conciliacao():
                               f'Já utilizado: R$ {valor_ja_utilizado/100:.2f}.'
                 }), 400
         else:
-            # CONCILIAÇÃO TOTAL DO RESTANTE
-            # Quando o valor da transação é suficiente para pagar completamente o valor restante
             valor_a_conciliar = valor_agendamento_centavos
             conciliacao_parcial = False
         
-        # Determinar tipo de movimentação (1=Entrada, 2=Saída)
         tipo_movimentacao = 1 if transacao.valor > 0 else 2
         
-        # Determinar tipo de origem e IDs
         tipo_origem = None
         faturamento_id = None
         lancamento_avulso_id = None
@@ -1091,73 +938,59 @@ def processar_conciliacao():
             tipo_origem = 'LANCAMENTO_AVULSO'
             lancamento_avulso_id = agendamento.lancamento_avulso_id
         
-        # Calcular diferença de valor entre OFX e valor conciliado
         valor_diferenca = int(abs(transacao.valor * 100)) - valor_a_conciliar
         
-        # Criar a movimentação financeira com todos os campos de auditoria
         from datetime import datetime
         nova_movimentacao = MovimentacaoFinanceiraModel(
             tipo_movimentacao=tipo_movimentacao,
             usuario_id=current_user.id,
             data_movimentacao=transacao.data_transacao,
             conta_bancaria_id=agendamento.conta_bancaria_id,
-            valor_movimentacao_100=valor_a_conciliar,  # Usa o valor que será efetivamente conciliado
+            valor_movimentacao_100=valor_a_conciliar,
             ativo=True,
             conciliacao_bancaria=True,
             
-            # Campos de auditoria da conciliação
             importacao_ofx_id=transacao_id,
             agendamento_id=agendamento_id,
             
-            # Dados originais da transação OFX
             conciliacao_fitid=transacao.fitid,
             conciliacao_valor_original=int(abs(transacao.valor * 100)),
             conciliacao_descricao_ofx=transacao.memo or transacao.descricao_limpa,
             conciliacao_data_transacao=transacao.data_transacao,
             conciliacao_tipo_movimento=transacao.tipo_movimento,
             
-            # Auditoria da conciliação
             conciliacao_data_processamento=datetime.now(),
             conciliacao_observacoes=f'{"INDIVIDUAL PARCIAL" if conciliacao_parcial else "INDIVIDUAL TOTAL"}: {observacoes}' if observacoes else f'{"Conciliação individual parcial" if conciliacao_parcial else "Conciliação individual total"}',
             
-            # Referências de origem
             conciliacao_faturamento_id=faturamento_id,
             conciliacao_lancamento_avulso_id=lancamento_avulso_id,
             conciliacao_tipo_origem=tipo_origem,
             
-            # Controle de diferenças
             conciliacao_valor_diferenca=valor_diferenca
         )
         
         db.session.add(nova_movimentacao)
         
-        # Atualizar agendamento - sempre usar adicionar_valor_conciliado para controle preciso
-        print(valor_a_conciliar)
         if not agendamento.adicionar_valor_conciliado(valor_a_conciliar):
             return jsonify({
                 'success': False,
                 'message': 'Erro interno: não foi possível adicionar valor conciliado ao agendamento'
             }), 500
         
-        # Definir situação baseada no status após adicionar valor
         agendamento.situacao_pagamento_id = 8 if agendamento.esta_totalmente_conciliado else 10
         
         db.session.add(agendamento)
         
-        # ATUALIZAR VALOR UTILIZADO DA TRANSAÇÃO - CRÍTICO para controle de uso parcial/total
         if not transacao.adicionar_valor_utilizado(valor_a_conciliar):
             return jsonify({
                 'success': False,
                 'message': 'Erro interno: não foi possível atualizar valor utilizado da transação'
             }), 500
         
-        # Só marcar faturamento/lançamento como conciliado se agendamento foi totalmente conciliado
         if agendamento.situacao_pagamento_id == 8:
-            # Se o agendamento é de um faturamento, marcar o faturamento como conciliado também
             if faturamento_id:
                 faturamento = FaturamentoModel.query.get(faturamento_id)
                 if faturamento:
-                    # Verificar se todos os agendamentos do faturamento estão conciliados
                     agendamentos_faturamento = AgendamentoPagamentoModel.obter_agendamentos_por_faturamento(faturamento_id)
                     todos_conciliados = all(ag.esta_totalmente_conciliado for ag in agendamentos_faturamento)
                     
@@ -1165,26 +998,22 @@ def processar_conciliacao():
                         faturamento.situacao_pagamento_id = 8
                         db.session.add(faturamento)
             
-            # Se o agendamento é de um lançamento avulso, marcar o lançamento como conciliado também
             if lancamento_avulso_id:
                 lancamento_avulso = LancamentoAvulsoModel.query.get(lancamento_avulso_id)
                 if lancamento_avulso:
                     lancamento_avulso.situacao_pagamento_id = 8
                     db.session.add(lancamento_avulso)
         
-        # Marcar transação OFX como conciliada e salvar dados para reversão
         faturamentos_ids = []
         movimentacoes_ids = []
         
         if faturamento_id:
             faturamentos_ids.append(faturamento_id)
         
-        # Commit primeiro para obter o ID da nova movimentação
         db.session.flush()
         if nova_movimentacao.id:
             movimentacoes_ids.append(nova_movimentacao.id)
         
-        # Salvar dados da conciliação no formato JSON
         lancamentos_avulsos_ids = []
         if lancamento_avulso_id:
             lancamentos_avulsos_ids.append(lancamento_avulso_id)
@@ -1196,7 +1025,7 @@ def processar_conciliacao():
             faturamentos_ids=faturamentos_ids,
             movimentacoes_ids=movimentacoes_ids,
             lancamentos_avulsos_ids=lancamentos_avulsos_ids,
-            valor_agendamento=valor_a_conciliar,  # Salva o valor efetivamente conciliado
+            valor_agendamento=valor_a_conciliar,
             usuario_id=current_user.id,
             observacoes=f'{"INDIVIDUAL PARCIAL" if conciliacao_parcial else "INDIVIDUAL TOTAL"}: {observacoes}' if observacoes else f'{"Conciliação individual parcial" if conciliacao_parcial else "Conciliação individual total"}'
         )
@@ -1208,10 +1037,8 @@ def processar_conciliacao():
                 'message': 'Erro ao salvar dados de conciliação para reversão'
             }), 500
         
-        # Adicionar campos específicos para compatibilidade
         transacao.pagamento_id = agendamento_id
         
-        # Observações detalhadas da conciliação
         obs_conciliacao = f'Conciliado {"PARCIALMENTE" if conciliacao_parcial else "TOTALMENTE"} com agendamento'
         if conciliacao_parcial:
             obs_conciliacao += f' - {ValoresMonetarios.converter_float_brl_positivo(valor_a_conciliar/100)} de {ValoresMonetarios.converter_float_brl_positivo(valor_agendamento_centavos/100)}'
@@ -1224,17 +1051,14 @@ def processar_conciliacao():
         transacao.observacoes_conciliacao = obs_conciliacao
         db.session.add(transacao)
         
-        # Atualizar saldo da conta bancária
         from sistema.models_views.financeiro.movimentacao_financeira.saldo_movimentacao_financeira_model import SaldoMovimentacaoFinanceiraModel
         
-        # Buscar o registro de saldo da conta
         saldo_conta = SaldoMovimentacaoFinanceiraModel.query.filter(
             SaldoMovimentacaoFinanceiraModel.conta_bancaria_id == agendamento.conta_bancaria_id,
             SaldoMovimentacaoFinanceiraModel.ativo == True,
             SaldoMovimentacaoFinanceiraModel.deletado == False
         ).first()
         
-        # Se não existir registro de saldo, criar um
         if not saldo_conta:
             saldo_conta = SaldoMovimentacaoFinanceiraModel(
                 data_movimentacao=transacao.data_transacao,
@@ -1244,13 +1068,11 @@ def processar_conciliacao():
             )
             db.session.add(saldo_conta)
         
-        # Atualizar o saldo baseado no tipo de movimentação e valor conciliado
-        if tipo_movimentacao == 1:  # Entrada/Crédito - AUMENTA o saldo
+        if tipo_movimentacao == 1:
             saldo_conta.valor_total_saldo_100 += valor_a_conciliar
-        elif tipo_movimentacao == 2:  # Saída/Débito - DIMINUI o saldo
+        elif tipo_movimentacao == 2:
             saldo_conta.valor_total_saldo_100 -= valor_a_conciliar
         
-        # Atualizar a data da última movimentação do saldo
         saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
         db.session.add(saldo_conta)
         
@@ -1265,7 +1087,6 @@ def processar_conciliacao():
             modulo='conciliacao_bancaria'
         )
         
-        # Preparar mensagem de sucesso detalhada
         status_transacao = "totalmente utilizada" if transacao.esta_totalmente_utilizada else f"parcialmente utilizada ({transacao.percentual_utilizado:.1f}%)"
         
         if conciliacao_parcial:
@@ -1305,14 +1126,13 @@ def processar_conciliacao():
         })
         
     except Exception as e:
-        print(e)
         db.session.rollback()
         return jsonify({
             'success': False,
             'message': f'Erro ao processar conciliação: {str(e)}'
         }), 500
 
-@app.route("/api/processar-conciliacao-parcial", methods=["POST"]) # não utilizado
+@app.route("/api/processar-conciliacao-parcial", methods=["POST"])
 @login_required
 @requires_roles
 def processar_conciliacao_parcial():
@@ -1322,10 +1142,9 @@ def processar_conciliacao_parcial():
     try:
         data = request.get_json()
         
-        # Dados recebidos do frontend
         transacao_id = data.get('transacao_id')
         agendamento_id = data.get('agendamento_id')
-        valor_parcial = data.get('valor_parcial')  # Valor em centavos que será conciliado
+        valor_parcial = data.get('valor_parcial')
         observacoes = data.get('observacoes', '')
 
         if not transacao_id or not agendamento_id or not valor_parcial:
@@ -1334,7 +1153,6 @@ def processar_conciliacao_parcial():
                 'message': 'Dados obrigatórios não fornecidos (transacao_id, agendamento_id, valor_parcial)'
             }), 400
         
-        # Validar que valor_parcial é um número positivo
         try:
             valor_parcial = int(valor_parcial)
             if valor_parcial <= 0:
@@ -1345,7 +1163,6 @@ def processar_conciliacao_parcial():
                 'message': 'Valor parcial deve ser um número positivo'
             }), 400
 
-        # Buscar a transação OFX
         from sistema.models_views.importacao_ofx.importacao_ofx_model import ImportacaoOfx
         transacao = ImportacaoOfx.query.get(transacao_id)
         if not transacao:
@@ -1354,7 +1171,6 @@ def processar_conciliacao_parcial():
                 'message': 'Transação não encontrada'
             }), 404
 
-        # Buscar o agendamento e validar se pertence à mesma conta bancária
         agendamento = AgendamentoPagamentoModel.query.filter(
             AgendamentoPagamentoModel.id == agendamento_id,
             AgendamentoPagamentoModel.conta_bancaria_id == transacao.conta_bancaria_id
@@ -1365,14 +1181,12 @@ def processar_conciliacao_parcial():
                 'message': 'Agendamento não encontrado ou não pertence à mesma conta bancária'
             }), 404
 
-        # Validar se transação já foi totalmente conciliada (permitir re-conciliação de parcial)
         if transacao.conciliado and not transacao.conciliacao_parcial:
             return jsonify({
                 'success': False,
                 'message': 'Esta transação já foi totalmente conciliada'
             }), 400
 
-        # Validar se agendamento pode receber conciliação parcial
         if agendamento.situacao_pagamento_id == 8:
             return jsonify({
                 'success': False,
@@ -1385,17 +1199,14 @@ def processar_conciliacao_parcial():
                 'message': 'Este agendamento já está totalmente conciliado'
             }), 400
 
-        # Validar se valor parcial não excede o valor pendente
         if valor_parcial > agendamento.valor_pendente_conciliacao_100:
             return jsonify({
                 'success': False,
                 'message': f'Valor parcial (R$ {valor_parcial/100:.2f}) excede o valor pendente (R$ {agendamento.valor_pendente_conciliacao_100/100:.2f})'
             }), 400
 
-        # Determinar tipo de movimentação (1=Entrada, 2=Saída)
         tipo_movimentacao = 1 if transacao.valor > 0 else 2
         
-        # Determinar tipo de origem e IDs
         tipo_origem = None
         faturamento_id = None
         lancamento_avulso_id = None
@@ -1407,79 +1218,64 @@ def processar_conciliacao_parcial():
             tipo_origem = 'LANCAMENTO_AVULSO'
             lancamento_avulso_id = agendamento.lancamento_avulso_id
 
-        # Calcular diferença de valor entre OFX e valor parcial
         valor_diferenca = abs(transacao.valor * 100) - valor_parcial
 
-        # Verificar se a transação pode receber este valor
         if not transacao.adicionar_valor_utilizado(valor_parcial):
             return jsonify({
                 'success': False,
                 'message': f'Valor parcial excede o valor disponível da transação (R$ {transacao.valor_disponivel:.2f})'
             }), 400
 
-        # Criar a movimentação financeira parcial
         from datetime import datetime
         nova_movimentacao = MovimentacaoFinanceiraModel(
             tipo_movimentacao=tipo_movimentacao,
             usuario_id=current_user.id,
             data_movimentacao=transacao.data_transacao,
             conta_bancaria_id=agendamento.conta_bancaria_id,
-            valor_movimentacao_100=valor_parcial,  # Usa o valor parcial
+            valor_movimentacao_100=valor_parcial,
             ativo=True,
             conciliacao_bancaria=True,
             
-            # Campos de auditoria da conciliação
             importacao_ofx_id=transacao_id,
             agendamento_id=agendamento_id,
             
-            # Dados originais da transação OFX
             conciliacao_fitid=transacao.fitid,
             conciliacao_valor_original=int(abs(transacao.valor * 100)),
             conciliacao_descricao_ofx=transacao.memo or transacao.descricao_limpa,
             conciliacao_data_transacao=transacao.data_transacao,
             conciliacao_tipo_movimento=transacao.tipo_movimento,
             
-            # Auditoria da conciliação
             conciliacao_data_processamento=datetime.now(),
             conciliacao_observacoes=f"CONCILIAÇÃO PARCIAL: {observacoes}",
             
-            # Referências de origem
             conciliacao_faturamento_id=faturamento_id,
             conciliacao_lancamento_avulso_id=lancamento_avulso_id,
             conciliacao_tipo_origem=tipo_origem,
             
-            # Controle de diferenças
             conciliacao_valor_diferenca=valor_diferenca
         )
         
         db.session.add(nova_movimentacao)
 
-        # Adicionar valor ao agendamento usando o método criado
         if not agendamento.adicionar_valor_conciliado(valor_parcial):
             return jsonify({
                 'success': False,
                 'message': 'Erro interno: não foi possível adicionar valor conciliado'
             }), 500
 
-        # Definir situação do agendamento baseada no status da conciliação
         if agendamento.esta_totalmente_conciliado:
-            # Totalmente conciliado
             agendamento.situacao_pagamento_id = 8
         else:
-            # Desconto por antecipação ou conciliação parcial
             agendamento.situacao_pagamento_id = 10
 
         db.session.add(agendamento)
 
-        # Se o agendamento foi totalmente conciliado, atualizar status
         if agendamento.esta_totalmente_conciliado:
             agendamento.situacao_pagamento_id = 8
             
-            # Se o agendamento é de um faturamento, verificar se pode marcar como conciliado
             if faturamento_id:
                 faturamento = FaturamentoModel.query.get(faturamento_id)
                 if faturamento:
-                    # Verificar se todos os agendamentos do faturamento estão conciliados
                     agendamentos_faturamento = AgendamentoPagamentoModel.obter_agendamentos_por_faturamento(faturamento_id)
                     todos_conciliados = all(ag.esta_totalmente_conciliado for ag in agendamentos_faturamento)
                     
@@ -1487,26 +1283,22 @@ def processar_conciliacao_parcial():
                         faturamento.situacao_pagamento_id = 8
                         db.session.add(faturamento)
             
-            # Se o agendamento é de um lançamento avulso, marcar como conciliado
             if lancamento_avulso_id:
                 lancamento_avulso = LancamentoAvulsoModel.query.get(lancamento_avulso_id)
                 if lancamento_avulso:
                     lancamento_avulso.situacao_pagamento_id = 8
                     db.session.add(lancamento_avulso)
 
-        # Marcar transação OFX como conciliada e salvar dados para reversão
         faturamentos_ids = []
         movimentacoes_ids = []
         
         if faturamento_id:
             faturamentos_ids.append(faturamento_id)
         
-        # Commit primeiro para obter o ID da nova movimentação
         db.session.flush()
         if nova_movimentacao.id:
             movimentacoes_ids.append(nova_movimentacao.id)
 
-        # Salvar dados da conciliação no formato JSON
         lancamentos_avulsos_ids = []
         if lancamento_avulso_id:
             lancamentos_avulsos_ids.append(lancamento_avulso_id)
@@ -1518,7 +1310,7 @@ def processar_conciliacao_parcial():
             faturamentos_ids=faturamentos_ids,
             movimentacoes_ids=movimentacoes_ids,
             lancamentos_avulsos_ids=lancamentos_avulsos_ids,
-            valor_agendamento=valor_parcial,  # Salva o valor parcial conciliado
+            valor_agendamento=valor_parcial,
             usuario_id=current_user.id,
             observacoes=f"PARCIAL: {observacoes}"
         )
@@ -1530,10 +1322,8 @@ def processar_conciliacao_parcial():
                 'message': 'Erro ao salvar dados de conciliação para reversão'
             }), 500
 
-        # Adicionar campos específicos para compatibilidade
         transacao.pagamento_id = agendamento_id
         
-        # Observações detalhadas da conciliação parcial
         obs_conciliacao = f'Conciliação PARCIAL - R$ {valor_parcial/100:.2f} de R$ {agendamento.valor_total:.2f}'
         if tipo_origem == 'FATURAMENTO':
             obs_conciliacao += f' | Faturamento: {agendamento.faturamento.codigo_faturamento if agendamento.faturamento else "N/A"}'
@@ -1543,7 +1333,6 @@ def processar_conciliacao_parcial():
         transacao.observacoes_conciliacao = obs_conciliacao
         db.session.add(transacao)
 
-        # Atualizar saldo da conta bancária
         from sistema.models_views.financeiro.movimentacao_financeira.saldo_movimentacao_financeira_model import SaldoMovimentacaoFinanceiraModel
         
         saldo_conta = SaldoMovimentacaoFinanceiraModel.query.filter(
@@ -1552,7 +1341,6 @@ def processar_conciliacao_parcial():
             SaldoMovimentacaoFinanceiraModel.deletado == False
         ).first()
         
-        # Se não existir registro de saldo, criar um
         if not saldo_conta:
             saldo_conta = SaldoMovimentacaoFinanceiraModel(
                 data_movimentacao=transacao.data_transacao,
@@ -1562,19 +1350,16 @@ def processar_conciliacao_parcial():
             )
             db.session.add(saldo_conta)
         
-        # Atualizar o saldo baseado no tipo de movimentação e valor parcial
-        if tipo_movimentacao == 1:  # Entrada/Crédito - AUMENTA o saldo
+        if tipo_movimentacao == 1:
             saldo_conta.valor_total_saldo_100 += valor_parcial
-        elif tipo_movimentacao == 2:  # Saída/Débito - DIMINUI o saldo
+        elif tipo_movimentacao == 2:
             saldo_conta.valor_total_saldo_100 -= valor_parcial
         
-        # Atualizar a data da última movimentação do saldo
         saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
         db.session.add(saldo_conta)
 
         db.session.commit()
 
-        # Pontuação para conciliação parcial
         acao = TipoAcaoEnum.CADASTRO
         PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
             current_user.id,
@@ -1583,7 +1368,6 @@ def processar_conciliacao_parcial():
             modulo='conciliacao_bancaria_parcial'
         )
 
-        # Preparar mensagem de sucesso detalhada
         status_agendamento = "totalmente conciliado" if agendamento.esta_totalmente_conciliado else f"parcialmente conciliado ({agendamento.percentual_conciliado:.1f}%)"
         mensagem_sucesso = f'Conciliação parcial processada! {ValoresMonetarios.converter_float_brl_positivo(valor_parcial/100)} conciliados. Agendamento {agendamento_id} {status_agendamento}.'
 
@@ -1625,7 +1409,6 @@ def obter_detalhes_conciliacao(transacao_id):
     try:
         from sistema.models_views.importacao_ofx.importacao_ofx_model import ImportacaoOfx
         
-        # Buscar a transação OFX
         transacao = ImportacaoOfx.query.get(transacao_id)
         if not transacao:
             return jsonify({
@@ -1633,7 +1416,6 @@ def obter_detalhes_conciliacao(transacao_id):
                 'error': 'Transação não encontrada'
             }), 404
         
-        # Verificar se transação está conciliada (total ou parcialmente)
         if not transacao.conciliado and not transacao.conciliacao_parcial:
             return jsonify({
                 'success': False,
@@ -1649,15 +1431,11 @@ def obter_detalhes_conciliacao(transacao_id):
             'impacto_saldo': None
         }
         
-        # =====================================================================
-        # BUSCAR TODAS AS MOVIMENTAÇÕES VINCULADAS À TRANSAÇÃO
-        # =====================================================================
         movimentacoes = MovimentacaoFinanceiraModel.query.filter(
             MovimentacaoFinanceiraModel.importacao_ofx_id == transacao_id,
             MovimentacaoFinanceiraModel.ativo == True
         ).all()
         
-        # Coletar agendamentos únicos das movimentações
         agendamentos_ids_set = set()
         
         for mov in movimentacoes:
@@ -1673,7 +1451,6 @@ def obter_detalhes_conciliacao(transacao_id):
                 'conta': conta_nome
             })
         
-        # Buscar detalhes dos agendamentos únicos
         if agendamentos_ids_set:
             agendamentos = AgendamentoPagamentoModel.query.filter(
                 AgendamentoPagamentoModel.id.in_(list(agendamentos_ids_set))
@@ -1696,7 +1473,6 @@ def obter_detalhes_conciliacao(transacao_id):
                 if agendamento.lancamento_avulso_id and agendamento.lancamento_avulso:
                     codigo = agendamento.lancamento_avulso_id
                 
-                # Calcular valor conciliado para este agendamento nesta transação
                 valor_conciliado_transacao = sum(
                     mov.valor_movimentacao_100 
                     for mov in movimentacoes 
@@ -1711,22 +1487,18 @@ def obter_detalhes_conciliacao(transacao_id):
                     'observacoes': f'{tipo_origem} {codigo}' if codigo else tipo_origem
                 })
         
-        # Extrair tipo de conciliação e observações do JSON se disponível
         if transacao.dados_conciliacao_json:
             dados_json = transacao.dados_conciliacao_json
             detalhes['tipo_conciliacao'] = dados_json.get('tipo_conciliacao', 'Não especificado').replace('_', ' ').title()
             if dados_json.get('observacoes'):
                 detalhes['observacoes'] = dados_json.get('observacoes')
         
-        # Data da conciliação
         if transacao.data_conciliacao:
             detalhes['data_conciliacao'] = transacao.data_conciliacao.strftime('%d/%m/%Y às %H:%M:%S')
         
-        # Calcular impacto no saldo (usar valor efetivamente utilizado)
         valor_utilizado = transacao.valor_utilizado_100 or int(abs(transacao.valor * 100))
         detalhes['impacto_saldo'] = ValoresMonetarios.converter_float_brl_positivo(valor_utilizado / 100)
         
-        # Observações da transação
         if transacao.observacoes_conciliacao:
             detalhes['observacoes'] = transacao.observacoes_conciliacao
         
@@ -1736,7 +1508,6 @@ def obter_detalhes_conciliacao(transacao_id):
         })
         
     except Exception as e:
-        print(f"[ERROR] Erro ao obter detalhes da conciliação: {str(e)}")
         return jsonify({
             'success': False,
             'error': f'Erro interno do servidor: {str(e)}'
@@ -1751,7 +1522,6 @@ def salvar_nova_movimentacao():
     Endpoint simplificado para salvar nova movimentação via AJAX (seguindo padrão cadastrar_extrator)
     """
     try:
-        # Extrair dados do formulário (não JSON para compatibilidade com o template Alpine.js)
         transacao_ofx_id = request.form.get('transacao_ofx_id')
         valor_transacao_ofx = request.form.get('valor_transacao_ofx')
         descricao = request.form.get('descricao', '').strip()
@@ -1761,13 +1531,11 @@ def salvar_nova_movimentacao():
         pessoa_financeiro_id = request.form.get('pessoa_financeiro_id')
         categorias_json = request.form.get('categorias_json', '[]')
         
-        # Campos opcionais para valores detalhados e parcelamento
         centros_custo_json = request.form.get('centros_custo_json', '[]')
         valores_detalhados_ativo = request.form.get('valores_detalhados_ativo', 'false').lower() == 'true'
         parcelas_json = request.form.get('parcelas_json', '[]')
-        parcelamento_ativo = len(parcelas_json.strip()) > 2 and parcelas_json != '[]'  # Se há parcelas, parcelamento está ativo
+        parcelamento_ativo = len(parcelas_json.strip()) > 2 and parcelas_json != '[]'
         
-        # Validar transação OFX
         if not transacao_ofx_id:
             return jsonify({'erro': True, 'mensagem': 'ID da transação OFX não fornecido'}), 400
             
@@ -1778,7 +1546,6 @@ def salvar_nova_movimentacao():
         if transacao.conciliado:
             return jsonify({'erro': True, 'mensagem': 'Esta transação já foi conciliada'}), 400
 
-        # Campos obrigatórios
         campos = {
             "descricao": ["Descrição", descricao],
             "data_vencimento": ["Data de Vencimento", data_vencimento],
@@ -1797,17 +1564,14 @@ def salvar_nova_movimentacao():
                 'campos_obrigatorios': validacao_campos_obrigatorios
             }), 400
 
-        # Validações adicionais
         try:
             data_vencimento_obj = datetime.strptime(data_vencimento, '%Y-%m-%d').date()
         except ValueError:
             return jsonify({'erro': True, 'mensagem': 'Data de vencimento inválida'}), 400
 
-        # Parsear data de competência (opcional) - formato MM/AAAA do frontend
         data_competencia_obj = None
         if data_competencia:
             try:
-                # Formato esperado: MM/AAAA (ex: 02/2026)
                 data_competencia_obj = datetime.strptime(f"01/{data_competencia}", '%d/%m/%Y').date()
             except ValueError:
                 return jsonify({'erro': True, 'mensagem': 'Data de competência inválida. Use o formato MM/AAAA'}), 400
@@ -1819,25 +1583,21 @@ def salvar_nova_movimentacao():
         except json.JSONDecodeError:
             return jsonify({'erro': True, 'mensagem': 'Formato de categorias inválido'}), 400
 
-        # Calcular valor em centavos
         valor_centavos = int(abs(transacao.valor) * 100)
         
-        # Determinar tipo de movimentação
         eh_receita = transacao.valor > 0
         tipo_movimentacao_lancamento = 1 if eh_receita else 2
 
-        # Criar lançamento avulso
         lancamento_avulso = LancamentoAvulsoModel(
             tipo_movimentacao=tipo_movimentacao_lancamento,
             descricao=descricao,
             valor_movimentacao_100=valor_centavos,
             usuario_id=current_user.id,
-            situacao_pagamento_id=8  # Já conciliado
+            situacao_pagamento_id=8
         )
         db.session.add(lancamento_avulso)
         db.session.flush()
 
-        # Processar categorias
         categorias_processadas = []
         for cat in categorias:
             categoria_obj = PlanoContaModel.buscar_por_codigo(cat.get('categoria', '').split(' - ')[0])
@@ -1850,7 +1610,6 @@ def salvar_nova_movimentacao():
             }
             categorias_processadas.append(categoria_formatada)
 
-        # Processar centros de custo (se valores detalhados estiver ativo)
         centros_custo_processados = []
         if valores_detalhados_ativo:
             try:
@@ -1864,9 +1623,8 @@ def salvar_nova_movimentacao():
                         }
                         centros_custo_processados.append(centro_formatado)
             except json.JSONDecodeError:
-                pass  # Se JSON inválido, continua com array vazio
+                pass
 
-        # Processar parcelas
         parcelas_processadas = []
         try:
             parcelas = json.loads(parcelas_json)
@@ -1880,9 +1638,8 @@ def salvar_nova_movimentacao():
                     }
                     parcelas_processadas.append(parcela_formatada)
         except json.JSONDecodeError:
-            pass  # Se JSON inválido, continua com array vazio
+            pass
 
-        # Criar agendamento vinculado ao lançamento
         agendamento = AgendamentoPagamentoModel(
             lancamento_avulso_id=lancamento_avulso.id,
             pessoa_financeiro_id=int(pessoa_financeiro_id),
@@ -1896,12 +1653,11 @@ def salvar_nova_movimentacao():
             numero_parcelas=len(parcelas_processadas) if parcelamento_ativo else None,
             dias_entre_parcelas=30,
             conta_bancaria_id=int(conta_bancaria_id),
-            situacao_pagamento_id=8  # Conciliado
+            situacao_pagamento_id=8
         )
         db.session.add(agendamento)
-        db.session.flush()  # Para obter o ID do agendamento
+        db.session.flush()
 
-        # Criar parcelas individuais se parcelamento ativo
         if parcelamento_ativo and parcelas_processadas:
             for i, parcela in enumerate(parcelas_processadas, 1):
                 try:
@@ -1916,11 +1672,10 @@ def salvar_nova_movimentacao():
                     valor_parcela=parcela.get('valor', 0),
                     descricao=parcela.get('descricao', ''),
                     referencia=parcela.get('referencia', ''),
-                    situacao_pagamento_id=8  # Conciliado
+                    situacao_pagamento_id=8
                 )
                 db.session.add(parcela_obj)
 
-        # Criar movimentação financeira
         tipo_movimentacao = 1 if transacao.valor > 0 else 2
         movimentacao_financeira = MovimentacaoFinanceiraModel(
             tipo_movimentacao=tipo_movimentacao,
@@ -1945,7 +1700,6 @@ def salvar_nova_movimentacao():
         db.session.add(movimentacao_financeira)
         db.session.flush()
 
-        # Marcar transação como conciliada
         sucesso_salvamento = ImportacaoOfxService.salvar_dados_conciliacao(
             transacao=transacao,
             tipo_conciliacao='NOVA_MOVIMENTACAO',
@@ -1962,7 +1716,6 @@ def salvar_nova_movimentacao():
             db.session.rollback()
             return jsonify({'erro': True, 'mensagem': 'Erro ao salvar dados de conciliação'}), 500
 
-        # Atualizar saldo da conta
         saldo_conta = SaldoMovimentacaoFinanceiraModel.query.filter_by(
             conta_bancaria_id=agendamento.conta_bancaria_id,
             ativo=True,
@@ -1985,7 +1738,6 @@ def salvar_nova_movimentacao():
         
         saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
 
-        # Registrar pontuação
         PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
             current_user.id,
             TipoAcaoEnum.CADASTRO,
@@ -1995,7 +1747,6 @@ def salvar_nova_movimentacao():
 
         db.session.commit()
         
-        # Preparar mensagem de sucesso detalhada
         mensagem_sucesso = 'Nova movimentação criada e conciliada com sucesso!'
         if valores_detalhados_ativo and centros_custo_processados:
             mensagem_sucesso += f' Processados {len(centros_custo_processados)} centros de custo.'
@@ -2036,7 +1787,6 @@ def reverter_conciliacao():
                 'message': 'ID da transação é obrigatório'
             }), 400
         
-        # Buscar a transação OFX
         transacao = ImportacaoOfx.query.get(transacao_id)
         if not transacao:
             return jsonify({
@@ -2044,14 +1794,12 @@ def reverter_conciliacao():
                 'message': 'Transação não encontrada'
             }), 404
         
-        # Verificar se pode ser revertida (permite parcial e total)
         if not transacao.dados_conciliacao_json:
             return jsonify({
                 'success': False,
                 'message': 'Esta transação não pode ser revertida (não possui dados de reversão)'
             }), 400
         
-        # Reverter a conciliação
         sucesso, mensagem = ImportacaoOfxService.reverter_conciliacao(transacao)
         
         if sucesso:
@@ -2071,8 +1819,6 @@ def reverter_conciliacao():
             'message': f'Erro ao reverter conciliação: {str(e)}'
         }), 500
 
-# =============================================================================
-# ====================  LISTAGEM MOVIMENTAÇÃO FINANCEIRA ======================
 
 @app.route("/financeiro/listagem-movimentacao-financeira", methods=["GET", "POST"])
 @login_required
@@ -2080,17 +1826,14 @@ def reverter_conciliacao():
 def conciliacao_contas_bancarias():
     conta_selecionada_id = request.args.get("conta_bancaria_id", type=int)
 
-    # Se não há conta selecionada, usar a conta principal
     if not conta_selecionada_id:
         conta_principal = ContaBancariaModel.verifica_conta_bancaria_principal()
         if conta_principal:
             conta_selecionada_id = conta_principal.id
 
-    # Obter estatísticas de transações da conta específica (ou geral se não houver conta)
     if conta_selecionada_id:
         stats_transacoes = ImportacaoOfxService.obter_estatisticas_transacoes(conta_bancaria_id=conta_selecionada_id)
 
-        # Verificar se há transações OFX não conciliadas para esta conta específica
         transacoes_conta = ImportacaoOfx.query.filter_by(
             conta_bancaria_id=conta_selecionada_id,
             conciliado=False,
@@ -2109,7 +1852,6 @@ def conciliacao_contas_bancarias():
     for conta in contas_bancarias:
         conta.saldo_total = SaldoMovimentacaoFinanceiraModel.obter_registro_saldo_por_conta_bancaria(conta.id)
     
-    # Calcular a soma total de saldos de todas as contas bancárias
     saldo_total_contas = sum(conta.saldo_total for conta in contas_bancarias if conta.saldo_total is not None)
     
     a_pagar_frete = FretePagarModel.obter_valor_total_a_pagar()
@@ -2139,9 +1881,7 @@ def conciliacao_contas_bancarias():
         conta_id_para_link=conta_selecionada_id
     )
     
-# ========================================================
 
-# Versão antiga, manter para quaisquer reverts
 @app.route("/financeiro/movimentacoes-financeiras/listagem-ofx")
 @login_required
 @requires_roles
@@ -2152,7 +1892,6 @@ def listagem_ofx():
         flash(('Nenhum arquivo OFX foi importado. Importe um arquivo primeiro.', 'warning'))
         return redirect(url_for('importar_ofx'))
     
-    # Parâmetros de filtros
     filtro_data_inicio = request.args.get('dataInicio', '').strip()
     filtro_data_fim = request.args.get('dataFim', '').strip()
     filtro_conciliado = request.args.get('conciliado', 'nao')
@@ -2166,14 +1905,11 @@ def listagem_ofx():
     pagina = int(request.args.get('pagina', 1))
     por_pagina = 200
     
-    # Query simples das transações
     conciliado_val = filtro_conciliado == 'sim'
     transacoes = ImportacaoOfx.query.filter_by(conciliado=conciliado_val)
     
-    # Filtrar transações não deletadas/ignoradas por padrão
     transacoes = transacoes.filter(ImportacaoOfx.ofx_deletada == False)
     
-    # Aplicar filtros
     if filtro_data_inicio:
         transacoes = transacoes.filter(ImportacaoOfx.data_transacao >= filtro_data_inicio)
     if filtro_data_fim:
@@ -2187,13 +1923,10 @@ def listagem_ofx():
  
     if filtro_tipo_movimentacao:
         if filtro_tipo_movimentacao == 'entrada':
-            # Filtrar apenas valores positivos
             transacoes = transacoes.filter(ImportacaoOfx.valor > 0)
         elif filtro_tipo_movimentacao == 'saida':
-            # Filtrar apenas valores negativos
             transacoes = transacoes.filter(ImportacaoOfx.valor < 0)
 
-    # Paginação
     total_transacoes = transacoes.count()
     transacoes = transacoes.order_by(ImportacaoOfx.data_transacao.desc(), ImportacaoOfx.id.desc())\
                            .offset((pagina-1)*por_pagina)\
@@ -2202,7 +1935,6 @@ def listagem_ofx():
     
     total_paginas = (total_transacoes // por_pagina) + (1 if total_transacoes % por_pagina else 0)
     
-    # Obter resumo e estrutura
     resumo_bd = ImportacaoOfxService.obter_resumo_importacao(
         data_inicio=filtro_data_inicio if filtro_data_inicio else None,
         data_fim=filtro_data_fim if filtro_data_fim else None,
@@ -2217,23 +1949,19 @@ def listagem_ofx():
     
     estrutura_plano = PlanoContaModel.obter_estrutura_plana_hierarquica()
     centros_custo = CentroCustoModel.obter_centro_custos_ativos()
-    # Carregar dados para os selects
     pessoas_financeiro = PessoaFinanceiroModel.listar_pessoas_ativas()
-    # Processar documentos formatados para cada pessoa
     for p in pessoas_financeiro:
         if p.numero_documento and len(p.numero_documento.strip()) > 0:
             p.documento_formatado = ValidaDocs.insere_pontuacao_cnpj(p.numero_documento) if len(p.numero_documento) == 14 else ValidaDocs.insere_pontuacao_cpf(p.numero_documento)
         else:
             p.documento_formatado = "N/A"
     
-    # Buscar sugestões para cada transação
     sugestoes_por_transacao = {}
     for transacao in transacoes:
-        if not transacao.conciliado:  # Apenas para transações não conciliadas
-            valor_transacao = int(abs(transacao.valor * 100))  # Converter para centavos
+        if not transacao.conciliado:
+            valor_transacao = int(abs(transacao.valor * 100))
             eh_credito = transacao.valor > 0
             
-            # Buscar sugestões formatadas usando o método do model
             sugestoes_formatadas = AgendamentoPagamentoModel.obter_sugestoes_conciliacao_formatadas(
                 valor_transacao=valor_transacao,
                 eh_credito=eh_credito,
@@ -2241,18 +1969,15 @@ def listagem_ofx():
                         
             sugestoes_por_transacao[transacao.id] = sugestoes_formatadas
     
-    # Buscar agendamentos recentes para cada transação (últimos 30 registros por tipo)
     agendamentos_por_transacao = {}
     for transacao in transacoes:
-        if not transacao.conciliado:  # Apenas para transações não conciliadas
+        if not transacao.conciliado:
             eh_credito = transacao.valor > 0
             
-            # Buscar agendamentos recentes do mesmo tipo (receitas ou despesas)
             agendamentos_formatados = AgendamentoPagamentoModel.obter_agendamentos_recentes_formatados(eh_credito)
                         
             agendamentos_por_transacao[transacao.id] = agendamentos_formatados
     
-    # Dados para o template
     transacao_mais_recente = transacoes[0] if transacoes else None
     
     return render_template("financeiro/contas_bancarias/conciliacao_bancaria.html",
@@ -2315,11 +2040,9 @@ def _formatar_data_importacao(resumo_bd):
         return resumo_bd.get('data_importacao', '')
 
 
-# ================== SUGESTÕES DE AGENDAMENTOS PARA TRANSAÇÕES OFX ==================
         
 def processar_sugestao_individual(transacao_id):
     """Processa sugestão para uma única transação (funcionalidade original)"""
-    # Buscar transação OFX
     transacao = ImportacaoOfx.query.get(transacao_id)
     if not transacao:
         return jsonify({
@@ -2328,14 +2051,12 @@ def processar_sugestao_individual(transacao_id):
             'sugestoes': []
         }), 404
     
-    # Buscar sugestões usando o método do model com conta_bancaria_id
     sugestoes = AgendamentoPagamentoModel.buscar_sugestoes_ofx(
         valor=transacao.valor,
         tipo_movimento=transacao.tipo_movimento,
         conta_bancaria_id=transacao.conta_bancaria_id
     )
     
-    # Formatar sugestões
     sugestoes_formatadas = formatar_sugestoes_resposta(sugestoes)
     
     return jsonify({
@@ -2354,7 +2075,6 @@ def processar_sugestoes_lote(transacoes_ids):
             'sugestoes_por_transacao': {}
         }), 400
     
-    # Buscar todas as transações de uma vez
     transacoes = ImportacaoOfx.query.filter(
         ImportacaoOfx.id.in_(transacoes_ids)
     ).all()
@@ -2366,29 +2086,23 @@ def processar_sugestoes_lote(transacoes_ids):
             'sugestoes_por_transacao': {}
         }), 404
     
-    # Organizar transações por ID para acesso rápido
     transacoes_dict = {str(t.id): t for t in transacoes}
     
-    # Resultado organizado por transação
     sugestoes_por_transacao = {}
     
-    # Processar cada transação
     for transacao_id_str in map(str, transacoes_ids):
         transacao = transacoes_dict.get(transacao_id_str)
         
         if transacao:
-            # Buscar sugestões para esta transação com conta_bancaria_id
             sugestoes = AgendamentoPagamentoModel.buscar_sugestoes_ofx(
                 valor=transacao.valor,
                 tipo_movimento=transacao.tipo_movimento,
                 conta_bancaria_id=transacao.conta_bancaria_id
             )
             
-            # Formatar sugestões
             sugestoes_formatadas = formatar_sugestoes_resposta(sugestoes)
             sugestoes_por_transacao[transacao_id_str] = sugestoes_formatadas
         else:
-            # Transação não encontrada - retornar lista vazia
             sugestoes_por_transacao[transacao_id_str] = []
     
     return jsonify({
@@ -2404,7 +2118,6 @@ def formatar_sugestoes_resposta(sugestoes):
     sugestoes_formatadas = []
     
     for sugestao in sugestoes:
-        # Processar categorias
         categorias_lista = []
         if sugestao.categorias_json:
             try:
@@ -2420,9 +2133,8 @@ def formatar_sugestoes_resposta(sugestoes):
                         'valor': categoria_item.get('valor', 0)
                     })
             except Exception as e:
-                print(f"[WARNING] Erro ao processar categorias_json: {str(e)}")
+                pass
         
-        # Definir origem baseada no tipo
         origem = 'Lançamento Avulso'
         codigo_origem = 'Lançamento Avulso'
         

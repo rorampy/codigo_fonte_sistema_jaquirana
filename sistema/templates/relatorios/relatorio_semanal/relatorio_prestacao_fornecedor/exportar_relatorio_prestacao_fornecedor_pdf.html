@@ -249,7 +249,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table>
       <tr>
@@ -271,7 +271,6 @@
 
   <div class="relatorio-title">Relatório Prestação Contas Fornecedor</div>
 
-  <!-- Filtros aplicados se existirem -->
   {% if dados_corretos %}
   <div class="filtros-aplicados">
     <div class="filtros-title">Filtros Aplicados</div>
@@ -319,10 +318,8 @@
   {% set origem = origem_group.grouper %}
   {% set registros_origem = origem_group.list %}
 
-  <!-- Seção da Origem (Fornecedor/Floresta) -->
   <div class="section-title no-break">Fornecedor: {{ origem }}</div>
 
-  <!-- Informações Bancárias do Fornecedor -->
   {% if registros_origem and registros_origem[0].fornecedor_obj %}
   {% set fornecedor = registros_origem[0].fornecedor_obj %}
   {% if fornecedor.conta_bancaria or fornecedor.chave_pix %}
@@ -362,7 +359,6 @@
   {% set produto = produto_group.grouper %}
   {% set registros_produto = produto_group.list %}
 
-  <!-- Produto dentro da Origem -->
   <div class="group-break">
     <div class="section-title">
       Produto: {{ produto }}
@@ -371,7 +367,6 @@
       </span>
     </div>
 
-    <!-- Tabela de cargas para este produto -->
     <table class="no-break">
       <thead>
         <tr>
@@ -434,7 +429,6 @@
         </tr>
         {% endfor %}
 
-        <!-- Linhas de Total da Origem - só aparece na última tabela de produto -->
         {% if loop.last %}
         <tr class="subtotal">
           <td colspan="5"><strong>Total de cargas: {{ registros_origem|length }}</strong></td>
@@ -454,13 +448,13 @@
         {% endif %}
       </tbody>
     </table>
-  </div> <!-- Fecha group-break -->
+  </div> 
   {% endfor %}
 
   {% endfor %}
 
   {% else %}
-  <!-- Estado vazio -->
+  
   <div style="text-align: center; padding: 50px 0;">
     <h3 style="color: #666;">Nenhum registro encontrado</h3>
     <p style="color: #999;">Não há registros de cargas disponíveis para os filtros selecionados.</p>

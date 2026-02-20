@@ -56,7 +56,6 @@
     {% endfor %}
     {% endif %}
 
-
     <div class="tree-add-item">
       <button class="tree-add-btn" {% if controle_estrutura_ativo or current_user.role_id==1 %}
         onclick="openAddModal('{{ categoria.codigo }}')" {%endif %}>
@@ -85,12 +84,12 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/tree-view.css') }}">
 
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             PLANO DE CONTAS
           </div>
@@ -101,7 +100,7 @@
       </div>
     </div>
   </div>
-  <!-- Page body -->
+  
   <div class="page-body">
     <div class="container-xl">
 
@@ -123,7 +122,6 @@
             </div>
             {% endif %}
 
-            <!-- Info card sobre o plano de contas-->
             {% if current_user.role_id != 1 %}
             {% if controle_estrutura_ativo != 1 %}
             <div class="row">
@@ -153,7 +151,6 @@
             {% endif %}
             {% endif %}
 
-
             <div class="treeview-container">
 
               {% if estrutura %}
@@ -176,7 +173,6 @@
     </div>
   </div>
 
-  <!-- Modal Adicionar Categoria -->
   <div class="modal modal-blur fade" id="modal-add-category" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -210,7 +206,6 @@
     </div>
   </div>
 
-  <!-- Modal Editar Categoria -->
   <div class="modal modal-blur fade" id="modal-edit-category" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -296,7 +291,6 @@
   let currentEditCategoryId = null;
   let currentDeleteCategoryId = null;
 
-  // Função para expandir/colapsar nós
   function toggleNode(toggleElement) {
     const treeItem = toggleElement.closest('.tree-item');
     const children = treeItem.querySelector('.tree-children');
@@ -307,17 +301,16 @@
 
       if (isCollapsed) {
         children.style.display = 'block';
-        // seta para baixo
+        
         arrow.setAttribute('points', '6,9 12,15 18,9');
       } else {
         children.style.display = 'none';
-        // seta para direita
+        
         arrow.setAttribute('points', '9,6 15,12 9,18');
       }
     }
   }
 
-  // Função para abrir modal de adicionar categoria
   function openAddModal(parentCode) {
     currentParentCode = parentCode;
     const parentName = getParentName(parentCode);
@@ -333,7 +326,6 @@
     }, 150);
   }
 
-  // Função para abrir modal de editar categoria
   function openEditModal(categoriaId, categoriaAtualNome) {
     currentEditCategoryId = categoriaId;
 
@@ -350,7 +342,6 @@
     }, 150);
   }
 
-  // Função para abrir modal de excluir categoria
   function openDeleteModal(categoriaId, categoriaNome) {
     currentDeleteCategoryId = categoriaId;
 
@@ -360,7 +351,6 @@
     modal.show();
   }
 
-  // Função para adicionar subcategoria - INTEGRADA COM BACKEND
   async function adicionarSubcategoria() {
     const nome = document.getElementById('category-name').value.trim();
 
@@ -415,7 +405,6 @@
     }
   }
 
-  // Função para confirmar edição de categoria
   async function confirmarEdicaoCategoria() {
     const novoNome = document.getElementById('edit-category-name').value.trim();
 
@@ -464,7 +453,6 @@
     }
   }
 
-  // Função para confirmar exclusão de categoria
   async function confirmarExclusaoCategoria() {
     const btn = document.querySelector('#modal-delete-category .btn-danger');
     const originalText = btn.innerHTML;
@@ -499,14 +487,12 @@
     }
   }
 
-  // Função para adicionar categoria no DOM
   function adicionarCategoriaDOM(categoria) {
     const parentItem = document.querySelector(`[data-category="${currentParentCode}"]`);
     const children = parentItem.querySelector('.tree-children');
     const addItem = Array.from(children.children)
       .find(el => el.classList.contains('tree-add-item'));
 
-    // Criar nova subcategoria
     const newItem = document.createElement('div');
     const isSubSubCategory = currentParentCode.includes('.');
     newItem.className = `tree-item ${isSubSubCategory ? 'subsubcategory' : 'subcategory'}`;
@@ -553,31 +539,25 @@
         </div>
     `;
 
-    // Inserir antes do botão de adicionar
     children.insertBefore(newItem, addItem);
 
-    // insere o novo item antes do botão, ou anexa no fim
     if (addItem && addItem.parentNode === children) {
       children.insertBefore(newItem, addItem);
     } else {
       children.appendChild(newItem);
     }
 
-
-    // Mostrar children se estiver oculto
     if (children.style.display === 'none') {
       children.style.display = 'block';
       const toggle = parentItem.querySelector('.tree-toggle');
       toggle.classList.remove('collapsed');
     }
 
-    // Adicionar eventos de hover
     addHoverEvents(newItem);
     const caret = newItem.querySelector('.tree-toggle');
     caret.addEventListener('click', () => toggleNode(caret));
   }
 
-  // Função para mostrar mensagens flash
   function showFlashMessage(type, message) {
     const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
 
@@ -596,7 +576,6 @@
     }, 5000);
   }
 
-  // Função para determinar a classe do botão baseada no código pai
   function getBadgeClass(parentCode) {
     if (parentCode.startsWith('1')) {
       return 'btn btn-outline-success btn-icon';
@@ -608,7 +587,6 @@
     return 'btn btn-outline-primary btn-icon';
   }
 
-  // Função para obter nome da categoria pai
   function getParentName(parentCode) {
     const names = {
       '1': 'Receitas',
@@ -629,7 +607,6 @@
     return `Categoria ${parentCode}`;
   }
 
-  // Função para adicionar eventos de hover
   function addHoverEvents(element) {
     const treeLine = element.querySelector('.tree-line');
     const actions = element.querySelector('.tree-actions');
@@ -645,14 +622,12 @@
     }
   }
 
-  // Inicializar quando a página carregar
   document.addEventListener('DOMContentLoaded', function () {
-    // Ajustar todas as setas para baixo (aberto) ao carregar
+    
     document.querySelectorAll('.tree-toggle .arrow-icon polyline').forEach(poly => {
       poly.setAttribute('points', '6,9 12,15 18,9');
     });
 
-    // Enter para adicionar categoria
     const categoryNameInput = document.getElementById('category-name');
     if (categoryNameInput) {
       categoryNameInput.addEventListener('keypress', function (e) {
@@ -662,7 +637,6 @@
       });
     }
 
-    // Enter para editar categoria
     const editCategoryNameInput = document.getElementById('edit-category-name');
     if (editCategoryNameInput) {
       editCategoryNameInput.addEventListener('keypress', function (e) {
@@ -672,25 +646,20 @@
       });
     }
 
-    // Adicionar eventos de hover para categorias existentes
     document.querySelectorAll('.tree-item').forEach(addHoverEvents);
 
-    // Controle do switch de alteração da estrutura
     const switchControle = document.querySelector('input[name="usuario_alteracao"]');
     if (switchControle) {
       switchControle.addEventListener('change', function () {
         const isChecked = this.checked;
         const valor = isChecked ? 1 : 0;
 
-        // Desabilitar o switch durante a requisição
         this.disabled = true;
 
-        // Determinar qual endpoint chamar
         const endpoint = isChecked
           ? '/configuracoes/gerais/plano-contas/usuario-permitir-alterar'
           : '/configuracoes/gerais/plano-contas/usuario-negar-alteracao';
 
-        // Fazer a requisição
         fetch(endpoint, {
           method: 'PUT',
           headers: {
@@ -703,19 +672,19 @@
             if (data.sucesso) {
               showFlashMessage('success', data.mensagem);
             } else {
-              // Reverter o switch se houve erro
+              
               this.checked = !isChecked;
               showFlashMessage('error', data.erro || 'Erro ao alterar configuração');
             }
           })
           .catch(error => {
             console.error('Erro:', error);
-            // Reverter o switch se houve erro
+            
             this.checked = !isChecked;
             showFlashMessage('error', 'Erro de conexão. Tente novamente.');
           })
           .finally(() => {
-            // Reabilitar o switch
+            
             this.disabled = false;
           });
       });

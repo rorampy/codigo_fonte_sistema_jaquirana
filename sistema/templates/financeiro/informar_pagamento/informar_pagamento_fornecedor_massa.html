@@ -24,7 +24,7 @@
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
       <div class="row g-3 mb-4">
-        <!-- Card Crédito -->
+        
         <div class="col-6 {% if valor_total_fretes|default(0) > 0 %}col-md-3{% else %}col-md-4{% endif %}">
           <div class="card border-0 shadow-sm h-100">
             <div class="card-body p-4 d-flex flex-column">
@@ -78,7 +78,6 @@
           </div>
         </div>
 
-        <!-- Card Fretes (só quando há fretes) -->
         {% if valor_total_fretes|default(0) > 0 %}
         <div class="col-6 col-md-3">
           <div class="card border-0 shadow-sm h-100">
@@ -110,7 +109,7 @@
           </div>
         </div>
         {% endif %}
-        <!-- Card Total a Faturar -->
+        
         <div class="col-6 {% if valor_total_fretes|default(0) > 0 %}col-md-3{% else %}col-md-4{% endif %}">
           <div class="card border-0 shadow-sm h-100">
             <div class="card-body p-4 d-flex flex-column">
@@ -131,12 +130,10 @@
                 <div class="flex-grow-1">
                   <p class="text-muted mb-1 small text-uppercase fw-medium" id="total-pagar-label">Total a Faturar</p>
 
-                  <!-- Valor principal (dinâmico conforme uso do crédito) -->
                   <h4 class="mb-0 fw-bold" style="color: #1B5E20;" id="total-pagar">
                     {{ (valor_total_geral + (valor_total_fretes|default(0))) | formatar_float_para_brl }}
                   </h4>
 
-                  <!-- Informações adicionais -->
                   <div id="total-pagar-detalhes">
                     {% if valor_total_fretes|default(0) > 0 %}
                     <small class="text-muted d-block">
@@ -144,11 +141,8 @@
                     </small>
                     {% endif %}
 
-                    <!-- Badge de status do crédito (aparece apenas quando usar crédito) -->
                     <div id="credito-status" class="mt-1" style="display: none;">
-                      <!-- <small class="badge bg-success-lt" id="credito-aplicado-badge">
-                        Crédito aplicado
-                      </small> -->
+                      
                       <small class="text-muted d-block mt-1">
                         Total bruto: <span id="total-bruto-mini">-</span>
                       </small>
@@ -196,8 +190,6 @@
                 </button>
               </div>
             </div>
-
-
 
             <div class="table-responsive">
               <table class="table table-sm table-striped">
@@ -323,8 +315,6 @@
                 </button>
               </div>
             </div>
-
-
 
             <div class="table-responsive">
               <table class="table table-sm table-striped">
@@ -488,10 +478,9 @@
             </div>
 
             {%if total_credito_disponivel_geral != 0%}
-            <!-- Seção de seleção de créditos (aparece quando seleciona "Sim") -->
+            
             <div id="resumo-creditos" class="mb-4" style="display: none;">
 
-              <!-- Créditos dos Fornecedores -->
               {% for fornecedor_id, dados_fornecedor in fornecedores_dict.items() %}
               {% if dados_fornecedor.creditos_individuais %}
               <div class="creditos-section mb-3" id="creditos-fornecedor-{{ fornecedor_id }}" style="display: none;">
@@ -572,7 +561,6 @@
               {% endif %}
               {% endfor %}
 
-              <!-- Créditos das Transportadoras -->
               {% if fretes_dict %}
               {% for transportadora_id, dados_transportadora in fretes_dict.items() %}
               {% if dados_transportadora.creditos_individuais %}
@@ -661,7 +649,6 @@
               {% endfor %}
               {% endif %}
 
-              <!-- Header moderno -->
               <div class="card border-0 shadow-sm" style="border-radius: 5px; overflow: hidden;">
                 <div class="card-header border-0 text-white position-relative"
                   style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D2E 100%); padding: 24px;">
@@ -682,14 +669,12 @@
                 </div>
 
                 <div class="card-body p-0">
-                  <!-- Seção Principal: Cards lado a lado -->
+                  
                   <div class="row g-0">
 
-                    <!-- Fornecedores -->
                     <div class="{% if fretes_dict %}col-lg-6{% else %}col-12{% endif %}">
                       <div class="p-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
 
-                        <!-- Título da seção -->
                         <div class="d-flex align-items-center mb-4">
                           <div class="rounded-circle me-3 d-flex align-items-center justify-content-center"
                             style="width: 40px; height: 40px; background: #1B5E20;">
@@ -706,7 +691,6 @@
                           </div>
                         </div>
 
-                        <!-- Cards dos fornecedores -->
                         <div class="space-y-3">
                           {% for fornecedor_id, dados_fornecedor in fornecedores_dict.items() %}
                           <div class="card border-0 shadow-sm mb-3" style="border-radius: 5px; background: white;"
@@ -762,11 +746,10 @@
                     </div>
                   </div>
 
-                  <!-- Transportadoras (se houver) -->
                   {% if fretes_dict %}
                   <div class="col-lg-6 border-start">
                     <div class="p-4">
-                      <!-- Título da seção -->
+                      
                       <div class="d-flex align-items-center mb-4">
                         <div class="rounded-circle me-3 d-flex align-items-center justify-content-center"
                           style="width: 40px; height: 40px; background: #1B5E20;">
@@ -786,7 +769,6 @@
                         </div>
                       </div>
 
-                      <!-- Cards das transportadoras -->
                       <div class="space-y-3">
                         {% for transportadora_id, dados_transportadora in fretes_dict.items() %}
                         <div class="card border-0 shadow-sm mb-3" style="border-radius: 5px; background: white;"
@@ -845,11 +827,9 @@
                 {% endif %}
               </div>
 
-              <!-- Resumo Final Moderno -->
               <div class="border-top bg-light">
                 <div class="p-4">
 
-                  <!-- Título do resumo -->
                   <div class="text-center mb-4">
                     <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center"
                       style="width: 48px; height: 48px; background: #f8f9fa; border: 2px solid #dee2e6;">
@@ -862,7 +842,7 @@
                       </svg>
                     </div>
                     <h5 class="mb-0 text-dark">RESULTADO FINAL</h5>
-                    <!-- Cards do resumo matemático -->
+                    
                     <div class="row g-3 mb-4">
                       <div class="col-md-4">
                         <div class="card border shadow-sm" style="border-radius: 12px;">
@@ -938,7 +918,6 @@
     </div>
   </div>
 
-  <!-- Estilos customizados para as tabelas de créditos -->
   <style>
     .hover-row:hover {
       background-color: #f8f9fa !important;
@@ -985,7 +964,6 @@
         });
       });
     });
-
 
     let creditosSelecionados = {
       fornecedor: {},
@@ -1257,7 +1235,6 @@
           }
         });
 
-        // Somar créditos de transportadoras
         Object.keys(creditosSelecionados.transportadora).forEach(transportadoraId => {
           if (creditosSelecionados.transportadora[transportadoraId]) {
             const creditoTransportadora = creditosSelecionados.transportadora[transportadoraId].reduce((sum, credito) => sum + (credito.valor / 100), 0);
@@ -1701,7 +1678,6 @@
     });
   </script>
 
-  <!-- Modal para Lançamento de Crédito -->
   <div class="modal fade" id="modalLancarCredito" tabindex="-1" aria-labelledby="modalLancarCreditoLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -1851,7 +1827,6 @@
 
           mostrarToast(`Crédito lançado com sucesso para ${tipoTexto}: ${nomeEntidade}`, 'success');
 
-          // Recarregar a página após um breve delay para mostrar o toast
           setTimeout(() => {
             window.location.reload();
           }, 1500);
@@ -1898,7 +1873,6 @@
         currency: 'BRL'
       }).format(valor);
     }
-
 
   </script>
 

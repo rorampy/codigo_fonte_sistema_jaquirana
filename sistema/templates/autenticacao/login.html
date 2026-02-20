@@ -1,10 +1,5 @@
 {% extends 'estrutura/base_login.html' %}
 {% block conteudo %}
-<!-- <div class="text-center mb-4">
-    <a href="{{ url_for('login') }}" class="navbar-brand navbar-brand-autodark">
-      <img src="{{ url_for('static', filename='images/logo.png') }}" width="200" height="70" alt="Logomarca Sistema">
-    </a>
-  </div> -->
 
 <div class="row g-0 flex-fill">
   <div class="col-12 col-lg-6 col-xl-4 border-top-wide border-primary d-flex flex-column justify-content-center">
@@ -14,7 +9,6 @@
           <img src="{{ url_for('static', filename='images/logo.png') }}" width="120" alt="MBR">
         </a>
       </div>
-
 
       {% include 'estrutura/mensagens_flash.html' %}
 
@@ -51,14 +45,13 @@
     </div>
   </div>
   <div class="col-12 col-lg-6 col-xl-8 d-none d-lg-block">
-    <!-- Photo -->
+    
     <div class="bg-cover h-100 min-vh-100"
       style="background-image: url({{url_for('static', filename='images/GIF_extratora_pinus_EC220DL.gif')}});">
     </div>
   </div>
 </div>
 
-<!-- Exibe/Oculta conteúdo do input password -->
 <script>
   function mostrarSenha() {
     const passwordField = document.getElementById('campoSenha');

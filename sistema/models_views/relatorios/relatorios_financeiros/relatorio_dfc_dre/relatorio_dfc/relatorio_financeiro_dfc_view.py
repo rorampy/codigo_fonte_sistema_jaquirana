@@ -19,12 +19,10 @@ def dfc_analitico():
     Rota para exibir DFC Analítico com filtros por período
     """
     try:
-        # Valores padrão - mês atual
         data_fim_default = date.today()
-        data_inicio_default = date(data_fim_default.year, data_fim_default.month, 1)  # Primeiro dia do mês atual
-        exercicio_default = DataHora.obter_exercicio_mes_atual()  # Exercício do mês atual
+        data_inicio_default = date(data_fim_default.year, data_fim_default.month, 1)
+        exercicio_default = DataHora.obter_exercicio_mes_atual()
         
-        # Coletar dados do formulário
         dados_form = {
             'data_inicio': request.form.get('data_inicio') or request.args.get('data_inicio', data_inicio_default.strftime('%Y-%m-%d')),
             'data_fim': request.form.get('data_fim') or request.args.get('data_fim', data_fim_default.strftime('%Y-%m-%d')),
@@ -33,27 +31,17 @@ def dfc_analitico():
             'exportar_excel': request.form.get('exportar_excel')
         }
         
-        # Debug: log dos dados capturados do formulário
-        print(f"DEBUG DFC Analítico - Dados do form: data_inicio={dados_form['data_inicio']}, data_fim={dados_form['data_fim']}, exercicio={dados_form['exercicio']}")
-        print(f"DEBUG DFC Analítico - Request form: {dict(request.form)}")
-        print(f"DEBUG DFC Analítico - Request args: {dict(request.args)}")
         
-        # Processar datas - SEMPRE usar dados do formulário primeiro
         if dados_form['exercicio'] and dados_form['exercicio'] != exercicio_default:
             try:
-                # Usar a função dos utilitários para obter período completo
                 data_inicio, data_fim = DataHora.obter_periodo_completo_mes(dados_form['exercicio'])
                 
-                # Atualizar dados_form
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
                 
-                # Debug: log das datas processadas do exercício
-                print(f"DEBUG DFC Analítico - Exercício processado: {dados_form['exercicio']}, Data início: {data_inicio}, Data fim: {data_fim}")
                 
             except ValueError as e:
                 flash((str(e), 'error'))
-                # Usar dados do formulário como fallback
                 try:
                     data_inicio = datetime.strptime(dados_form['data_inicio'], '%Y-%m-%d').date()
                     data_fim = datetime.strptime(dados_form['data_fim'], '%Y-%m-%d').date()
@@ -64,13 +52,10 @@ def dfc_analitico():
                     dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
                 dados_form['exercicio'] = ''
         else:
-            # Converter strings de data para objetos date - PRIORIZAR dados do form
             try:
                 data_inicio = datetime.strptime(dados_form['data_inicio'], '%Y-%m-%d').date()
                 data_fim = datetime.strptime(dados_form['data_fim'], '%Y-%m-%d').date()
                 
-                # Debug: log das datas processadas do range
-                print(f"DEBUG DFC Analítico - Range manual processado: Data início: {data_inicio}, Data fim: {data_fim}")
                 
             except ValueError:
                 flash(('Datas inválidas fornecidas!', 'error'))
@@ -79,7 +64,6 @@ def dfc_analitico():
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
             
-            # Verificar se as datas são válidas
             if data_inicio > data_fim:
                 flash(('Data de início não pode ser maior que data de fim!', 'error'))
                 data_inicio = data_inicio_default
@@ -87,16 +71,11 @@ def dfc_analitico():
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
         
-        # Gerar DFC analítico com as datas processadas
-        print(f"DEBUG: Gerando DFC Analítico com data_inicio: {data_inicio}, data_fim: {data_fim}")
         dfc_dados = DFCModel.gerar_dfc_analitico(data_inicio, data_fim)
         
         if dados_form['exportar_pdf']:
-            print(f"DEBUG: Exportando PDF com data_inicio: {data_inicio}, data_fim: {data_fim}")
             return exportar_dfc_pdf(dfc_dados, data_inicio, data_fim)
         
-        # Log da consulta realizada (opcional)
-        # ChangelogModel é usado para versionamento do sistema, não para logs de uso
         
         return render_template(
             'relatorios/relatorios_financeiros/relatorio_dfc_dre/dfc/dfc_analitico.html',
@@ -126,12 +105,10 @@ def dfc_sintetico():
     Rota para exibir DFC Sintético com filtros por período
     """
     try:
-        # Valores padrão - mês atual
         data_fim_default = date.today()
-        data_inicio_default = date(data_fim_default.year, data_fim_default.month, 1)  # Primeiro dia do mês atual
-        exercicio_default = DataHora.obter_exercicio_mes_atual()  # Exercício do mês atual
+        data_inicio_default = date(data_fim_default.year, data_fim_default.month, 1)
+        exercicio_default = DataHora.obter_exercicio_mes_atual()
         
-        # Coletar dados do formulário
         dados_form = {
             'data_inicio': request.form.get('data_inicio') or request.args.get('data_inicio', data_inicio_default.strftime('%Y-%m-%d')),
             'data_fim': request.form.get('data_fim') or request.args.get('data_fim', data_fim_default.strftime('%Y-%m-%d')),
@@ -140,27 +117,17 @@ def dfc_sintetico():
             'exportar_excel': request.form.get('exportar_excel')
         }
         
-        # Debug: log dos dados capturados do formulário
-        print(f"DEBUG DFC Sintético - Dados do form: data_inicio={dados_form['data_inicio']}, data_fim={dados_form['data_fim']}, exercicio={dados_form['exercicio']}")
-        print(f"DEBUG DFC Sintético - Request form: {dict(request.form)}")
-        print(f"DEBUG DFC Sintético - Request args: {dict(request.args)}")
         
-        # Processar datas - SEMPRE usar dados do formulário primeiro
         if dados_form['exercicio'] and dados_form['exercicio'] != exercicio_default:
             try:
-                # Usar a função dos utilitários para obter período completo
                 data_inicio, data_fim = DataHora.obter_periodo_completo_mes(dados_form['exercicio'])
                 
-                # Atualizar dados_form
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
                 
-                # Debug: log das datas processadas do exercício
-                print(f"DEBUG DFC Sintético - Exercício processado: {dados_form['exercicio']}, Data início: {data_inicio}, Data fim: {data_fim}")
                 
             except ValueError as e:
                 flash((str(e), 'error'))
-                # Usar dados do formulário como fallback
                 try:
                     data_inicio = datetime.strptime(dados_form['data_inicio'], '%Y-%m-%d').date()
                     data_fim = datetime.strptime(dados_form['data_fim'], '%Y-%m-%d').date()
@@ -171,13 +138,10 @@ def dfc_sintetico():
                     dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
                 dados_form['exercicio'] = ''
         else:
-            # Converter strings de data para objetos date - PRIORIZAR dados do form
             try:
                 data_inicio = datetime.strptime(dados_form['data_inicio'], '%Y-%m-%d').date()
                 data_fim = datetime.strptime(dados_form['data_fim'], '%Y-%m-%d').date()
                 
-                # Debug: log das datas processadas do range
-                print(f"DEBUG DFC Sintético - Range manual processado: Data início: {data_inicio}, Data fim: {data_fim}")
                 
             except ValueError:
                 flash(('Datas inválidas fornecidas!', 'error'))
@@ -186,7 +150,6 @@ def dfc_sintetico():
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
             
-            # Verificar se as datas são válidas
             if data_inicio > data_fim:
                 flash(('Data de início não pode ser maior que data de fim!', 'error'))
                 data_inicio = data_inicio_default
@@ -194,16 +157,11 @@ def dfc_sintetico():
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
         
-        # Gerar DFC sintético com as datas processadas
-        print(f"DEBUG: Gerando DFC Sintético com data_inicio: {data_inicio}, data_fim: {data_fim}")
         dfc_dados = DFCModel.gerar_dfc_sintetico(data_inicio, data_fim)
         
         if dados_form['exportar_pdf']:
-            print(f"DEBUG: Exportando PDF Sintético com data_inicio: {data_inicio}, data_fim: {data_fim}")
             return exportar_dfc_sintetico_pdf(dfc_dados, data_inicio, data_fim)
         
-        # Log da consulta realizada (opcional)
-        # ChangelogModel é usado para versionamento do sistema, não para logs de uso
         
         return render_template(
             'relatorios/relatorios_financeiros/relatorio_dfc_dre/dfc/dfc_sintetico.html',
@@ -230,16 +188,11 @@ def exportar_dfc_pdf(dfc_dados, data_inicio, data_fim):
     Exporta DFC Analítico para PDF
     """
     try:
-        # Debug: log das datas recebidas na função de exportação
-        print(f"DEBUG: exportar_dfc_pdf recebeu data_inicio: {data_inicio}, data_fim: {data_fim}")
         
-        # Obter data atual como objeto datetime
         data_hoje = datetime.now()
         
-        # Obter caminho do logo
         logo_path = obter_url_absoluta_de_imagem('logo.png')
         
-        # Renderizar template para PDF
         html = render_template(
             'relatorios/relatorios_financeiros/relatorio_dfc_dre/dfc/dfc_analitico_pdf.html',
             logo_path=logo_path,
@@ -250,10 +203,8 @@ def exportar_dfc_pdf(dfc_dados, data_inicio, data_fim):
             formatar_float_para_brl=formatar_float_para_brl
         )
         
-        # Nome do arquivo de saída
         nome_arquivo_saida = f'dfc-analitico_{data_inicio.strftime("%Y%m%d")}_{data_fim.strftime("%Y%m%d")}'
         
-        # Gerar PDF usando a função padrão do sistema
         return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo_saida)
         
     except Exception as e:
@@ -266,16 +217,11 @@ def exportar_dfc_sintetico_pdf(dfc_dados, data_inicio, data_fim):
     Exporta DFC Sintético para PDF
     """
     try:
-        # Debug: log das datas recebidas na função de exportação
-        print(f"DEBUG: exportar_dfc_sintetico_pdf recebeu data_inicio: {data_inicio}, data_fim: {data_fim}")
         
-        # Obter data atual como objeto datetime
         data_hoje = datetime.now()
         
-        # Obter caminho do logo
         logo_path = obter_url_absoluta_de_imagem('logo.png')
         
-        # Renderizar template para PDF
         html = render_template(
             'relatorios/relatorios_financeiros/relatorio_dfc_dre/dfc/dfc_sintetico_pdf.html',
             logo_path=logo_path,
@@ -286,10 +232,8 @@ def exportar_dfc_sintetico_pdf(dfc_dados, data_inicio, data_fim):
             formatar_float_para_brl=formatar_float_para_brl
         )
         
-        # Nome do arquivo de saída
         nome_arquivo_saida = f'dfc-sintetico_{data_inicio.strftime("%Y%m%d")}_{data_fim.strftime("%Y%m%d")}'
         
-        # Gerar PDF usando a função padrão do sistema
         return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo_saida)
         
     except Exception as e:
@@ -305,26 +249,22 @@ def dfc_categoria_detalhes(categoria_id):
     Busca dados completos do faturamento e lançamentos avulsos
     """
     try:
-        # Obter parâmetros da requisição
         data_inicio_str = request.args.get('data_inicio')
         data_fim_str = request.args.get('data_fim')
         
         if not data_inicio_str or not data_fim_str:
             return jsonify({'error': 'Datas são obrigatórias'}), 400
         
-        # Converter datas
         try:
             data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
             data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
         except ValueError:
             return jsonify({'error': 'Formato de data inválido. Use YYYY-MM-DD'}), 400
         
-        # Importar models necessários
         from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
         from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
         from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
         
-        # Buscar registros da categoria no período com joins para obter dados completos
         registros = db.session.query(AgendamentoPagamentoModel)\
             .outerjoin(FaturamentoModel, AgendamentoPagamentoModel.faturamento_id == FaturamentoModel.id)\
             .outerjoin(LancamentoAvulsoModel, AgendamentoPagamentoModel.lancamento_avulso_id == LancamentoAvulsoModel.id)\
@@ -337,7 +277,6 @@ def dfc_categoria_detalhes(categoria_id):
                 AgendamentoPagamentoModel.data_vencimento <= data_fim
             ).all()
         
-        # Filtrar registros que contêm a categoria específica
         registros_categoria = []
         
         for registro in registros:
@@ -348,60 +287,49 @@ def dfc_categoria_detalhes(categoria_id):
                     if isinstance(categorias, list):
                         for categoria_info in categorias:
                             if isinstance(categoria_info, dict) and categoria_info.get('categoria_id') == categoria_id:
-                                # Dividir por 100 pois valores estão multiplicados por 100 no banco
                                 valor_corrigido = float(categoria_info.get('valor', 0)) / 100.0
                                 
-                                # Determinar a origem dos dados
                                 origem = 'Sistema'
                                 tipo_documento = 'Lançamento'
                                 codigo_documento = f'AGD-{registro.id}'
                                 beneficiario = 'Não informado'
                                 observacoes = registro.descricao or ''
                                 
-                                # Se tem faturamento, buscar detalhes do faturamento
                                 if registro.faturamento:
                                     faturamento = registro.faturamento
                                     tipo_documento = 'Faturamento'
                                     codigo_documento = faturamento.codigo_faturamento
                                     
-                                    # Determinar tipo de operação
-                                    if faturamento.tipo_operacao == 1:  # Carga
+                                    if faturamento.tipo_operacao == 1:
                                         origem = 'Faturamento de Carga'
-                                    elif faturamento.tipo_operacao == 2:  # Lançamento
-                                        if faturamento.direcao_financeira == 1:  # Receita
+                                    elif faturamento.tipo_operacao == 2:
+                                        if faturamento.direcao_financeira == 1:
                                             origem = 'Receita Avulsa'
-                                        else:  # Despesa
+                                        else:
                                             origem = 'Despesa Avulsa'
-                                    elif faturamento.tipo_operacao == 3:  # Crédito
+                                    elif faturamento.tipo_operacao == 3:
                                         origem = 'Controle de Crédito'
                                     
-                                    # Buscar detalhes do JSON do faturamento
                                     if faturamento.detalhes_json:
                                         try:
                                             detalhes = json.loads(faturamento.detalhes_json) if isinstance(faturamento.detalhes_json, str) else faturamento.detalhes_json
                                             if isinstance(detalhes, dict):
-                                                # Construir descrição detalhada e explicativa
                                                 informacoes_detalhes = []
                                                 
-                                                # Verificar se o agendamento tem múltiplas categorias
                                                 categorias_agendamento = json.loads(registro.categorias_json) if isinstance(registro.categorias_json, str) else registro.categorias_json
                                                 tem_multiplas_categorias = len(categorias_agendamento) > 1 if categorias_agendamento else False
                                                 
-                                                # Adicionar informação sobre categorização múltipla
                                                 if tem_multiplas_categorias:
                                                     outras_categorias = [cat.get('categoria', 'N/A') for cat in categorias_agendamento if cat.get('categoria_id') != categoria_id]
                                                     if outras_categorias:
                                                         informacoes_detalhes.append(f"Faturamento rateado entre categorias: {', '.join(outras_categorias[:2])}")
                                                 
-                                                # ENTIDADES ENVOLVIDAS NO FATURAMENTO
                                                 entidades_envolvidas = []
                                                 
-                                                # FORNECEDORES
                                                 if 'fornecedores' in detalhes and detalhes['fornecedores']:
-                                                    fornecedores = detalhes['fornecedores'][:3]  # Limitar a 3
+                                                    fornecedores = detalhes['fornecedores'][:3]
                                                     nomes_fornecedores = []
                                                     for f in fornecedores:
-                                                        # Buscar identificação em diferentes campos possíveis
                                                         nome = (f.get('fornecedor_identificacao') or 
                                                                f.get('identificacao') or 
                                                                f.get('nome') or 
@@ -415,12 +343,10 @@ def dfc_categoria_detalhes(categoria_id):
                                                     elif len(fornecedores) > 0:
                                                         entidades_envolvidas.append(f"{len(fornecedores)} fornecedor(es) cadastrado(s)")
                                                 
-                                                # TRANSPORTADORAS
                                                 if 'transportadoras' in detalhes and detalhes['transportadoras']:
-                                                    transportadoras = detalhes['transportadoras'][:3]  # Limitar a 3
+                                                    transportadoras = detalhes['transportadoras'][:3]
                                                     nomes_transportadoras = []
                                                     for t in transportadoras:
-                                                        # Buscar identificação em diferentes campos possíveis
                                                         nome = (t.get('transportadora_identificacao') or 
                                                                t.get('fornecedor_identificacao') or
                                                                t.get('identificacao') or 
@@ -435,12 +361,10 @@ def dfc_categoria_detalhes(categoria_id):
                                                     elif len(transportadoras) > 0:
                                                         entidades_envolvidas.append(f"{len(transportadoras)} transportadora(s) cadastrada(s)")
                                                 
-                                                # EXTRATORES
                                                 if 'extratores' in detalhes and detalhes['extratores']:
-                                                    extratores = detalhes['extratores'][:3]  # Limitar a 3
+                                                    extratores = detalhes['extratores'][:3]
                                                     nomes_extratores = []
                                                     for e in extratores:
-                                                        # Buscar identificação em diferentes campos possíveis
                                                         nome = (e.get('extrator_identificacao') or 
                                                                e.get('identificacao') or 
                                                                e.get('nome') or 
@@ -453,12 +377,10 @@ def dfc_categoria_detalhes(categoria_id):
                                                     elif len(extratores) > 0:
                                                         entidades_envolvidas.append(f"{len(extratores)} extrator(es) cadastrado(s)")
                                                 
-                                                # COMISSIONADOS
                                                 if 'comissionados' in detalhes and detalhes['comissionados']:
-                                                    comissionados = detalhes['comissionados'][:3]  # Limitar a 3
+                                                    comissionados = detalhes['comissionados'][:3]
                                                     nomes_comissionados = []
                                                     for c in comissionados:
-                                                        # Buscar identificação em diferentes campos possíveis
                                                         nome = (c.get('comissionado_identificacao') or 
                                                                c.get('identificacao') or 
                                                                c.get('nome') or 
@@ -471,12 +393,10 @@ def dfc_categoria_detalhes(categoria_id):
                                                     elif len(comissionados) > 0:
                                                         entidades_envolvidas.append(f"{len(comissionados)} comissionado(s) cadastrado(s)")
                                                 
-                                                # PRODUTOS/CARGAS
                                                 if 'cargas_a_receber' in detalhes and detalhes['cargas_a_receber']:
-                                                    cargas = detalhes['cargas_a_receber'][:3]  # Limitar a 3
+                                                    cargas = detalhes['cargas_a_receber'][:3]
                                                     nomes_produtos = []
                                                     for c in cargas:
-                                                        # Buscar produto em diferentes campos possíveis
                                                         produto = (c.get('produto') or 
                                                                   c.get('nome_produto') or 
                                                                   c.get('descricao') or
@@ -489,7 +409,6 @@ def dfc_categoria_detalhes(categoria_id):
                                                     elif len(cargas) > 0:
                                                         entidades_envolvidas.append(f"{len(cargas)} produto(s) cadastrado(s)")
                                                 
-                                                # CRÉDITOS UTILIZADOS (com explicação detalhada)
                                                 creditos_utilizados = []
                                                 if 'credito_fornecedor' in detalhes and detalhes['credito_fornecedor']:
                                                     creditos_fornecedor = detalhes['credito_fornecedor']
@@ -521,7 +440,6 @@ def dfc_categoria_detalhes(categoria_id):
                                                         outros = f" +{len(creditos_extrator)-2} outros" if len(creditos_extrator) > 2 else ""
                                                         creditos_utilizados.append(f"Créditos Extrator: {' | '.join(descricoes)}{outros}")
                                                 
-                                                # DOCUMENTOS FISCAIS
                                                 documentos_fiscais = []
                                                 if 'nf_complementar' in detalhes and detalhes['nf_complementar']:
                                                     qtd = len(detalhes['nf_complementar'])
@@ -530,10 +448,9 @@ def dfc_categoria_detalhes(categoria_id):
                                                     qtd = len(detalhes['nf_servico'])
                                                     documentos_fiscais.append(f"{qtd} NF Serviço(s)")
                                                 
-                                                # Montar descrição final organizada por seções
                                                 secoes_descricao = []
                                                 
-                                                if informacoes_detalhes:  # Info sobre categorização múltipla
+                                                if informacoes_detalhes:
                                                     secoes_descricao.extend(informacoes_detalhes)
                                                 
                                                 if entidades_envolvidas:
@@ -545,26 +462,23 @@ def dfc_categoria_detalhes(categoria_id):
                                                 if documentos_fiscais:
                                                     secoes_descricao.extend(documentos_fiscais)
                                                 
-                                                # Juntar todas as seções
                                                 if secoes_descricao:
                                                     observacoes = " • ".join(secoes_descricao)
                                         except (json.JSONDecodeError, TypeError, KeyError):
                                             pass
                                 
-                                # Se tem lançamento avulso, buscar detalhes
                                 if registro.lancamento_avulso:
                                     lancamento = registro.lancamento_avulso
                                     tipo_documento = 'Lançamento Avulso'
                                     codigo_documento = f'LAN-{lancamento.id}'
                                     
-                                    if lancamento.tipo_movimentacao == 1:  # Receita
+                                    if lancamento.tipo_movimentacao == 1:
                                         origem = 'Receita Avulsa'
-                                    else:  # Despesa
+                                    else:
                                         origem = 'Despesa Avulsa'
                                     
                                     observacoes = lancamento.descricao or ''
                                 
-                                # Buscar beneficiário
                                 if registro.pessoa_financeiro:
                                     beneficiario = registro.pessoa_financeiro.identificacao
                                 
@@ -581,7 +495,6 @@ def dfc_categoria_detalhes(categoria_id):
                                     'tipo_documento': tipo_documento,
                                     'codigo_documento': codigo_documento,
                                     'situacao_pagamento_id': registro.situacao_pagamento_id,
-                                    # Campos adicionais para mais detalhes
                                     'data_vencimento': registro.data_vencimento.strftime('%d/%m/%Y') if registro.data_vencimento else None,
                                     'valor_total_original': registro.valor_total_100 / 100 if registro.valor_total_100 else 0,
                                     'faturamento_id': registro.faturamento_id,
@@ -590,7 +503,6 @@ def dfc_categoria_detalhes(categoria_id):
                 except (json.JSONDecodeError, TypeError):
                     continue
         
-        # Calcular total
         total = sum(reg['valor'] for reg in registros_categoria)
         
         return jsonify({
@@ -602,5 +514,4 @@ def dfc_categoria_detalhes(categoria_id):
         })
         
     except Exception as e:
-        print(f"Erro em dre_categoria_detalhes: {e}")
         return jsonify({'error': f'Erro ao buscar detalhes: {str(e)}'}), 500

@@ -21,21 +21,18 @@ class ManipulacaoArquivos:
         PDF de saída, a orientação do documento e se deve abrir em nova aba.
         """
         options = {
-            "enable-local-file-access": "",  # habilita acesso a arquivos locais
+            "enable-local-file-access": "",
             "encoding": "UTF-8",
-            "orientation": orientacao,  # Portrait ou Landscape
+            "orientation": orientacao,
         }
         
-        # Gerar o PDF a partir do HTML
         arquivo_pdf = pdfkit.from_string(
             html, False, configuration=pdfkit_config, options=options
         )
         
-        # Retorna o PDF como resposta da requisição
         resposta = make_response(arquivo_pdf)
         resposta.headers["Content-Type"] = "application/pdf"
         
-        # Define se vai baixar ou abrir em nova aba
         if abrir_em_nova_aba:
             resposta.headers["Content-Disposition"] = f"inline; filename={nome_arquivo}.pdf"
         else:
@@ -51,12 +48,11 @@ class ManipulacaoArquivos:
         
         wkhtmltopdf_path = caminho_wkhtmltopdf
 
-        if os.name == 'nt':  # Windows
+        if os.name == 'nt':
             wkhtmltoimage_path = wkhtmltopdf_path.replace('wkhtmltopdf.exe', 'wkhtmltoimage.exe')
-        else:  # Linux ou outros
+        else:
             wkhtmltoimage_path = wkhtmltopdf_path.replace('wkhtmltopdf', 'wkhtmltoimage')
                 
-        # Verificar se o arquivo existe
         if not os.path.exists(wkhtmltoimage_path):
             raise Exception(f"wkhtmltoimage não encontrado em: {wkhtmltoimage_path}")
         
@@ -123,13 +119,11 @@ class ManipulacaoArquivos:
         :param nome_arquivo: Nome do arquivo (sem extensão).
         :param colunas: Lista de nomes das colunas (se dados for lista de listas). Opcional.
         """
-        # Converte os dados para DataFrame, se já não for
         if isinstance(dados, pd.DataFrame):
             df = dados
         else:
             df = pd.DataFrame(dados, columns=colunas)
         
-        # Cria um buffer para manter o arquivo na memória
         output = BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
             df.to_excel(writer, index=False, sheet_name="Sheet1")
@@ -179,7 +173,6 @@ class ManipulacaoArquivos:
             num_colunas = len(df.columns)
             num_linhas = len(df)
 
-            # --- Estilos ---
             verde_escuro = '1E5631'
             verde_claro = 'E7F0E7'
             cinza_zebra = 'F9F9F9'
@@ -208,7 +201,6 @@ class ManipulacaoArquivos:
                 bottom=Side(style='thin', color='DDDDDD')
             )
 
-            # --- Título (linha 1, mesclada) ---
             ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_colunas)
             celula_titulo = ws.cell(row=1, column=1, value=titulo_planilha)
             celula_titulo.font = font_titulo
@@ -216,10 +208,8 @@ class ManipulacaoArquivos:
             celula_titulo.alignment = Alignment(horizontal='center', vertical='center')
             ws.row_dimensions[1].height = 35
 
-            # --- Linha vazia (row 2) ---
             ws.row_dimensions[2].height = 8
 
-            # --- Cabeçalho (row 3) ---
             for col_idx in range(1, num_colunas + 1):
                 cell = ws.cell(row=3, column=col_idx)
                 cell.font = font_header
@@ -228,7 +218,6 @@ class ManipulacaoArquivos:
                 cell.border = Border(bottom=Side(style='medium', color=verde_escuro))
             ws.row_dimensions[3].height = 28
 
-            # --- Identificar colunas monetárias e destaque por índice ---
             colunas = list(df.columns)
             idx_monetarias = set()
             idx_destaque = None
@@ -238,7 +227,6 @@ class ManipulacaoArquivos:
                 if col_name == coluna_destaque:
                     idx_destaque = i
 
-            # --- Dados (a partir da row 4) ---
             for row_idx in range(num_linhas):
                 excel_row = row_idx + 4
 
@@ -261,12 +249,10 @@ class ManipulacaoArquivos:
                         cell.font = font_normal
                         cell.alignment = align_center
 
-                # Zebra striping
                 if row_idx % 2 == 1:
                     for col_idx in range(num_colunas):
                         ws.cell(row=excel_row, column=col_idx + 1).fill = fill_zebra
 
-            # --- Linha de totais ---
             if linha_totais:
                 total_row = num_linhas + 4
                 ws.row_dimensions[total_row].height = 28
@@ -292,7 +278,6 @@ class ManipulacaoArquivos:
                     else:
                         cell.font = font_total
 
-            # --- Auto-width das colunas ---
             for col_idx in range(num_colunas):
                 col_letter = get_column_letter(col_idx + 1)
                 max_len = len(str(colunas[col_idx])) + 4
@@ -306,7 +291,6 @@ class ManipulacaoArquivos:
 
                 ws.column_dimensions[col_letter].width = max(12, min(max_len + 2, 45))
 
-            # Congelar cabeçalho
             ws.freeze_panes = 'A4'
 
         output.seek(0)
@@ -332,7 +316,6 @@ class ManipulacaoArquivos:
         ws = wb.active
         ws.title = 'Dados'
         
-        # Estilos
         verde_escuro = '1E5631'
         verde_claro = 'E8F5E8'
         azul_escuro = '1565C0'
@@ -362,11 +345,9 @@ class ManipulacaoArquivos:
         borda_fina = Border(bottom=Side(style='thin', color='DDDDDD'))
         borda_grupo = Border(bottom=Side(style='medium', color=verde_escuro))
         
-        # Colunas das cargas
         colunas_cargas = ['Data', 'Tipo', 'Entidade', 'Cliente', 'Produto', 'Bitola', 'NF', 'Peso (Ton)', 'Preço', 'Valor Final']
         num_colunas = len(colunas_cargas)
         
-        # Título do relatório (linha 1)
         ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_colunas)
         celula_titulo = ws.cell(row=1, column=1, value=titulo_planilha)
         celula_titulo.font = font_titulo
@@ -374,7 +355,7 @@ class ManipulacaoArquivos:
         celula_titulo.alignment = align_center
         ws.row_dimensions[1].height = 30
         
-        row = 3  # Começa na linha 3
+        row = 3
         
         total_geral_saldo = 0
         
@@ -391,7 +372,6 @@ class ManipulacaoArquivos:
             
             total_geral_saldo += saldo_pendente
             
-            # Status de atraso
             if dias_atraso > 0:
                 status = f'{dias_atraso} dias atraso'
             elif dias_atraso == 0:
@@ -399,7 +379,6 @@ class ManipulacaoArquivos:
             else:
                 status = 'No prazo'
             
-            # Linha do grupo (faturamento)
             ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas)
             info_grupo = f'{codigo_fat} - {pessoa_nome[:40]} | {tipo_operacao} | Venc: {data_vencimento.strftime("%d/%m/%Y") if data_vencimento else "-"} | {status} | Saldo: R$ {saldo_pendente:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
             celula_grupo = ws.cell(row=row, column=1, value=info_grupo)
@@ -412,7 +391,6 @@ class ManipulacaoArquivos:
             detalhes = grupo.get('detalhes_cargas')
             
             if detalhes:
-                # Cabeçalho das cargas
                 for col_idx, col_name in enumerate(colunas_cargas):
                     cell = ws.cell(row=row, column=col_idx + 1, value=col_name)
                     cell.font = font_header
@@ -426,7 +404,6 @@ class ManipulacaoArquivos:
                 total_peso = 0
                 total_valor = 0
                 
-                # Fornecedores
                 for f in detalhes.get('fornecedores', []):
                     peso = float(f.get('peso_ticket') or 0) if f.get('peso_ticket') else 0
                     valor = (f.get('valor_faturado') or 0) / 100
@@ -454,7 +431,6 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
-                # Transportadoras
                 for t in detalhes.get('transportadoras', []):
                     peso = float(t.get('peso_ticket') or 0) if t.get('peso_ticket') else 0
                     valor = (t.get('valor_faturado') or 0) / 100
@@ -482,7 +458,6 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
-                # Extratores
                 for e in detalhes.get('extratores', []):
                     peso = float(e.get('peso_ticket') or 0) if e.get('peso_ticket') else 0
                     valor = (e.get('valor_faturado') or 0) / 100
@@ -510,7 +485,6 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
-                # Comissionados
                 for c in detalhes.get('comissionados', []):
                     peso = float(c.get('peso_ticket') or 0) if c.get('peso_ticket') else 0
                     valor = (c.get('valor_faturado') or 0) / 100
@@ -538,7 +512,6 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
-                # Cargas a Receber (Clientes) - AR
                 for car in detalhes.get('cargas_a_receber', []):
                     peso = float(car.get('peso_ticket') or 0) if car.get('peso_ticket') else 0
                     valor = (car.get('valor_faturado') or 0) / 100
@@ -566,7 +539,6 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
-                # Linha de subtotal do grupo
                 ws.cell(row=row, column=1, value=f'Subtotal ({cargas_count} cargas)').font = font_subtotal
                 ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
                 peso_cell = ws.cell(row=row, column=8, value=total_peso)
@@ -586,8 +558,6 @@ class ManipulacaoArquivos:
                 row += 1
             
             elif grupo.get('agendamentos') and any(a.get('is_nf_complementar') for a in grupo.get('agendamentos', [])):
-                # NF Complementar - exibir detalhes dos agendamentos
-                # Cabeçalho
                 colunas_nfc = ['Código', 'Tipo', 'Descrição', 'Data', 'Situação']
                 for col_idx, col_name in enumerate(colunas_nfc):
                     cell = ws.cell(row=row, column=col_idx + 1, value=col_name)
@@ -595,7 +565,6 @@ class ManipulacaoArquivos:
                     cell.fill = fill_header
                     cell.alignment = align_center
                     cell.border = borda_fina
-                # Coluna de valor
                 cell = ws.cell(row=row, column=len(colunas_nfc) + 1, value='Valor')
                 cell.font = font_header
                 cell.fill = fill_header
@@ -621,7 +590,6 @@ class ManipulacaoArquivos:
                     row += 1
             
             else:
-                # Lançamento avulso ou sem detalhes
                 descricao = grupo.get('lancamento_descricao') or 'Detalhes não disponíveis'
                 ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas - 1)
                 ws.cell(row=row, column=1, value=f'Lançamento: {descricao}').font = font_normal
@@ -632,9 +600,8 @@ class ManipulacaoArquivos:
                     ws.cell(row=row, column=col).border = borda_fina
                 row += 1
             
-            row += 1  # Linha em branco entre grupos
+            row += 1
         
-        # Linha de TOTAL GERAL
         row += 1
         ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas - 1)
         total_cell = ws.cell(row=row, column=1, value='TOTAL GERAL - SALDO PENDENTE')
@@ -649,13 +616,11 @@ class ManipulacaoArquivos:
         valor_total_cell.alignment = align_center
         ws.row_dimensions[row].height = 28
         
-        # Ajustar largura das colunas
         larguras = [12, 14, 30, 20, 12, 12, 10, 12, 12, 14]
         for col_idx, largura in enumerate(larguras):
             col_letter = get_column_letter(col_idx + 1)
             ws.column_dimensions[col_letter].width = largura
         
-        # Congelar primeira linha
         ws.freeze_panes = 'A2'
         
         output = BytesIO()
@@ -683,7 +648,6 @@ class ManipulacaoArquivos:
         ws = wb.active
         ws.title = 'Dados'
         
-        # Estilos
         verde_escuro = '1E5631'
         verde_claro = 'E8F5E8'
         azul_escuro = '1565C0'
@@ -715,7 +679,6 @@ class ManipulacaoArquivos:
         borda_fina = Border(bottom=Side(style='thin', color='DDDDDD'))
         borda_grupo = Border(bottom=Side(style='medium', color=verde_escuro))
         
-        # Colunas das cargas - AR não tem coluna Cliente
         if direcao == 'ar':
             colunas_cargas = ['Data', 'Tipo', 'Entidade', 'Produto', 'Bitola', 'NF', 'Peso (Ton)', 'Preço', 'Valor Final']
             col_produto = 4
@@ -734,7 +697,6 @@ class ManipulacaoArquivos:
             col_valor = 10
         num_colunas = len(colunas_cargas)
         
-        # Título do relatório (linha 1)
         ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_colunas)
         celula_titulo = ws.cell(row=1, column=1, value=titulo_planilha)
         celula_titulo.font = font_titulo
@@ -742,7 +704,7 @@ class ManipulacaoArquivos:
         celula_titulo.alignment = align_center
         ws.row_dimensions[1].height = 30
         
-        row = 3  # Começa na linha 3
+        row = 3
         
         total_geral_pago = 0
         
@@ -757,11 +719,9 @@ class ManipulacaoArquivos:
             
             total_geral_pago += total_pago
             
-            # Status
             status = 'Pago Parcialmente' if tem_parcial else ('Pago' if direcao == 'ap' else 'Recebido')
             label_data = 'Pag' if direcao == 'ap' else 'Rec'
             
-            # Linha do grupo (faturamento)
             ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas)
             info_grupo = f'{codigo_fat} - {pessoa_nome[:40]} | {tipo_operacao} | {status} | {label_data}: {data_pagamento.strftime("%d/%m/%Y") if data_pagamento else "-"} | Total: R$ {total_pago:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
             celula_grupo = ws.cell(row=row, column=1, value=info_grupo)
@@ -774,7 +734,6 @@ class ManipulacaoArquivos:
             detalhes = grupo.get('detalhes_cargas')
             
             if detalhes:
-                # Cabeçalho das cargas
                 for col_idx, col_name in enumerate(colunas_cargas):
                     cell = ws.cell(row=row, column=col_idx + 1, value=col_name)
                     cell.font = font_header
@@ -788,7 +747,6 @@ class ManipulacaoArquivos:
                 total_peso = 0
                 total_valor = 0
                 
-                # Fornecedores
                 for f in detalhes.get('fornecedores', []):
                     peso = float(f.get('peso_ticket') or 0) if f.get('peso_ticket') else 0
                     valor = (f.get('valor_faturado') or 0) / 100
@@ -816,7 +774,6 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
-                # Transportadoras
                 for t in detalhes.get('transportadoras', []):
                     peso = float(t.get('peso_ticket') or 0) if t.get('peso_ticket') else 0
                     valor = (t.get('valor_faturado') or 0) / 100
@@ -844,7 +801,6 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
-                # Extratores
                 for e in detalhes.get('extratores', []):
                     peso = float(e.get('peso_ticket') or 0) if e.get('peso_ticket') else 0
                     valor = (e.get('valor_faturado') or 0) / 100
@@ -872,7 +828,6 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
-                # Comissionados
                 for c in detalhes.get('comissionados', []):
                     peso = float(c.get('peso_ticket') or 0) if c.get('peso_ticket') else 0
                     valor = (c.get('valor_faturado') or 0) / 100
@@ -900,7 +855,6 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
-                # Cargas a Receber (Clientes) - AR
                 for car in detalhes.get('cargas_a_receber', []):
                     peso = float(car.get('peso_ticket') or 0) if car.get('peso_ticket') else 0
                     valor = (car.get('valor_faturado') or 0) / 100
@@ -911,7 +865,6 @@ class ManipulacaoArquivos:
                     ws.cell(row=row, column=1, value=car.get('data_entrega', '-')).font = font_normal
                     ws.cell(row=row, column=2, value='Cliente').font = font_normal
                     ws.cell(row=row, column=3, value=(car.get('cliente') or '-')[:30]).font = font_normal
-                    # AR não tem coluna Cliente separada, usa índices dinâmicos
                     ws.cell(row=row, column=col_produto, value=car.get('produto', '-')).font = font_normal
                     ws.cell(row=row, column=col_bitola, value=car.get('bitola', '-')).font = font_normal
                     ws.cell(row=row, column=col_nf, value=car.get('nota_fiscal', '-')).font = font_normal
@@ -928,7 +881,6 @@ class ManipulacaoArquivos:
                         ws.cell(row=row, column=col).border = borda_fina
                     row += 1
                 
-                # Linha de subtotal do grupo
                 ws.cell(row=row, column=1, value=f'Subtotal ({cargas_count} cargas)').font = font_subtotal
                 ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=col_nf)
                 peso_cell = ws.cell(row=row, column=col_peso, value=total_peso)
@@ -948,7 +900,6 @@ class ManipulacaoArquivos:
                 row += 1
             
             elif grupo.get('agendamentos') and any(a.get('is_nf_complementar') for a in grupo.get('agendamentos', [])):
-                # NF Complementar - exibir detalhes dos agendamentos
                 colunas_nfc = ['Código', 'Tipo', 'Descrição', 'Data', 'Situação']
                 for col_idx, col_name in enumerate(colunas_nfc):
                     cell = ws.cell(row=row, column=col_idx + 1, value=col_name)
@@ -981,7 +932,6 @@ class ManipulacaoArquivos:
                     row += 1
             
             else:
-                # Lançamento avulso ou sem detalhes
                 descricao = grupo.get('lancamento_descricao') or 'Detalhes não disponíveis'
                 ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas - 1)
                 ws.cell(row=row, column=1, value=f'Lançamento: {descricao}').font = font_normal
@@ -992,9 +942,8 @@ class ManipulacaoArquivos:
                     ws.cell(row=row, column=col).border = borda_fina
                 row += 1
             
-            row += 1  # Linha em branco entre grupos
+            row += 1
         
-        # Linha de TOTAL GERAL
         row += 1
         ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=num_colunas - 1)
         label_total = 'TOTAL GERAL - VALOR PAGO' if direcao == 'ap' else 'TOTAL GERAL - VALOR RECEBIDO'
@@ -1010,16 +959,14 @@ class ManipulacaoArquivos:
         valor_total_cell.alignment = align_center
         ws.row_dimensions[row].height = 28
         
-        # Ajustar largura das colunas
         if direcao == 'ar':
-            larguras = [12, 14, 30, 12, 12, 10, 12, 12, 14]  # 9 colunas, sem Cliente
+            larguras = [12, 14, 30, 12, 12, 10, 12, 12, 14]
         else:
-            larguras = [12, 14, 30, 20, 12, 12, 10, 12, 12, 14]  # 10 colunas
+            larguras = [12, 14, 30, 20, 12, 12, 10, 12, 12, 14]
         for col_idx, largura in enumerate(larguras):
             col_letter = get_column_letter(col_idx + 1)
             ws.column_dimensions[col_letter].width = largura
         
-        # Congelar primeira linha
         ws.freeze_panes = 'A2'
         
         output = BytesIO()

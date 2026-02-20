@@ -23,7 +23,6 @@ def cadastrar_rota():
         clientes = ClienteModel.listar_clientes_ativos()
         transportadoras = TransportadoraModel.listar_transportadoras_ativas()
         
-        # Buscar produtos e bitolas dinamicamente
         produtos_bitolas = ProdutoBitolaModel.obter_produtos_com_bitolas()
 
         validacao_campos_obrigatorios = {}
@@ -35,13 +34,11 @@ def cadastrar_rota():
             clienteDestino = request.form["clienteDestino"]
             transportadoraFrete = request.form["transportadoraFrete"]
             
-            # Capturar preços de frete dinamicamente
             precos_frete_dados = {}
             for produto_id, produto_data in produtos_bitolas.items():
                 produto_name = produto_data['nome']
                 bitolas = produto_data['bitolas']
                 
-                # Usar mesmos prefixos do frontend
                 if produto_name.lower() == 'eucalipto':
                     prefix = 'euca'
                 elif produto_name.lower() == 'pinus':
@@ -60,10 +57,8 @@ def cadastrar_rota():
                         'valor': valor
                     }
             
-            # Tratar a opção "Todos" - converter para None
             transportadora_id_final = None if transportadoraFrete == "todos" or not transportadoraFrete else int(transportadoraFrete)
             
-            # Campo comuns - validar que pelo menos uma transportadora foi selecionada
             campos = {
                 "clienteDestino": ["Cliente destino", clienteDestino],
                 "transportadoraFrete": ["Transportadora", transportadoraFrete],
@@ -77,7 +72,6 @@ def cadastrar_rota():
                 flash((f"Verifique os campos destacados em vermelho!", "warning"))
 
             if gravar_banco:
-                # Query padrão
                 query = RotaFreteModel.query.filter_by(
                     cliente_id=clienteDestino,
                     transportadora_id=transportadora_id_final
@@ -91,7 +85,6 @@ def cadastrar_rota():
             
 
             if gravar_banco:
-                # Converter preços de frete dinamicamente
                 precos_frete_convertidos = {}
                 for campo_nome, dados in precos_frete_dados.items():
                     valor_float = ValoresMonetarios.converter_string_brl_para_float(dados['valor'])
@@ -102,7 +95,6 @@ def cadastrar_rota():
                         'valor_100': valor_100
                     }
 
-                # Criar rota sem campos de bitola hardcoded
                 rota = RotaFreteModel(
                     floresta_id=None,
                     fornecedor_id=int(fornecedorIdentificacao),
@@ -111,9 +103,8 @@ def cadastrar_rota():
                     ativo=True
                 )
                 db.session.add(rota)
-                db.session.flush()  # Para obter o ID da rota
+                db.session.flush()
                 
-                # Salvar preços de frete dinamicamente na tabela normalizada
                 for campo_nome, dados in precos_frete_convertidos.items():
                     preco_frete = RotaFretePrecoBitolaModel(
                         rota_frete_id=rota.id,
@@ -134,7 +125,6 @@ def cadastrar_rota():
                 flash(("Rota de frete cadastrada com sucesso!", "success"))
                 return redirect(url_for("listar_rotas"))
     except Exception as e:
-        print(f"Erro ao cadastrar nova rota: {e}")
         flash(('Houve um erro ao tentar cadastrar nova rota! Entre em contato com o suporte!', 'warning'))
         return redirect(url_for('listar_rotas'))
     return render_template(
@@ -172,13 +162,10 @@ def editar_rota(id):
         clientes = ClienteModel.listar_clientes_ativos()
         transportadoras = TransportadoraModel.listar_transportadoras_ativas()
         
-        # Buscar produtos e bitolas dinamicamente
         produtos_bitolas = ProdutoBitolaModel.obter_produtos_com_bitolas()
         
-        # Carregar preços de frete normalizados
         precos_frete = RotaFretePrecoBitolaModel.listar_precos_rota(rota.id)
         
-        # Organizar preços por produto/bitola
         precos_dict = {}
         for preco in precos_frete:
             key = f"produto_{preco.produto_id}_bitola_{preco.bitola_id}"
@@ -194,16 +181,13 @@ def editar_rota(id):
             cliente_id = request.form.get("clienteDestino")
             transportadora_id = request.form.get("transportadoraFrete")
             
-            # Tratar a opção "Todos" - converter para None
             transportadora_id_final = None if transportadora_id == "todos" or not transportadora_id else int(transportadora_id)
             
-            # Capturar preços de frete dinamicamente
             precos_frete_dados = {}
             for produto_id, produto_data in produtos_bitolas.items():
                 produto_name = produto_data['nome']
                 bitolas = produto_data['bitolas']
                 
-                # Usar mesmos prefixos do frontend
                 if produto_name.lower() == 'eucalipto':
                     prefix = 'euca'
                 elif produto_name.lower() == 'pinus':
@@ -222,7 +206,6 @@ def editar_rota(id):
                         'valor': valor
                     }
 
-            # Campos comuns
             campos = {
                 "clienteDestino": ["Cliente destino", cliente_id],
                 "transportadoraFrete": ["Transportadora", transportadora_id],
@@ -249,7 +232,6 @@ def editar_rota(id):
                     flash(("Já existe um registro com estas especificações!", "warning"))
 
             if gravar_banco:
-                # Converter preços de frete dinamicamente
                 precos_frete_convertidos = {}
                 for campo_nome, dados in precos_frete_dados.items():
                     valor_float = ValoresMonetarios.converter_string_brl_para_float(dados['valor'])
@@ -260,14 +242,12 @@ def editar_rota(id):
                         'valor_100': valor_100
                     }
 
-                # Preparar objeto para comparação (valores antigos da tabela normalizada)
                 obj1 = {
                     "fornecedorIdentificacao": str(rota.fornecedor_id or ""),
                     "clienteDestino": str(rota.cliente_id or ""),
                     "transportadoraFrete": "todos" if rota.transportadora_id is None else str(rota.transportadora_id or ""),
                 }
                 
-                # Adicionar preços antigos ao obj1
                 for preco in precos_frete:
                     produto_nome = preco.produto.nome.lower()
                     if produto_nome == 'eucalipto':
@@ -279,7 +259,6 @@ def editar_rota(id):
                     else:
                         prefix = produto_nome[:5]
                     
-                    # Encontrar índice da bitola
                     bitola_idx = 1
                     for idx, b in enumerate(produtos_bitolas[preco.produto_id]['bitolas'], 1):
                         if b['id'] == preco.bitola_id:
@@ -289,14 +268,12 @@ def editar_rota(id):
                     campo_nome = f"{prefix}PrecoCusto{bitola_idx}"
                     obj1[campo_nome] = preco.preco_frete_100
 
-                # Preparar objeto novo para comparação
                 obj2 = {
                     "fornecedorIdentificacao": str(fornecedor_id or ""),
                     "clienteDestino": str(cliente_id or ""),
                     "transportadoraFrete": "todos" if transportadora_id_final is None else str(transportadora_id_final or ""),
                 }
                 
-                # Adicionar novos preços ao obj2
                 for campo_nome, dados in precos_frete_convertidos.items():
                     obj2[campo_nome] = dados['valor_100']
 
@@ -310,18 +287,15 @@ def editar_rota(id):
                         modulo='rota_frete'
                     )
 
-                # Atualizar dados básicos da rota
                 rota.floresta_id = None
                 rota.fornecedor_id = int(fornecedor_id)
                 rota.cliente_id = int(cliente_id)
                 rota.transportadora_id = transportadora_id_final
                 rota.ativo = True
                 
-                # Desativar preços antigos
                 for preco_antigo in precos_frete:
                     preco_antigo.ativo = False
                 
-                # Salvar novos preços de frete dinamicamente na tabela normalizada
                 for campo_nome, dados in precos_frete_convertidos.items():
                     preco_frete = RotaFretePrecoBitolaModel(
                         rota_frete_id=rota.id,
@@ -335,7 +309,6 @@ def editar_rota(id):
                 flash(("Rota de frete atualizada com sucesso!", "success"))
                 return redirect(url_for("listar_rotas"))
 
-        # Preparar dados_corretos para o template
         dados_corretos = {
             "tipoOrigem": "floresta" if rota.floresta_id else "fornecedor",
             "florestaIdentificacao": rota.floresta_id or "",
@@ -344,12 +317,10 @@ def editar_rota(id):
             "transportadoraFrete": "todos" if rota.transportadora_id is None else rota.transportadora_id,
         }
         
-        # Adicionar preços de frete dinamicamente ao dados_corretos
         for produto_id, produto_data in produtos_bitolas.items():
             produto_name = produto_data['nome']
             bitolas = produto_data['bitolas']
             
-            # Usar mesmos prefixos do frontend
             if produto_name.lower() == 'eucalipto':
                 prefix = 'euca'
             elif produto_name.lower() == 'pinus':
@@ -365,7 +336,6 @@ def editar_rota(id):
                 dados_corretos[campo_nome] = precos_dict.get(chave_dict, 0)
                 
     except Exception as e:
-        print(e)
         flash(('Houve um erro ao tentar editar esta rota! Entre em contato com o suporte.', 'warning'))
         return redirect(url_for('editar_rota', id=id))
 
@@ -439,12 +409,9 @@ def atualizar_precos_frete():
         else:
             return redirect(url_for("listagem_fretes_a_pagar"))
 
-        # Converter transportadora_id para None se for "todos"
         transportadora_filtro = None if transportadora_id == "todos" else transportadora_id
 
-        print(f"Filtro transportadora: {transportadora_filtro}")
 
-        # Iniciar a tarefa assíncrona
         task = sincronizar_precos_transportadoras(data_inicio, data_fim, transportadora_id=transportadora_filtro)
 
         try:

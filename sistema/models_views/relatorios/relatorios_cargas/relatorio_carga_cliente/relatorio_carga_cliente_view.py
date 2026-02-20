@@ -17,23 +17,18 @@ def relatorio_cargas_cliente():
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
     data_hoje = datetime.now().strftime("%d-%m-%Y")
 
-    # Obter fonte de dados (form para POST, args para GET)
     dados_request = request.form if request.method == "POST" else request.args
     filtros = obter_filtros_relatorio(dados_request)
     
-    # Verificar se há algum filtro aplicado
     tem_filtros = any(filtros.values())
     
-    # Buscar registros com ou sem filtro
     if tem_filtros:
         registros = RegistroOperacionalModel.filtrar_registros_carga_cliente(**filtros)
     else:
         registros = RegistroOperacionalModel.obter_registros_carga_agrupados()
     
-    # Processar registros para garantir formato correto (2 casas decimais)
     registros = processar_registros_formatacao(registros)
     
-    # Exportar PDF
     if request.method == "POST" and request.form.get("exportar_pdf"):
         logo_path = obter_url_absoluta_de_imagem("logo.png")
         html = render_template(
@@ -48,14 +43,12 @@ def relatorio_cargas_cliente():
         resposta = ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo_saida, 'landscape')
         return resposta
 
-    # Exportar Excel
     if request.method == "POST" and request.form.get("exportar_excel"):
         dados_excel = preparar_dados_excel(registros)
         nome_arquivo_saida = f"relatorio-cargas-cliente-{data_hoje}"
         resposta = ManipulacaoArquivos.exportar_excel(dados_excel, nome_arquivo_saida)
         return resposta
 
-    # Renderizar template HTML
     return render_template(
         "/relatorios/relatorio_de_cargas/relatorio_cargas_cliente/relatorio_cargas_cliente.html",
         registros=registros,
@@ -112,7 +105,6 @@ def processar_registros_formatacao(registros):
         list: Registros com valores formatados
     """
     for item in registros:
-        # Arredondar peso_complementar e valor_complementar para 2 casas decimais
         if 'peso_complementar' in item and item['peso_complementar'] is not None:
             item['peso_complementar'] = round(float(item['peso_complementar']), 2)
         if 'valor_complementar' in item and item['valor_complementar'] is not None:
@@ -214,7 +206,6 @@ def preparar_dados_excel(registros):
     registros_por_cliente = {}
     totais_por_cliente = {}
     
-    # Agrupar registros por cliente
     for item in registros:
         registro = item["registro"]
         cliente_nome = obter_cliente_nome(registro)
@@ -227,11 +218,9 @@ def preparar_dados_excel(registros):
         registros_por_cliente[cliente_nome].append(item)
         totais_por_cliente[cliente_nome] += valor_frete
 
-    # Montar linhas do Excel
     for cliente in sorted(registros_por_cliente.keys()):
         registros_cliente = registros_por_cliente[cliente]
         
-        # Linha de cabeçalho do cliente
         dados_excel.append({
             "Data Entrega e Cliente": cliente.upper(),
             "Placa": "",
@@ -246,13 +235,11 @@ def preparar_dados_excel(registros):
             "Total Venda": "",
         })
         
-        # Dados do cliente
         for item in registros_cliente:
             registro = item["registro"]
             linha_dados = montar_linha_dados_excel(registro, item, cliente)
             dados_excel.append(linha_dados)
                         
-        # Linha de total por cliente
         if registros_cliente:
             dados_excel.append({
                 "Data Entrega e Cliente": "",
@@ -268,7 +255,6 @@ def preparar_dados_excel(registros):
                 "Total Venda": "",
             })
             
-            # Linha em branco para separar clientes
             dados_excel.append({
                 "Data Entrega e Cliente": "",
                 "Placa": "",

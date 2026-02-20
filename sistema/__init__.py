@@ -11,23 +11,19 @@ from config import *
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = CHAVE_SECRETA_FLASK
-app.config['SESSION_TYPE'] = 'filesystem' # para utilizar sessão
+app.config['SESSION_TYPE'] = 'filesystem'
 app.config.from_object('config')
 
 
-# instância banco
 db = SQLAlchemy()
 db.init_app(app)
 
-# instância migration
 mi = Migrate(app, db)
 
-# login
 login_manager = LoginManager(app)
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    # Verifica se a rota de origem e uma rota protegida diferente de login
     if request.endpoint != 'login':
         flash((f'Você precisa estar logado para acessar esta página!', 'warning'))
     return redirect(url_for('login'))
@@ -36,15 +32,11 @@ def unauthorized():
 def requires_roles(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
-        # Obtendo nome da rota automaticamente
         endpoint = request.endpoint
         required_roles = mapeamento_roles.get(endpoint, [])
         
-        # se for em um relacionamento N-N entre usuario e roles
-        #user_roles = [role.nome for role in current_user.roles]
         user_role = current_user.role.nome
         
-        #if not any(role in user_roles for role in required_roles):
         if not user_role in required_roles:
             return render_template('paginas_erro/erro_401.html')
             
@@ -52,7 +44,6 @@ def requires_roles(f):
     return wrapped
 
 
-# uploads
 app.config['UPLOAD_USERS'] = UPLOAD_USERS
 app.config['UPLOAD_CONTRATO_FLORESTA'] = UPLOAD_CONTRATO_FLORESTA
 app.config['UPLOAD_CONTRATO_FORNECEDOR'] = UPLOAD_CONTRATO_FORNECEDOR
@@ -81,17 +72,14 @@ app.config['UPLOAD_NOTA_SERVICO'] = UPLOAD_NOTA_SERVICO
 app.config['UPLOAD_ESTOQUE_CERTIFICACOES'] = UPLOAD_ESTOQUE_CERTIFICACOES
 app.config['UPLOAD_COMPROVANTE_RECEITA_DESPESA'] = UPLOAD_COMPROVANTE_RECEITA_DESPESA
 
-# tornando a pasta 'uploads' acessível no front
-# determinar o caminho para a pasta raiz do projeto
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 
 @app.route('/uploads/_info_users/<filename>')
 def diretorio_uploads_usuarios(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_info_users', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_info_users'), 
@@ -100,10 +88,9 @@ def diretorio_uploads_usuarios(filename):
 
 @app.route('/uploads/_arquivo_nf/<filename>')
 def diretorio_uploads_nota_fiscal(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_arquivo_nf', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_arquivo_nf'), 
@@ -112,10 +99,9 @@ def diretorio_uploads_nota_fiscal(filename):
 
 @app.route('/uploads/_contratos_florestas/<filename>')
 def diretorio_uploads_contrato_floresta(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_contratos_florestas', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_contratos_florestas'), 
@@ -125,10 +111,9 @@ def diretorio_uploads_contrato_floresta(filename):
 
 @app.route('/uploads/_contratos_fornecedores/<filename>')
 def diretorio_uploads_contrato_fornecedor(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_contratos_fornecedores', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_contratos_fornecedores'), 
@@ -137,10 +122,9 @@ def diretorio_uploads_contrato_fornecedor(filename):
 
 @app.route('/uploads/_declaracao_senar/<filename>')
 def diretorio_uploads_declaracao_senar(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_declaracao_senar', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_declaracao_senar'), 
@@ -149,10 +133,9 @@ def diretorio_uploads_declaracao_senar(filename):
 
 @app.route('/uploads/_arquivo_ticket/<filename>')
 def diretorio_uploads_tickets(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_arquivo_ticket', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_arquivo_ticket'), 
@@ -161,10 +144,9 @@ def diretorio_uploads_tickets(filename):
 
 @app.route('/uploads/_nf_entrada/<filename>')
 def diretorio_uploads_nf_entrada(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_nf_entrada', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_nf_entrada'), 
@@ -173,10 +155,9 @@ def diretorio_uploads_nf_entrada(filename):
 
 @app.route('/uploads/_arquivo_estorno/<filename>')
 def diretorio_uploads_arquivo_estorno(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_arquivo_estorno', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_arquivo_estorno'), 
@@ -185,10 +166,9 @@ def diretorio_uploads_arquivo_estorno(filename):
 
 @app.route('/uploads/_nf_excessao/<filename>')
 def diretorio_uploads_nf_excessao(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_nf_excessao', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_nf_excessao'), 
@@ -197,10 +177,9 @@ def diretorio_uploads_nf_excessao(filename):
 
 @app.route('/uploads/_contra_nota/<filename>')
 def diretorio_uploads_contra_nota(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_contra_nota', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_contra_nota'), 
@@ -209,10 +188,9 @@ def diretorio_uploads_contra_nota(filename):
 
 @app.route('/uploads/_arquivo_cte/<filename>')
 def diretorio_uploads_arquivo_cte(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_arquivo_cte', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_arquivo_cte'), 
@@ -221,10 +199,9 @@ def diretorio_uploads_arquivo_cte(filename):
 
 @app.route('/uploads/_arquivo_mdf/<filename>')
 def diretorio_uploads_arquivo_mdf(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_arquivo_mdf', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_arquivo_mdf'), 
@@ -233,10 +210,9 @@ def diretorio_uploads_arquivo_mdf(filename):
 
 @app.route('/uploads/_comprovante_pagamento_comissionado/<filename>')
 def diretorio_uploads_comprovante_pagamento_comissionado(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_comprovante_pagamento_comissionado', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_comprovante_pagamento_comissionado'), 
@@ -245,10 +221,9 @@ def diretorio_uploads_comprovante_pagamento_comissionado(filename):
 
 @app.route('/uploads/_nf_complementar/<filename>')
 def diretorio_uploads_nf_complementar(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_nf_complementar', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_nf_complementar'),
@@ -258,23 +233,20 @@ def diretorio_uploads_nf_complementar(filename):
 
 @app.route('/uploads/_nf_servico/<filename>')
 def diretorio_uploads_nf_servico(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_nf_servico', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_nf_servico'),
         filename
     )
 
-# NOVA ROTA PARA CERTIFICAÇÕES
 @app.route('/uploads/_estoque_certificacoes/<filename>')
 def diretorio_uploads_estoque_certificacoes(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_estoque_certificacoes', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_estoque_certificacoes'),
@@ -283,10 +255,9 @@ def diretorio_uploads_estoque_certificacoes(filename):
     
 @app.route('/uploads/_anexo_comprovante_receita_despesa/<filename>')
 def diretorio_uploads_anexo_comprovante_receita_despesa(filename):
-    # Valida se o arquivo existe
     caminho_arquivo = os.path.join(PROJECT_ROOT, '..', 'uploads/_anexo_comprovante_receita_despesa', filename)
     if not os.path.isfile(caminho_arquivo):
-        abort(404)  # Retorna erro 404 se o arquivo não existir
+        abort(404)
     
     return send_from_directory(
         os.path.join(PROJECT_ROOT, '..', 'uploads/_anexo_comprovante_receita_despesa'),
@@ -295,86 +266,60 @@ def diretorio_uploads_anexo_comprovante_receita_despesa(filename):
 
 
 def obter_url_absoluta_de_imagem(nome_imagem):
-    # Obtem o caminho absoluto para a pasta 'static'
     static_folder = current_app.static_folder
-    # Cria o caminho absoluto para a imagem
     image_path = os.path.join(static_folder, 'images', nome_imagem)
     
     return image_path
 
 
-# funções para front
-# Função para formatar valores em Real Brasileiro (BRL)
 def formatar_float_para_brl(valor):
-    # Arredonda o valor para duas casas decimais
     valor_formatado = valor / 100
 
-    # Converte o valor formatado para uma string
     valor_str = "{:,.2f}".format(valor_formatado)
 
-    # Substitui ',' por '.' e vice-versa, para atender ao formato BRL
     valor_str = valor_str.replace(',', 'temp').replace('.', ',').replace('temp', '.')
 
-    # Adiciona o símbolo R$
     valor_str = "R$ " + valor_str
 
     return valor_str
 
-# Função para formatar valores em Real Brasileiro (BRL)
 def formatar_float_para_brl_sem_divisao(valor):
-    # Arredonda o valor para duas casas decimais
     valor_formatado = valor
 
-    # Converte o valor formatado para uma string
     valor_str = "{:,.2f}".format(valor_formatado)
 
-    # Substitui ',' por '.' e vice-versa, para atender ao formato BRL
     valor_str = valor_str.replace(',', 'temp').replace('.', ',').replace('temp', '.')
 
-    # Adiciona o símbolo R$
     valor_str = "R$ " + valor_str
 
     return valor_str
 
 
-# Função para formatar valores em Real Brasileiro (BRL)
 def formatar_float_para_brl_sem_cifrao(valor):
-    # Arredonda o valor para duas casas decimais
     valor_formatado = valor / 100
 
-    # Converte o valor formatado para uma string
     valor_str = "{:,.2f}".format(valor_formatado)
 
-    # Substitui ',' por '.' e vice-versa, para atender ao formato BRL
     valor_str = valor_str.replace(',', 'temp').replace('.', ',').replace('temp', '.')
 
-    # Adiciona o símbolo R$
     valor_str = valor_str
 
     return valor_str
 
-# Função para formatar valores em Dólar Americano (USD)
 def formatar_float_para_usd(valor):
-    # Arredonda o valor para duas casas decimais
     valor_formatado = valor / 100
 
-    # Converte o valor formatado para uma string
     valor_str = "{:,.2f}".format(valor_formatado)
 
-    # Substitui ',' por '.' para separar os milhares
     valor_str = valor_str.replace(',', 'temp').replace('.', ',').replace('temp', '.')
 
-    # Adiciona o símbolo $
     valor_str = "$ " + valor_str
 
     return valor_str
 
-# Exibe um objeto datetime no formato de data do Brasil
 def formatar_data_para_brl(data):
-    # Formata a data para o padrão brasileiro dd/mm/aaaa
     return data.strftime('%d/%m/%Y')
 
-# Função específica para filtros que aceita tanto datetime quanto string
 def formatar_data_filtro_para_brl(data):
     """
     Aceita datetime ou string no formato 'YYYY-MM-DD' e retorna 'DD/MM/YYYY'
@@ -386,12 +331,11 @@ def formatar_data_filtro_para_brl(data):
         elif isinstance(data, datetime):
             data_obj = data
         else:
-            return ""  # Retorna string vazia para tipos inválidos
+            return ""
         
-        # Formata a data para o padrão brasileiro dd/mm/aaaa
         return data_obj.strftime('%d/%m/%Y')
     except (ValueError, TypeError):
-        return ""  # Retorna string vazia em caso de erro
+        return ""
 
 def formatar_data_hora(data_entrada) -> str:
     """
@@ -403,22 +347,18 @@ def formatar_data_hora(data_entrada) -> str:
         elif isinstance(data_entrada, datetime):
             data_obj = data_entrada
         else:
-            return ""  # Retorna string vazia para tipos inválidos
+            return ""
 
         return data_obj.strftime("%d/%m/%Y %H:%M:%S")
     except (ValueError, TypeError):
-        return ""  # Retorna string vazia em caso de erro
+        return ""
 
 def converte_data_para_datetime_converte_data_brl(data):
-    # Converte a string para um objeto datetime
     data_obj = datetime.strptime(data, '%Y-%m-%d')
     
-    # Formata a data para o padrão brasileiro dd/mm/aaaa
     return data_obj.strftime('%d/%m/%Y')
 
-# Exibe um objeto datetime no formato de data e hora do Brasil
 def formatar_data_hora_para_brl(data):
-    # Formata a data para o padrão brasileiro dd/mm/aaaa hh:mm
     return data.strftime('%d/%m/%Y %H:%M')
 
 app.jinja_env.filters['formatar_float_para_brl'] = formatar_float_para_brl
@@ -433,7 +373,6 @@ app.jinja_env.filters['converte_data_para_datetime_converte_data_brl'] = convert
 app.jinja_env.filters['obter_url_absoluta_de_imagem'] = obter_url_absoluta_de_imagem
 
 
-# models e rotas
 from sistema.models_views import base_model
 from sistema.models_views.upload_arquivo import upload_arquivo_model
 from sistema.models_views.upload_arquivo import upload_arquivo_view
@@ -448,7 +387,6 @@ from sistema.models_views.autenticacao import role_view
 from sistema.models_views.autenticacao import usuario_view
 from sistema.models_views.autenticacao import dashboard_model
 
-# Notas fiscais
 from sistema.models_views.controle_carga.solicitacao_nf import carga_model
 from sistema.models_views.controle_carga.solicitacao_nf import carga_view
 from sistema.models_views.controle_carga.vendas.vendas_entregues import vendas_entregues_view
@@ -464,7 +402,6 @@ from sistema.models_views.controle_carga.nf_complementar import nf_complementar_
 from sistema.models_views.controle_carga.nf_complementar import nf_entrada_model
 from sistema.models_views.controle_carga.nf_entrada import nf_entrada_view
 
-# Gerenciamento
 from sistema.models_views.gerenciar.cliente import cliente_model
 from sistema.models_views.gerenciar.cliente import cliente_view
 
@@ -506,7 +443,6 @@ from sistema.models_views.gerenciar.comissionado import comissionado_view
 from sistema.models_views.gerenciar.pessoa_financeiro import pessoa_financeiro_model
 from sistema.models_views.gerenciar.pessoa_financeiro import pessoa_financeiro_view
 
-# Parametros
 from sistema.models_views.parametros.bitola import bitola_model
 from sistema.models_views.parametros.bitola import bitola_view
 
@@ -519,7 +455,6 @@ from sistema.models_views.parametros.status_emissao_nf_complementar import statu
 from sistema.models_views.parametros.nome_grupo_whats import nome_grupo_whats_model
 from sistema.models_views.parametros.nome_grupo_whats import nome_grupo_whats_view
 
-# Relatorios
 from sistema.models_views.relatorios.relatorios_cargas.relatorio_nf_entrada import relatorio_nf_entrada_view
 from sistema.models_views.relatorios.relatorios_cargas.relatorio_carga_cliente import relatorio_carga_cliente_view
 from sistema.models_views.relatorios.relatorios_cargas.relatorio_carga_fornecedor import relatorio_carga_fornecedor_floresta_view
@@ -541,12 +476,10 @@ from sistema.models_views.relatorios.relatorios_financeiros.relatorio_cargas_a_r
 from sistema.models_views.relatorios.relatorio_movimentacao_financeira import relatorio_movimentacao_financeira_view
 from sistema.models_views.relatorios.relatorio_controle_emissao import relatorio_controle_emissao_view
 
-# Relatórios Contas AP/AR
 from sistema.models_views.relatorios.relatorios_financeiros.relatorios_contas_ap_ar import emissoes_view
 from sistema.models_views.relatorios.relatorios_financeiros.relatorios_contas_ap_ar import baixas_view
 from sistema.models_views.relatorios.relatorios_financeiros.relatorios_contas_ap_ar import pendentes_view
 
-# Configurações
 from sistema.models_views.configuracoes_gerais.empresa_emissora import empresa_emissora_model
 from sistema.models_views.configuracoes_gerais.empresa_emissora import empresa_emissora_view
 from sistema.models_views.configuracoes_gerais.centro_custo import centro_custo_model
@@ -560,10 +493,8 @@ from sistema.models_views.parametros.instituicoes_financeiras import instituicao
 from sistema.models_views.configuracoes_gerais.tag import tag_model
 from sistema.models_views.configuracoes_gerais.tag import tag_view
 
-# Imposto
 from sistema.models_views.parametros.imposto import imposto_model
 
-# Financeiro
 from sistema.models_views.configuracoes_gerais.situacao_pagamento import situacao_pagamento_model
 from sistema.models_views.faturamento.cargas_a_receber.vendas.recebimento_model import RecebimentoModel
 from sistema.models_views.faturamento.cargas_a_receber.vendas import cargas_a_receber_view
@@ -589,7 +520,6 @@ from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento
 from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento_terceiros import saldo_extratores_view
 from sistema.models_views.financeiro.controle_adiantamentos.extrato_adiantamento_terceiros import saldo_freteiros_view
 
-# Faturamento
 from sistema.models_views.faturamento.cargas_a_faturar.fornecedor import fornecedor_a_pagar_model
 from sistema.models_views.faturamento.cargas_a_faturar.transportadora import frete_a_pagar_model
 from sistema.models_views.faturamento.cargas_a_faturar.fornecedor import fornecedor_a_pagar_view
@@ -608,22 +538,17 @@ from sistema.models_views.financeiro.operacional.carga_a_receber import cargas_a
 from sistema.models_views.relatorios.relatorios_financeiros.relatorio_dfc_dre.relatorio_dfc import relatorio_financeiro_dfc_view
 from sistema.models_views.relatorios.relatorios_financeiros.relatorio_dfc_dre.relatorio_dre import relatorio_financeiro_dre_view
 
-# Pedido de Compra
 from sistema.models_views.pedido_compra import pedido_compra_model
 from sistema.models_views.pedido_compra import pedido_compra_view
 from sistema.models_views.pedido_compra import pedido_compra_item_model
 
-# Nova arquitetura de créditos (modelos unificados)
 from sistema.models_views.financeiro.controle_adiantamentos import transacao_credito_model
 from sistema.models_views.financeiro.controle_adiantamentos import faturamento_credito_vinculo_model
 from sistema.models_views.financeiro.controle_adiantamentos import historico_transacao_model
 
-# Operacional
 from sistema.models_views.financeiro.operacional.carga_a_pagar import carga_a_pagar_view
 
-# Pontuacao Usuario
 from sistema.models_views.pontuacao_usuario import pontuacao_usuario_model
 
-# Certificações
 from sistema.models_views.gerenciar.certificacoes import certificacoes_model
 from sistema.models_views.gerenciar.certificacoes import certificacoes_view

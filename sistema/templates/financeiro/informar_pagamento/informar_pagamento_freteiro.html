@@ -24,7 +24,7 @@
       {% include 'estrutura/mensagens_flash.html' %}
 
       <div class="row row-cards mb-4">
-        <!-- 1. Total Bruto - O que precisa pagar -->
+        
         <div class="col-md-6 col-lg-4">
           <div class="card border shadow-lg rounded-3 stat-card-hover card-orange">
             <div class="card-body d-flex align-items-center">
@@ -49,7 +49,6 @@
           </div>
         </div>
 
-        <!-- 2. Crédito Disponível - Quanto pode abater -->
         <div class="col-md-6 col-lg-4">
           <div class="card border shadow-lg rounded-3 stat-card-hover card-blue">
             <div class="card-body d-flex align-items-center">
@@ -71,7 +70,6 @@
           </div>
         </div>
 
-        <!-- 3. Valor Líquido - Resultado após crédito -->
         <div class="col-md-6 col-lg-4">
           <div class="card border shadow-lg rounded-3 stat-card-hover card-green">
             <div class="card-body d-flex align-items-center">
@@ -165,7 +163,7 @@
             </div>
 
             {% if saldo_credito != 0 or creditos_individuais %}
-            <!-- Seção de seleção de créditos individuais (aparece quando seleciona "Sim") -->
+            
             {% if creditos_individuais %}
             <div id="secao-selecao-creditos" class="mb-4" style="display: none;">
               <div class="card shadow-sm border-0" style="border-left: 4px solid #1B5E20 !important;">
@@ -244,7 +242,7 @@
             {% endif %}
 
             {% if saldo_credito != 0 and not creditos_individuais %}
-            <!-- Seção quando há saldo mas não há créditos individuais - TABELA DE SELEÇÃO SIMULADA -->
+            
             <div id="secao-credito-total" class="mb-4" style="display: none;">
               <div class="card shadow-sm border-0" style="border-left: 4px solid #1B5E20 !important;">
                 <div class="card-header"
@@ -320,12 +318,10 @@
             </div>
             {% endif %}
 
-            <!-- Seção do resumo de créditos (aparece quando seleciona "Sim") -->
             <div id="resumo-creditos" class="mb-4" style="display: none;">
 
-              <!-- Card do Resumo -->
               <div class="card border-0 shadow-sm card-smooth" style="border-radius: 12px; overflow: hidden;">
-                <!-- Header clean -->
+                
                 <div class="card-header text-white py-3"
                   style="background: linear-gradient(135deg, #1B5E20 0%, #388E3C 100%); border: none;">
                   <div class="d-flex align-items-center">
@@ -347,7 +343,6 @@
                 <div class="card-body p-4">
                   {% set valor_liquido_resumo = registro.valor_total_a_pagar_100 - saldo_credito if saldo_credito > 0 else registro.valor_total_a_pagar_100 %}
                   
-                  <!-- Info da Transportadora -->
                   <div class="d-flex align-items-center justify-content-between p-3 mb-4 rounded-3" style="background: #f8f9fa;">
                     <div class="d-flex align-items-center">
                       <div class="avatar bg-primary-lt me-3">
@@ -372,7 +367,6 @@
                     </div>
                   </div>
 
-                  <!-- Cards do Resultado Final - Números Maiores -->
                   <div class="row g-3">
                     <div class="col-md-4">
                       <div class="card h-100 stat-card-hover card-orange" style="border-radius: 10px;">
@@ -400,7 +394,6 @@
                     </div>
                   </div>
 
-                  <!-- Fórmula visual -->
                   <div class="text-center mt-4 py-2 rounded-3" style="background: #f8f9fa;">
                     <span class="text-orange fw-bold fs-5" id="resumo-valor-transportadora">{{ registro.valor_total_a_pagar_100 | formatar_float_para_brl }}</span>
                     <span class="mx-3 text-muted">−</span>
@@ -442,7 +435,6 @@
     </div>
   </div>
 
-  <!-- CSS reutilizável para páginas de pagamento -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/informar-pagamento.css') }}">
 
   <script>
@@ -497,10 +489,10 @@
         if (resumoValorTransportadora) resumoValorTransportadora.textContent = formatarMoeda(valorTotal);
 
         if (radioSim && radioSim.checked) {
-          // Se usar crédito, recalcular com base nos créditos selecionados ou saldo disponível
+          
           calcularCreditosSelecionadosIndividuais();
         } else {
-          // Não usar crédito: valor total negativo
+          
           if (resumoSaldoFinal) resumoSaldoFinal.textContent = formatarMoeda(-valorTotal);
 
           if (resumoStatusTransportadora) {
@@ -509,12 +501,9 @@
         }
       }
 
-      // Funções de seleção de créditos individuais
       function toggleAllCreditosIndividuais() {
         const selectAllCheckbox = document.getElementById('select-all-creditos');
         const creditoCheckboxes = document.querySelectorAll('.credito-checkbox');
-        
-        console.log('Toggle all - Estado:', selectAllCheckbox.checked); // Debug
         
         creditoCheckboxes.forEach(checkbox => {
           checkbox.checked = selectAllCheckbox.checked;
@@ -528,27 +517,21 @@
         const allCheckboxes = document.querySelectorAll('.credito-checkbox');
         let totalSelecionado = 0;
         
-        // Se há checkboxes de créditos individuais e algum está selecionado
         if (allCheckboxes.length > 0) {
           creditoCheckboxes.forEach(checkbox => {
             const valor = parseFloat(checkbox.getAttribute('data-valor')) / 100;
-            console.log('Valor do checkbox:', valor); // Debug
             totalSelecionado += valor;
           });
         } else {
-          // Se não há checkboxes individuais, usar o saldo disponível total
+          
           totalSelecionado = creditoDisponivel;
         }
         
-        console.log('Total selecionado:', totalSelecionado); // Debug
-        
-        // Atualizar display do total selecionado
         const totalElement = document.getElementById('total-creditos-selecionados');
         if (totalElement) {
           totalElement.textContent = formatarMoeda(totalSelecionado);
         }
         
-        // Preparar dados para envio
         const creditos_selecionados = {};
         if (creditoCheckboxes.length > 0) {
           creditos_selecionados.transportadora = {};
@@ -565,7 +548,6 @@
           creditosHidden.value = JSON.stringify(creditos_selecionados);
         }
         
-        // Atualizar campos do resumo
         atualizarResumoComCreditosSelecionados(totalSelecionado);
       }
 
@@ -585,23 +567,18 @@
         const isDebito = creditosSelecionados < 0;
         const valorDebito = Math.abs(creditosSelecionados);
         
-        console.log('Atualizando resumo - Créditos:', creditosSelecionados, 'Valor Total:', valorTotal, 'É Débito:', isDebito);
-        
-        // Atualizar valor total a pagar no resumo (card e fórmula)
         if (resumoTotalPagar) {
           resumoTotalPagar.textContent = formatarMoeda(valorTotal);
         }
         
-        // Atualizar valor total na fórmula visual
         if (resumoValorTransportadora) {
           resumoValorTransportadora.textContent = formatarMoeda(valorTotal);
         }
         
         if (isDebito) {
-          // === DÉBITO (crédito negativo) - AUMENTA o valor a pagar ===
+          
           const valorFinal = valorTotal + valorDebito;
           
-          // Card de créditos -> mudar para vermelho e mostrar "DÉBITO"
           if (cardCreditosUtilizados) {
             cardCreditosUtilizados.classList.remove('card-blue');
             cardCreditosUtilizados.classList.add('card-red');
@@ -609,27 +586,24 @@
           if (resumoCreditosTotais) {
             resumoCreditosTotais.textContent = formatarMoeda(valorDebito);
             resumoCreditosTotais.className = 'fw-bold mb-0 text-red fs-2';
-            // Atualizar label
+            
             const labelCreditos = resumoCreditosTotais.previousElementSibling;
             if (labelCreditos) {
               labelCreditos.innerHTML = 'DÉBITO <small class="text-danger">(+)</small>';
             }
           }
           
-          // Fórmula - mostrar como SOMA
           if (resumoCreditoTransportadora) {
             resumoCreditoTransportadora.textContent = formatarMoeda(valorDebito);
             resumoCreditoTransportadora.className = 'text-red fw-bold fs-5';
           }
           
-          // Trocar o sinal de − para + na fórmula
           const sinaisFormula = document.querySelectorAll('#resumo-creditos .text-center.mt-4 .text-muted');
           if (sinaisFormula.length >= 1) {
             sinaisFormula[0].textContent = '+';
             sinaisFormula[0].className = 'mx-3 text-red fw-bold';
           }
           
-          // Card valor líquido -> mudar para vermelho (valor aumentou!)
           if (cardValorLiquido) {
             cardValorLiquido.classList.remove('card-green');
             cardValorLiquido.classList.add('card-red');
@@ -643,7 +617,6 @@
             resumoValorLiquidoFormula.className = 'text-red fw-bold fs-5';
           }
           
-          // Status - mostrar alerta de débito
           if (resumoStatusTransportadora) {
             resumoStatusTransportadora.innerHTML = `
               <span class="badge bg-danger-lt text-danger fs-6 px-3 py-2">
@@ -654,10 +627,9 @@
           }
           
         } else {
-          // === CRÉDITO (normal ou zero) - DIMINUI o valor a pagar ===
+          
           const saldoFinal = Math.max(0, valorTotal - creditosSelecionados);
           
-          // Restaurar cor azul no card de créditos
           if (cardCreditosUtilizados) {
             cardCreditosUtilizados.classList.remove('card-red');
             cardCreditosUtilizados.classList.add('card-blue');
@@ -665,27 +637,24 @@
           if (resumoCreditosTotais) {
             resumoCreditosTotais.textContent = formatarMoeda(creditosSelecionados);
             resumoCreditosTotais.className = 'fw-bold mb-0 text-blue fs-2';
-            // Restaurar label
+            
             const labelCreditos = resumoCreditosTotais.previousElementSibling;
             if (labelCreditos) {
               labelCreditos.textContent = 'Créditos Utilizados';
             }
           }
           
-          // Fórmula - mostrar como SUBTRAÇÃO
           if (resumoCreditoTransportadora) {
             resumoCreditoTransportadora.textContent = formatarMoeda(creditosSelecionados);
             resumoCreditoTransportadora.className = 'text-blue fw-bold fs-5';
           }
           
-          // Restaurar sinal de − na fórmula
           const sinaisFormula = document.querySelectorAll('#resumo-creditos .text-center.mt-4 .text-muted, #resumo-creditos .text-center.mt-4 .text-red');
           if (sinaisFormula.length >= 1) {
             sinaisFormula[0].textContent = '−';
             sinaisFormula[0].className = 'mx-3 text-muted';
           }
           
-          // Restaurar cor verde no card valor líquido
           if (cardValorLiquido) {
             cardValorLiquido.classList.remove('card-red');
             cardValorLiquido.classList.add('card-green');
@@ -699,7 +668,6 @@
             resumoValorLiquidoFormula.className = 'text-green fw-bold fs-5';
           }
           
-          // Atualizar status
           if (resumoStatusTransportadora) {
             if (creditosSelecionados >= valorTotal) {
               resumoStatusTransportadora.innerHTML = '<span class="badge bg-success-lt text-success fs-6 px-3 py-2">COBERTO</span>';
@@ -722,7 +690,7 @@
         const creditosHidden = document.getElementById('creditos-selecionados-hidden');
 
         if (radioSim && radioSim.checked) {
-          // Mostrar seção de seleção de créditos individuais (se existir)
+          
           if (secaoSelecaoCreditos) {
             secaoSelecaoCreditos.style.display = 'block';
             secaoSelecaoCreditos.style.opacity = '0';
@@ -735,7 +703,6 @@
             }, 10);
           }
 
-          // Mostrar seção de crédito total (se existir e não há créditos individuais)
           if (secaoCreditoTotal) {
             secaoCreditoTotal.style.display = 'block';
             secaoCreditoTotal.style.opacity = '0';
@@ -748,7 +715,6 @@
             }, 10);
           }
 
-          // Mostrar resumo de créditos
           if (resumoCreditos) {
             setTimeout(() => {
               resumoCreditos.style.display = 'block';
@@ -763,17 +729,15 @@
             }, 200);
           }
         } else {
-          // Limpar créditos selecionados quando escolhe "Não"
+          
           if (creditosHidden) {
             creditosHidden.value = '';
           }
           
-          // Desmarcar todos os checkboxes de crédito
           document.querySelectorAll('.credito-checkbox').forEach(checkbox => {
             checkbox.checked = false;
           });
           
-          // Ocultar todas as seções
           if (secaoSelecaoCreditos) {
             secaoSelecaoCreditos.style.transition = 'all 0.3s ease-out';
             secaoSelecaoCreditos.style.opacity = '0';
@@ -809,7 +773,6 @@
         atualizarResumoCredito(valorAtual);
       }
 
-      // Event listeners
       precoCustoInput.addEventListener('input', calcularValores);
       precoCustoInput.addEventListener('blur', calcularValores);
 
@@ -821,11 +784,10 @@
         });
       });
 
-      // Event listeners para checkboxes de crédito
       document.querySelectorAll('.credito-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', () => {
           calcularCreditosSelecionadosIndividuais();
-          // Atualizar o estado do checkbox "selecionar todos"
+          
           const selectAllCheckbox = document.getElementById('select-all-creditos');
           const allCheckboxes = document.querySelectorAll('.credito-checkbox');
           const checkedCheckboxes = document.querySelectorAll('.credito-checkbox:checked');
@@ -836,7 +798,6 @@
         });
       });
 
-      // Event listener para o checkbox "Selecionar Todos"
       const selectAllCheckbox = document.getElementById('select-all-creditos');
       if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', function() {
@@ -844,7 +805,6 @@
         });
       }
 
-      // Event listener para o checkbox "Selecionar Todos" da seção de crédito total
       const selectAllCreditoTotal = document.getElementById('select-all-creditos-total');
       if (selectAllCreditoTotal) {
         selectAllCreditoTotal.addEventListener('change', function() {
@@ -856,23 +816,15 @@
         });
       }
 
-      // Inicialização
       calcularValores();
       
-      // Garantir comportamento padrão consistente com fornecedores
       const radioSim = document.querySelector('input[name="usar_credito"][value="sim"]');
       const radioNao = document.querySelector('input[name="usar_credito"][value="nao"]');
       
-      console.log('Inicialização - Radio Sim checked:', radioSim?.checked);
-      console.log('Inicialização - Radio Não checked:', radioNao?.checked);
-      
-      // Garantir comportamento padrão igual ao fornecedor: "Não" por padrão
       if (!radioSim.checked && !radioNao.checked) {
         radioNao.checked = true;
-        console.log('Forçando seleção padrão: Não');
       }
       
-      // Garantir que as seções de crédito estejam ocultas inicialmente se "Não" estiver selecionado
       if (radioNao && radioNao.checked) {
         const resumoCreditos = document.getElementById('resumo-creditos');
         const secaoSelecaoCreditos = document.getElementById('secao-selecao-creditos');
@@ -885,15 +837,12 @@
       
       alternarResumo();
 
-      // Adicionar evento para garantir que o usuário tenha controle total
       document.querySelectorAll('input[name="usar_credito"]').forEach(radio => {
         radio.addEventListener('click', function() {
-          console.log('Usuário clicou em:', this.value);
           setTimeout(() => alternarResumo(), 10);
         });
       });
 
-      // Força atualização inicial do resumo e cálculo de créditos
       setTimeout(() => {
         const valorAtual = parseFloat(valorTotalHidden.value) || 0;
         atualizarResumoCredito(valorAtual);
@@ -904,10 +853,9 @@
     });
   </script>
 
-  <!-- Script para máscara de moeda -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Função para aplicar máscara de moeda brasileira
+      
       function aplicarMascaraMoeda(input) {
         let valor = input.value.replace(/\D/g, '');
         if (valor === '') {
@@ -921,7 +869,6 @@
         input.value = 'R$ ' + valor;
       }
 
-      // Aplicar máscara nos inputs de preço de custo
       document.querySelectorAll('.campo-moeda-brl').forEach(input => {
         input.addEventListener('input', function () {
           aplicarMascaraMoeda(this);
@@ -939,7 +886,6 @@
           }
         });
 
-        // Permitir apenas números e vírgula
         input.addEventListener('keypress', function (e) {
           const char = String.fromCharCode(e.which);
           if (!/[0-9,.]/.test(char)) {

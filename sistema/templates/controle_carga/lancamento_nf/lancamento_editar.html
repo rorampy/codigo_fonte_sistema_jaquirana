@@ -170,7 +170,6 @@
               </div>
             </div>
 
-            <!-- Campo de Input da Nota Fiscal -->
             <div id="camposOriginais" class="{% if emissao.carga_frf %}d-none{% endif %}">
               <div class="row">
                 <div class="col-md-6 mb-3">
@@ -213,7 +212,6 @@
                     <input type="file" name="arquivoNfNova" class="form-control" accept=".pdf">
                   </div>
 
-                  <!-- Campo de Envio do novo XML -->
                   <div id="inputUploadNovaXml" class="d-none mt-3">
                     <label class="form-label required">Arquivo NF Nova (XML)</label>
                     <input type="file" name="arquivoNfNovaXml"
@@ -229,7 +227,7 @@
                     <small class="text-danger"><strong>Atenção:</strong> Esta NF de estorno substituirá a NF atual no
                       sistema.</small>
                   </div>
-                  <!-- Estorno XML -->
+                  
                   <div id="inputUploadEstornoXml" class="d-none mb-3">
                     <label class="form-label required">Arquivo NF de Estorno (XML)</label>
                     <input type="file" name="arquivoNfEstornoXml"
@@ -285,7 +283,6 @@
                       accept=".pdf">
                   </div>
 
-                  <!-- Campo XML do NFe de Excesso -->
                   <div id="inputUploadExcessoXml" class="d-none mt-3">
                     <label class="form-label required">Arquivo NFe de Excesso (XML)</label>
                     <input type="file" name="arquivoNfExcessoXml"

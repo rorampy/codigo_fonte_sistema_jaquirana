@@ -204,7 +204,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table>
       <tr>
@@ -226,7 +226,6 @@
 
   <div class="relatorio-title">Relatório Controle de Estoque por Fornecedor</div>
 
-  <!-- Filtros aplicados se existirem -->
   {% if dados_corretos %}
   <div class="filtros-aplicados">
     <div class="filtros-title">Filtros Aplicados</div>
@@ -253,20 +252,16 @@
 
   {% if registros %}
 
-  <!-- Dados por fornecedor -->
   {% for origem_group in registros|groupby('origem') %}
   {% set origem = origem_group.grouper %}
   {% set registros_origem = origem_group.list %}
 
-  <!-- Seção do Fornecedor -->
   <div class="section-title no-break">Fornecedor: {{ origem }}</div>
 
-  <!-- Agrupamento por produto dentro do fornecedor -->
   {% for produto_group in registros_origem|groupby('produto') %}
   {% set produto = produto_group.grouper %}
   {% set registros_produto = produto_group.list %}
   
-  <!-- Tabela de controle de estoque por produto -->
   <div class="group-break">
     <div class="section-title">
       Produto: {{ produto }}
@@ -343,7 +338,6 @@
         </tr>
         {% endfor %}
 
-        <!-- Total do Produto -->
         {% set ns_produto = namespace(total_entradas=0, total_saidas=0) %}
         {% for item_prod in registros_produto %}
           {% if item_prod.nfentrada.peso_contra_nota %}
@@ -383,7 +377,7 @@
   {% endfor %}
 
   {% else %}
-  <!-- Estado vazio -->
+  
   <div style="text-align: center; padding: 50px 0;">
     <h3 style="color: #666;">Nenhum registro encontrado</h3>
     <p style="color: #999;">Não há registros de controle de estoque disponíveis para os filtros selecionados.</p>

@@ -219,7 +219,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table class="no-border">
       <tr>
@@ -236,7 +236,6 @@
 
   <div class="relatorio-title">{{ titulo_relatorio }}</div>
 
-  <!-- Filtros Aplicados -->
   {% if dados_corretos %}
   <div class="info-box">
     <strong>Vencimento até:</strong> {{ dados_corretos.get('dataFim', '') | converte_data_para_datetime_converte_data_brl if dados_corretos.get('dataFim') else 'Sem filtro' }}
@@ -249,7 +248,6 @@
   </div>
   {% endif %}
 
-  <!-- Resumo Geral -->
   <table class="resumo-geral">
     <thead>
       <tr>
@@ -273,19 +271,17 @@
     </tbody>
   </table>
 
-  <!-- Detalhamento por Faturamento (AP e AR) -->
   {% if grupos %}
   
   {% for grupo in grupos %}
   <table class="faturamento-table">
-    <!-- Linha Cabeçalho do Faturamento -->
+    
     <tr class="faturamento-header">
       <td colspan="8">
         {{ grupo.codigo_faturamento }} - {{ grupo.pessoa_nome | truncate(50, True, '...') }}
       </td>
     </tr>
     
-    <!-- Linha Info do Faturamento -->
     <tr class="faturamento-info">
       <td colspan="2"><strong>Tipo:</strong> {{ grupo.tipo_operacao }}</td>
       <td><strong>Títulos:</strong> {{ grupo.qtd_agendamentos }}</td>
@@ -298,7 +294,7 @@
     {% set total_cargas = (detalhes.fornecedores|length if detalhes.fornecedores else 0) + (detalhes.transportadoras|length if detalhes.transportadoras else 0) + (detalhes.extratores|length if detalhes.extratores else 0) + (detalhes.comissionados|length if detalhes.comissionados else 0) + (detalhes.cargas_a_receber|length if detalhes.cargas_a_receber else 0) %}
     
     {% if total_cargas > 0 %}
-    <!-- Cabeçalho das Cargas -->
+    
     <tr class="cargas-header">
       <th>Data</th>
       <th>Tipo</th>
@@ -310,7 +306,6 @@
       <th>Valor</th>
     </tr>
 
-    <!-- Fornecedores -->
     {% for f in detalhes.fornecedores %}
     <tr class="carga-row">
       <td>{{ f.data_entrega or '-' }}</td>
@@ -324,7 +319,6 @@
     </tr>
     {% endfor %}
 
-    <!-- Transportadoras -->
     {% for t in detalhes.transportadoras %}
     <tr class="carga-row">
       <td>{{ t.data_entrega or '-' }}</td>
@@ -338,7 +332,6 @@
     </tr>
     {% endfor %}
 
-    <!-- Extratores -->
     {% for e in detalhes.extratores %}
     <tr class="carga-row">
       <td>{{ e.data_entrega or '-' }}</td>
@@ -352,7 +345,6 @@
     </tr>
     {% endfor %}
 
-    <!-- Comissionados -->
     {% for c in detalhes.comissionados %}
     <tr class="carga-row">
       <td>{{ c.data_entrega or '-' }}</td>
@@ -366,7 +358,6 @@
     </tr>
     {% endfor %}
 
-    <!-- Cargas a Receber (Clientes) -->
     {% for car in detalhes.cargas_a_receber %}
     <tr class="carga-row">
       <td>{{ car.data_entrega or '-' }}</td>
@@ -409,7 +400,6 @@
     {% endfor %}
     {% endif %}
 
-    <!-- Linha de Saldo Pendente -->
     <tr class="saldo-row">
       <td colspan="6" style="text-align: left;">SALDO PENDENTE</td>
       <td colspan="2" class="valor-saldo" style="text-align: right;">{{ grupo.total_pendente_100 | formatar_float_para_brl }}</td>
@@ -418,7 +408,7 @@
   {% endfor %}
 
   {% elif registros %}
-  <!-- Fallback para AR ou quando não há grupos -->
+  
   <table class="faturamento-table">
     <tr class="cargas-header">
       <th>Código</th>
@@ -455,7 +445,6 @@
   </div>
   {% endif %}
 
-  <!-- Footer -->
   <div class="footer">
     <p><strong>Jaquirana Extração &copy; 2025</strong> - Todos os direitos reservados</p>
     <p><strong>Sistema de Gestão Jaquirana</strong></p>

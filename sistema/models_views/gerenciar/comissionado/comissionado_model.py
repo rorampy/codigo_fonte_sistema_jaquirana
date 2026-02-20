@@ -8,7 +8,6 @@ class ComissionadoModel(BaseModel):
     """
     __tablename__ = 'com_comissionado'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    # 1 - PF | 0 - PJ
     tipo_cadastro = db.Column(db.Boolean, nullable=False)
     identificacao = db.Column(db.String(255), nullable=False)
     numero_documento = db.Column(db.String(20), nullable=False)

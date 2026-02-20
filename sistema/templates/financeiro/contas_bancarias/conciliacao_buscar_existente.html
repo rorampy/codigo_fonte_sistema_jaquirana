@@ -22,9 +22,8 @@
       </div>
     </div>
 
-    <!-- Filtros de Busca -->
     <div class="card-body border-bottom">
-      <!-- Primeira linha de filtros -->
+      
       <div class="row g-2 mb-3">
         <div class="col-md-2">
           <label class="form-label small">Valor Mínimo</label>
@@ -69,7 +68,6 @@
         </div>
       </div>
 
-      <!-- Segunda linha de filtros -->
       <div class="row g-2 mb-3">
         <div class="col-md-6">
           <label class="form-label small">Beneficiário</label>
@@ -105,7 +103,6 @@
       </div>
     </div>
     
-    <!-- Loading Spinner -->
     <div id="loading-agendamentos-{{ transacao_id }}" class="d-flex justify-content-center align-items-center py-4">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Carregando agendamentos...</span>
@@ -113,7 +110,6 @@
       <span class="ms-2">Carregando agendamentos...</span>
     </div>
 
-    <!-- Tabela de Agendamentos -->
     <div id="tabela-agendamentos-{{ transacao_id }}" class="d-none">
       <div class="table-responsive">
         <table class="table card-table table-vcenter text-nowrap datatable">
@@ -132,7 +128,7 @@
             </tr>
           </thead>
           <tbody id="tbody-agendamentos-{{ transacao_id }}">
-            <!-- Conteúdo será preenchido via AJAX -->
+            
           </tbody>
         </table>
       </div>
@@ -155,7 +151,6 @@
       </div>
     </div>
 
-    <!-- Estado Vazio -->
     <div id="estado-vazio-{{ transacao_id }}" class="d-none text-center py-5">
       <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
@@ -168,7 +163,6 @@
       <p class="mb-0 text-muted">Nenhum agendamento recente encontrado para este tipo de movimentação</p>
     </div>
 
-    <!-- Estado de Erro -->
     <div id="estado-erro-{{ transacao_id }}" class="d-none text-center py-5">
       <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"

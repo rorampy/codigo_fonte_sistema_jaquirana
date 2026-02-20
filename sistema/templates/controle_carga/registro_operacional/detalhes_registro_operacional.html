@@ -43,7 +43,7 @@
       {% include 'estrutura/mensagens_flash.html' %}
 
       {% if registro.solicitacao_nf_id and registro.arquivo_ticket_id %}
-      <!-- Divergências -->
+      
       <div class="row mb-4">
         <div class="col-12">
           <div class="card rounded-3 overflow-hidden">
@@ -260,7 +260,7 @@
       {%endif%}
 
       {%if registro.solicitacao.nf_emitida%}
-      <!-- Dados da Nota Fiscal -->
+      
       <div class="row mb-4">
         <div class="col-12">
           <div class="card rounded-3 overflow-hidden">
@@ -281,7 +281,7 @@
             <div class="card-body">
               <div class="row g-3">
                 {%if registro.carga_frf%}
-                <!-- Campos específicos para FRF -->
+                
                 <div class="col-lg-4 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="destinatario"
@@ -354,7 +354,7 @@
                   </div>
                 </div>
                 {%else%}
-                <!-- Campos padrão para Nota Fiscal -->
+                
                 <div class="col-lg-4 col-md-6">
                   <div class="form-floating">
                     <input type="text" class="form-control bg-light" id="emissor"
@@ -469,7 +469,7 @@
       {%endif%}
 
       {%if registro.peso_ton_nf_excesso%}
-      <!-- Dados da NFe de Excesso -->
+      
       <div class="row mb-4">
         <div class="col-12">
           <div class="card rounded-3 overflow-hidden">
@@ -551,7 +551,7 @@
       {%endif%}
 
       {%if registro.arquivo_ticket_id%}
-      <!-- Dados do Ticket -->
+      
       <div class="row mb-4">
         <div class="col-12">
           <div class="card rounded-3 overflow-hidden">
@@ -628,7 +628,6 @@
       </div>
       {%endif%}
 
-      <!-- Botão de Voltar -->
       <div class="text-end mt-4 mb-5">
         <a href="javascript:history.back()"
           class="btn btn-primary px-4 py-2 d-inline-flex align-items-center gap-2">

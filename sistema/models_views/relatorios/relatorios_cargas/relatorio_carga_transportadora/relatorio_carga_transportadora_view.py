@@ -14,7 +14,6 @@ def relatorio_cargas_transportadora():
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
     dataHoje = datetime.now().strftime("%d-%m-%Y")
 
-    # Para exportações (POST), usar os dados do formulário
     if request.method == "POST":
         if any(request.form.values()) and not (request.form.get("exportar_pdf") or request.form.get("exportar_excel")):
             data_inicio = request.form.get("dataInicio")
@@ -40,7 +39,6 @@ def relatorio_cargas_transportadora():
             )
             dados_corretos = request.form
         else:
-            # Para exportações, reaplicar os filtros baseados nos hidden fields do form
             data_inicio = request.form.get("dataInicio")
             data_fim = request.form.get("dataFim")
             placa = request.form.get("placaCargaCliente")
@@ -67,7 +65,6 @@ def relatorio_cargas_transportadora():
                 registros = RegistroOperacionalModel.obter_registros_carga_transportadora()
             dados_corretos = request.form
     else:
-        # Para GET, usar args
         if any(request.args.values()):
             data_inicio = request.args.get("dataInicio")
             data_fim = request.args.get("dataFim")
@@ -114,7 +111,6 @@ def relatorio_cargas_transportadora():
         return resposta
 
     if request.method == "POST" and request.form.get("exportar_excel"):
-        # Agrupar registros por transportadora
         registros_por_transportadora = {}
         totais_por_transportadora = {}
         
@@ -161,16 +157,13 @@ def relatorio_cargas_transportadora():
             
             registros_por_transportadora[transportadora].append(registro_data)
             
-            # Calcular totais
             totais_por_transportadora[transportadora]["peso_total"] += peso_liquido
             totais_por_transportadora[transportadora]["valor_total"] += round(valor_pagar / 100, 2) if valor_pagar else 0
             totais_por_transportadora[transportadora]["quantidade_cargas"] += 1
 
-        # Construir dados para Excel com agrupamento
         dados_excel = []
         
         for transportadora, registros_transportadora in registros_por_transportadora.items():
-            # Cabeçalho da transportadora
             dados_excel.append({
                 "Data Entrega": f"TRANSPORTADORA: {transportadora}",
                 "Transportadora": "",
@@ -182,11 +175,9 @@ def relatorio_cargas_transportadora():
                 "Valor a Pagar Transportadora (R$)": "",
             })
             
-            # Registros da transportadora
             for registro in registros_transportadora:
                 dados_excel.append(registro)
             
-            # Totais da transportadora
             totais = totais_por_transportadora[transportadora]
             dados_excel.append({
                 "Data Entrega": f"TOTAL {transportadora}:",
@@ -199,7 +190,6 @@ def relatorio_cargas_transportadora():
                 "Valor a Pagar Transportadora (R$)": round(totais["valor_total"], 2),
             })
             
-            # Linha em branco entre transportadoras
             dados_excel.append({
                 "Data Entrega": "",
                 "Transportadora": "",

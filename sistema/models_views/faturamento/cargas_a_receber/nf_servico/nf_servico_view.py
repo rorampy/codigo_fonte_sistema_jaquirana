@@ -24,10 +24,8 @@ def faturamento_nf_servico():
     dataHoje = datetime.now().strftime('%d-%m-%Y')
     clientes = ClienteModel.listar_clientes_ativos()
 
-    # Verificar se está vindo do agrupamento de cargas a receber
     agrupar_cargas_receber = request.args.get('agrupar_cargas_receber')
     if agrupar_cargas_receber:
-        # Filtrar apenas NFs pendentes (situação 2)
         nfs_servico = NfServicoModel.query.filter(
             NfServicoModel.ativo == True,
             NfServicoModel.situacao_financeira_id == 2
@@ -43,7 +41,7 @@ def faturamento_nf_servico():
             'data_emissao': nf.data_emissao,
             'carregamento_discriminacao': nf.carregamento_discriminacao or "",
             'discriminacao_servico': nf.discriminacao_servico or "",
-            'valor_total_liquido': nf.total_liquido_100 or 0,  # Garante que nunca seja None
+            'valor_total_liquido': nf.total_liquido_100 or 0,
             'situacao_financeira': nf.situacao,
             'numero_nota_fiscal': nf.numero_nota_fiscal or "-",
             'servico': nf
@@ -78,7 +76,6 @@ def cadastrar_nf_servico():
     if request.method == "POST":
         """Processa emissão via formulário com upload de PDF da NFS-e"""
         try:            
-            # Obter dados do formulário
             cliente_id = request.form.get('cliente_id')
             arquivo_nfse = request.files.get('arquivo_nf_servico')
             
@@ -94,52 +91,42 @@ def cadastrar_nf_servico():
                 flash((f"Verifique os campos destacados em vermelho!", "warning"))
 
             if gravar_banco:
-                # Validar se é PDF primeiro
                 if arquivo_nfse.mimetype != "application/pdf":
                     flash(('Arquivo deve ser um PDF válido.', 'error'))
                     return redirect(url_for('cadastrar_nf_servico'))
                 
-                # Upload temporário para validação
                 objeto_nfse_temp = upload_arquivo(arquivo_nfse, "UPLOAD_NOTA_SERVICO", "temp")
                 
-                # Extrair dados da NFS-e ANTES de gravar no banco
                 try:
                     dados_nfse = ExtrairDadosNFSe.extrair_dados_nfse_simples(objeto_nfse_temp.caminho)
                                     
-                    # Validação simples: verificar se tem dados básicos e valores
                     numero_nota = dados_nfse["cabecalho"].get("numero_nota")
                     tem_prestador = dados_nfse["prestador"].get("cnpj_cpf") or dados_nfse["prestador"].get("identificacao_social")
                     valor_total = dados_nfse["totais"].get("total_liquido") or dados_nfse["totais"].get("total_servicos")
                     
-                    # Se não tem dados básicos OU não tem valor, não é válida
                     if not (numero_nota or tem_prestador) or not valor_total:
-                        # Remove arquivo temporário
                         db.session.delete(objeto_nfse_temp)
                         db.session.commit()
                         flash(("Arquivo não é uma NFS-e válida! Verifique se contém dados obrigatórios.", "warning"))
                         return redirect(url_for("cadastrar_nf_servico"))
                     
                 except Exception:
-                    # Remove arquivo temporário
                     db.session.delete(objeto_nfse_temp)
                     db.session.commit()
                     flash(("Erro ao processar arquivo! Verifique se é uma NFS-e válida.", "error"))
                     return redirect(url_for("cadastrar_nf_servico"))
                 
-                # SE CHEGOU AQUI, É VÁLIDA! Agora pode gravar no banco
                 nf_servico = NfServicoModel(
                     cliente_id=int(cliente_id),
-                    situacao_financeira_id=2,  # Pendente de faturamento
+                    situacao_financeira_id=2,
                 )
                 
                 db.session.add(nf_servico)
-                db.session.flush()  # Garante que o ID seja gerado
+                db.session.flush()
                 
-                # Atualizar nome do arquivo com ID real
                 objeto_nfse_temp.nome_original = f"{nf_servico.id}"
                 objeto_nfse = objeto_nfse_temp
                 
-                # Processar data de emissão
                 data_emissao = None
                 data_hora_str = dados_nfse["cabecalho"].get("data_hora_emissao")
                 if data_hora_str:
@@ -148,39 +135,33 @@ def cadastrar_nf_servico():
                     except:
                         pass
                 
-                # Converter valores monetários para centavos
                 def converter_valor(valor_str):
                     if not valor_str:
-                        return 0  # Retorna 0 em vez de None
+                        return 0
                     try:
                         valor_limpo = valor_str.replace('.', '').replace(',', '.')
                         return int(float(valor_limpo) * 100)
                     except:
-                        return 0  # Retorna 0 em caso de erro
-                # Função para truncar strings longas
+                        return 0
                 def truncar_string(valor, max_length):
                     if not valor:
                         return valor
                     return valor[:max_length] if len(valor) > max_length else valor
                 
-                # Atualizar campos da NF Serviço (mapeamento dinâmico completo)
                 nf_servico.numero_nota_fiscal = truncar_string(dados_nfse["cabecalho"].get("numero_nota"), 50)
                 nf_servico.chave_acesso = truncar_string(dados_nfse["cabecalho"].get("codigo_verificacao"), 500)
                 nf_servico.data_emissao = data_emissao
                 
-                # Data de competência se disponível
                 if dados_nfse["cabecalho"].get("data_competencia"):
                     try:
                         nf_servico.data_competencia = datetime.strptime(dados_nfse["cabecalho"]["data_competencia"], '%d/%m/%Y').date()
                     except ValueError:
                         pass
                 
-                # Dados do serviço
                 nf_servico.servico_exigivel = dados_nfse.get("dados_servico", {}).get("exigibilidade") or "Exigível"
                 nf_servico.municipio_prestacao_servico = dados_nfse.get("dados_servico", {}).get("municipio_prestacao") or "Canela/RS"
                 nf_servico.municipio_incidencia = dados_nfse.get("dados_servico", {}).get("municipio_incidencia") or "Canela/RS"
                 
-                # Prestador (todos os campos)
                 nf_servico.prestador_identificacao_social = truncar_string(dados_nfse["prestador"].get("identificacao_social"), 255)
                 nf_servico.prestador_nome_fantasia = truncar_string(dados_nfse["prestador"].get("nome_fantasia"), 255)
                 nf_servico.prestador_endereco = truncar_string(dados_nfse["prestador"].get("endereco"), 500)
@@ -192,7 +173,6 @@ def cadastrar_nf_servico():
                 nf_servico.prestador_telefone = truncar_string(dados_nfse["prestador"].get("telefone"), 100)
                 nf_servico.prestador_email = truncar_string(dados_nfse["prestador"].get("email"), 150)
                 
-                # Tomador (todos os campos)
                 nf_servico.tomador_razao_social = truncar_string(dados_nfse["tomador"].get("razao_social"), 255)
                 nf_servico.tomador_endereco = truncar_string(dados_nfse["tomador"].get("endereco"), 500)
                 nf_servico.tomador_municipio = truncar_string(dados_nfse["tomador"].get("municipio"), 150)
@@ -202,16 +182,13 @@ def cadastrar_nf_servico():
                 nf_servico.tomador_telefone = truncar_string(dados_nfse["tomador"].get("telefone"), 100)
                 nf_servico.tomador_email = truncar_string(dados_nfse["tomador"].get("email"), 150)
                 
-                # Discriminação do serviço
                 nf_servico.discriminacao_servico = dados_nfse["discriminacao"].get("discriminacao_servico")
                 nf_servico.carregamento_discriminacao = truncar_string(dados_nfse["discriminacao"].get("carregamento_cavaco_biomassa"), 255)
                 
-                # Valores em centavos
                 nf_servico.valor_servico_100 = converter_valor(dados_nfse["discriminacao"].get("valor_servico"))
                 nf_servico.total_servicos_100 = converter_valor(dados_nfse["totais"].get("total_servicos"))
                 nf_servico.total_liquido_100 = converter_valor(dados_nfse["totais"].get("total_liquido"))
                 
-                # Alíquota e valor ISS
                 if dados_nfse["discriminacao"].get("aliquota_iss"):
                     try:
                         nf_servico.aliquota_servico = float(dados_nfse["discriminacao"]["aliquota_iss"].replace(',', '.'))
@@ -220,12 +197,10 @@ def cadastrar_nf_servico():
                 
                 nf_servico.valor_iss_100 = converter_valor(dados_nfse["discriminacao"].get("valor_iss"))
                 
-                # Valores adicionais em centavos
                 nf_servico.base_calculo_rs = converter_valor(dados_nfse["discriminacao"].get("base_calculo"))
                 nf_servico.valor_desconto_100 = converter_valor(dados_nfse["discriminacao"].get("valor_desconto"))
                 nf_servico.desconto_condicional_100 = converter_valor(dados_nfse["discriminacao"].get("desconto_condicional"))
                 
-                # Alíquota alternativa
                 aliquota_str = dados_nfse["discriminacao"].get("aliquota_servico")
                 if aliquota_str:
                     try:
@@ -233,21 +208,18 @@ def cadastrar_nf_servico():
                     except:
                         pass
                 
-                # Retenções
                 nf_servico.pis_valor_100 = converter_valor(dados_nfse["retencoes"].get("pis_valor"))
                 nf_servico.cofins_valor_100 = converter_valor(dados_nfse["retencoes"].get("cofins_valor"))
                 nf_servico.inss_valor_100 = converter_valor(dados_nfse["retencoes"].get("inss_valor"))
                 nf_servico.csll_valor_100 = converter_valor(dados_nfse["retencoes"].get("csll_valor"))
                 nf_servico.outras_retencoes_100 = converter_valor(dados_nfse["retencoes"].get("outras_retencoes"))
                 
-                # Período de prestação
                 periodo_inicio, periodo_fim = ExtrairDadosNFSe.extrair_periodo_servico(
                     dados_nfse["discriminacao"].get("discriminacao_servico")
                 )
                 nf_servico.periodo_inicio = periodo_inicio
                 nf_servico.periodo_fim = periodo_fim
                 
-                # Arquivo
                 nf_servico.arquivo_nota_id = objeto_nfse.id
 
                 db.session.commit()
@@ -257,7 +229,6 @@ def cadastrar_nf_servico():
                     
         except Exception as e:
             db.session.rollback()
-            print(f"Erro no cadastro de NFS-e: {str(e)}")
             flash(('Erro inesperado ao processar NFS-e. Tente novamente.', 'error'))
             
     clientes = ClienteModel.listar_clientes_ativos()
@@ -326,7 +297,6 @@ def informar_faturamento_nf_servico(id):
                     'data_emissao': registro.data_emissao.strftime('%d/%m/%Y') if registro.data_emissao else None
                 }]
 
-                # Salvar detalhes
                 novo_faturamento.salvar_detalhes(nf_servico=detalhes_nf_servico)
 
                 db.session.add(novo_faturamento)
@@ -351,7 +321,6 @@ def informar_faturamento_nf_servico(id):
         )
     except Exception as e:
         db.session.rollback()
-        print(f"[ERROR] Erro ao informar faturamento de carga: {e}")
         flash((f"Erro ao informar faturamento de carga: {str(e)}", "danger"))
         return redirect(url_for("faturamento_nf_servico"))
 
@@ -376,7 +345,7 @@ def informar_faturamento_nf_servico_massa():
                 flash(("IDs inválidos selecionados!", "warning"))
                 return redirect(url_for("faturamento_nf_servico"))
 
-        else:  # POST
+        else:
             ids_selecionados = request.form.get('ids_registros', '')
             if not ids_selecionados:
                 flash(("Nenhum registro foi selecionado para faturamento!", "warning"))
@@ -389,7 +358,7 @@ def informar_faturamento_nf_servico_massa():
                 return redirect(url_for("faturamento_nf_servico"))
 
         registros = [NfServicoModel.obter_por_id(registro_id) for registro_id in ids_list]
-        registros = [r for r in registros if r and r.situacao_financeira_id != 5]  # Filtrar já recebidos
+        registros = [r for r in registros if r and r.situacao_financeira_id != 5]
 
         if not registros:
             flash(("Nenhum registro válido encontrado para recebimento!", "warning"))
@@ -400,7 +369,7 @@ def informar_faturamento_nf_servico_massa():
 
         clientes_dict = {}
         valor_total_geral = 0
-        valores_recebidos_dict = {}  # id do registro -> valor editado (centavos)
+        valores_recebidos_dict = {}
 
         for registro in registros:
             valor_total_recebimento = registro.total_liquido_100 or 0
@@ -444,7 +413,6 @@ def informar_faturamento_nf_servico_massa():
                         registros_processados += 1
                         valor_total_processado += valor_recebido
 
-                        # Adicionar cada NF de serviço ao array de detalhes
                         detalhes_nf_servico.append({
                             "nf_servico_id": registro.id,
                             "numero_nf": registro.numero_nota_fiscal or "",
@@ -455,7 +423,6 @@ def informar_faturamento_nf_servico_massa():
                             'data_emissao': registro.data_emissao.strftime('%d/%m/%Y') if registro.data_emissao else None
                         })
 
-                    # Criação do faturamento em massa (um único faturamento para todos os registros)
                     novo_faturamento = FaturamentoModel(
                         usuario_id=current_user.id,
                         codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
@@ -466,7 +433,6 @@ def informar_faturamento_nf_servico_massa():
                         direcao_financeira=1
                     )
 
-                    # Salvar detalhes
                     novo_faturamento.salvar_detalhes(nf_servico=detalhes_nf_servico)
                     db.session.add(novo_faturamento)
 
@@ -483,7 +449,6 @@ def informar_faturamento_nf_servico_massa():
                     return redirect(url_for('faturamento_nf_servico'))
 
                 except Exception as e:
-                    print(f"[ERROR] Erro ao processar faturamento em massa: {e}")
                     db.session.rollback()
                     flash((f"Erro ao processar faturamento em massa: {str(e)}", "error"))
                     return redirect(request.url)
@@ -500,7 +465,6 @@ def informar_faturamento_nf_servico_massa():
         )
 
     except Exception as e:
-        print(f"[ERROR] Erro interno: {e}")
         db.session.rollback()
         flash((f"Erro interno: {str(e)}", "error"))
         return redirect(url_for("faturamento_nf_servico"))
@@ -515,13 +479,11 @@ def editar_nf_servico(id):
     validacao_campos_erros = {}
     gravar_banco = True
     
-    # Buscar registro existente
     nf_servico = NfServicoModel.obter_por_id(id)
     if not nf_servico:
         flash(("Registro não encontrado!", "warning"))
         return redirect(url_for('faturamento_nf_servico'))
     
-    # Verificar se pode ser editado
     if nf_servico.situacao_financeira_id == 5 or nf_servico.situacao_financeira_id == 6 or nf_servico.situacao_financeira_id == 8:
         flash(("Registro não pode ser editado! Entre em contato com o suporte.", "warning"))
         return redirect(url_for('faturamento_nf_servico'))
@@ -529,7 +491,6 @@ def editar_nf_servico(id):
     if request.method == "POST":
         """Processa edição via formulário com upload de PDF da NFS-e"""
         try:            
-            # Obter dados do formulário
             cliente_id = request.form.get('cliente_id')
             arquivo_nfse = request.files.get('arquivo_nf_servico')
             
@@ -537,7 +498,6 @@ def editar_nf_servico(id):
                 "cliente_id": ["Cliente", cliente_id]
             }
             
-            # Arquivo é obrigatório apenas se não há arquivo já associado
             if not nf_servico.arquivo_nota_id:
                 campos["arquivo_nf_servico"] = ["Arquivo NFS-e", arquivo_nfse]
             
@@ -548,43 +508,33 @@ def editar_nf_servico(id):
                 flash((f"Verifique os campos destacados em vermelho!", "warning"))
 
             if gravar_banco:
-                # Se novo arquivo foi enviado, processar
                 if arquivo_nfse and arquivo_nfse.filename:
-                    # Validar se é PDF primeiro
                     if arquivo_nfse.mimetype != "application/pdf":
                         flash(('Arquivo deve ser um PDF válido.', 'error'))
                         return redirect(url_for('editar_nf_servico', id=id))
                     
-                    # Upload temporário para validação
                     objeto_nfse_temp = upload_arquivo(arquivo_nfse, "UPLOAD_NOTA_SERVICO", "temp")
                     
-                    # Extrair dados da NFS-e ANTES de gravar no banco
                     try:
                         dados_nfse = ExtrairDadosNFSe.extrair_dados_nfse_simples(objeto_nfse_temp.caminho)
                                         
-                        # Validação simples: verificar se tem dados básicos e valores
                         numero_nota = dados_nfse["cabecalho"].get("numero_nota")
                         tem_prestador = dados_nfse["prestador"].get("cnpj_cpf") or dados_nfse["prestador"].get("identificacao_social")
                         valor_total = dados_nfse["totais"].get("total_liquido") or dados_nfse["totais"].get("total_servicos")
                         
-                        # Se não tem dados básicos OU não tem valor, não é válida
                         if not (numero_nota or tem_prestador) or not valor_total:
-                            # Remove arquivo temporário
                             db.session.rollback()
                             flash(("Arquivo não é uma NFS-e válida! Verifique se contém dados obrigatórios.", "warning"))
                             return redirect(url_for("editar_nf_servico", id=id))
                         
                     except Exception:
-                        # Remove arquivo temporário
                         db.session.rollback()
                         flash(("Erro ao processar arquivo! Verifique se é uma NFS-e válida.", "error"))
                         return redirect(url_for("editar_nf_servico", id=id))
                                         
-                    # Atualizar nome do arquivo com ID real
                     objeto_nfse_temp.nome_original = f"{nf_servico.id}"
                     objeto_nfse = objeto_nfse_temp
                     
-                    # Processar data de emissão
                     data_emissao = None
                     data_hora_str = dados_nfse["cabecalho"].get("data_hora_emissao")
                     if data_hora_str:
@@ -593,40 +543,34 @@ def editar_nf_servico(id):
                         except:
                             pass
                     
-                    # Converter valores monetários para centavos
                     def converter_valor(valor_str):
                         if not valor_str:
-                            return 0  # Retorna 0 em vez de None
+                            return 0
                         try:
                             valor_limpo = valor_str.replace('.', '').replace(',', '.')
                             return int(float(valor_limpo) * 100)
                         except:
-                            return 0  # Retorna 0 em caso de erro
+                            return 0
                     
-                    # Função para truncar strings longas
                     def truncar_string(valor, max_length):
                         if not valor:
                             return valor
                         return valor[:max_length] if len(valor) > max_length else valor
                     
-                    # Atualizar campos da NF Serviço (mapeamento dinâmico completo)
                     nf_servico.numero_nota_fiscal = truncar_string(dados_nfse["cabecalho"].get("numero_nota"), 50)
                     nf_servico.chave_acesso = truncar_string(dados_nfse["cabecalho"].get("codigo_verificacao"), 500)
                     nf_servico.data_emissao = data_emissao
                     
-                    # Data de competência se disponível
                     if dados_nfse["cabecalho"].get("data_competencia"):
                         try:
                             nf_servico.data_competencia = datetime.strptime(dados_nfse["cabecalho"]["data_competencia"], '%d/%m/%Y').date()
                         except ValueError:
                             pass
                     
-                    # Dados do serviço
                     nf_servico.servico_exigivel = dados_nfse.get("dados_servico", {}).get("exigibilidade") or "Exigível"
                     nf_servico.municipio_prestacao_servico = dados_nfse.get("dados_servico", {}).get("municipio_prestacao") or "Canela/RS"
                     nf_servico.municipio_incidencia = dados_nfse.get("dados_servico", {}).get("municipio_incidencia") or "Canela/RS"
                     
-                    # Prestador (todos os campos)
                     nf_servico.prestador_identificacao_social = truncar_string(dados_nfse["prestador"].get("identificacao_social"), 255)
                     nf_servico.prestador_nome_fantasia = truncar_string(dados_nfse["prestador"].get("nome_fantasia"), 255)
                     nf_servico.prestador_endereco = truncar_string(dados_nfse["prestador"].get("endereco"), 500)
@@ -638,7 +582,6 @@ def editar_nf_servico(id):
                     nf_servico.prestador_telefone = truncar_string(dados_nfse["prestador"].get("telefone"), 100)
                     nf_servico.prestador_email = truncar_string(dados_nfse["prestador"].get("email"), 150)
                     
-                    # Tomador (todos os campos)
                     nf_servico.tomador_razao_social = truncar_string(dados_nfse["tomador"].get("razao_social"), 255)
                     nf_servico.tomador_endereco = truncar_string(dados_nfse["tomador"].get("endereco"), 500)
                     nf_servico.tomador_municipio = truncar_string(dados_nfse["tomador"].get("municipio"), 150)
@@ -648,16 +591,13 @@ def editar_nf_servico(id):
                     nf_servico.tomador_telefone = truncar_string(dados_nfse["tomador"].get("telefone"), 100)
                     nf_servico.tomador_email = truncar_string(dados_nfse["tomador"].get("email"), 150)
                     
-                    # Discriminação do serviço
                     nf_servico.discriminacao_servico = dados_nfse["discriminacao"].get("discriminacao_servico")
                     nf_servico.carregamento_discriminacao = truncar_string(dados_nfse["discriminacao"].get("carregamento_cavaco_biomassa"), 255)
                     
-                    # Valores em centavos
                     nf_servico.valor_servico_100 = converter_valor(dados_nfse["discriminacao"].get("valor_servico"))
                     nf_servico.total_servicos_100 = converter_valor(dados_nfse["totais"].get("total_servicos"))
                     nf_servico.total_liquido_100 = converter_valor(dados_nfse["totais"].get("total_liquido"))
                     
-                    # Alíquota e valor ISS
                     if dados_nfse["discriminacao"].get("aliquota_iss"):
                         try:
                             nf_servico.aliquota_servico = float(dados_nfse["discriminacao"]["aliquota_iss"].replace(',', '.'))
@@ -666,12 +606,10 @@ def editar_nf_servico(id):
                     
                     nf_servico.valor_iss_100 = converter_valor(dados_nfse["discriminacao"].get("valor_iss"))
                     
-                    # Valores adicionais em centavos
                     nf_servico.base_calculo_rs = converter_valor(dados_nfse["discriminacao"].get("base_calculo"))
                     nf_servico.valor_desconto_100 = converter_valor(dados_nfse["discriminacao"].get("valor_desconto"))
                     nf_servico.desconto_condicional_100 = converter_valor(dados_nfse["discriminacao"].get("desconto_condicional"))
                     
-                    # Alíquota alternativa
                     aliquota_str = dados_nfse["discriminacao"].get("aliquota_servico")
                     if aliquota_str:
                         try:
@@ -679,24 +617,20 @@ def editar_nf_servico(id):
                         except:
                             pass
                     
-                    # Retenções
                     nf_servico.pis_valor_100 = converter_valor(dados_nfse["retencoes"].get("pis_valor"))
                     nf_servico.cofins_valor_100 = converter_valor(dados_nfse["retencoes"].get("cofins_valor"))
                     nf_servico.inss_valor_100 = converter_valor(dados_nfse["retencoes"].get("inss_valor"))
                     nf_servico.csll_valor_100 = converter_valor(dados_nfse["retencoes"].get("csll_valor"))
                     nf_servico.outras_retencoes_100 = converter_valor(dados_nfse["retencoes"].get("outras_retencoes"))
                     
-                    # Período de prestação
                     periodo_inicio, periodo_fim = ExtrairDadosNFSe.extrair_periodo_servico(
                         dados_nfse["discriminacao"].get("discriminacao_servico")
                     )
                     nf_servico.periodo_inicio = periodo_inicio
                     nf_servico.periodo_fim = periodo_fim
                     
-                    # Atualizar arquivo
                     nf_servico.arquivo_nota_id = objeto_nfse.id
 
-                # Atualizar campos básicos sempre (independente do arquivo)
                 nf_servico.cliente_id = int(cliente_id)
 
                 db.session.commit()
@@ -706,7 +640,6 @@ def editar_nf_servico(id):
                     
         except Exception as e:
             db.session.rollback()
-            print(f"Erro na edição de NFS-e: {str(e)}")
             flash(('Erro inesperado ao editar NFS-e. Tente novamente.', 'error'))
             
     clientes = ClienteModel.listar_clientes_ativos()
@@ -757,6 +690,5 @@ def excluir_nf_servico(id):
         return redirect(url_for('faturamento_nf_servico'))
     except Exception as e:
         db.session.rollback()
-        print(f"[ERROR] Erro ao excluir NF de serviço: {e}")
         flash((f"Erro ao excluir NF de serviço! Entre em contato com o suporte.", "danger"))
         return redirect(url_for("faturamento_nf_servico"))

@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             FLORESTAS
           </div>
@@ -40,7 +40,7 @@
       </div>
     </div>
   </div>
-  <!-- Page body -->
+  
   <div class="page-body">
     <div class="container-xl">
 
@@ -49,7 +49,6 @@
       <div class="col-12">
         <div  class="card">
 
-          <!-- Início Tabela -->
           <div class="table-responsive">
             <table class="table table-vcenter card-table">
               <thead>
@@ -105,7 +104,7 @@
                             d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" />
                         </svg>
                       </a>
-                      <!-- Botão: Editar floresta -->
+                      
                       <a href="{{ url_for('editar_floresta', id=f.id) }}" class="btn btn-icon btn-outline-warning"
                         data-bs-toggle="tooltip" data-bs-placement="top" title="Editar floresta">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="24"
@@ -117,7 +116,7 @@
                         </svg>
                       </a>
                       {%if f.ativo == 1%}
-                      <!-- Botão: Desativar floresta -->
+                      
                       <a href="#" class="btn btn-icon btn-outline-danger {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%} excluir" data-bs-toggle="modal"
                         data-bs-target="#modal-desativar-{{ f.id }}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24"
@@ -135,7 +134,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             <div class="modal-status bg-danger"></div>
                             <div class="modal-body text-center py-4">
-                              <!-- Download SVG icon from http://tabler.io/icons/icon/alert-triangle -->
+                              
                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
@@ -169,7 +168,7 @@
                         </div>
                       </div>
                       {%else%}
-                      <!-- Botão: Ativar floresta -->
+                      
                       <a href="{{ url_for('ativar_floresta', id=f.id) }}"
                         class="btn btn-icon btn-outline-success {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%} ativar" data-bs-toggle="tooltip" data-bs-placement="top"
                         title="Ativar floresta">
@@ -193,7 +192,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
       <form action="{{url_for('listar_florestas')}}" method="POST">
@@ -262,7 +260,7 @@
               Limpar Filtros
             </a>
             <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
-              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="icon icon-2">

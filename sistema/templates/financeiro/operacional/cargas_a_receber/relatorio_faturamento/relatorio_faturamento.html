@@ -1,4 +1,3 @@
-<!-- Crie este arquivo: templates/financeiro/faturamentos/relatorio_pdf.html -->
 
 <!DOCTYPE html>
 <html>
@@ -246,7 +245,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table>
       <tr>
@@ -263,7 +262,6 @@
 
   <div class="relatorio-title">Relatório de Faturamento | {{ faturamento.codigo_faturamento }}</div>
 
-  <!-- Dados do Faturamento -->
   <div class="section-title">DADOS DO FATURAMENTO</div>
   {% if not opcoes.ocultar_cliente %}
   <div class="simple-info">
@@ -282,11 +280,9 @@
   </div>
   {% endif %}
 
-  <!-- Cargas a Receber -->
   {% if cargas_a_receber %}
   <div class="section-title">CARGAS A RECEBER ({{ total_cargas_a_receber }} registros)</div>
 
-  <!-- Resumo por carga -->
   <table>
     <thead>
       <tr>
@@ -312,7 +308,6 @@
     </tbody>
   </table>
 
-  <!-- Detalhes dos clientes -->
   {% for nome_cliente, grupo in cargas_a_receber.items() %}
   <div class="section-title">Cliente - {{ nome_cliente }}</div>
   <table>
@@ -352,11 +347,9 @@
   {% endfor %}
   {% endif %}
 
-  <!-- NFs Complementares -->
   {% if nfs_complementares %}
   <div class="section-title">NFS COMPLEMENTARES ({{ total_nfs_complementares }} registros)</div>
 
-  <!-- Resumo por cliente -->
   <table>
     <thead>
       <tr>
@@ -382,7 +375,6 @@
     </tbody>
   </table>
 
-  <!-- Detalhes das NFs por cliente -->
   {% for nome_cliente, grupo in nfs_complementares.items() %}
   <div class="section-title">DETALHES NF COMPLEMENTAR - {{ nome_cliente }}</div>
 
@@ -431,11 +423,9 @@
   {% endfor %}
   {% endif %}
 
-  <!-- NFs de Serviço -->
   {% if nfs_servico %}
   <div class="section-title">NFS DE SERVIÇO ({{ total_nfs_servico }} registros)</div>
 
-  <!-- Resumo por cliente -->
   <table>
     <thead>
       <tr>
@@ -461,7 +451,6 @@
     </tbody>
   </table>
 
-  <!-- Detalhes das NFs por cliente -->
   {% for nome_cliente, grupo in nfs_servico.items() %}
   <div class="section-title">DETALHES NF SERVIÇO - {{ nome_cliente }}</div>
   <table>
@@ -489,7 +478,6 @@
   {% endfor %}
   {% endif %}
 
-  <!-- Total Geral -->
   {% if not opcoes.ocultar_cliente %}
   <div class="section-title">CONSOLIDADO FINAL</div>
   <table>

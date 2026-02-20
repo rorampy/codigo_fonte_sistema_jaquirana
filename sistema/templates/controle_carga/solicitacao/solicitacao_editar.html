@@ -113,7 +113,6 @@
                 </div>
               </div>
 
-              <!-- Grupo Certificações -->
               <div class="col-sm-3 col-md-3">
                 <div class="mb-3">
                   <label class="form-label">Certificação</label>
@@ -130,18 +129,6 @@
                   </div>
                 </div>
               </div>
-
-              <!-- <div class="col-sm-2 col-md-2">
-                <div class="mb-3">
-                  <label class="form-label">Data e hora MSG Grupo</label>
-                  <input type="datetime-local" name="dataHoraSolicitacao"
-                    value="{% if solicitacao.data_hora_msg_whats %}{{ solicitacao.data_hora_msg_whats.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
-                    class="form-control {% if 'dataHoraSolicitacao' in campos_obrigatorios %}is-invalid{% endif %}">
-                  <div class="invalid-feedback">
-                    {{ campos_obrigatorios.get('dataHoraSolicitacao') }}
-                  </div>
-                </div>
-              </div> -->
 
               <div class="row">
                 <h3 class="text-primary">Informações de transporte</h3>
@@ -258,13 +245,11 @@
       const capacidadeCargaInput = document.getElementById('inputcapacidadeCarga');
       const capacidadeCargaHidden = document.getElementById('inputVeiculoId');
     
-      // Valores salvos (para edição)
       const produtoSalvo = "{{ solicitacao.produto_id or '' }}";
       const bitolaSalva = "{{ solicitacao.bitola_id or '' }}";
       const transportadoraSalva = "{{ solicitacao.transportadora_id or '' }}";
       const motoristaSalvo = "{{ solicitacao.motorista_id or '' }}";
 
-      // Inicializar TomSelect para produto
       const tomProduto = new TomSelect(produtoSelect, {
         create: false,
         allowEmptyOption: false,
@@ -274,7 +259,6 @@
         }
       });
 
-      // Inicializar TomSelect para bitola
       let tomBitola = new TomSelect(bitolaSelect, {
         create: false,
         allowEmptyOption: false,
@@ -284,7 +268,6 @@
         }
       });
 
-      // Função para carregar bitolas por produto
       function carregarBitolas(produtoId, selecionarBitola = null) {
         if (!produtoId) {
           tomBitola.destroy();
@@ -299,10 +282,9 @@
         fetch(`/produto/${produtoId}/bitolas`)
           .then(response => response.json())
           .then(data => {
-            // Destruir TomSelect
+            
             tomBitola.destroy();
             
-            // Limpar e repopular select
             bitolaSelect.innerHTML = '<option value selected>Selecione...</option>';
             data.bitolas.forEach(b => {
               const opt = document.createElement('option');
@@ -311,7 +293,6 @@
               bitolaSelect.appendChild(opt);
             });
 
-            // Recriar TomSelect
             tomBitola = new TomSelect(bitolaSelect, {
               create: false,
               allowEmptyOption: false,
@@ -321,7 +302,6 @@
               }
             });
 
-            // Se houver valor salvo, seleciona
             if (selecionarBitola) {
               tomBitola.setValue(selecionarBitola);
             }
@@ -331,12 +311,10 @@
           });
       }
 
-      // Evento de mudança de produto
       tomProduto.on('change', function(produtoId) {
         carregarBitolas(produtoId);
       });
 
-      // Se já existir produto selecionado (edição), carrega bitolas dele
       if (produtoSalvo) {
         carregarBitolas(produtoSalvo, bitolaSalva);
       }
@@ -377,11 +355,9 @@
               return;
             }
     
-            // Preenche capacidade
             capacidadeCargaInput.value = data.capacidade_carga;
             capacidadeCargaHidden.value = veiculoId;
     
-            // Preenche transportadoras (todas as transportadoras do veículo)
             transportadoraSelect.innerHTML = '<option value selected>Selecione...</option>';
             data.transportadoras.forEach(t => {
               const opt = document.createElement('option');
@@ -390,12 +366,11 @@
               transportadoraSelect.appendChild(opt);
             });
     
-            // Se houver valor salvo, seleciona automaticamente
             if (transportadoraSalva && data.transportadoras.some(t => t.id == transportadoraSalva)) {
               transportadoraSelect.value = transportadoraSalva;
               carregarMotoristas(transportadoraSalva, motoristaSalvo);
             } else {
-              // limpa lista de motoristas até o usuário escolher uma transportadora
+              
               motoristaSelect.innerHTML = '<option value selected>Selecione...</option>';
             }
           })
@@ -418,17 +393,15 @@
     
       transportadoraSelect.addEventListener('change', function () {
         const transportadoraId = this.value;
-        // quando transportadora mudar, carrega motoristas correspondentes
+        
         carregarMotoristas(transportadoraId);
       });
     
-      // Se já existir veículo selecionado (edição), carrega dados dele:
       const veiculoSelecionado = veiculoSelect.value;
       if (veiculoSelecionado) {
         carregarDadosVeiculo(veiculoSelecionado);
       }
     
-      // Inicializa TomSelect nos demais selects
       document.querySelectorAll('select.form-select').forEach(function (select) {
         if (!['selectMotorista', 'selectTransportadora', 'selectProduto', 'selectBitola', 'selectVeiculo'].includes(select.id)) {
           new TomSelect(select, {

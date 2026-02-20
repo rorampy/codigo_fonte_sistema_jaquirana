@@ -14,12 +14,10 @@ class NfServicoModel(BaseModel):
     cliente_id = db.Column(db.Integer, db.ForeignKey("cli_cliente.id"), nullable=False)
     cliente = db.relationship("ClienteModel", backref=db.backref("cliente_nf_servico", lazy=True))
 
-    # Dados do Serviço
     servico_exigivel = db.Column(db.String(150), nullable=True)
     municipio_prestacao_servico = db.Column(db.String(150), nullable=True)
     municipio_incidencia = db.Column(db.String(150), nullable=True)
     
-    # Prestador do Serviço (empresa que emite)
     prestador_identificacao_social = db.Column(db.String(255), nullable=True)
     prestador_nome_fantasia = db.Column(db.String(255), nullable=True)
     prestador_endereco = db.Column(db.String(500), nullable=True)
@@ -31,7 +29,6 @@ class NfServicoModel(BaseModel):
     prestador_telefone = db.Column(db.String(100), nullable=True)
     prestador_email = db.Column(db.String(150), nullable=True)
     
-    # Tomador do Serviço (cliente)
     tomador_razao_social = db.Column(db.String(255), nullable=True)
     tomador_endereco = db.Column(db.String(500), nullable=True)
     tomador_municipio = db.Column(db.String(150), nullable=True)
@@ -41,48 +38,41 @@ class NfServicoModel(BaseModel):
     tomador_telefone = db.Column(db.String(100), nullable=True)
     tomador_email = db.Column(db.String(150), nullable=True)
     
-    # Discriminação do Serviço
-    discriminacao_servico = db.Column(db.Text, nullable=True)  # Descrição do serviço prestado
-    carregamento_discriminacao = db.Column(db.String(255), nullable=True)  # Ex: "SERVIÇOS PRESTADOS NO PERÍODO 11/09/25 A 25/09/25"
-    base_calculo_rs = db.Column(db.Integer, nullable=True)  # Base de Cálculo(R$) * 100
-    valor_servico_100 = db.Column(db.Integer, nullable=True)  # Valor do Serviço * 100
-    valor_desconto_100 = db.Column(db.Integer, nullable=True)  # Desconto(R$) * 100
-    desconto_condicional_100 = db.Column(db.Integer, nullable=True)  # Desconto Condicional(R$) * 100
-    valor_liquido_100 = db.Column(db.Integer, nullable=True)  # Valor Líquido * 100
+    discriminacao_servico = db.Column(db.Text, nullable=True)
+    carregamento_discriminacao = db.Column(db.String(255), nullable=True)
+    base_calculo_rs = db.Column(db.Integer, nullable=True)
+    valor_servico_100 = db.Column(db.Integer, nullable=True)
+    valor_desconto_100 = db.Column(db.Integer, nullable=True)
+    desconto_condicional_100 = db.Column(db.Integer, nullable=True)
+    valor_liquido_100 = db.Column(db.Integer, nullable=True)
     
-    # Alíquotas e Valores
-    aliquota_servico = db.Column(db.Float, nullable=True)  # % da alíquota
-    valor_iss_100 = db.Column(db.Integer, nullable=True)  # Valor do ISS(R$) * 100
-    valor_iss_retido_100 = db.Column(db.Integer, nullable=True)  # Valor do ISS Retido(R$) * 100
-    desconto_condicional_rs = db.Column(db.Integer, nullable=True)  # Desconto Condicional(R$) * 100
+    aliquota_servico = db.Column(db.Float, nullable=True)
+    valor_iss_100 = db.Column(db.Integer, nullable=True)
+    valor_iss_retido_100 = db.Column(db.Integer, nullable=True)
+    desconto_condicional_rs = db.Column(db.Integer, nullable=True)
     
-    # Retenções Federais
-    pis_percentual = db.Column(db.Float, nullable=True)  # PIS (%)
-    pis_valor_100 = db.Column(db.Integer, nullable=True)  # PIS valor * 100
-    cofins_percentual = db.Column(db.Float, nullable=True)  # COFINS (%)
-    cofins_valor_100 = db.Column(db.Integer, nullable=True)  # COFINS valor * 100
-    inss_percentual = db.Column(db.Float, nullable=True)  # INSS (%)
-    inss_valor_100 = db.Column(db.Integer, nullable=True)  # INSS valor * 100
-    csll_percentual = db.Column(db.Float, nullable=True)  # CSLL (%)
-    csll_valor_100 = db.Column(db.Integer, nullable=True)  # CSLL valor * 100
-    outras_retencoes_100 = db.Column(db.Integer, nullable=True)  # Outras Retenções * 100
+    pis_percentual = db.Column(db.Float, nullable=True)
+    pis_valor_100 = db.Column(db.Integer, nullable=True)
+    cofins_percentual = db.Column(db.Float, nullable=True)
+    cofins_valor_100 = db.Column(db.Integer, nullable=True)
+    inss_percentual = db.Column(db.Float, nullable=True)
+    inss_valor_100 = db.Column(db.Integer, nullable=True)
+    csll_percentual = db.Column(db.Float, nullable=True)
+    csll_valor_100 = db.Column(db.Integer, nullable=True)
+    outras_retencoes_100 = db.Column(db.Integer, nullable=True)
     
-    # Totais
-    total_servicos_100 = db.Column(db.Integer, nullable=True)  # Total dos Serviços * 100
-    total_liquido_100 = db.Column(db.Integer, nullable=True)  # Total Líquido * 100
+    total_servicos_100 = db.Column(db.Integer, nullable=True)
+    total_liquido_100 = db.Column(db.Integer, nullable=True)
     
-    # Dados da Nota Fiscal
     numero_nota_fiscal = db.Column(db.String(50), nullable=True)
     serie_nota = db.Column(db.String(10), nullable=True)
     data_emissao = db.Column(db.Date, nullable=True)
     data_competencia = db.Column(db.Date, nullable=True)
     chave_acesso = db.Column(db.String(500), nullable=True)
     
-    # Período de prestação do serviço
     periodo_inicio = db.Column(db.Date, nullable=True)
     periodo_fim = db.Column(db.Date, nullable=True)
     
-    # Arquivos
     arquivo_nota_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     arquivo_nota = db.relationship("UploadArquivoModel", foreign_keys=[arquivo_nota_id], backref=db.backref("arquivo_nf_servico", lazy=True))
     
@@ -94,11 +84,9 @@ class NfServicoModel(BaseModel):
     def __init__(
         self,
         cliente_id=None,
-        # Dados do Serviço
         servico_exigivel=None,
         municipio_prestacao_servico=None,
         municipio_incidencia=None,
-        # Prestador do Serviço
         prestador_identificacao_social=None,
         prestador_nome_fantasia=None,
         prestador_endereco=None,
@@ -109,7 +97,6 @@ class NfServicoModel(BaseModel):
         prestador_inscricao_estadual=None,
         prestador_telefone=None,
         prestador_email=None,
-        # Tomador do Serviço
         tomador_razao_social=None,
         tomador_endereco=None,
         tomador_municipio=None,
@@ -118,7 +105,6 @@ class NfServicoModel(BaseModel):
         tomador_inscricao_municipal=None,
         tomador_telefone=None,
         tomador_email=None,
-        # Discriminação do Serviço
         discriminacao_servico=None,
         carregamento_cavaco_biomassa=None,
         base_calculo_rs=None,
@@ -126,12 +112,10 @@ class NfServicoModel(BaseModel):
         valor_desconto_100=None,
         desconto_condicional_100=None,
         valor_liquido_100=None,
-        # Alíquotas e Valores
         aliquota_servico=None,
         valor_iss_100=None,
         valor_iss_retido_100=None,
         desconto_condicional_rs=None,
-        # Retenções Federais
         pis_percentual=None,
         pis_valor_100=None,
         cofins_percentual=None,
@@ -141,10 +125,8 @@ class NfServicoModel(BaseModel):
         csll_percentual=None,
         csll_valor_100=None,
         outras_retencoes_100=None,
-        # Totais
         total_servicos_100=None,
         total_liquido_100=None,
-        # Dados da Nota
         numero_nota_fiscal=None,
         serie_nota=None,
         data_emissao=None,
@@ -157,11 +139,9 @@ class NfServicoModel(BaseModel):
         ativo=True
     ):
         self.cliente_id = cliente_id
-        # Dados do Serviço
         self.servico_exigivel = servico_exigivel
         self.municipio_prestacao_servico = municipio_prestacao_servico
         self.municipio_incidencia = municipio_incidencia
-        # Prestador do Serviço
         self.prestador_identificacao_social = prestador_identificacao_social
         self.prestador_nome_fantasia = prestador_nome_fantasia
         self.prestador_endereco = prestador_endereco
@@ -172,7 +152,6 @@ class NfServicoModel(BaseModel):
         self.prestador_inscricao_estadual = prestador_inscricao_estadual
         self.prestador_telefone = prestador_telefone
         self.prestador_email = prestador_email
-        # Tomador do Serviço
         self.tomador_razao_social = tomador_razao_social
         self.tomador_endereco = tomador_endereco
         self.tomador_municipio = tomador_municipio
@@ -181,7 +160,6 @@ class NfServicoModel(BaseModel):
         self.tomador_inscricao_municipal = tomador_inscricao_municipal
         self.tomador_telefone = tomador_telefone
         self.tomador_email = tomador_email
-        # Discriminação do Serviço
         self.discriminacao_servico = discriminacao_servico
         self.carregamento_cavaco_biomassa = carregamento_cavaco_biomassa
         self.base_calculo_rs = base_calculo_rs
@@ -189,12 +167,10 @@ class NfServicoModel(BaseModel):
         self.valor_desconto_100 = valor_desconto_100
         self.desconto_condicional_100 = desconto_condicional_100
         self.valor_liquido_100 = valor_liquido_100
-        # Alíquotas e Valores
         self.aliquota_servico = aliquota_servico
         self.valor_iss_100 = valor_iss_100
         self.valor_iss_retido_100 = valor_iss_retido_100
         self.desconto_condicional_rs = desconto_condicional_rs
-        # Retenções Federais
         self.pis_percentual = pis_percentual
         self.pis_valor_100 = pis_valor_100
         self.cofins_percentual = cofins_percentual
@@ -204,10 +180,8 @@ class NfServicoModel(BaseModel):
         self.csll_percentual = csll_percentual
         self.csll_valor_100 = csll_valor_100
         self.outras_retencoes_100 = outras_retencoes_100
-        # Totais
         self.total_servicos_100 = total_servicos_100
         self.total_liquido_100 = total_liquido_100
-        # Dados da Nota
         self.numero_nota_fiscal = numero_nota_fiscal
         self.serie_nota = serie_nota
         self.data_emissao = data_emissao
@@ -222,11 +196,9 @@ class NfServicoModel(BaseModel):
     @staticmethod
     def criar_nf_servico(
         cliente_id,
-        # Dados do Serviço
         servico_exigivel=None,
         municipio_prestacao_servico=None,
         municipio_incidencia=None,
-        # Prestador do Serviço
         prestador_identificacao_social=None,
         prestador_nome_fantasia=None,
         prestador_endereco=None,
@@ -237,7 +209,6 @@ class NfServicoModel(BaseModel):
         prestador_inscricao_estadual=None,
         prestador_telefone=None,
         prestador_email=None,
-        # Tomador do Serviço
         tomador_razao_social=None,
         tomador_endereco=None,
         tomador_municipio=None,
@@ -246,7 +217,6 @@ class NfServicoModel(BaseModel):
         tomador_inscricao_municipal=None,
         tomador_telefone=None,
         tomador_email=None,
-        # Discriminação do Serviço
         discriminacao_servico=None,
         carregamento_discriminacao=None,
         base_calculo_rs=None,
@@ -254,12 +224,10 @@ class NfServicoModel(BaseModel):
         valor_desconto_100=None,
         desconto_condicional_100=None,
         valor_liquido_100=None,
-        # Alíquotas e Valores
         aliquota_servico=None,
         valor_iss_100=None,
         valor_iss_retido_100=None,
         desconto_condicional_rs=None,
-        # Retenções Federais
         pis_percentual=None,
         pis_valor_100=None,
         cofins_percentual=None,
@@ -269,10 +237,8 @@ class NfServicoModel(BaseModel):
         csll_percentual=None,
         csll_valor_100=None,
         outras_retencoes_100=None,
-        # Totais
         total_servicos_100=None,
         total_liquido_100=None,
-        # Dados da Nota
         numero_nota_fiscal=None,
         serie_nota=None,
         data_emissao=None,
@@ -300,11 +266,9 @@ class NfServicoModel(BaseModel):
         try:
             nova_nf_servico = NfServicoModel(
                 cliente_id=cliente_id,
-                # Dados do Serviço
                 servico_exigivel=servico_exigivel,
                 municipio_prestacao_servico=municipio_prestacao_servico,
                 municipio_incidencia=municipio_incidencia,
-                # Prestador do Serviço
                 prestador_identificacao_social=prestador_identificacao_social,
                 prestador_nome_fantasia=prestador_nome_fantasia,
                 prestador_endereco=prestador_endereco,
@@ -315,7 +279,6 @@ class NfServicoModel(BaseModel):
                 prestador_inscricao_estadual=prestador_inscricao_estadual,
                 prestador_telefone=prestador_telefone,
                 prestador_email=prestador_email,
-                # Tomador do Serviço
                 tomador_razao_social=tomador_razao_social,
                 tomador_endereco=tomador_endereco,
                 tomador_municipio=tomador_municipio,
@@ -324,7 +287,6 @@ class NfServicoModel(BaseModel):
                 tomador_inscricao_municipal=tomador_inscricao_municipal,
                 tomador_telefone=tomador_telefone,
                 tomador_email=tomador_email,
-                # Discriminação do Serviço
                 discriminacao_servico=discriminacao_servico,
                 carregamento_discriminacao=carregamento_discriminacao,
                 base_calculo_rs=base_calculo_rs,
@@ -332,12 +294,10 @@ class NfServicoModel(BaseModel):
                 valor_desconto_100=valor_desconto_100,
                 desconto_condicional_100=desconto_condicional_100,
                 valor_liquido_100=valor_liquido_100,
-                # Alíquotas e Valores
                 aliquota_servico=aliquota_servico,
                 valor_iss_100=valor_iss_100,
                 valor_iss_retido_100=valor_iss_retido_100,
                 desconto_condicional_rs=desconto_condicional_rs,
-                # Retenções Federais
                 pis_percentual=pis_percentual,
                 pis_valor_100=pis_valor_100,
                 cofins_percentual=cofins_percentual,
@@ -347,10 +307,8 @@ class NfServicoModel(BaseModel):
                 csll_percentual=csll_percentual,
                 csll_valor_100=csll_valor_100,
                 outras_retencoes_100=outras_retencoes_100,
-                # Totais
                 total_servicos_100=total_servicos_100,
                 total_liquido_100=total_liquido_100,
-                # Dados da Nota
                 numero_nota_fiscal=numero_nota_fiscal,
                 serie_nota=serie_nota,
                 data_emissao=data_emissao,

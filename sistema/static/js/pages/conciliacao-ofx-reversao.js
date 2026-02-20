@@ -1,19 +1,3 @@
-/**
- * Gerenciador de Reversão de Conciliação OFX
- * 
- * Este módulo é responsável por gerenciar a reversão de conciliações bancárias
- * de transações OFX, fornecendo uma interface clara e segura para o usuário.
- * 
- * Funcionalidades:
- * - Exibir detalhes da conciliação a ser revertida
- * - Buscar informações via API
- * - Validar confirmação do usuário
- * - Processar reversão
- * - Exibir feedback de sucesso/erro
- * 
- * @author Sistema de Gestão
- * @version 1.0.0
- */
 
 class ConciliacaoReversao {
     constructor() {
@@ -22,20 +6,13 @@ class ConciliacaoReversao {
         this.init();
     }
 
-    /**
-     * Inicializa o gerenciador de reversão
-     */
     init() {
-        console.log('[ReversaoOFX] Inicializando gerenciador de reversão...');
         this.configurarEventos();
         this.inicializarModal();
     }
 
-    /**
-     * Configura todos os eventos necessários
-     */
     configurarEventos() {
-        // Evento para checkbox de confirmação
+        
         const checkboxConfirmacao = document.getElementById('confirmarReversao');
         if (checkboxConfirmacao) {
             checkboxConfirmacao.addEventListener('change', (e) => {
@@ -46,7 +23,6 @@ class ConciliacaoReversao {
             });
         }
 
-        // Evento para botão de confirmação
         const btnConfirmar = document.getElementById('btnConfirmarReversao');
         if (btnConfirmar) {
             btnConfirmar.addEventListener('click', () => {
@@ -54,7 +30,6 @@ class ConciliacaoReversao {
             });
         }
 
-        // Evento quando modal é fechado - limpar dados
         const modal = document.getElementById('modalReverterConciliacao');
         if (modal) {
             modal.addEventListener('hidden.bs.modal', () => {
@@ -63,9 +38,6 @@ class ConciliacaoReversao {
         }
     }
 
-    /**
-     * Inicializa referências do modal
-     */
     inicializarModal() {
         const modalElement = document.getElementById('modalReverterConciliacao');
         if (modalElement) {
@@ -73,15 +45,8 @@ class ConciliacaoReversao {
         }
     }
 
-    /**
-     * Abre modal de reversão para uma transação específica
-     * @param {number} transacaoId - ID da transação
-     * @param {string} fitid - FITID da transação
-     * @param {string} valorFormatado - Valor formatado da transação
-     * @param {string} dataTransacao - Data da transação (opcional)
-     */
     abrirModalReversao(transacaoId, fitid, valorFormatado, dataTransacao = null) {
-        // Armazenar dados da transação
+        
         this.transacaoParaReverter = {
             id: transacaoId,
             fitid: fitid,
@@ -89,24 +54,17 @@ class ConciliacaoReversao {
             dataTransacao: dataTransacao
         };
 
-        // Preencher informações básicas da transação
         this.preencherInformacoesTransacao();
 
-        // Resetar estado do modal
         this.resetarModal();
 
-        // Mostrar modal
         if (this.modalReversao) {
             this.modalReversao.show();
         }
 
-        // Carregar detalhes da conciliação
         this.carregarDetalhesConciliacao();
     }
 
-    /**
-     * Preenche as informações básicas da transação no modal
-     */
     preencherInformacoesTransacao() {
         if (!this.transacaoParaReverter) return;
 
@@ -125,17 +83,13 @@ class ConciliacaoReversao {
         });
     }
 
-    /**
-     * Reset do modal para estado inicial
-     */
     resetarModal() {
-        // Resetar checkbox
+        
         const checkbox = document.getElementById('confirmarReversao');
         if (checkbox) {
             checkbox.checked = false;
         }
 
-        // Desabilitar botão
         const btnConfirmar = document.getElementById('btnConfirmarReversao');
         if (btnConfirmar) {
             btnConfirmar.disabled = true;
@@ -144,15 +98,11 @@ class ConciliacaoReversao {
             `;
         }
 
-        // Mostrar loading no conteúdo
         this.mostrarCarregando();
     }
 
-    /**
-     * Mostra estado de carregando
-     */
     mostrarCarregando() {
-        // Esconder conteúdo
+        
         const conteudo = document.getElementById('reverterConteudo');
         const erro = document.getElementById('reverterErro');
         const carregando = document.getElementById('reverterCarregando');
@@ -162,9 +112,6 @@ class ConciliacaoReversao {
         if (carregando) carregando.style.display = 'block';
     }
 
-    /**
-     * Mostra conteúdo principal
-     */
     mostrarConteudo() {
         const conteudo = document.getElementById('reverterConteudo');
         const erro = document.getElementById('reverterErro');
@@ -175,9 +122,6 @@ class ConciliacaoReversao {
         if (carregando) carregando.style.display = 'none';
     }
 
-    /**
-     * Mostra erro
-     */
     mostrarErro(mensagem) {
         const conteudo = document.getElementById('reverterConteudo');
         const erro = document.getElementById('reverterErro');
@@ -190,14 +134,10 @@ class ConciliacaoReversao {
         if (erroMensagem) erroMensagem.textContent = mensagem;
     }
 
-    /**
-     * Carrega detalhes da conciliação via API
-     */
     async carregarDetalhesConciliacao() {
         if (!this.transacaoParaReverter) return;
 
         try {
-            console.log('[ReversaoOFX] Buscando detalhes da conciliação...');
 
             const response = await fetch(`/api/detalhes-conciliacao/${this.transacaoParaReverter.id}`, {
                 method: 'GET',
@@ -224,12 +164,8 @@ class ConciliacaoReversao {
         }
     }
 
-    /**
-     * Exibe os detalhes da conciliação no modal
-     * @param {Object} detalhes - Detalhes da conciliação
-     */
     exibirDetalhesConciliacao(detalhes) {
-        // Preencher informações da conciliação
+        
         const elemTipoConciliacao = document.getElementById('reverterTipoConciliacao');
         const elemDataConciliacao = document.getElementById('reverterDataConciliacao');
         const elemObservacoes = document.getElementById('reverterObservacoes');
@@ -242,20 +178,13 @@ class ConciliacaoReversao {
             elemDataConciliacao.textContent = detalhes.data_conciliacao || 'N/A';
         }
 
-        // Exibir agendamentos
         this.preencherAgendamentos(detalhes.agendamentos);
 
-        // Exibir movimentações
         this.preencherMovimentacoes(detalhes.movimentacoes);
 
-        // Mostrar conteúdo
         this.mostrarConteudo();
     }
 
-    /**
-     * Preenche a lista de agendamentos
-     * @param {Array} agendamentos - Lista de agendamentos
-     */
     preencherAgendamentos(agendamentos) {
         const container = document.getElementById('reverterAgendamentosContainer');
         const lista = document.getElementById('reverterAgendamentosList');
@@ -266,7 +195,6 @@ class ConciliacaoReversao {
         }
 
         if (container) container.style.display = 'block';
-        console.log(agendamentos)
         if (lista) {
             lista.innerHTML = agendamentos.map(agendamento => `
                 <tr>
@@ -279,10 +207,6 @@ class ConciliacaoReversao {
         }
     }
 
-    /**
-     * Preenche a lista de movimentações
-     * @param {Array} movimentacoes - Lista de movimentações
-     */
     preencherMovimentacoes(movimentacoes) {
         const container = document.getElementById('reverterMovimentacoesContainer');
         const lista = document.getElementById('reverterMovimentacoesList');
@@ -305,17 +229,10 @@ class ConciliacaoReversao {
         }
     }
 
-    /**
-     * Exibe erro no carregamento dos detalhes
-     * @param {string} mensagem - Mensagem de erro
-     */
     exibirErroCarregamento(mensagem) {
         this.mostrarErro(mensagem || 'Erro ao carregar detalhes da conciliação');
     }
 
-    /**
-     * Confirma e processa a reversão da conciliação
-     */
     async confirmarReversao() {
         if (!this.transacaoParaReverter) {
             console.error('[ReversaoOFX] Nenhuma transação selecionada para reversão');
@@ -338,7 +255,6 @@ class ConciliacaoReversao {
         }
 
         try {
-            console.log('[ReversaoOFX] Processando reversão da transação:', this.transacaoParaReverter.id);
 
             const response = await fetch('/api/reverter-conciliacao', {
                 method: 'POST',
@@ -368,36 +284,23 @@ class ConciliacaoReversao {
         }
     }
 
-    /**
-     * Exibe sucesso da reversão
-     * @param {string} mensagem - Mensagem de sucesso
-     */
     exibirSucessoReversao(mensagem) {
-        console.log('[ReversaoOFX] Reversão processada com sucesso');
 
-        // Fechar modal atual
         if (this.modalReversao) {
             this.modalReversao.hide();
         }
 
-        // Mostrar modal de sucesso
         const modalSucesso = new bootstrap.Modal(document.getElementById('modal-reversao-sucesso'));
         modalSucesso.show();
 
-        // Recarregar página após 2 segundos
         setTimeout(() => {
             window.location.reload();
         }, 2000);
     }
 
-    /**
-     * Exibe erro na reversão
-     * @param {string} mensagem - Mensagem de erro
-     */
     exibirErroReversao(mensagem) {
         console.error('[ReversaoOFX] Erro na reversão:', mensagem);
 
-        // Reabilitar botão
         const btnConfirmar = document.getElementById('btnConfirmarReversao');
         if (btnConfirmar) {
             btnConfirmar.disabled = false;
@@ -412,41 +315,28 @@ class ConciliacaoReversao {
             `;
         }
 
-        // Atualizar mensagem no modal de erro e exibir
         const mensagemErro = document.getElementById('mensagem-erro-reversao');
         if (mensagemErro) {
             mensagemErro.textContent = mensagem;
         }
 
-        // Mostrar modal de erro
         const modalErro = new bootstrap.Modal(document.getElementById('modal-reversao-erro'));
         modalErro.show();
     }
 
-    /**
-     * Mostra toast de notificação
-     * @param {string} tipo - Tipo do toast (success, error, warning, info)
-     * @param {string} mensagem - Mensagem a ser exibida
-     */
     mostrarToast(tipo, mensagem) {
-        // Usar função global se disponível
+        
         if (window.mostrarToast) {
             window.mostrarToast(tipo, mensagem);
             return;
         }
 
-        // Fallback simples
-        console.log(`[ReversaoOFX] Toast ${tipo}:`, mensagem);
         alert(`${tipo.toUpperCase()}: ${mensagem}`);
     }
 
-    /**
-     * Limpa dados do modal quando fechado
-     */
     limparDadosModal() {
         this.transacaoParaReverter = null;
 
-        // Limpar elementos do modal
         const elementos = ['reverterDataTransacao', 'reverterValorTransacao', 'reverterDescricaoTransacao', 'reverterFitidTransacao'];
         elementos.forEach(id => {
             const elemento = document.getElementById(id);
@@ -455,13 +345,11 @@ class ConciliacaoReversao {
             }
         });
 
-        // Resetar checkbox
         const checkbox = document.getElementById('confirmarReversao');
         if (checkbox) {
             checkbox.checked = false;
         }
 
-        // Esconder containers
         const containers = ['reverterAgendamentosContainer', 'reverterMovimentacoesContainer', 'reverterObservacoesContainer'];
         containers.forEach(id => {
             const container = document.getElementById(id);
@@ -472,12 +360,10 @@ class ConciliacaoReversao {
     }
 }
 
-// Inicializar quando DOM estiver carregado
 document.addEventListener('DOMContentLoaded', function() {
-    // Criar instância global do gerenciador
+    
     window.conciliacaoReversao = new ConciliacaoReversao();
     
-    // Função global para compatibilidade com template
     window.abrirModalReversao = function(transacaoId, fitid, valorFormatado, dataTransacao) {
         if (window.conciliacaoReversao) {
             window.conciliacaoReversao.abrirModalReversao(transacaoId, fitid, valorFormatado, dataTransacao);
@@ -486,5 +372,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    console.log('[ReversaoOFX] Sistema de reversão inicializado com sucesso');
 });

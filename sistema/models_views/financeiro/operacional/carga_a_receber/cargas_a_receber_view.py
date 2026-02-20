@@ -21,26 +21,20 @@ def listagem_faturamentos_cargas_a_receber():
     Lista todos os faturamentos realizados no sistema.
     """
     try:
-        # Obter parâmetros de filtro
         beneficiario = request.args.get('beneficiario', type=int)
         situacao_faturamento = request.args.get('situacaoFaturamento', type=int)
         
-        # Se não há nenhum parâmetro na URL (acesso inicial), definir padrão como "não categorizado" (situação 7)
         if not request.args:
             situacao_faturamento = 7
-        # Se há parâmetros mas situacaoFaturamento está vazio/None, significa "Todos"
         elif 'situacaoFaturamento' in request.args and not situacao_faturamento:
             situacao_faturamento = None
 
         
-         # Obter faturamentos com base nos filtros utilizando o método do modelo
         faturamentos = FaturamentoModel.filtrar_a_receber_faturamentos(beneficiario, situacao_faturamento)
         
-        # Obter situações de faturamento
         situacoes_faturamento = SituacaoPagamentoModel.listar_situacoes_faturamento()
         beneficiarios = PessoaFinanceiroModel.listar_pessoas_ativas()
         
-        # Adicionar informação do usuário a cada faturamento
         for faturamento in faturamentos:
             if faturamento.usuario_id:
                 usuario = UsuarioModel.query.get(faturamento.usuario_id)
@@ -55,7 +49,6 @@ def listagem_faturamentos_cargas_a_receber():
         )
         
     except Exception as e:
-        print(f"[ERROR listagem_faturamentos_cargas_a_pagar] {e}")
         flash(("Erro ao carregar listagem de faturamentos! Contate o suporte.", "error"))
         return redirect(url_for("listagem_faturamentos_cargas_a_pagar"))
 
@@ -74,16 +67,13 @@ def detalhes_faturamento_cargas_a_receber_ajax(id):
             
         detalhes = faturamento.obter_detalhes()
         
-        # Buscar informações do usuário
         usuario = UsuarioModel.query.get(faturamento.usuario_id) if faturamento.usuario_id else None
         
-        # Formatar valores monetários
         def formatar_valor(valor_centavos):
             if valor_centavos is None:
                 return "R$ 0,00"
             return f"R$ {valor_centavos / 100:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         
-        # Preparar dados do faturamento
         dados_faturamento = {
             "codigo_faturamento": faturamento.codigo_faturamento,
             "data_cadastro": faturamento.data_cadastro.strftime("%d/%m/%Y %H:%M") if faturamento.data_cadastro else "",
@@ -103,7 +93,6 @@ def detalhes_faturamento_cargas_a_receber_ajax(id):
         }
     
         
-        # Formatar detalhes dos fornecedores
         cargas_a_receber_formatadas = []
         for carga in detalhes.get("cargas_a_receber", []):
             carga_formatada = {
@@ -127,7 +116,6 @@ def detalhes_faturamento_cargas_a_receber_ajax(id):
             }
             cargas_a_receber_formatadas.append(carga_formatada)
 
-        # Formatar detalhes das NFs complementares
         nfs_complementares_formatadas = []
         for nf in detalhes.get("nf_complementar", []):
             nf_formatada = {
@@ -142,7 +130,6 @@ def detalhes_faturamento_cargas_a_receber_ajax(id):
             }
             nfs_complementares_formatadas.append(nf_formatada)
 
-        # Formatar detalhes das NFs de Serviço
         nfs_servico_formatadas = []
         for nf in detalhes.get("nf_servico", []):
             nf_formatada = {
@@ -164,7 +151,6 @@ def detalhes_faturamento_cargas_a_receber_ajax(id):
         })
         
     except Exception as e:
-        print(f"[ERROR detalhes_faturamento_ajax] {e}")
         return jsonify({"erro": "Erro interno do servidor"}), 500
 
 
@@ -178,7 +164,6 @@ def obter_registros_operacionais_nf_complementar(nf_id):
     try:
         from sistema.models_views.faturamento.cargas_a_receber.nf_complementar.nf_complementar_model import NfComplementarModel
         
-        # Buscar a NF complementar
         nf_complementar = NfComplementarModel.obter_por_id(nf_id)
         
         if not nf_complementar:
@@ -186,7 +171,6 @@ def obter_registros_operacionais_nf_complementar(nf_id):
         
         registros_operacionais = []
         
-        # Buscar registros operacionais dos detalhes da NF complementar
         if nf_complementar.nf_complementar_detalhes and 'registros_operacionais' in nf_complementar.nf_complementar_detalhes:
             registro_ids = [item['registro_id'] for item in nf_complementar.nf_complementar_detalhes['registros_operacionais']]
             if registro_ids:
@@ -214,7 +198,6 @@ def obter_registros_operacionais_nf_complementar(nf_id):
         })
         
     except Exception as e:
-        print(f"[ERROR obter_registros_operacionais_nf_complementar] {e}")
         return jsonify({"erro": "Erro interno do servidor"}), 500
 
 
@@ -224,34 +207,26 @@ def obter_registros_operacionais_nf_complementar(nf_id):
 def exportar_faturamento_cargas_a_receber_pdf(faturamento_id):
     """Gera PDF do faturamento com opções de ocultação"""
     try:
-        # Buscar faturamento
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
-        # Processar dados do faturamento (reutilizar função existente)
         dados_processados = processar_dados_faturamento(faturamento)
         
-        # Dados adicionais para o template
         dados_extras = {
             'logo_path': obter_url_absoluta_de_imagem("logo.png"),
             'data_geracao': datetime.now().strftime('%d/%m/%Y %H:%M'),
             'usuario_geracao': current_user.nome if hasattr(current_user, 'nome') else 'Sistema'
         }
         
-        # Combinar todos os dados
         dados_template = {**dados_processados, **dados_extras}
 
-        # Renderizar template HTML
         html = render_template('financeiro/operacional/cargas_a_receber/relatorio_faturamento/relatorio_faturamento.html', **dados_template)
 
-        # Gerar nome do arquivo
         codigo_fat = faturamento.codigo_faturamento
         nome_arquivo = f"Faturamento_{codigo_fat}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Gerar PDF
         return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo, orientacao="Portrait", abrir_em_nova_aba=True)
         
     except Exception as e:
-        print(f"[ERROR exportar_faturamento_pdf] {e}")
         flash((f"Erro ao gerar PDF do faturamento! Contate o suporte. {e}", "error"))
         return redirect(url_for("listagem_faturamentos_cargas_a_receber"))
     
@@ -261,33 +236,26 @@ def exportar_faturamento_cargas_a_receber_pdf(faturamento_id):
 def exportar_faturamento_cargas_a_receber_imagem(faturamento_id):
     """Gera imagem JPG do faturamento com opções de ocultação"""
     try:
-        # Buscar faturamento
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
         dados_processados = processar_dados_faturamento(faturamento)
         
-        # Dados adicionais para o template
         dados_extras = {
             'logo_path': obter_url_absoluta_de_imagem("logo.png"),
             'data_geracao': datetime.now().strftime('%d/%m/%Y %H:%M'),
             'usuario_geracao': current_user.nome if hasattr(current_user, 'nome') else 'Sistema'
         }
         
-        # Combinar todos os dados
         dados_template = {**dados_processados, **dados_extras}
 
-        # USAR O MESMO TEMPLATE DO PDF
         html = render_template('financeiro/operacional/cargas_a_receber/relatorio_faturamento/relatorio_faturamento_imagem.html', **dados_template)
 
-        # Gerar nome do arquivo
         codigo_fat = faturamento.codigo_faturamento
         nome_arquivo = f"Faturamento_{codigo_fat}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Gerar IMAGEM ao invés de PDF
         return ManipulacaoArquivos.gerar_imagem_from_html(html, nome_arquivo, largura=1400)
         
     except Exception as e:
-        print(f"[ERROR exportar_faturamento_imagem] {e}")
         flash((f"Erro ao gerar imagem do faturamento! Contate o suporte. {e}", "error"))
         return redirect(url_for("listagem_faturamentos_cargas_a_receber"))
  
@@ -302,48 +270,38 @@ def excluir_faturamento_a_receber(faturamento_id):
     faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
     
     try:
-        # Verificar se o faturamento possui situação 6 (não pode ser excluído)
         if faturamento.situacao_pagamento_id == 6:
             flash(('Não é possível excluir este faturamento pois ele possui situação que não permite exclusão.', 'error'))
             return redirect(url_for('listagem_faturamentos_cargas_a_receber'))
         
-        # Buscar todos os agendamentos relacionados ao faturamento
         agendamentos = AgendamentoPagamentoModel.query.filter_by(
             faturamento_id=faturamento_id
         ).all()
         
-        # Verificar se algum agendamento possui situação 1 (não pode ser excluído)
         agendamentos_situacao_1 = [ag for ag in agendamentos if ag.situacao_pagamento_id == 1]
         if agendamentos_situacao_1:
             flash(('Não é possível excluir este faturamento pois possui agendamentos com situação que não permite exclusão.', 'error'))
             return redirect(url_for('listagem_faturamentos_cargas_a_receber'))
         
-        # Atualizar situação de todos os agendamentos para deletado/inativo
         for agendamento in agendamentos:
             agendamento.ativo = False
             agendamento.deletado = True
 
-        # Processar cargas a receber para alterar situação dos registros operacionais
         if faturamento.detalhes_json:
             try:
-                # Verificar se detalhes_json já é um dicionário ou string JSON
                 if isinstance(faturamento.detalhes_json, dict):
                     detalhes = faturamento.detalhes_json
                 else:
                     detalhes = json.loads(faturamento.detalhes_json)
                 
-                # Processar cargas a receber
                 cargas_a_receber = detalhes.get('cargas_a_receber', [])
                 for carga_data in cargas_a_receber:
                     registro_operacional_id = carga_data.get('registro_operacional_id')
                     if registro_operacional_id:
-                        # Buscar registro operacional
                         registro = RegistroOperacionalModel.query.get(registro_operacional_id)
                         if registro:
-                            # Alterar situação para 2 (pendente)
                             registro.situacao_financeira_id = 2
                 
-                # Processar NFs complementares
                 nfs_complementares = detalhes.get('nf_complementar', [])
                 for nf_data in nfs_complementares:
                     nf_complementar_id = nf_data.get('nf_complementar_id')
@@ -352,12 +310,10 @@ def excluir_faturamento_a_receber(faturamento_id):
                             from sistema.models_views.faturamento.cargas_a_receber.nf_complementar.nf_complementar_model import NfComplementarModel
                             nf_complementar = NfComplementarModel.obter_por_id(nf_complementar_id)
                             if nf_complementar:
-                                # Alterar situação para 2 (pendente)
                                 nf_complementar.situacao_financeira_id = 2
                         except Exception as e:
-                            print(f"[ERROR] Erro ao atualizar NF complementar {nf_complementar_id}: {e}")
+                            pass
                 
-                # Processar NFs de serviço
                 nfs_servico = detalhes.get('nf_servico', [])
                 for nf_data in nfs_servico:
                     nf_servico_id = nf_data.get('nf_servico_id')
@@ -366,16 +322,13 @@ def excluir_faturamento_a_receber(faturamento_id):
                             from sistema.models_views.faturamento.cargas_a_receber.nf_servico.nf_servico_model import NfServicoModel
                             nf_servico = NfServicoModel.obter_por_id(nf_servico_id)
                             if nf_servico:
-                                # Alterar situação para 2 (pendente)
                                 nf_servico.situacao_financeira_id = 2
                         except Exception as e:
-                            print(f"[ERROR] Erro ao atualizar NF serviço {nf_servico_id}: {e}")
+                            pass
                 
             except (json.JSONDecodeError, TypeError) as e:
-                print(f"[ERROR] Erro ao processar detalhes do faturamento: {e}")
                 pass
         
-        # Marcar faturamento como excluído (ativo=False, deletado=True)
         faturamento.ativo = False
         faturamento.deletado = True
         
@@ -393,36 +346,29 @@ def excluir_faturamento_a_receber(faturamento_id):
 def processar_dados_faturamento(faturamento):
     """Processa dados do faturamento para uso nos templates"""
     
-    # Obter detalhes do faturamento
     try:
         detalhes = faturamento.obter_detalhes()
     except:
         detalhes = {}
     
-    # Processar detalhes JSON se existir (fallback)
     if not detalhes and faturamento.detalhes_json:
         try:
             detalhes = json.loads(faturamento.detalhes_json)
         except:
             detalhes = {}
     
-    # Obter informações do usuário
     usuario = UsuarioModel.query.get(faturamento.usuario_id) if faturamento.usuario_id else None
     
-    # Calcular período quinzenal baseado nas datas de entrega dos registros
     todas_datas = []
     
-    # Coletar todas as datas de entrega das cargas a receber
     cargas_a_receber = detalhes.get('cargas_a_receber', [])
     for carga in cargas_a_receber:
         data_entrega = carga.get('data_entrega')
         if data_entrega and data_entrega != '-':
             todas_datas.append(data_entrega)
     
-    # Determinar o período quinzenal
     periodo_quinzenal = DataHora.obter_periodo_quinzenal(todas_datas) if todas_datas else None
     
-    # Dados básicos do faturamento
     dados = {
         'faturamento': {
             "codigo_faturamento": faturamento.codigo_faturamento,
@@ -431,54 +377,47 @@ def processar_dados_faturamento(faturamento):
             "valor_total": faturamento.valor_total,
             "valor_bruto_total": faturamento.valor_bruto_total,
             "valor_credito_aplicado": faturamento.valor_credito_aplicado,
-            "valor_cargas_a_receber": faturamento.valor_total,  # Para cargas a receber, o valor total é o valor das cargas
+            "valor_cargas_a_receber": faturamento.valor_total,
             "utilizou_credito": faturamento.utilizou_credito,
             "situacao": faturamento.situacao.situacao if faturamento.situacao else "Pendente",
             "periodo_quinzenal": periodo_quinzenal
         }
     }
     
-    # Processar cargas a receber (clientes)
     cargas_a_receber = detalhes.get('cargas_a_receber', [])
     cargas_agrupadas = agrupar_clientes_pdf(cargas_a_receber)
     dados['cargas_a_receber'] = cargas_agrupadas
     dados['total_cargas_a_receber'] = len(cargas_a_receber)
     
-    # Processar NFs complementares
     nfs_complementares = detalhes.get('nf_complementar', [])
     nfs_agrupadas = agrupar_nfs_complementares_pdf(nfs_complementares)
     dados['nfs_complementares'] = nfs_agrupadas
     dados['total_nfs_complementares'] = len(nfs_complementares)
     
-    # Processar NFs de Serviço
     nfs_servico = detalhes.get('nf_servico', [])
     nfs_servico_agrupadas = agrupar_nfs_servico_pdf(nfs_servico)
     dados['nfs_servico'] = nfs_servico_agrupadas
     dados['total_nfs_servico'] = len(nfs_servico)
     
-    # Opções padrão (podem ser customizadas posteriormente)
     dados['opcoes'] = {
         'ocultar_cliente': False,
-        'ocultar_fornecedores': True,  # Para cargas a receber, não mostramos fornecedores
-        'ocultar_transportadoras': True,  # Para cargas a receber, não mostramos transportadoras
+        'ocultar_fornecedores': True,
+        'ocultar_transportadoras': True,
         'ocultar_receitas_avulsas': True,
         'ocultar_despesas_avulsas': True,
     }
     
-    # Calcular total de toneladas somando todos os peso_ticket das cargas a receber
     total_toneladas = 0.0
     for carga in cargas_a_receber:
         peso = carga.get('peso_ticket', 0)
         if peso:
             try:
-                # Converter para float se for string
                 if isinstance(peso, str):
                     peso = float(peso.replace(',', '.'))
                 total_toneladas += float(peso)
             except (ValueError, TypeError):
-                pass  # Ignorar valores inválidos
+                pass
     
-    # Somar também toneladas das NFs complementares (registros operacionais)
     for nf_grupo in nfs_agrupadas.values():
         for registro in nf_grupo.get('registros_operacionais', []):
             peso = registro.get('peso_liquido_ticket', 0)
@@ -506,7 +445,6 @@ def agrupar_clientes_pdf(cargas_a_receber):
         nome_cliente = carga.get('cliente', 'Não informado')
         valor_faturado = carga.get('valor_faturado', 0)
         
-        # Garantir que o valor seja numérico (em centavos)
         if isinstance(valor_faturado, str):
             valor_faturado = 0
         
@@ -525,7 +463,6 @@ def agrupar_nfs_servico_pdf(nfs_servico):
         nome_cliente = nf_data.get('cliente', 'Não informado')
         valor_nf = nf_data.get('valor_total', 0)
         
-        # Garantir que o valor seja numérico (já em centavos)
         if isinstance(valor_nf, str):
             valor_nf = 0
         
@@ -545,11 +482,9 @@ def agrupar_nfs_complementares_pdf(nfs_complementares):
         nome_cliente = nf_data.get('cliente', 'Não informado')
         valor_nf = nf_data.get('valor_total_nota_100', 0)
         
-        # Garantir que o valor seja numérico (já em centavos)
         if isinstance(valor_nf, str):
             valor_nf = 0
         
-        # Buscar registros operacionais da NF complementar
         nf_id = nf_data.get('nf_complementar_id')
         registros_operacionais = []
         
@@ -578,9 +513,8 @@ def agrupar_nfs_complementares_pdf(nfs_complementares):
                             }
                             registros_operacionais.append(registro_formatado)
             except Exception as e:
-                print(f"[ERROR] Erro ao buscar registros operacionais da NF {nf_id}: {e}")
+                pass
         
-        # Adicionar dados da NF com registros operacionais
         nf_completa = {**nf_data, 'registros_operacionais': registros_operacionais}
         
         grupos[nome_cliente]['nfs'].append(nf_completa)
@@ -599,11 +533,9 @@ def agrupar_nfs_servico_pdf(nfs_servico):
         nome_cliente = nf_data.get('cliente', 'Não informado')
         valor_nf = nf_data.get('valor_total', 0)
         
-        # Garantir que o valor seja numérico (já em centavos)
         if isinstance(valor_nf, str):
             valor_nf = 0
         
-        # Usar os campos que realmente temos nas NFs de serviço
         nf_formatada = {
             'numero_nf': nf_data.get('numero_nf', '-'),
             'data_emissao': nf_data.get('data_emissao', '-'),

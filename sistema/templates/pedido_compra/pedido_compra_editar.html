@@ -3,7 +3,7 @@
 {% include 'estrutura/header.html' %}
 
 <div class="page-wrapper">
-  <!-- Cabeçalho da página -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
@@ -16,10 +16,9 @@
           </h2>
         </div>
         
-        <!-- Botões de ação -->
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="btn-list">
-            <!-- Botão voltar -->
+            
             <a href="{{ url_for('listar_pedidos_compra') }}" class="btn btn-outline-secondary">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -30,7 +29,6 @@
               Voltar
             </a>
             
-            <!-- Botão exportar PDF -->
             <a href="{{ url_for('exportar_pedido_compra_pdf', id=pedido.id) }}" class="btn btn-outline-danger" target="_blank">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -41,7 +39,6 @@
               PDF
             </a>
             
-            <!-- Botão exportar Excel -->
             <a href="{{ url_for('exportar_pedido_compra_excel', id=pedido.id) }}" class="btn btn-outline-success">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -59,12 +56,10 @@
     </div>
   </div>
 
-  <!-- Corpo da página -->
   <div class="page-body">
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
       
-      <!-- Informações do pedido -->
       <div class="card mb-3">
         <div class="card-body">
           <div class="row">
@@ -85,10 +80,9 @@
         </div>
       </div>
 
-      <!-- Formulário de edição agrupado por fornecedor -->
       <form action="{{ url_for('editar_pedido_compra', id=pedido.id) }}" method="POST" id="form-pedido-compra">
         {% if itens_agrupados and itens_agrupados|length > 0 %}
-        <!-- Accordion agrupado por fornecedor -->
+        
         <div class="accordion" id="fornecedoresAccordion">
           {% for fornecedor_id, itens_do_fornecedor in itens_agrupados.items() %}
           {% set fornecedor = itens_do_fornecedor[0].fornecedor if itens_do_fornecedor[0].fornecedor else None %}
@@ -147,24 +141,21 @@
                     <tbody class="tbody-itens-fornecedor" data-fornecedor-id="{{ fornecedor_id }}">
                       {% for item in itens_do_fornecedor %}
                       <tr class="item-row" data-index="{{ loop.index0 }}" data-item-id="{{ item.id }}" data-fornecedor-id="{{ fornecedor_id }}">
-                        <!-- ID oculto do item (para atualização) -->
+                        
                         <input type="hidden" name="item_id[]" value="{{ item.id }}">
-                        <!-- Fornecedor fixo (hidden) -->
+                        
                         <input type="hidden" name="fornecedor_id[]" value="{{ item.fornecedor_id }}">
                         
-                        <!-- Data Carga -->
                         <td>
                           <input type="date" class="form-control" name="data_carga[]" 
                                  value="{{ item.data_carga.strftime('%Y-%m-%d') if item.data_carga else '' }}" required>
                         </td>
                         
-                        <!-- Data Entrega -->
                         <td>
                           <input type="date" class="form-control" name="data_entrega[]" 
                                  value="{{ item.data_entrega.strftime('%Y-%m-%d') if item.data_entrega else '' }}" required>
                         </td>
                         
-                        <!-- Transportadora -->
                         <td>
                           <select class="form-select select-transportadora" name="transportadora_id[]">
                             <option value="">Selecione...</option>
@@ -176,7 +167,6 @@
                           </select>
                         </td>
                         
-                        <!-- Motorista -->
                         <td>
                           <select class="form-select select-motorista" name="motorista_id[]">
                             <option value="">Selecione...</option>
@@ -188,7 +178,6 @@
                           </select>
                         </td>
                         
-                        <!-- Placa (Veículo) -->
                         <td>
                           <select class="form-select select-veiculo" name="veiculo_id[]">
                             <option value="">Selecione...</option>
@@ -200,7 +189,6 @@
                           </select>
                         </td>
                         
-                        <!-- Extrator -->
                         <td>
                           <select class="form-select select-extrator" name="extrator_id[]">
                             <option value="">Selecione...</option>
@@ -212,7 +200,6 @@
                           </select>
                         </td>
                         
-                        <!-- Botão remover -->
                         <td>
                           <button type="button" class="btn btn-icon btn-outline-danger btn-remover-item" 
                                   title="Remover carga" data-item-id="{{ item.id }}">
@@ -241,7 +228,6 @@
         </div>
         {% endif %}
         
-        <!-- Rodapé com botões -->
         <div class="card mt-3">
           <div class="card-footer">
             <div class="row align-items-center">
@@ -269,7 +255,6 @@
         </div>
       </form>
       
-      <!-- Visualização removida pois agora é inline -->
       {% if False %}
       <div class="card mt-3">
         <div class="card-header">
@@ -331,7 +316,6 @@
   </div>
 </div>
 
-<!-- Modal de confirmação para excluir item -->
 <div class="modal modal-blur fade" id="modal-excluir-item" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -368,10 +352,6 @@
 </div>
 
 <script>
-/**
- * Script para gerenciar a edição de pedido de compra agrupado por fornecedor
- * Com Tom Select para campos de seleção com busca
- */
 
 document.addEventListener('DOMContentLoaded', function() {
     const botoesAdicionarFornecedor = document.querySelectorAll('.btn-adicionar-item-fornecedor');
@@ -381,11 +361,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let itemIndex = {{ pedido.contar_itens() }};
     let itemParaExcluir = null;
     
-    /**
-     * Inicializa Tom Select em um elemento select
-     */
     function inicializarTomSelect(select, placeholder = 'Selecione...') {
-        // Verifica se já tem Tom Select inicializado
+        
         if (select.tomselect) {
             return select.tomselect;
         }
@@ -400,9 +377,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    /**
-     * Inicializa Tom Select em todos os selects de uma linha (menos fornecedor que é fixo)
-     */
     function inicializarTomSelectsLinha(linha) {
         const selects = {
             transportadora: linha.querySelector('.select-transportadora'),
@@ -411,16 +385,12 @@ document.addEventListener('DOMContentLoaded', function() {
             extrator: linha.querySelector('.select-extrator')
         };
         
-        // Inicializa cada select
         if (selects.transportadora) inicializarTomSelect(selects.transportadora, 'Selecione a transportadora...');
         if (selects.motorista) inicializarTomSelect(selects.motorista, 'Selecione o motorista...');
         if (selects.veiculo) inicializarTomSelect(selects.veiculo, 'Selecione a placa...');
         if (selects.extrator) inicializarTomSelect(selects.extrator, 'Selecione o extrator...');
     }
     
-    /**
-     * Destrói Tom Select de todos os selects de uma linha
-     */
     function destruirTomSelectsLinha(linha) {
         linha.querySelectorAll('select').forEach(select => {
             if (select.tomselect) {
@@ -429,25 +399,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    /**
-     * Atualiza o contador de itens
-     */
     function atualizarContador() {
         const rows = document.querySelectorAll('.item-row');
         contador.textContent = rows.length;
     }
     
-    /**
-     * Atualiza os selects de motorista e veículo baseado na transportadora
-     */
     function atualizarMotoristaVeiculo(transportadoraId, selectMotorista, selectVeiculo) {
         if (transportadoraId) {
-            // Busca motoristas da transportadora via AJAX
+            
             fetch(`/pedido-compra/api/motoristas/${transportadoraId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.sucesso) {
-                        // Atualiza via Tom Select se existir
+                        
                         if (selectMotorista.tomselect) {
                             selectMotorista.tomselect.clear();
                             selectMotorista.tomselect.clearOptions();
@@ -460,12 +424,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             
-            // Busca veículos da transportadora via AJAX
             fetch(`/pedido-compra/api/veiculos/${transportadoraId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.sucesso) {
-                        // Atualiza via Tom Select se existir
+                        
                         if (selectVeiculo.tomselect) {
                             selectVeiculo.tomselect.clear();
                             selectVeiculo.tomselect.clearOptions();
@@ -480,9 +443,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    /**
-     * Configura filtro de transportadora para uma linha
-     */
     function configurarFiltroTransportadora(linha) {
         const selectTransportadora = linha.querySelector('.select-transportadora');
         const selectMotorista = linha.querySelector('.select-motorista');
@@ -490,7 +450,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!selectTransportadora) return;
         
-        // Usa o evento do Tom Select se existir
         if (selectTransportadora.tomselect) {
             selectTransportadora.tomselect.on('change', function(value) {
                 atualizarMotoristaVeiculo(value, selectMotorista, selectVeiculo);
@@ -502,9 +461,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    /**
-     * Adiciona nova linha de item em um fornecedor específico
-     */
     botoesAdicionarFornecedor.forEach(btn => {
         btn.addEventListener('click', function() {
             const fornecedorId = this.getAttribute('data-fornecedor-id');
@@ -512,14 +468,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (!tbody) return;
             
-            // Cria uma nova linha limpa usando template HTML
             const novaLinha = document.createElement('tr');
             novaLinha.className = 'item-row';
             novaLinha.setAttribute('data-index', itemIndex);
             novaLinha.setAttribute('data-fornecedor-id', fornecedorId);
             itemIndex++;
             
-            // HTML template da nova linha
             novaLinha.innerHTML = `
                 <input type="hidden" name="item_id[]" value="">
                 <input type="hidden" name="fornecedor_id[]" value="${fornecedorId}">
@@ -572,7 +526,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </td>
             `;
             
-            // Configura botão de remover
             const btnRemover = novaLinha.querySelector('.btn-remover-item');
             btnRemover.addEventListener('click', function() {
                 destruirTomSelectsLinha(novaLinha);
@@ -580,10 +533,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 atualizarContador();
             });
             
-            // Adiciona a nova linha na tabela
             tbody.appendChild(novaLinha);
             
-            // Inicializa Tom Select apenas na nova linha
             inicializarTomSelectsLinha(novaLinha);
             configurarFiltroTransportadora(novaLinha);
             
@@ -592,20 +543,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    /**
-     * Configura eventos de remover para itens existentes
-     */
     document.querySelectorAll('.btn-remover-item').forEach(btn => {
         btn.addEventListener('click', function() {
             const row = this.closest('.item-row');
             const itemId = this.getAttribute('data-item-id');
             
-            // Se é um item existente (tem ID), confirma antes de excluir
             if (itemId) {
                 itemParaExcluir = { row, itemId };
                 modalExcluir.show();
             } else {
-                // Item novo (ainda não salvo), pode remover direto
+                
                 destruirTomSelectsLinha(row);
                 row.remove();
                 atualizarContador();
@@ -613,15 +560,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    /**
-     * Confirma exclusão de item existente
-     */
     document.getElementById('btn-confirmar-excluir').addEventListener('click', function() {
         if (!itemParaExcluir) return;
         
         const { row, itemId } = itemParaExcluir;
         
-        // Chama API para excluir
         fetch(`/pedido-compra/item/excluir/${itemId}`, {
             method: 'POST',
             headers: {
@@ -647,13 +590,11 @@ document.addEventListener('DOMContentLoaded', function() {
         itemParaExcluir = null;
     });
     
-    // Inicializa Tom Select em todas as linhas existentes
     document.querySelectorAll('.item-row').forEach(linha => {
         inicializarTomSelectsLinha(linha);
         configurarFiltroTransportadora(linha);
     });
     
-    // Validação do formulário
     document.getElementById('form-pedido-compra').addEventListener('submit', function(e) {
         const rows = document.querySelectorAll('.item-row');
         

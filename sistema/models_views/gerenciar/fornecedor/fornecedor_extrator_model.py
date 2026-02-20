@@ -10,7 +10,6 @@ class FornecedorExtratorModel(BaseModel):
     __tablename__ = 'for_fornecedor_extrator'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     
-    # Relacionamentos
     fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id", ondelete="CASCADE"), nullable=False)
     fornecedor = db.relationship("FornecedorCadastroModel", backref=db.backref("extratores_vinculados", lazy=True))
     

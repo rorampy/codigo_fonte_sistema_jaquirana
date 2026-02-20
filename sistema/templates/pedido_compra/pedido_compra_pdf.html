@@ -189,7 +189,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table>
       <tr>
@@ -206,7 +206,6 @@
 
   <div class="relatorio-title">Pedido de Compra - Escala de Cargas</div>
 
-  <!-- Dados do Pedido -->
   <div class="section-title">DADOS DO PEDIDO</div>
   <div class="info-faturamento">
     <div class="simple-info">
@@ -231,18 +230,16 @@
     </div>
   </div>
 
-  <!-- Seções por fornecedor -->
   {% if itens_agrupados and itens_agrupados|length > 0 %}
     {% for fornecedor_id, itens_do_fornecedor in itens_agrupados.items() %}
     {% set fornecedor = itens_do_fornecedor[0].fornecedor if itens_do_fornecedor[0].fornecedor else None %}
     
     <div class="fornecedor-section">
-      <!-- Título do Fornecedor -->
+      
       <div class="section-title">
         {{ fornecedor.identificacao if fornecedor else 'Sem Fornecedor Definido' }}
       </div>
       
-      <!-- Tabela de itens do fornecedor -->
       <table>
         <thead>
           <tr>
@@ -281,7 +278,6 @@
     </div>
   {% endif %}
 
-  <!-- Total Geral -->
   <div class="section-title">RESUMO FINAL</div>
   <table>
     <tr class="total-principal">

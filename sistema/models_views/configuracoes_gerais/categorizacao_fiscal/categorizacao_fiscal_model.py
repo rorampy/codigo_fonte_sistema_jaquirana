@@ -13,12 +13,11 @@ class CategorizacaoFiscalModel(BaseModel):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     codigo = db.Column(db.String(20), unique=True, nullable=False, index=True)
     nome = db.Column(db.String(255), nullable=False)
-    tipo = db.Column(db.Integer, nullable=False)  # 1=Receita, 2=Despesa, 3=Movimentação
-    nivel = db.Column(db.Integer, nullable=False, default=1)  # 1=Principal, 2=Sub, 3=SubSub
+    tipo = db.Column(db.Integer, nullable=False)
+    nivel = db.Column(db.Integer, nullable=False, default=1)
     parent_id = db.Column(db.Integer, db.ForeignKey('ca_categorizacao_fiscal.id'), nullable=True)
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
-    # Relacionamentos
     parent = relationship("CategorizacaoFiscalModel", remote_side=[id], backref="children")
     
     def __init__(self, codigo=None, nome=None, tipo=None, parent_id=None, nivel=1, ativo=True):
@@ -80,7 +79,6 @@ class CategorizacaoFiscalModel(BaseModel):
             return None
         
         if '.' not in parent_code:
-            # Para subcategorias (1.01, 1.02, etc.)
             subcategorias = cls.query.filter(
                 cls.codigo.like(f"{parent_code}.%"),
                 ~cls.codigo.like(f"{parent_code}.%.%"),
@@ -90,7 +88,6 @@ class CategorizacaoFiscalModel(BaseModel):
             if not subcategorias:
                 return f"{parent_code}.01"
             
-            # Extrair números das subcategorias ativas
             numeros = []
             for sub in subcategorias:
                 try:
@@ -99,7 +96,6 @@ class CategorizacaoFiscalModel(BaseModel):
                 except (IndexError, ValueError):
                     continue
             
-            # Encontrar próximo número disponível
             proximo = 1
             while proximo in numeros:
                 proximo += 1
@@ -115,7 +111,6 @@ class CategorizacaoFiscalModel(BaseModel):
             if not sub_subcategorias:
                 return f"{parent_code}.01"
             
-            # Extrair números das sub-subcategorias ativas
             numeros = []
             for subsub in sub_subcategorias:
                 try:
@@ -126,7 +121,6 @@ class CategorizacaoFiscalModel(BaseModel):
                 except (IndexError, ValueError):
                     continue
             
-            # Encontrar próximo número disponível
             proximo = 1
             while proximo in numeros:
                 proximo += 1
@@ -198,12 +192,10 @@ class CategorizacaoFiscalModel(BaseModel):
         Returns:
             None
         """
-        # Excluir filhos recursivamente
         filhos = self.get_children_ordenados()
         for filho in filhos:
             filho.soft_delete()
         
-        # Excluir esta categoria
         self.ativo = False
         db.session.commit()
 
@@ -244,22 +236,18 @@ def criar_categoria_com_tratamento_duplicacao(codigo, nome, tipo, parent_id=None
         Exception: Se ocorrer erro durante criação/reativação
     """
     try:
-        # Verificar se código já existe como registro ativo
         categoria_existente = CategorizacaoFiscalModel.buscar_por_codigo(codigo)
         if categoria_existente:
             raise ValueError(f"Código {codigo} já existe e está ativo")
         
-        # Verificar se existe registro inativo com mesmo código
         categoria_inativa = CategorizacaoFiscalModel.query.filter_by(codigo=codigo, ativo=False).first()
         
         if categoria_inativa:
-            # Reativar categoria existente
-            categoria_inativa.nome = nome  # Atualizar nome
+            categoria_inativa.nome = nome
             categoria_inativa.ativo = True
             db.session.commit()
             return categoria_inativa
         else:
-            # Criar nova categoria
             nova_categoria = CategorizacaoFiscalModel(
                 codigo=codigo,
                 nome=nome,

@@ -48,7 +48,6 @@
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
 
-      <!-- Cards de Informações -->
       <div class="row row-cards mb-4">
         <div class="col-md-6 col-lg-4">
           <div class="card border shadow-lg rounded-3" style="border-color: #335B45 !important;">
@@ -110,7 +109,6 @@
         </div>
       </div>
 
-      <!-- Extrato de Movimentações Bancárias -->
       <div class="row mt-4">
         <div class="col">
           <div class="card shadow-sm border-0 rounded-3">
@@ -493,7 +491,6 @@
     </div>
   </div>
 
-  <!-- Modal para Customizar Conta Bancária -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document" style="display: grid;">
       <form id="filtroForm" method="get">
@@ -537,7 +534,6 @@
     </div>
   </div>
 
-  <!-- Modal para Filtros do Extrato -->
   <div class="modal modal-blur fade" id="modal-filtros-extrato" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
       <form id="filtroExtratoForm" method="get">
@@ -555,7 +551,7 @@
           </div>
           <div class="modal-body">
             <div class="row g-3">
-              <!-- Conta Bancária -->
+              
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Conta Bancária</label>
                 <select class="form-select" name="conta_bancaria_id">
@@ -569,7 +565,6 @@
                 </select>
               </div>
 
-              <!-- Tipo de Movimentação -->
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Tipo de Movimentação</label>
                 <select class="form-select" name="tipo_movimentacao">
@@ -579,31 +574,26 @@
                 </select>
               </div>
 
-              <!-- Data Inicial -->
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Data Inicial</label>
                 <input type="date" class="form-control" name="data_inicial">
               </div>
 
-              <!-- Data Final -->
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Data Final</label>
                 <input type="date" class="form-control" name="data_final">
               </div>
 
-              <!-- Valor Mínimo -->
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Valor Mínimo</label>
                 <input type="text" class="form-control campo-moeda-brl" name="valor_minimo" placeholder="R$ 0,00">
               </div>
 
-              <!-- Valor Máximo -->
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Valor Máximo</label>
                 <input type="text" class="form-control campo-moeda-brl" name="valor_maximo" placeholder="R$ 0,00">
               </div>
 
-              <!-- Status Conciliação -->
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Status de Conciliação</label>
                 <select class="form-select" name="status_conciliacao">
@@ -613,7 +603,6 @@
                 </select>
               </div>
 
-              <!-- Ordenação -->
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Ordenar Por</label>
                 <select class="form-select" name="ordenacao">
@@ -644,23 +633,15 @@
     </div>
   </div>
 
-
-
   <script>
     document.getElementById('selectConta').addEventListener('change', () => {
       document.getElementById('filtroForm').submit();
     });
 
-
-
-
-
-    // Inicializar máscaras de moeda nos campos de filtro
     document.addEventListener('DOMContentLoaded', function() {
       const camposMoeda = document.querySelectorAll('.campo-moeda-brl');
       camposMoeda.forEach(campo => {
-        // Aplicar máscara de moeda brasileira (se você tiver uma função para isso)
-        // Por exemplo, usando uma biblioteca como IMask ou similar
+        
       });
     });
   </script>

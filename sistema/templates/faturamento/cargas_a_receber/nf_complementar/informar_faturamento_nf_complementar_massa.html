@@ -19,7 +19,6 @@
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
 
-      <!-- Cards de resumo -->
       <div class="row row-cards mb-4">
         <div class="col-md-6 col-lg-4">
           <div class="card border shadow-lg rounded-3">
@@ -93,12 +92,9 @@
         </div>
       </div>
 
-
-      <!-- Formulário de confirmação -->
       <form action="{{ url_for('informar_faturamento_nf_complementar_massa') }}" method="POST" enctype="multipart/form-data" id="form-recebimento">
         <input type="hidden" name="ids_registros" value="{{ ids_selecionados }}">
 
-        <!-- Seção detalhada dos registros por cliente -->
         <div class="card shadow-sm border-0 rounded-3 mb-4">
           <div class="card-header bg-light fw-bold">
             NFs Complementares Selecionadas para Faturamento
@@ -123,7 +119,7 @@
               </div>
 
               {% for registro in dados_cliente.registros %}
-              <!-- Informações básicas da NF Complementar -->
+              
               <div class="card mb-3 border-light">
                 <div class="card-header bg-light">
                   <div class="row align-items-center">
@@ -140,7 +136,6 @@
                   </div>
                 </div>
                 
-                <!-- Tabela com registros operacionais -->
                 {% if registro.registros_operacionais %}
                 <div class="card-body p-0">
                   <div class="table-responsive">
@@ -250,7 +245,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Aplica a máscara de moeda se necessário
+      
       if (typeof aplicarMascaraMoeda === 'function') {
         aplicarMascaraMoeda();
       }
@@ -262,7 +257,6 @@
         });
       }
 
-      console.log('NFs Complementares carregadas para faturamento em massa');
     });
   </script>
 

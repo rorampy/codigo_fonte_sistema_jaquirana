@@ -99,9 +99,9 @@
             {% include 'estrutura/mensagens_flash.html' %}
 
             <div class="row">
-                <!-- Informações Principais -->
+                
                 <div class="col-md-8">
-                    <!-- Card Principal -->
+                    
                     <div class="card">
                         <div class="card-header">
                             <div class="row align-items-center">
@@ -113,7 +113,7 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <!-- Descrição -->
+                            
                             {% if certificacao.descricao %}
                             <div class="mb-4">
                                 <h4 class="text-muted mb-2">Descrição</h4>
@@ -121,7 +121,6 @@
                             </div>
                             {% endif %}
 
-                            <!-- Informações Detalhadas -->
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
@@ -157,7 +156,6 @@
                                 {% endif %}
                             </div>
 
-                            <!-- Observações -->
                             {% if certificacao.descricao_nota %}
                             <div class="mt-4">
                                 <h4 class="text-muted mb-3">Observações</h4>
@@ -183,7 +181,6 @@
                         </div>
                     </div>
 
-                    <!-- Anexos -->
                     {% set anexos_ativos = certificacao.obter_anexos_ativos() %}
                     {% if anexos_ativos %}
                     <div class="card mt-4">
@@ -297,7 +294,6 @@
                                                         anexo.data_cadastro else 'Data não informada' }}
                                                     </small>
 
-                                                    <!-- Botões de Ação -->
                                                     <div class="btn-group mt-3 w-100">
                                                         <a href="{{ url_for('diretorio_uploads_estoque_certificacoes', filename=anexo.arquivo_upload.nome) }}"
                                                             target="_blank"
@@ -340,7 +336,7 @@
                         </div>
                     </div>
                     {% else %}
-                    <!-- Estado Vazio de Anexos -->
+                    
                     <div class="card mt-4">
                         <div class="card-header">
                             <h3 class="card-title">
@@ -394,9 +390,8 @@
                     {% endif %}
                 </div>
 
-                <!-- Sidebar com Informações Extras -->
                 <div class="col-md-4">
-                    <!-- Status do Estoque -->
+                    
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">
@@ -418,7 +413,6 @@
                         <div class="card-body text-center">
                             {% set valor_estoque = certificacao.valor_estoque_atual or 0 %}
 
-                            <!-- Ícone dinâmico -->
                             <div class="mb-3">
                                 {% if valor_estoque == 0 %}
                                 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"
@@ -483,10 +477,8 @@
                                         {% endif %}
                             </div>
 
-                            <!-- Valor -->
                             <div class="h2 mb-3">{{ "%.2f"|format(valor_estoque)|replace('.', ',') }} t</div>
 
-                            <!-- Status -->
                             <div class="text-muted mb-3">
                                 {% if valor_estoque == 0 %}
                                 <span class="badge bg-danger-lt">Sem Estoque</span>
@@ -501,7 +493,6 @@
                                         {% endif %}
                             </div>
 
-                            <!-- Progress Bar -->
                             <div class="progress progress-sm">
                                 {% if valor_estoque == 0 %}
                                 <div class="progress-bar bg-danger" style="width: 0%"></div>
@@ -520,7 +511,6 @@
                 </div>
             </div>
 
-            <!-- Estatísticas Rápidas -->
             <div class="card mt-3">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -557,7 +547,6 @@
                 </div>
             </div>
 
-            <!-- Ações Rápidas -->
             <div class="card mt-3">
                 <div class="card-header">
                     <h3 class="card-title d-flex align-items-center">
@@ -644,7 +633,6 @@
 {% include 'estrutura/footer.html' %}
 </div>
 
-<!-- Modal de Confirmação para Excluir Certificação -->
 <div class="modal modal-blur fade" id="modal-excluir-certificacao" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -685,7 +673,6 @@
     </div>
 </div>
 
-<!-- Modal de Confirmação para Desativar Certificação -->
 <div class="modal modal-blur fade" id="modal-desativar-certificacao" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
         <div class="modal-content">

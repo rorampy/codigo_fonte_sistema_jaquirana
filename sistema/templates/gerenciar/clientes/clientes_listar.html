@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             CLIENTES
           </div>
@@ -41,7 +41,7 @@
       </div>
     </div>
   </div>
-  <!-- Page body -->
+  
   <div class="page-body">
     <div class="container-xl">
 
@@ -50,7 +50,6 @@
       <div class="col-12">
         <div class="card">
 
-          <!-- Início Tabela -->
           <div class="table-responsive">
             <table class="table table-vcenter card-table">
               <thead>
@@ -84,7 +83,7 @@
                   </td>
                   <td>
                     <div class="btn-list flex-nowrap">
-                      <!-- Botão: Editar cliente -->
+                      
                       <a href="{{ url_for('editar_cliente', id=c.id) }}" class="btn btn-icon btn-outline-warning"
                         data-bs-toggle="tooltip" data-bs-placement="top" title="Editar cliente">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="24"
@@ -96,7 +95,7 @@
                         </svg>
                       </a>
                       {% if c.ativo == 1 %}
-                      <!-- Botão: Desativar cliente -->
+                      
                       <a href="#"
                         class="btn btn-icon btn-outline-danger desativar {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%}"
                         data-bs-toggle="modal" data-bs-target="#modal-desativar-{{ c.id }}">
@@ -116,7 +115,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             <div class="modal-status bg-danger"></div>
                             <div class="modal-body text-center py-4">
-                              <!-- Download SVG icon from http://tabler.io/icons/icon/alert-triangle -->
+                              
                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
@@ -150,7 +149,7 @@
                         </div>
                       </div>
                       {%else%}
-                      <!-- Botão: Ativar cliente -->
+                      
                       <a href="{{ url_for('ativar_cliente', id=c.id) }}"
                         class="btn btn-icon btn-outline-success {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%} ativar"
                         data-bs-toggle="tooltip" data-bs-placement="top" title="Ativar cliente">
@@ -174,7 +173,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="justify-content: center;">
       <form action="{{url_for('listar_clientes')}}" method="GET">
@@ -203,7 +201,7 @@
               Limpar Filtros
             </a>
             <button type="submit" class="btn btn-primary btn-5 ms-auto" data-bs-dismiss="modal">
-              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="icon icon-2">

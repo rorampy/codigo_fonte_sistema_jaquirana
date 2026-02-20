@@ -184,13 +184,10 @@ def editar_pessoa_financeiro(id):
         "chave_pix": pessoa.chave_pix or "",
     }
     
-    # Preparar vínculos existentes para o JavaScript
     vinculos_existentes = {}
     if pessoa.vinculos_operacionais:
-        # Se vínculos_operacionais já é um dict, usar diretamente
         if isinstance(pessoa.vinculos_operacionais, dict):
             vinculos_existentes = pessoa.vinculos_operacionais
-        # Se é uma string JSON, fazer parse
         elif isinstance(pessoa.vinculos_operacionais, str):
             import json
             try:
@@ -198,7 +195,6 @@ def editar_pessoa_financeiro(id):
             except:
                 vinculos_existentes = {}
     
-    # Converter para JSON string para usar no template
     import json
     vinculos_json = json.dumps(vinculos_existentes) if vinculos_existentes else 'null'
     

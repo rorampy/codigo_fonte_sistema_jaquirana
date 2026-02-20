@@ -20,10 +20,9 @@ class RotaFreteModel(BaseModel):
     cliente_id = db.Column(db.Integer, db.ForeignKey('cli_cliente.id'), nullable=False)
     cliente = db.relationship('ClienteModel', backref=db.backref('cliente_rota', lazy=True))
 
-    transportadora_id = db.Column(db.Integer, db.ForeignKey('transp_transportadora.id'), nullable=True)  # Nullable para opção "Todos"
+    transportadora_id = db.Column(db.Integer, db.ForeignKey('transp_transportadora.id'), nullable=True)
     transportadora = db.relationship('TransportadoraModel', backref=db.backref('transportadora_rota', lazy=True))
 
-    # Bitolas e preços de custo para Eucalipto (opcionais)
     euca_bitola_1_id = db.Column(db.Integer, nullable=True)
     euca_preco_custo_frete_bitola_1_100 = db.Column(db.Integer, nullable=True)
     euca_bitola_2_id = db.Column(db.Integer, nullable=True)
@@ -33,7 +32,6 @@ class RotaFreteModel(BaseModel):
     euca_bitola_4_id = db.Column(db.Integer, nullable=True)
     euca_preco_custo_frete_bitola_4_100 = db.Column(db.Integer, nullable=True)
 
-    # Bitolas e preços de custo para Pinus (opcionais)
     pinus_bitola_1_id = db.Column(db.Integer, nullable=True)
     pinus_preco_custo_frete_bitola_1_100 = db.Column(db.Integer, nullable=True)
     pinus_bitola_2_id = db.Column(db.Integer, nullable=True)
@@ -124,7 +122,6 @@ class RotaFreteModel(BaseModel):
         registros = query.all()
         agrupados = []
 
-        # agrupamento estruturado
         temp = defaultdict(list)
         for rota, cliente in registros:
             temp[cliente].append(rota)
@@ -143,7 +140,6 @@ class RotaFreteModel(BaseModel):
         return rotas
     
     def obter_rotas_relacionadas_transportadora(cliente_id, transportadora_id, fornecedor_id):
-        # Primeiro tenta encontrar rota específica para a transportadora
         rota = RotaFreteModel.query.filter(
             RotaFreteModel.cliente_id == cliente_id,
             RotaFreteModel.transportadora_id == transportadora_id,
@@ -152,11 +148,10 @@ class RotaFreteModel(BaseModel):
             RotaFreteModel.deletado == 0
         ).first()
         
-        # Se não encontrar rota específica, busca a rota "Todos" (transportadora_id = None)
         if not rota:
             rota = RotaFreteModel.query.filter(
                 RotaFreteModel.cliente_id == cliente_id,
-                RotaFreteModel.transportadora_id.is_(None),  # Rota "Todos"
+                RotaFreteModel.transportadora_id.is_(None),
                 RotaFreteModel.fornecedor_id == fornecedor_id,
                 RotaFreteModel.ativo == 1,
                 RotaFreteModel.deletado == 0

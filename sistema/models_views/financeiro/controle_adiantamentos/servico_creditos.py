@@ -10,7 +10,6 @@ class ServicoCreditos:
     Utiliza apenas a nova arquitetura (TransacaoCreditoModel).
     """
     
-    # === Operações de Leitura de Saldo ===
     
     def obter_saldo_fornecedor(fornecedor_id: int) -> int:
         """
@@ -26,7 +25,6 @@ class ServicoCreditos:
             from .transacao_credito_model import TransacaoCreditoModel, TipoPessoa
             return TransacaoCreditoModel.obter_saldo_pessoa(TipoPessoa.FORNECEDOR, fornecedor_id)
         except Exception as e:
-            print(f"[ERRO obter_saldo_fornecedor] {fornecedor_id}: {e}")
             return 0
     
     def obter_saldo_transportadora(transportadora_id: int) -> int:
@@ -43,7 +41,6 @@ class ServicoCreditos:
             from .transacao_credito_model import TransacaoCreditoModel, TipoPessoa
             return TransacaoCreditoModel.obter_saldo_pessoa(TipoPessoa.FRETEIRO, transportadora_id)
         except Exception as e:
-            print(f"[ERRO obter_saldo_transportadora] {transportadora_id}: {e}")
             return 0
     
     def obter_saldo_freteiro(transportadora_id: int) -> int:
@@ -64,10 +61,8 @@ class ServicoCreditos:
             from .transacao_credito_model import TransacaoCreditoModel, TipoPessoa
             return TransacaoCreditoModel.obter_saldo_pessoa(TipoPessoa.EXTRATOR, extrator_id)
         except Exception as e:
-            print(f"[ERRO obter_saldo_extrator] {extrator_id}: {e}")
             return 0
     
-    # === Operações de Leitura de Créditos Disponíveis ===
     
     def obter_creditos_disponiveis_fornecedor(fornecedor_id: int) -> List[Dict]:
         """
@@ -80,7 +75,6 @@ class ServicoCreditos:
             from .transacao_credito_model import TransacaoCreditoModel, TipoPessoa
             return TransacaoCreditoModel.obter_creditos_disponiveis(TipoPessoa.FORNECEDOR, fornecedor_id)
         except Exception as e:
-            print(f"[ERRO obter_creditos_disponiveis_fornecedor] {fornecedor_id}: {e}")
             return []
     
     def obter_creditos_disponiveis_transportadora(transportadora_id: int) -> List[Dict]:
@@ -89,7 +83,6 @@ class ServicoCreditos:
             from .transacao_credito_model import TransacaoCreditoModel, TipoPessoa
             return TransacaoCreditoModel.obter_creditos_disponiveis(TipoPessoa.FRETEIRO, transportadora_id)
         except Exception as e:
-            print(f"[ERRO obter_creditos_disponiveis_transportadora] {transportadora_id}: {e}")
             return []
     
     def obter_creditos_disponiveis_extrator(extrator_id: int) -> List[Dict]:
@@ -98,10 +91,8 @@ class ServicoCreditos:
             from .transacao_credito_model import TransacaoCreditoModel, TipoPessoa
             return TransacaoCreditoModel.obter_creditos_disponiveis(TipoPessoa.EXTRATOR, extrator_id)
         except Exception as e:
-            print(f"[ERRO obter_creditos_disponiveis_extrator] {extrator_id}: {e}")
             return []
     
-    # === Operações de Histórico ===
     
     def obter_historico_fornecedor(fornecedor_id: int, limite: int = None) -> list:
         """Obtém histórico de transações de um fornecedor."""
@@ -109,7 +100,6 @@ class ServicoCreditos:
             from .transacao_credito_model import TransacaoCreditoModel, TipoPessoa
             return TransacaoCreditoModel.obter_historico_pessoa(TipoPessoa.FORNECEDOR, fornecedor_id, limite)
         except Exception as e:
-            print(f"[ERRO obter_historico_fornecedor] {fornecedor_id}: {e}")
             return []
     
     def obter_historico_transportadora(transportadora_id: int, limite: int = None) -> list:
@@ -118,7 +108,6 @@ class ServicoCreditos:
             from .transacao_credito_model import TransacaoCreditoModel, TipoPessoa
             return TransacaoCreditoModel.obter_historico_pessoa(TipoPessoa.FRETEIRO, transportadora_id, limite)
         except Exception as e:
-            print(f"[ERRO obter_historico_transportadora] {transportadora_id}: {e}")
             return []
     
     def obter_historico_extrator(extrator_id: int, limite: int = None) -> list:
@@ -127,10 +116,8 @@ class ServicoCreditos:
             from .transacao_credito_model import TransacaoCreditoModel, TipoPessoa
             return TransacaoCreditoModel.obter_historico_pessoa(TipoPessoa.EXTRATOR, extrator_id, limite)
         except Exception as e:
-            print(f"[ERRO obter_historico_extrator] {extrator_id}: {e}")
             return []
     
-    # === Operações de Lançamento ===
     
     def lancar_credito_fornecedor(
         fornecedor_id: int,
@@ -176,13 +163,11 @@ class ServicoCreditos:
             db.session.add(transacao)
             db.session.flush()
             
-            # Registra no histórico
             HistoricoTransacaoCreditoModel.registrar_criacao(transacao, usuario_id)
             
             return {'novo_id': transacao.id, 'legado_id': None}
             
         except Exception as e:
-            print(f"[ERRO lancar_credito_fornecedor] {fornecedor_id}: {e}")
             return {'novo_id': None, 'legado_id': None}
     
     def lancar_credito_transportadora(
@@ -231,7 +216,6 @@ class ServicoCreditos:
             return {'novo_id': transacao.id, 'legado_id': None}
             
         except Exception as e:
-            print(f"[ERRO lancar_credito_transportadora] {transportadora_id}: {e}")
             return {'novo_id': None, 'legado_id': None}
     
     def lancar_credito_extrator(
@@ -280,10 +264,8 @@ class ServicoCreditos:
             return {'novo_id': transacao.id, 'legado_id': None}
             
         except Exception as e:
-            print(f"[ERRO lancar_credito_extrator] {extrator_id}: {e}")
             return {'novo_id': None, 'legado_id': None}
     
-    # === Operação de Edição ===
     
     def editar_credito_fornecedor(
         credito_id: int,
@@ -372,22 +354,18 @@ class ServicoCreditos:
                 resultado['mensagem'] = f"Crédito ID {credito_id} não encontrado"
                 return resultado
             
-            # Verificar se não foi utilizado
             if transacao.valor_utilizado_100 > 0:
                 resultado['mensagem'] = "Este crédito já foi parcialmente utilizado e não pode ser editado"
                 return resultado
             
-            # Verificar se é lançamento
             if transacao.tipo_transacao != TipoTransacaoCredito.LANCAMENTO:
                 resultado['mensagem'] = "Apenas lançamentos podem ser editados"
                 return resultado
             
-            # Verificar se está ativo
             if not transacao.ativo:
                 resultado['mensagem'] = "Crédito inativo não pode ser editado"
                 return resultado
             
-            # Guardar valores anteriores para histórico
             dados_anteriores = {
                 'valor_original_100': transacao.valor_original_100,
                 'descricao': transacao.descricao,
@@ -395,7 +373,6 @@ class ServicoCreditos:
                 'tipo_valor': transacao.tipo_valor
             }
             
-            # Aplicar alterações
             alteracoes = []
             if valor_100 is not None and valor_100 != transacao.valor_original_100:
                 transacao.valor_original_100 = valor_100
@@ -417,7 +394,6 @@ class ServicoCreditos:
                 resultado['mensagem'] = "Nenhuma alteração detectada"
                 return resultado
             
-            # Registrar no histórico
             historico = HistoricoTransacaoCreditoModel(
                 transacao_credito_id=transacao.id,
                 acao=AcaoHistoricoCredito.ALTERACAO,
@@ -447,10 +423,8 @@ class ServicoCreditos:
         except Exception as e:
             db.session.rollback()
             resultado['mensagem'] = f"Erro ao editar crédito: {str(e)}"
-            print(f"[ERRO _editar_credito] {credito_id}: {e}")
             return resultado
     
-    # === Operação de Exclusão ===
     
     def excluir_credito(
         tipo: str,
@@ -481,21 +455,17 @@ class ServicoCreditos:
                 resultado['mensagem'] = f"Crédito ID {credito_id} não encontrado"
                 return resultado
             
-            # Verificar se não foi utilizado
             if transacao.valor_utilizado_100 > 0:
                 resultado['mensagem'] = "Este crédito já foi parcialmente utilizado e não pode ser excluído"
                 return resultado
             
-            # Verificar se já está cancelado
             if transacao.tipo_transacao == TipoTransacaoCredito.CANCELAMENTO or not transacao.ativo:
                 resultado['mensagem'] = "Este crédito já foi cancelado"
                 return resultado
             
-            # Cancelar a transação
             transacao.ativo = False
             transacao.deletado = True
             
-            # Registrar no histórico
             HistoricoTransacaoCreditoModel.registrar_cancelamento(
                 transacao=transacao,
                 usuario_id=usuario_id,
@@ -510,10 +480,8 @@ class ServicoCreditos:
         except Exception as e:
             db.session.rollback()
             resultado['mensagem'] = f"Erro ao excluir crédito: {str(e)}"
-            print(f"[ERRO excluir_credito] {tipo} {credito_id}: {e}")
             return resultado
     
-    # === Operação de Utilização ===
     
     def utilizar_credito(
         tipo: str,
@@ -566,13 +534,11 @@ class ServicoCreditos:
                 resultado['mensagem'] = "Crédito sem saldo disponível"
                 return resultado
             
-            # Calcular valor a utilizar respeitando o sinal do saldo
             if saldo_disponivel > 0:
                 valor_a_utilizar = min(abs(valor_100), abs(saldo_disponivel))
             else:
                 valor_a_utilizar = -min(abs(valor_100), abs(saldo_disponivel))
             
-            # Usar o método do modelo que cria a transação de UTILIZACAO
             nova_transacao = transacao.utilizar_credito(
                 valor_100=abs(valor_a_utilizar),
                 usuario_id=usuario_id,
@@ -580,7 +546,6 @@ class ServicoCreditos:
                 descricao=descricao
             )
             
-            # Registrar no histórico
             HistoricoTransacaoCreditoModel.registrar_utilizacao(
                 transacao=transacao,
                 valor_utilizado_100=abs(valor_a_utilizar),
@@ -601,7 +566,6 @@ class ServicoCreditos:
         except Exception as e:
             db.session.rollback()
             resultado['mensagem'] = f"Erro ao utilizar crédito: {str(e)}"
-            print(f"[ERRO utilizar_credito] {tipo} {credito_id}: {e}")
             return resultado
     
     def processar_utilizacao_creditos(
@@ -709,7 +673,6 @@ class ServicoCreditos:
                     descricao=f"Créditos utilizados: {creditos_ids}"
                 )
                 
-                # Definir o campo correto da entidade (fornecedor/transportadora/extrator)
                 if tipo == 'fornecedor':
                     vinculo.fornecedor_id = pessoa_id
                 elif tipo == 'freteiro':
@@ -721,7 +684,6 @@ class ServicoCreditos:
                 db.session.flush()
                 resultado['vinculo_id'] = vinculo.id
             except Exception as e:
-                print(f"[WARN] Erro ao criar vínculo de crédito: {e}")
                 import traceback
                 traceback.print_exc()
         
@@ -826,8 +788,6 @@ class ServicoCreditos:
         """
         try:
             from .transacao_credito_model import TransacaoCreditoModel, TipoTransacaoCredito
-            print(f"[INFO estornar_utilizacao_creditos] Iniciando estorno para faturamento_id={faturamento_id}")
-            # Buscar todas as transações de UTILIZACAO vinculadas a este faturamento
             transacoes_utilizacao = TransacaoCreditoModel.query.filter_by(
                 faturamento_destino_id=faturamento_id,
                 tipo_transacao=TipoTransacaoCredito.UTILIZACAO
@@ -844,7 +804,6 @@ class ServicoCreditos:
             total_estornado_100 = 0
             
             for transacao_utilizacao in transacoes_utilizacao:
-                # Criar transação de ESTORNO usando o método do model
                 transacao_estorno = transacao_utilizacao.estornar(
                     usuario_id=usuario_id,
                     descricao=motivo
@@ -873,7 +832,6 @@ class ServicoCreditos:
             
         except Exception as e:
             db.session.rollback()
-            print(f"[ERRO estornar_utilizacao_creditos] faturamento_id={faturamento_id}: {e}")
             return {
                 'sucesso': False,
                 'mensagem': f'Erro ao estornar créditos: {str(e)}',

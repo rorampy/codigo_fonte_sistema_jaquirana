@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             FLORESTA
           </div>
@@ -19,7 +19,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -223,7 +222,6 @@
                       </div>
                     </div>
 
-                    <!-- Botão Visualizar -->
                     <a href="#" id="visualizar-contrato-floresta"
                       class="btn btn-visualizar-arquivo mb-3"
                       data-url="{{ url_for('diretorio_uploads_contrato_floresta', filename=floresta.contrato_floresta.caminho.split('/')[-1]) }}"
@@ -242,7 +240,6 @@
                       Visualizar Contrato Atual
                     </a>
 
-                    <!-- Input de upload (oculto inicialmente) -->
                     <div id="inputUploadContratoFloresta" class="d-none">
                       <input type="file" name="contratoFloresta"
                         class="form-control contratoFloresta {% if 'contratoFloresta' in campos_obrigatorios or 'contratoFloresta' in campos_erros %}
@@ -261,7 +258,7 @@
                     </div>
 
                     {% else %}
-                    <!-- Caso não exista contrato -->
+                    
                     <input type="file" name="contratoFornecedor"
                       class="form-control {% if 'contratoFornecedor' in campos_obrigatorios or 'contratoFornecedor' in campos_erros %}is-invalid{% endif %}"
                       accept=".pdf">
@@ -351,7 +348,6 @@
         });
       }
   
-      // === Contrato FLORESTA ===
       const radioManterFloresta = document.getElementById("opcaoContratoManterContratoFloresta");
       const radioAlterarFloresta = document.getElementById("opcaoContratoAlterarContratoFloresta");
       const inputUploadFloresta = document.getElementById("inputUploadContratoFloresta");

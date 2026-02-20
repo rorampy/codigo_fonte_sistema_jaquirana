@@ -1,22 +1,20 @@
-// Sistema de Conciliação OFX - Busca sempre dados atualizados do servidor
+
 class ConciliacaoOFX {
   constructor() {
-    // Controles internos
-    this.requisicaoAndamento = new Set();             // Evita requisições duplicadas
+    
+    this.requisicaoAndamento = new Set();             
     
     this.inicializar();
   }
 
-  // Inicialização do sistema
   inicializar() {
     this.configurarEventos();
-    // Sempre buscar dados atualizados do servidor
+    
     setTimeout(() => this.buscarSugestoesSemCache(), 100);
   }
 
-  // Configura eventos do sistema
   configurarEventos() {
-    // Quando usuário clica em abas de sugestão - sempre carrega do servidor
+    
     document.addEventListener('shown.bs.tab', (evento) => {
       const linkAba = evento.target.getAttribute('href');
       if (linkAba && linkAba.includes('tabs-sugestao-')) {
@@ -27,21 +25,17 @@ class ConciliacaoOFX {
       }
     });
 
-    // Quando uma conciliação é feita - recarrega sugestões
     document.addEventListener('conciliacao-realizada', (evento) => {
       
-      // Recarrega todas as abas abertas
       this.recarregarTodasSugestoes();
     });
   }
 
-  // Extrai ID da transação a partir do link da aba
   extrairIdTransacao(linkAba) {
     const match = linkAba.match(/tabs-sugestao-(\d+)/);
     return match ? match[1] : null;
   }
 
-  // Busca sugestões sem usar cache - sempre do servidor
   async buscarSugestoesSemCache() {
     const todasTransacoes = this.coletarIdsTransacoes();
     
@@ -49,13 +43,10 @@ class ConciliacaoOFX {
       return;
     }
 
-    
-
-    // Mostra loading em todas
     todasTransacoes.forEach(id => {
       const container = document.getElementById(`tabs-sugestao-${id}`);
       if (container) {
-        container.dataset.carregado = 'false'; // Reset status
+        container.dataset.carregado = 'false'; 
         this.mostrarCarregamento(container);
       }
     });
@@ -82,12 +73,9 @@ class ConciliacaoOFX {
     }
   }
 
-  // Carrega sugestões para uma transação específica sem cache
   async carregarSugestoesSemCache(idTransacao) {
     const container = document.getElementById(`tabs-sugestao-${idTransacao}`);
     if (!container) return;
-
-    
 
     container.dataset.carregado = 'false';
     this.mostrarCarregamento(container);
@@ -115,11 +103,9 @@ class ConciliacaoOFX {
     }
   }
 
-  // Recarrega todas as sugestões abertas
   async recarregarTodasSugestoes() {
     const todasTransacoes = this.coletarIdsTransacoes();
     
-    // Recarrega apenas as que já foram carregadas
     const transacoesCarregadas = todasTransacoes.filter(id => {
       const container = document.getElementById(`tabs-sugestao-${id}`);
       return container && container.dataset.carregado === 'true';
@@ -131,11 +117,9 @@ class ConciliacaoOFX {
     }
   }
 
-  // Busca sugestões para transações específicas
   async buscarSugestoesSemCacheEspecificas(idsTransacoes) {
     if (idsTransacoes.length === 0) return;
 
-    // Mostra loading
     idsTransacoes.forEach(id => {
       const container = document.getElementById(`tabs-sugestao-${id}`);
       if (container) this.mostrarCarregamento(container);
@@ -159,7 +143,6 @@ class ConciliacaoOFX {
     }
   }
 
-  // Processa resposta do servidor sem salvar em cache
   processarRespostaSemCache(sugestoesPorTransacao) {
     Object.entries(sugestoesPorTransacao).forEach(([transacaoId, sugestoes]) => {
       const container = document.getElementById(`tabs-sugestao-${transacaoId}`);
@@ -177,7 +160,6 @@ class ConciliacaoOFX {
     });
   }
 
-  // Mostra mensagem vazio para todas as transações
   mostrarMensagemVazioParaTodas(idsTransacoes) {
     idsTransacoes.forEach(id => {
       const container = document.getElementById(`tabs-sugestao-${id}`);
@@ -188,7 +170,6 @@ class ConciliacaoOFX {
     });
   }
 
-  // Mostra erro para todas as transações
   mostrarErroParaTodas(idsTransacoes) {
     idsTransacoes.forEach(id => {
       const container = document.getElementById(`tabs-sugestao-${id}`);
@@ -199,7 +180,6 @@ class ConciliacaoOFX {
     });
   }
 
-  // Coleta todos os IDs de transações presentes na página
   coletarIdsTransacoes() {
     const ids = [];
     document.querySelectorAll('[href*="tabs-sugestao-"]').forEach(elemento => {
@@ -209,7 +189,6 @@ class ConciliacaoOFX {
     return ids;
   }
 
-  // Exibe tela de carregamento no container
   mostrarCarregamento(container) {
     container.innerHTML = '';
 
@@ -228,7 +207,6 @@ class ConciliacaoOFX {
     container.appendChild(wrapper);
   }
 
-  // Exibe mensagem quando não há sugestões disponíveis
   mostrarMensagemVazio(container) {
     container.innerHTML = '';
 
@@ -254,7 +232,6 @@ class ConciliacaoOFX {
     container.appendChild(wrapper);
   }
 
-  // Exibe mensagem de erro quando falha o carregamento
   mostrarMensagemErro(container) {
     container.innerHTML = '';
 
@@ -280,7 +257,6 @@ class ConciliacaoOFX {
     container.appendChild(wrapper);
   }
 
-  // Exibe lista de sugestões no container
   exibirSugestoes(container, listaSugestoes, idTransacao) {
     container.innerHTML = '';
 
@@ -299,37 +275,30 @@ class ConciliacaoOFX {
     container.appendChild(wrapperPrincipal);
   }
 
-  // Cria card HTML para uma sugestão
   criarCardSugestao(sugestao, idTransacao) {
-    // Coluna principal
+    
     const coluna = document.createElement('div');
     coluna.className = 'col-12';
 
-    // Card
     const card = document.createElement('div');
     card.className = 'card border-0 shadow-sm sugestao-card';
 
-    // Corpo do card
     const corpoCard = document.createElement('div');
     corpoCard.className = 'card-body p-3';
 
-    // Linha de informações
     const linhaInfo = document.createElement('div');
     linhaInfo.className = 'row align-items-center';
 
-    // Colunas de informação
     linhaInfo.appendChild(this.criarColunaTipo(sugestao));
     linhaInfo.appendChild(this.criarColunaValor(sugestao));
     linhaInfo.appendChild(this.criarColunaData(sugestao));
     linhaInfo.appendChild(this.criarColunaBeneficiario(sugestao));
     linhaInfo.appendChild(this.criarColunaDescricao(sugestao));
 
-    // Linha das Categorias
     const linhaCategorias = document.createElement('div');
     linhaCategorias.className = 'row mt-3';
     linhaCategorias.appendChild(this.criarLinhaCategoria(sugestao));
 
-    // Linha do botão
     const linhaBotao = document.createElement('div');
     linhaBotao.className = 'row mt-3';
 
@@ -346,7 +315,6 @@ class ConciliacaoOFX {
     colunaBotao.appendChild(botao);
     linhaBotao.appendChild(colunaBotao);
 
-    // Montar estrutura
     corpoCard.appendChild(linhaInfo);
     corpoCard.appendChild(linhaCategorias);
     corpoCard.appendChild(linhaBotao);
@@ -356,7 +324,6 @@ class ConciliacaoOFX {
     return coluna;
   }
 
-  // Cria coluna com tipo/origem da sugestão
   criarColunaTipo(sugestao) {
     const coluna = document.createElement('div');
     coluna.className = 'col-md-2 col-sm-12 text-center mb-2 mb-md-0';
@@ -369,7 +336,6 @@ class ConciliacaoOFX {
     return coluna;
   }
 
-  // Cria coluna com valor da sugestão
   criarColunaValor(sugestao) {
     const coluna = document.createElement('div');
     coluna.className = 'col-md-2 col-sm-6 text-center mb-2 mb-md-0';
@@ -391,7 +357,6 @@ class ConciliacaoOFX {
     return coluna;
   }
 
-  // Cria coluna com data de vencimento da sugestão
   criarColunaData(sugestao) {
     const coluna = document.createElement('div');
     coluna.className = 'col-md-2 col-sm-6 text-center mb-2 mb-md-0';
@@ -414,7 +379,6 @@ class ConciliacaoOFX {
     return coluna;
   }
 
-  // Cria coluna com beneficiário da sugestão
   criarColunaBeneficiario(sugestao) {
     const coluna = document.createElement('div');
     coluna.className = 'col-md-3 col-sm-12 mb-2 mb-md-0';
@@ -438,7 +402,6 @@ class ConciliacaoOFX {
     return coluna;
   }
 
-  // Cria coluna com descrição da sugestão
   criarColunaDescricao(sugestao) {
     const coluna = document.createElement('div');
     coluna.className = 'col-md-3 col-sm-12 mb-2 mb-md-0';
@@ -461,7 +424,6 @@ class ConciliacaoOFX {
     return coluna;
   }
 
-  // Cria linha com categorias da sugestão
   criarLinhaCategoria(sugestao) {
     const coluna = document.createElement('div');
     coluna.className = 'col-12';
@@ -476,7 +438,6 @@ class ConciliacaoOFX {
     const containerBadges = document.createElement('div');
     containerBadges.className = 'd-flex flex-wrap gap-1';
 
-    // Verifica se tem categorias
     if (sugestao.categorias_json && sugestao.categorias_json.length > 0) {
       sugestao.categorias_json.forEach(itemCategoria => {
         const categoriaNome = itemCategoria.categoria || 'Categoria não identificada';
@@ -504,7 +465,6 @@ class ConciliacaoOFX {
     return coluna;
   }
 
-  // Trunca texto se exceder o limite especificado
   truncarTexto(texto, limite) {
     if (!texto) return 'Não informado';
     return texto.length > limite ? texto.substring(0, limite) + '...' : texto;
@@ -512,7 +472,6 @@ class ConciliacaoOFX {
 
 }
 
-// Inicializa quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
   new ConciliacaoOFX();
 });

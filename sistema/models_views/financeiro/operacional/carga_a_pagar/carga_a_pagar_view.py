@@ -16,7 +16,6 @@ from sistema.models_views.gerenciar.comissionado.comissionado_model import Comis
 from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
 from sistema.models_views.financeiro.operacional.categorizar_fatura.categorizacao_model import AgendamentoPagamentoModel
 
-# Imports para modelos de A Pagar
 from sistema.models_views.faturamento.cargas_a_faturar.fornecedor.fornecedor_a_pagar_model import FornecedorPagarModel
 from sistema.models_views.faturamento.cargas_a_faturar.transportadora.frete_a_pagar_model import FretePagarModel
 from sistema.models_views.faturamento.cargas_a_faturar.extrator.extrator_a_pagar_model import ExtratorPagarModel
@@ -24,7 +23,6 @@ from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado
 
 from sistema._utilitarios import *
 
-# === Nova Arquitetura de Créditos ===
 from sistema.models_views.financeiro.controle_adiantamentos.servico_creditos import ServicoCreditos
 from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import (
     TransacaoCreditoModel, TipoTransacaoCredito, TipoPessoa
@@ -43,25 +41,19 @@ def listagem_faturamentos_cargas_a_pagar():
     Lista todos os faturamentos realizados no sistema com filtros opcionais.
     """
     try:
-        # Obter parâmetros de filtro
         beneficiario = request.args.get('beneficiario', type=int)
         situacao_faturamento = request.args.get('situacaoFaturamento', type=int)
         
-        # Se não há nenhum parâmetro na URL (acesso inicial), definir padrão como "não categorizado" (situação 7)
         if not request.args:
             situacao_faturamento = 7
-        # Se há parâmetros mas situacaoFaturamento está vazio/None, significa "Todos"
         elif 'situacaoFaturamento' in request.args and not situacao_faturamento:
             situacao_faturamento = None
 
-        # Obter faturamentos com base nos filtros utilizando o método do modelo
         faturamentos = FaturamentoModel.filtrar_a_pagar_faturamentos(beneficiario, situacao_faturamento)
 
-        # Obter situações de faturamento
         situacoes_faturamento = SituacaoPagamentoModel.listar_situacoes_faturamento()
         beneficiarios = PessoaFinanceiroModel.listar_pessoas_ativas()
 
-        # Adicionar informação do usuário a cada faturamento
         for faturamento in faturamentos:
             if faturamento.usuario_id:
                 usuario = UsuarioModel.query.get(faturamento.usuario_id)
@@ -92,23 +84,19 @@ def detalhes_faturamento_ajax(id):
         if not faturamento.ativo:
             return jsonify({"erro": "Faturamento não encontrado"}), 404
             
-        # Tratamento seguro para obter detalhes
         try:
             detalhes = faturamento.obter_detalhes()
         except Exception as e:
             detalhes = {"fornecedores": [], "transportadoras": [], "extratores": [], "comissionados": [], "cargas_a_receber": [],
                        "credito_fornecedor": [], "credito_transportadora": [], "credito_extrator": []}
         
-        # Buscar informações do usuário
         usuario = UsuarioModel.query.get(faturamento.usuario_id) if faturamento.usuario_id else None
         
-        # Formatar valores monetários
         def formatar_valor(valor_centavos):
             if valor_centavos is None:
                 return "R$ 0,00"
             return f"R$ {valor_centavos / 100:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         
-        # Preparar dados do faturamento
         dados_faturamento = {
             "codigo_faturamento": faturamento.codigo_faturamento,
             "data_cadastro": faturamento.data_cadastro.strftime("%d/%m/%Y %H:%M") if faturamento.data_cadastro else "",
@@ -128,7 +116,6 @@ def detalhes_faturamento_ajax(id):
             "total_comissionados": len(detalhes.get("comissionados", []))
         }
         
-        # Formatar detalhes dos fornecedores
         fornecedores_formatados = []
         for fornecedor in detalhes.get("fornecedores", []):
             fornecedor_formatado = {
@@ -149,7 +136,6 @@ def detalhes_faturamento_ajax(id):
             }
             fornecedores_formatados.append(fornecedor_formatado)
         
-        # Formatar detalhes das transportadoras
         transportadoras_formatadas = []
         for transportadora in detalhes.get("transportadoras", []):
             transportadora_formatada = {
@@ -171,7 +157,6 @@ def detalhes_faturamento_ajax(id):
             }
             transportadoras_formatadas.append(transportadora_formatada)
         
-        # Formatar detalhes dos extratores
         extratores_formatados = []
         for extrator in detalhes.get("extratores", []):
             extrator_formatado = {
@@ -193,7 +178,6 @@ def detalhes_faturamento_ajax(id):
             }
             extratores_formatados.append(extrator_formatado)
 
-        # Formatar detalhes dos comissionados
         comissionados_formatados = []
         for comissionado in detalhes.get("comissionados", []):
             comissionado_formatado = {
@@ -215,14 +199,12 @@ def detalhes_faturamento_ajax(id):
             }
             comissionados_formatados.append(comissionado_formatado)
 
-        # Buscar receitas e despesas avulsas apenas se este faturamento for de lançamento avulso
         receitas_avulsas_formatadas = []
         despesas_avulsas_formatadas = []
         
         if faturamento.lancamento_avulso_id and faturamento.lancamento_avulso:
             lancamento = faturamento.lancamento_avulso
             
-            # Se for receita avulsa (tipo_movimentacao = 1)
             if lancamento.tipo_movimentacao == 1:
                 receita_formatada = {
                     "descricao": lancamento.descricao or "N/A",
@@ -233,7 +215,6 @@ def detalhes_faturamento_ajax(id):
                 }
                 receitas_avulsas_formatadas.append(receita_formatada)
                 
-            # Se for despesa avulsa (tipo_movimentacao = 2)
             elif lancamento.tipo_movimentacao == 2:
                 despesa_formatada = {
                     "descricao": lancamento.descricao or "N/A",
@@ -244,18 +225,14 @@ def detalhes_faturamento_ajax(id):
                 }
                 despesas_avulsas_formatadas.append(despesa_formatada)
 
-        # Atualizar dados do faturamento com totais de receitas e despesas
         dados_faturamento["total_receitas_avulsas"] = len(receitas_avulsas_formatadas)
         dados_faturamento["total_despesas_avulsas"] = len(despesas_avulsas_formatadas)
 
-        # Formatar detalhes dos créditos utilizados
         creditos_utilizados_formatados = []
         
-        # Processar créditos de fornecedor
         credito_fornecedor = detalhes.get("credito_fornecedor", [])
         if credito_fornecedor:
             for credito in credito_fornecedor:
-                # Buscar código do faturamento origem
                 extrato_credito_id = credito.get("extrato_credito_fornecedor_id")
                 codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'fornecedor')
                 
@@ -268,11 +245,9 @@ def detalhes_faturamento_ajax(id):
                 }
                 creditos_utilizados_formatados.append(credito_formatado)
         
-        # Processar créditos de transportadora
         credito_transportadora = detalhes.get("credito_transportadora", [])
         if credito_transportadora:
             for credito in credito_transportadora:
-                # Buscar código do faturamento origem
                 extrato_credito_id = credito.get("extrato_credito_transportadora_id")
                 codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'transportadora')
                 
@@ -285,11 +260,9 @@ def detalhes_faturamento_ajax(id):
                 }
                 creditos_utilizados_formatados.append(credito_formatado)
         
-        # Processar créditos de extrator
         credito_extrator = detalhes.get("credito_extrator", [])
         if credito_extrator:
             for credito in credito_extrator:
-                # Buscar código do faturamento origem
                 extrato_credito_id = credito.get("extrato_credito_extrator_id")
                 codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'extrator')
                 
@@ -325,11 +298,9 @@ def dados_bancarios_faturamento(faturamento_id):
     try:
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
-        # Processar detalhes JSON para obter IDs únicos
         detalhes = {}
         if faturamento.detalhes_json:
             try:
-                # Verificar se detalhes_json já é um dicionário ou string JSON
                 if isinstance(faturamento.detalhes_json, dict):
                     detalhes = faturamento.detalhes_json
                 else:
@@ -337,40 +308,34 @@ def dados_bancarios_faturamento(faturamento_id):
             except (json.JSONDecodeError, TypeError):
                 detalhes = {}
         
-        # Obter fornecedores únicos
         fornecedores_ids = set()
         if detalhes.get('fornecedores'):
             for fornecedor in detalhes['fornecedores']:
                 if fornecedor.get('fornecedor_id'):
                     fornecedores_ids.add(fornecedor['fornecedor_id'])
         
-        # Obter transportadoras únicas
         transportadoras_ids = set()
         if detalhes.get('transportadoras'):
             for transportadora in detalhes['transportadoras']:
                 if transportadora.get('transportadora_id'):
                     transportadoras_ids.add(transportadora['transportadora_id'])
 
-        # Obter extratores únicos
         extratores_ids = set()
         if detalhes.get('extratores'):
             for extrator in detalhes['extratores']:
                 if extrator.get('extrator_id'):
                     extratores_ids.add(extrator['extrator_id'])
 
-        # Obter comissionados únicos
         comissionados_ids = set()
         if detalhes.get('comissionados'):
             for comissionado in detalhes['comissionados']:
                 if comissionado.get('comissionado_id'):
                     comissionados_ids.add(comissionado['comissionado_id'])
         
-        # Buscar dados bancários dos fornecedores
         fornecedores_dados = []
         for fornecedor_id in fornecedores_ids:
             fornecedor = FornecedorCadastroModel.query.get(fornecedor_id)
             if fornecedor:
-                # Buscar conta bancária do fornecedor na tabela normalizada
                 conta_bancaria = FornecedorContaBancariaModel.query.filter_by(
                     fornecedor_id=fornecedor_id,
                     ativo=True
@@ -385,7 +350,6 @@ def dados_bancarios_faturamento(faturamento_id):
                         'chave_pix': conta_bancaria.chave_pix
                     })
                 else:
-                    # Se não houver conta bancária cadastrada, adicionar com dados vazios
                     fornecedores_dados.append({
                         'identificacao': fornecedor.identificacao,
                         'instituicao_financeira': 'Banco não informado',
@@ -394,7 +358,6 @@ def dados_bancarios_faturamento(faturamento_id):
                         'chave_pix': 'Não informado'
                     })
         
-        # Buscar dados bancários das transportadoras
         transportadoras_dados = []
         for transportadora_id in transportadoras_ids:
             transportadora = TransportadoraModel.query.get(transportadora_id)
@@ -407,7 +370,6 @@ def dados_bancarios_faturamento(faturamento_id):
                     'chave_pix': transportadora.chave_pix
                 })
         
-        # Buscar dados bancários dos extratores
         extratores_dados = []
         for extrator_id in extratores_ids:
             extrator = ExtratorModel.query.get(extrator_id)
@@ -420,7 +382,6 @@ def dados_bancarios_faturamento(faturamento_id):
                     'chave_pix': extrator.chave_pix
                 })
 
-        # Buscar dados bancários dos comissionados
         comissionados_dados = []
         for comissionado_id in comissionados_ids:
             comissionado = ComissionadoModel.query.get(comissionado_id)
@@ -433,7 +394,6 @@ def dados_bancarios_faturamento(faturamento_id):
                     'chave_pix': comissionado.chave_pix
                 })
 
-        # Buscar dados bancários de receitas e despesas avulsas
         receitas_avulsas_dados = []
         despesas_avulsas_dados = []
         
@@ -447,13 +407,12 @@ def dados_bancarios_faturamento(faturamento_id):
                     'instituicao_financeira': lancamento.conta_bancaria.nome_banco,
                     'agencia_bancaria': lancamento.conta_bancaria.agencia,
                     'conta_bancaria': lancamento.conta_bancaria.conta,
-                    'chave_pix': 'N/A'  # ContaBancariaModel não tem campo PIX
+                    'chave_pix': 'N/A'
                 }
                 
-                # Adicionar ao array correto baseado no tipo
-                if lancamento.tipo_movimentacao == 1:  # Receita
+                if lancamento.tipo_movimentacao == 1:
                     receitas_avulsas_dados.append(dados_conta)
-                elif lancamento.tipo_movimentacao == 2:  # Despesa
+                elif lancamento.tipo_movimentacao == 2:
                     despesas_avulsas_dados.append(dados_conta)
         
         return jsonify({
@@ -476,7 +435,6 @@ def dados_bancarios_fornecedor(fornecedor_id):
     try:
         fornecedor = FornecedorCadastroModel.query.get_or_404(fornecedor_id)
         
-        # Buscar conta bancária do fornecedor na tabela normalizada
         conta_bancaria = FornecedorContaBancariaModel.query.filter_by(
             fornecedor_id=fornecedor_id,
             ativo=True
@@ -572,83 +530,63 @@ def excluir_faturamento_a_pagar(faturamento_id):
     faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
     
     try:
-        # Buscar todos os agendamentos relacionados ao faturamento
         agendamentos = AgendamentoPagamentoModel.query.filter_by(
             faturamento_id=faturamento_id
         ).all()
         
-        # Verificar se algum agendamento possui situação 8 (não pode ser excluído) pois ja esta conciliado
         agendamentos_situacao_8 = [ag for ag in agendamentos if ag.situacao_pagamento_id == 8]
         if agendamentos_situacao_8:
             flash(('Não é possível excluir este faturamento pois possui agendamentos com situação que não permite exclusão.', 'error'))
             return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
         
-        # Atualizar situação de todos os agendamentos para 2 (pendente)
         for agendamento in agendamentos:
             agendamento.ativo = False
             agendamento.deletado = True
 
-        # Processar detalhes do faturamento para devolver créditos e alterar situações
         if faturamento.detalhes_json:
             try:
-                # Verificar se detalhes_json já é um dicionário ou string JSON
                 if isinstance(faturamento.detalhes_json, dict):
                     detalhes = faturamento.detalhes_json
                 else:
                     detalhes = json.loads(faturamento.detalhes_json)
                 
-                # Processar fornecedores
                 fornecedores = detalhes.get('fornecedores', [])
                 for fornecedor_data in fornecedores:
                     fornecedor_a_pagar_id = fornecedor_data.get('fornecedor_a_pagar_id')
                     if fornecedor_a_pagar_id:
-                        # Buscar registro de fornecedor a pagar
                         fornecedor_pagar = FornecedorPagarModel.query.get(fornecedor_a_pagar_id)
                         if fornecedor_pagar:
-                            # Alterar situação para 2 (pendente)
                             fornecedor_pagar.situacao_pagamento_id = 2
 
-                # Processar transportadoras
                 transportadoras = detalhes.get('transportadoras', [])
                 for transportadora_data in transportadoras:
                     frete_a_pagar_id = transportadora_data.get('frete_a_pagar_id')
                     if frete_a_pagar_id:
-                        # Buscar registro de frete a pagar
                         frete_pagar = FretePagarModel.query.get(frete_a_pagar_id)
                         if frete_pagar:
-                            # Alterar situação para 2 (pendente)
                             frete_pagar.situacao_pagamento_id = 2
 
-                # Processar extratores
                 extratores = detalhes.get('extratores', [])
                 for extrator_data in extratores:
                     extrator_a_pagar_id = extrator_data.get('extrator_a_pagar_id')
                     if extrator_a_pagar_id:
-                        # Buscar registro de extrator a pagar
                         extrator_pagar = ExtratorPagarModel.query.get(extrator_a_pagar_id)
                         if extrator_pagar:
-                            # Alterar situação para 2 (pendente)
                             extrator_pagar.situacao_pagamento_id = 2
 
-                # Processar comissionados
                 comissionados = detalhes.get('comissionados', [])
                 for comissionado_data in comissionados:
                     comissionado_a_pagar_id = comissionado_data.get('comissionado_a_pagar_id')
                     if comissionado_a_pagar_id:
-                        # Buscar registro de comissionado a pagar
                         comissionado_pagar = ComissionadoPagarModel.query.get(comissionado_a_pagar_id)
                         if comissionado_pagar:
-                            # Alterar situação para 2 (pendente)
                             comissionado_pagar.situacao_pagamento_id = 2
 
-                # Devolver créditos utilizados
                 _devolver_creditos_faturamento(faturamento_id)
                 
             except (json.JSONDecodeError, TypeError) as e:
-                print(f"[ERROR] Erro ao processar detalhes do faturamento: {e}")
                 pass
         
-        # Marcar faturamento como excluído (ativo=False, deletado=True)
         faturamento.ativo = False
         faturamento.deletado = True
         
@@ -656,7 +594,6 @@ def excluir_faturamento_a_pagar(faturamento_id):
         flash(('Faturamento excluído com sucesso!', 'success'))
         
     except Exception as e:
-        print(e)
         db.session.rollback()
         flash((f'Erro ao excluir faturamento!', 'error'))
     
@@ -673,13 +610,10 @@ def _devolver_creditos_faturamento(faturamento_id):
     Returns:
         dict: Resultado da operação de estorno
     """
-    print(f"[INFO _devolver_creditos_faturamento] Iniciando devolução de créditos para faturamento ID: {faturamento_id}")
     try:
-        # Buscar código do faturamento para mensagem mais descritiva
         faturamento = FaturamentoModel.query.get(faturamento_id)
         codigo_fat = faturamento.codigo_faturamento if faturamento else faturamento_id
         
-        # Usar Nova Arquitetura via ServicoCreditos
         resultado_estorno = ServicoCreditos.estornar_utilizacao_creditos(
             faturamento_id=faturamento_id,
             usuario_id=current_user.id,
@@ -687,13 +621,11 @@ def _devolver_creditos_faturamento(faturamento_id):
         )
         
         if not resultado_estorno.get('sucesso'):
-            print(f"[WARN _devolver_creditos_faturamento] Erro ao estornar créditos: {resultado_estorno.get('mensagem')}")
             return resultado_estorno
         
         return resultado_estorno
                     
     except Exception as e:
-        print(f"[ERROR _devolver_creditos_faturamento] {e}")
         return {
             'sucesso': False,
             'mensagem': f'Erro ao devolver créditos: {str(e)}',
@@ -707,10 +639,8 @@ def _devolver_creditos_faturamento(faturamento_id):
 def exportar_faturamento_pdf(faturamento_id):
     """Gera PDF do faturamento com opções de ocultação"""
     try:
-        # Buscar faturamento
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
-        # Obter opções de ocultação do formulário
         opcoes = {
             'ocultar_fornecedores': request.form.get('ocultar_fornecedores') == 'true',
             'ocultar_transportadoras': request.form.get('ocultar_transportadoras') == 'true',
@@ -719,10 +649,8 @@ def exportar_faturamento_pdf(faturamento_id):
             'ocultar_despesas_avulsas': request.form.get('ocultar_despesas_avulsas') == 'true'
         }
         
-        # Processar dados do faturamento (reutilizar função existente)
         dados_processados = processar_dados_faturamento(faturamento)
                 
-        # Dados adicionais para o template
         dados_extras = {
             'opcoes': opcoes,
             'logo_path': obter_url_absoluta_de_imagem("logo.png"),
@@ -730,17 +658,13 @@ def exportar_faturamento_pdf(faturamento_id):
             'usuario_geracao': current_user.nome if hasattr(current_user, 'nome') else 'Sistema'
         }
         
-        # Combinar todos os dados
         dados_template = {**dados_processados, **dados_extras}
 
-        # Renderizar template HTML
         html = render_template('financeiro/faturamentos/relatorio_faturamento/relatorio_faturamento.html', **dados_template)
         
-        # Gerar nome do arquivo
         codigo_fat = faturamento.codigo_faturamento
         nome_arquivo = f"Faturamento_{codigo_fat}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Gerar PDF
         return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo, orientacao="Portrait", abrir_em_nova_aba=True)
         
     except Exception as e:
@@ -753,10 +677,8 @@ def exportar_faturamento_pdf(faturamento_id):
 def exportar_faturamento_imagem(faturamento_id):
     """Gera imagem JPG do faturamento com opções de ocultação"""
     try:
-        # Buscar faturamento
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
-        # Obter opções de ocultação do formulário
         opcoes = {
             'ocultar_fornecedores': request.form.get('ocultar_fornecedores') == 'true',
             'ocultar_transportadoras': request.form.get('ocultar_transportadoras') == 'true',
@@ -767,7 +689,6 @@ def exportar_faturamento_imagem(faturamento_id):
         
         dados_processados = processar_dados_faturamento(faturamento)
                 
-        # Dados adicionais para o template
         dados_extras = {
             'opcoes': opcoes,
             'logo_path': obter_url_absoluta_de_imagem("logo.png"),
@@ -775,17 +696,13 @@ def exportar_faturamento_imagem(faturamento_id):
             'usuario_geracao': current_user.nome if hasattr(current_user, 'nome') else 'Sistema'
         }
         
-        # Combinar todos os dados
         dados_template = {**dados_processados, **dados_extras}
         
-        # USAR O MESMO TEMPLATE DO PDF
         html = render_template('financeiro/faturamentos/relatorio_faturamento/relatorio_faturamento_imagem.html', **dados_template)
         
-        # Gerar nome do arquivo
         codigo_fat = faturamento.codigo_faturamento
         nome_arquivo = f"Faturamento_{codigo_fat}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Gerar IMAGEM ao invés de PDF
         return ManipulacaoArquivos.gerar_imagem_from_html(html, nome_arquivo, largura=1200)
         
     except Exception as e:
@@ -796,7 +713,6 @@ def exportar_faturamento_imagem(faturamento_id):
 def processar_dados_faturamento(faturamento):
     """Processa dados do faturamento para uso nos templates"""
     
-    # Dados básicos do faturamento
     
     dados = {
         'faturamento': {
@@ -815,11 +731,9 @@ def processar_dados_faturamento(faturamento):
         }
     }
     
-    # Processar detalhes JSON se existir
     detalhes = {}
     if faturamento.detalhes_json:
         try:
-            # Verificar se detalhes_json já é um dicionário ou string JSON
             if isinstance(faturamento.detalhes_json, dict):
                 detalhes = faturamento.detalhes_json
             else:
@@ -827,10 +741,8 @@ def processar_dados_faturamento(faturamento):
         except (json.JSONDecodeError, TypeError):
             detalhes = {}
     
-    # Calcular período quinzenal baseado nas datas de entrega dos registros
     todas_datas = []
     
-    # Coletar todas as datas de entrega dos registros
     for categoria in ['fornecedores', 'transportadoras', 'extratores', 'comissionados']:
         registros = detalhes.get(categoria, [])
         for registro in registros:
@@ -838,28 +750,21 @@ def processar_dados_faturamento(faturamento):
             if data_entrega and data_entrega != '-':
                 todas_datas.append(data_entrega)
     
-    # Determinar o período quinzenal - a função faz toda a mágica!
     periodo_quinzenal = DataHora.obter_periodo_quinzenal(todas_datas) if todas_datas else None
     
-    # Adicionar período quinzenal aos dados do faturamento
     dados['faturamento']['periodo_quinzenal'] = periodo_quinzenal
     
-    # Usar método integrado que retorna AMBAS as estruturas
     todos_dados_agrupados = FaturamentoModel.agrupar_dados_por_cliente_produto(detalhes)
     
-    # Estrutura ORIGINAL: extrair agrupamentos por categoria
     dados['fornecedores'] = todos_dados_agrupados['fornecedores_agrupados']
     dados['transportadoras'] = todos_dados_agrupados['transportadoras_agrupadas']
     dados['extratores'] = todos_dados_agrupados['extratores_agrupados']
     dados['comissionados'] = todos_dados_agrupados['comissionados_agrupados']
     dados['cargas_a_receber'] = todos_dados_agrupados['cargas_a_receber_agrupadas']
     
-    # NOVA estrutura hierárquica: agrupar TODOS os dados por cliente e produto
     dados['clientes'] = todos_dados_agrupados['dados_hierarquicos']
     dados['total_clientes'] = len(todos_dados_agrupados['dados_hierarquicos'])
     
-    # Usar os totais calculados pela função agrupar_dados_por_cliente_produto
-    # Os totais estão dentro de dados_hierarquicos -> produtos -> totais
     totais_globais = {
         'fornecedores': 0.0,
         'transportadoras': 0.0,
@@ -869,7 +774,6 @@ def processar_dados_faturamento(faturamento):
         'total_geral': 0.0
     }
     
-    # Somar todos os totais de todos os produtos de todos os clientes
     for cliente in todos_dados_agrupados.get('dados_hierarquicos', []):
         for produto in cliente.get('produtos', []):
             totais_produto = produto.get('totais', {})
@@ -880,7 +784,6 @@ def processar_dados_faturamento(faturamento):
             totais_globais['cargas_a_receber'] += totais_produto.get('cargas_a_receber', 0.0)
             totais_globais['total_geral'] += totais_produto.get('total_geral', 0.0)
     
-    # Calcular total de toneladas somando todos os peso_ticket dos registros
     total_toneladas = 0.0
     for categoria in ['fornecedores', 'transportadoras', 'extratores', 'comissionados', 'cargas_a_receber']:
         registros = detalhes.get(categoria, [])
@@ -888,28 +791,25 @@ def processar_dados_faturamento(faturamento):
             peso = registro.get('peso_ticket', 0)
             if peso:
                 try:
-                    # Converter para float se for string
                     if isinstance(peso, str):
                         peso = float(peso.replace(',', '.'))
                     total_toneladas += float(peso)
                 except (ValueError, TypeError):
-                    pass  # Ignorar valores inválidos
+                    pass
     
     totais_globais['total_toneladas'] = round(total_toneladas, 2)
     
     dados['totais'] = totais_globais
-    # Calcular totais gerais para compatibilidade
     dados['total_fornecedores'] = len(detalhes.get('fornecedores', []))
     dados['total_transportadoras'] = len(detalhes.get('transportadoras', []))
     dados['total_extratores'] = len(detalhes.get('extratores', []))
     dados['total_comissionados'] = len(detalhes.get('comissionados', []))
     dados['total_cargas_a_receber'] = len(detalhes.get('cargas_a_receber', []))
-    # Processar receitas avulsas (via relacionamento direto)
     receitas_avulsas = []
     if faturamento.lancamento_avulso_id:
         receitas_query = LancamentoAvulsoModel.query.filter_by(
             faturamento_id=faturamento.id,
-            tipo_movimentacao=1,  # Receitas
+            tipo_movimentacao=1,
             ativo=True
         ).all()
         
@@ -924,12 +824,11 @@ def processar_dados_faturamento(faturamento):
     dados['receitas_avulsas'] = receitas_avulsas
     dados['total_receitas_avulsas'] = len(receitas_avulsas)
 
-    # Processar despesas avulsas (via relacionamento direto)
     despesas_avulsas = []
     if faturamento.lancamento_avulso_id:
         despesas_query = LancamentoAvulsoModel.query.filter_by(
             faturamento_id=faturamento.id,
-            tipo_movimentacao=2,  # Despesas
+            tipo_movimentacao=2,
             ativo=True
         ).all()
         
@@ -946,7 +845,6 @@ def processar_dados_faturamento(faturamento):
 
     creditos_utilizados = []
     
-    # Processar créditos de fornecedor
     credito_fornecedor = detalhes.get("credito_fornecedor", [])
     if credito_fornecedor:
         for credito in credito_fornecedor:
@@ -954,10 +852,8 @@ def processar_dados_faturamento(faturamento):
             valor_utilizado = credito.get("valor", 0)
             valor_original = credito.get("valor_original", valor_utilizado)
             
-            # Calcular saldo restante deste crédito específico
             valor_restante = valor_original - valor_utilizado
             
-            # Buscar código do faturamento origem
             extrato_credito_id = credito.get("credito_id")
             codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'fornecedor')
             
@@ -973,7 +869,6 @@ def processar_dados_faturamento(faturamento):
                 "codigo_faturamento": codigo_faturamento_origem
             })
     
-    # Processar créditos de transportadora
     credito_transportadora = detalhes.get("credito_transportadora", [])
     if credito_transportadora:
         for credito in credito_transportadora:
@@ -982,9 +877,7 @@ def processar_dados_faturamento(faturamento):
             valor_utilizado = credito.get("valor", 0)
             valor_original = credito.get("valor_original", valor_utilizado)
             
-            # Calcular saldo restante deste crédito específico
             valor_restante = valor_original - valor_utilizado
-            # Buscar código do faturamento origem
             extrato_credito_id = credito.get("credito_id")
             codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'transportadora')
             
@@ -1000,7 +893,6 @@ def processar_dados_faturamento(faturamento):
                 "codigo_faturamento": codigo_faturamento_origem
             })
     
-    # Processar créditos de extrator
     credito_extrator = detalhes.get("credito_extrator", [])
     if credito_extrator:
         for credito in credito_extrator:
@@ -1008,10 +900,8 @@ def processar_dados_faturamento(faturamento):
             valor_utilizado = credito.get("valor", 0)
             valor_original = credito.get("valor_original", valor_utilizado)
             
-            # Calcular saldo restante deste crédito específico
             valor_restante = valor_original - valor_utilizado
             
-            # Buscar código do faturamento origem
             extrato_credito_id = credito.get("credito_id")
             codigo_faturamento_origem = FaturamentoModel.buscar_faturamento_origem_por_extrato(extrato_credito_id, 'extrator')
             
@@ -1030,7 +920,6 @@ def processar_dados_faturamento(faturamento):
     dados['creditos_utilizados'] = creditos_utilizados
     dados['faturamento']['utilizou_credito'] = faturamento.utilizou_credito
 
-    # Buscar créditos em aberto das entidades vinculadas ao faturamento
     creditos_em_aberto = FaturamentoModel._buscar_creditos_em_aberto(detalhes)
     dados['creditos_em_aberto'] = creditos_em_aberto
 
@@ -1051,28 +940,23 @@ def reverter_conciliacao_faturamento(faturamento_id):
     try:
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
-        # Verificar se o faturamento está conciliado (situação 8)
         if faturamento.situacao_pagamento_id != 8:
             return jsonify({
                 "sucesso": False,
                 "mensagem": "Este faturamento não está conciliado e não pode ser revertido."
             }), 400
         
-        # Buscar o agendamento vinculado ao faturamento
         agendamento = AgendamentoPagamentoModel.query.filter_by(
             faturamento_id=faturamento_id,
             ativo=True
         ).first()
         
         if agendamento:
-            # Reverter a situação do agendamento para pendente (situação 2)
             agendamento.situacao_id = 2
             agendamento.transacao_ofx_id = None
         
-        # Reverter a situação do faturamento para pendente (situação 2)
         faturamento.situacao_pagamento_id = 2
         
-        # Remover movimentações financeiras vinculadas ao agendamento
         from sistema.models_views.financeiro.movimentacao_financeira.movimentacao_financeira_model import MovimentacaoFinanceiraModel
         
         if agendamento:
@@ -1086,55 +970,50 @@ def reverter_conciliacao_faturamento(faturamento_id):
                     movimentacao.ativo = False
                     movimentacao.deletado = True
         
-        # ===== REVERTER SITUAÇÃO DOS REGISTROS "A PAGAR" =====
         registros_revertidos = 0
         
         if faturamento.detalhes_json:
             try:
                 detalhes = faturamento.detalhes_json if isinstance(faturamento.detalhes_json, dict) else json.loads(faturamento.detalhes_json)
                 
-                # Reverter fornecedores a pagar
                 fornecedores = detalhes.get('fornecedores', [])
                 for fornecedor_data in fornecedores:
                     fornecedor_a_pagar_id = fornecedor_data.get('id') or fornecedor_data.get('fornecedor_a_pagar_id')
                     if fornecedor_a_pagar_id:
                         registro = FornecedorPagarModel.query.get(fornecedor_a_pagar_id)
                         if registro:
-                            registro.situacao_pagamento_id = 2  # Pendente
+                            registro.situacao_pagamento_id = 2
                             registros_revertidos += 1
                 
-                # Reverter transportadoras/fretes a pagar
                 transportadoras = detalhes.get('transportadoras', [])
                 for transportadora_data in transportadoras:
                     frete_a_pagar_id = transportadora_data.get('id') or transportadora_data.get('frete_a_pagar_id')
                     if frete_a_pagar_id:
                         registro = FretePagarModel.query.get(frete_a_pagar_id)
                         if registro:
-                            registro.situacao_pagamento_id = 2  # Pendente
+                            registro.situacao_pagamento_id = 2
                             registros_revertidos += 1
                 
-                # Reverter extratores a pagar
                 extratores = detalhes.get('extratores', [])
                 for extrator_data in extratores:
                     extrator_a_pagar_id = extrator_data.get('id') or extrator_data.get('extrator_a_pagar_id')
                     if extrator_a_pagar_id:
                         registro = ExtratorPagarModel.query.get(extrator_a_pagar_id)
                         if registro:
-                            registro.situacao_pagamento_id = 2  # Pendente
+                            registro.situacao_pagamento_id = 2
                             registros_revertidos += 1
                 
-                # Reverter comissionados a pagar
                 comissionados = detalhes.get('comissionados', [])
                 for comissionado_data in comissionados:
                     comissionado_a_pagar_id = comissionado_data.get('id') or comissionado_data.get('comissionado_a_pagar_id')
                     if comissionado_a_pagar_id:
                         registro = ComissionadoPagarModel.query.get(comissionado_a_pagar_id)
                         if registro:
-                            registro.situacao_pagamento_id = 2  # Pendente
+                            registro.situacao_pagamento_id = 2
                             registros_revertidos += 1
                             
             except Exception as e:
-                print(f"[WARN reverter_conciliacao_faturamento] Erro ao reverter registros a pagar: {e}")
+                pass
                     
         creditos_reembolsados = 0
         valor_total_reembolsado = 0
@@ -1149,12 +1028,9 @@ def reverter_conciliacao_faturamento(faturamento_id):
             if resultado_estorno.get('sucesso'):
                 creditos_reembolsados = resultado_estorno.get('estornos_criados', 0)
                 valor_total_reembolsado = resultado_estorno.get('total_estornado_100', 0) / 100
-                print(f"[INFO reverter_conciliacao_faturamento] {resultado_estorno.get('mensagem')}")
-                print(f"[INFO reverter_conciliacao_faturamento] Valor total reembolsado: R$ {valor_total_reembolsado:.2f}")
             else:
-                print(f"[WARN reverter_conciliacao_faturamento] Erro ao estornar créditos: {resultado_estorno.get('mensagem')}")
+                pass
         
-        # Salvar alterações no banco
         db.session.commit()
         
         mensagem = f"✓ Conciliação do faturamento {faturamento.codigo_faturamento} revertida com sucesso!"
@@ -1177,7 +1053,6 @@ def reverter_conciliacao_faturamento(faturamento_id):
         
     except Exception as e:
         db.session.rollback()
-        print(f"[ERROR reverter_conciliacao_faturamento] {e}")
         return jsonify({
             "sucesso": False,
             "mensagem": f"Erro ao reverter conciliação: {str(e)}"

@@ -44,8 +44,6 @@
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
 
-
-      <!-- Tabela de Certificações -->
       {% if certificacoes %}
       <div class="col-12">
         <div class="card">
@@ -144,7 +142,7 @@
                           <path d="M6 6l12 12" />
                         </svg>
                       </a>
-                      <!-- Modal de Desativar -->
+                      
                       <div class="modal modal-blur fade" id="modal-desativar-{{certificacao.id}}" tabindex="-1"
                         role="dialog" aria-hidden="true">
                         <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
@@ -207,7 +205,7 @@
         </div>
       </div>
       {% else %}
-      <!-- Estado Vazio -->
+      
       <div class="empty">
         <div class="empty-img">
           <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24" fill="none"
@@ -241,7 +239,6 @@
     </div>
   </div>
 
-  <!-- Modal de Filtros -->
   <div class="modal modal-blur fade" id="modal-filtros" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
       <form action="{{ url_for('listar_certificacoes') }}" method="GET">

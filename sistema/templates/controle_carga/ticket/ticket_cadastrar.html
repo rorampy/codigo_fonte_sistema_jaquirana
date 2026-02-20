@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             TICKET
           </div>
@@ -19,7 +19,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -107,13 +106,11 @@
       </div>
       {% endif %}
 
-      <!-- Card principal do formulário -->
       <div class="col-12">
         <form class="card" id="formTicket" action="{{ url_for('cadastrar_ticket', id=solicitacao.id) }}" method="POST"
           enctype="multipart/form-data">
           <div class="card-body">
 
-            <!-- Área de Upload (exibida primeiro se não há imagem) -->
             <div id="areaUploadInicial" class="text-center py-5">
               <div class="mb-4">
                 <span class="avatar avatar-xl bg-primary-lt text-primary">
@@ -147,13 +144,12 @@
               </button>
             </div>
 
-            <!-- Formulário (oculto inicialmente, exibido após upload) -->
             <div id="areaFormulario" style="display: none;">
 
               <div class="row">
-                <!-- Coluna do Formulário -->
+                
                 <div class="col-lg-7">
-                  <!-- Seção: Fornecedor -->
+                  
                   <div class="mb-3">
                     <h4 class="subheader mb-3">
                       Fornecedor
@@ -179,7 +175,6 @@
                         </div>
                       </div>
 
-                      <!-- Extrator vinculado ao fornecedor (carregado via AJAX) -->
                       <div class="col-12" id="grupo-extrator-ticket" style="display: none;">
                         <label class="form-label">Extrator (quem fez o corte)</label>
                         <select name="extratorTicket" id="extratorTicket" class="form-select">
@@ -192,7 +187,6 @@
 
                   <hr class="my-3">
 
-                  <!-- Seção: Informações do Ticket -->
                   <div class="mb-3">
                     <h4 class="subheader mb-3">
                       Dados do Ticket
@@ -269,11 +263,9 @@
                     </div>
                   </div>
 
-                  <!-- Input file oculto -->
                   <input type="file" name="arquivoTicket" id="arquivoTicket" class="d-none" accept=".jpg, .jpeg, .png">
                 </div>
 
-                <!-- Coluna da Imagem do Ticket -->
                 <div class="col-lg-5">
                   <div class="card h-100 border-0 shadow-sm"
                     style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
@@ -292,7 +284,7 @@
                           Imagem do Ticket
                         </h4>
                         <div class="d-flex align-items-center gap-1">
-                          <!-- Controles de Zoom -->
+                          
                           <div class="btn-group btn-group-sm me-2" role="group">
                             <button type="button" class="btn btn-outline-secondary" onclick="zoomImagemTicket(-0.25)"
                               title="Diminuir (-)">
@@ -338,7 +330,7 @@
                       </div>
                     </div>
                     <div class="card-body p-2">
-                      <!-- Container com scroll para zoom -->
+                      
                       <div id="containerImagemTicket"
                         style="width: 100%; height: 380px; overflow: auto; border-radius: 8px; background: #fff; cursor: grab; position: relative; user-select: none;">
                         <img id="imagemTicketDireta" src="" alt="Imagem do Ticket" draggable="false"
@@ -392,7 +384,6 @@
   </div>
 </div>
 
-<!-- Modal de Upload -->
 <div class="modal modal-blur fade" id="modalUpload" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -459,7 +450,6 @@
   </div>
 </div>
 
-<!-- Modal de Confirmação -->
 <div class="modal modal-blur fade" id="modalConfirmacao" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -470,7 +460,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <!-- Alerta de confirmação -->
+        
         <div class="alert alert-danger mb-3">
           <div class="d-flex align-items-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24"
@@ -487,7 +477,6 @@
           </div>
         </div>
 
-        <!-- Card: Informações da Solicitação -->
         <div class="card border border-primary shadow-sm mb-4">
           <div class="card-body">
             <h3 class="card-title mb-3 text-primary">Informações da Solicitação</h3>
@@ -554,7 +543,6 @@
           </div>
         </div>
 
-        <!-- Card: Dados do Ticket (preenchidos pelo usuário) -->
         <div class="card border border-primary shadow-sm mb-4">
           <div class="card-body">
             <h3 class="card-title mb-3 text-primary">
@@ -599,7 +587,6 @@
           </div>
         </div>
 
-        <!-- Card: Imagem do Ticket -->
         <div class="card border border-primary shadow-sm mb-4">
           <div class="card-body">
             <h3 class="card-title mb-3 text-primary">
@@ -644,7 +631,6 @@
   </div>
 </div>
 
-<!-- Modal de Recomendações -->
 <div class="modal modal-blur fade" id="modalRecomendacoes" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -756,7 +742,6 @@
       });
     }
 
-    // Carregar extratores vinculados ao fornecedor selecionado via AJAX
     function carregarExtratoresFornecedor(fornecedorId) {
       const grupoExtrator = document.getElementById('grupo-extrator-ticket');
       const selectExtrator = document.getElementById('extratorTicket');
@@ -789,7 +774,6 @@
         });
     }
 
-    // Verifica se há dados extraídos no sessionStorage (vindo da listagem)
     const dadosExtraidos = sessionStorage.getItem('ticketDadosExtraidos');
     const arquivoBase64 = sessionStorage.getItem('ticketArquivoBase64');
 
@@ -797,7 +781,6 @@
       try {
         const dados = JSON.parse(dadosExtraidos);
 
-        // Preenche campos
         const campoNf = document.getElementById('numeroNf');
         const campoPeso = document.getElementById('pesoLiquido');
         const campoData = document.getElementById('dataEntregaTicket');
@@ -806,7 +789,6 @@
         if (dados.peso_liquido && campoPeso) campoPeso.value = parseFloat(dados.peso_liquido).toFixed(2);
         if (dados.data_entrega && campoData) campoData.value = dados.data_entrega;
 
-        // Recria o arquivo a partir do base64
         const nomeArquivo = sessionStorage.getItem('ticketArquivoNome') || 'ticket.jpg';
         const tipoArquivo = sessionStorage.getItem('ticketArquivoTipo') || 'image/jpeg';
 
@@ -822,17 +804,14 @@
               inputArquivo.files = dataTransfer.files;
             }
 
-            // Armazena a imagem base64 globalmente para visualização
             window.imagemBase64 = arquivoBase64;
 
-            // Atualiza a imagem direta na tela
             const imagemTicketDireta = document.getElementById('imagemTicketDireta');
             if (imagemTicketDireta) {
               imagemTicketDireta.src = arquivoBase64;
             }
           });
 
-        // Mostra formulário e esconde área de upload inicial
         const areaUploadInicial = document.getElementById('areaUploadInicial');
         const areaFormulario = document.getElementById('areaFormulario');
         const rodapeFormulario = document.getElementById('rodapeFormulario');
@@ -841,7 +820,6 @@
         if (areaFormulario) areaFormulario.style.display = 'block';
         if (rodapeFormulario) rodapeFormulario.style.display = 'block';
 
-        // Limpa sessionStorage
         sessionStorage.removeItem('ticketDadosExtraidos');
         sessionStorage.removeItem('ticketArquivoBase64');
         sessionStorage.removeItem('ticketArquivoNome');
@@ -854,7 +832,6 @@
   });
 </script>
 
-<!-- Script de Zoom Inline da Imagem do Ticket -->
 <script>
   (function () {
     'use strict';
@@ -870,7 +847,6 @@
     const imagem = document.getElementById('imagemTicketDireta');
     const zoomDisplay = document.getElementById('zoomLevelTicket');
 
-    // Função global para zoom
     window.zoomImagemTicket = function (delta) {
       const novoZoom = Math.max(zoomMin, Math.min(zoomMax, zoomTicket + delta));
       if (novoZoom !== zoomTicket) {
@@ -879,7 +855,6 @@
       }
     };
 
-    // Função global para resetar zoom
     window.resetZoomImagemTicket = function () {
       zoomTicket = 1;
       atualizarZoomTicket();
@@ -898,16 +873,14 @@
       }
     }
 
-    // Configurar eventos no container
     if (container) {
-      // Zoom com scroll do mouse
+      
       container.addEventListener('wheel', function (e) {
         e.preventDefault();
         const delta = e.deltaY < 0 ? 0.15 : -0.15;
         window.zoomImagemTicket(delta);
       }, { passive: false });
 
-      // Arrastar para mover
       container.addEventListener('mousedown', function (e) {
         isDragging = true;
         container.style.cursor = 'grabbing';

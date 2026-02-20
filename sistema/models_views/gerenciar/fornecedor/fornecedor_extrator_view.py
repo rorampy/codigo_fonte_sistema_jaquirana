@@ -7,9 +7,6 @@ from sistema.models_views.gerenciar.extrator.extrator_model import ExtratorModel
 from sistema._utilitarios import *
 
 
-# ============================================================
-# LISTAGEM - Fornecedores com extratores vinculados
-# ============================================================
 @app.route("/gerenciar/fornecedor-extratores", methods=["GET"])
 @login_required
 @requires_roles
@@ -31,7 +28,6 @@ def listar_fornecedor_extratores():
                 FornecedorCadastroModel.custo_extracao == True
             ).order_by(FornecedorCadastroModel.identificacao).all()
 
-        # Para cada fornecedor, carregar extratores vinculados
         dados_fornecedores = []
         for f in fornecedores:
             extratores_vinculados = FornecedorExtratorModel.listar_por_fornecedor(f.id)
@@ -48,14 +44,10 @@ def listar_fornecedor_extratores():
             dados_corretos=request.args,
         )
     except Exception as e:
-        print(e)
         flash(("Erro ao listar fornecedores com extratores!", "warning"))
         return redirect(url_for("listar_fornecedores"))
 
 
-# ============================================================
-# GERENCIAR - Adicionar/remover extratores de um fornecedor
-# ============================================================
 @app.route("/gerenciar/fornecedor-extratores/<int:fornecedor_id>", methods=["GET", "POST"])
 @login_required
 @requires_roles
@@ -73,18 +65,15 @@ def gerenciar_fornecedor_extratores(fornecedor_id):
             extratores_selecionados = request.form.getlist("extratores[]")
             
             try:
-                # Desativar vínculos existentes (soft delete)
                 vinculos_existentes = FornecedorExtratorModel.listar_por_fornecedor(fornecedor.id)
                 for vinculo in vinculos_existentes:
                     vinculo.ativo = False
                     vinculo.deletado = True
 
-                # Criar novos vínculos
                 for extrator_id_str in extratores_selecionados:
                     if extrator_id_str and extrator_id_str.strip():
                         extrator_id = int(extrator_id_str)
                         
-                        # Verificar se já existe um registro (reativar) ou criar novo
                         vinculo_existente = FornecedorExtratorModel.query.filter(
                             FornecedorExtratorModel.fornecedor_id == fornecedor.id,
                             FornecedorExtratorModel.extrator_id == extrator_id
@@ -106,10 +95,8 @@ def gerenciar_fornecedor_extratores(fornecedor_id):
 
             except Exception as e:
                 db.session.rollback()
-                print(e)
                 flash(("Erro ao salvar extratores do fornecedor!", "warning"))
 
-        # Carregar extratores já vinculados
         extratores_vinculados = FornecedorExtratorModel.listar_por_fornecedor(fornecedor.id)
         ids_vinculados = [ev.extrator_id for ev in extratores_vinculados]
 
@@ -120,14 +107,10 @@ def gerenciar_fornecedor_extratores(fornecedor_id):
             ids_vinculados=ids_vinculados,
         )
     except Exception as e:
-        print(e)
         flash(("Erro ao gerenciar extratores do fornecedor!", "warning"))
         return redirect(url_for("listar_fornecedor_extratores"))
 
 
-# ============================================================
-# REMOVER VÍNCULO INDIVIDUAL
-# ============================================================
 @app.route("/gerenciar/fornecedor-extratores/remover/<int:vinculo_id>", methods=["GET"])
 @login_required
 @requires_roles
@@ -146,14 +129,10 @@ def remover_fornecedor_extrator(vinculo_id):
         return redirect(url_for("gerenciar_fornecedor_extratores", fornecedor_id=vinculo.fornecedor_id))
     except Exception as e:
         db.session.rollback()
-        print(e)
         flash(("Erro ao remover extrator do fornecedor!", "warning"))
         return redirect(url_for("listar_fornecedor_extratores"))
 
 
-# ============================================================
-# API JSON - Extratores por fornecedor (para uso no ticket)
-# ============================================================
 @app.route("/api/extratores-fornecedor/<int:fornecedor_id>", methods=["GET"])
 @login_required
 def api_extratores_por_fornecedor(fornecedor_id):

@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             MOTORISTAS
           </div>
@@ -47,7 +47,7 @@
       </div>
     </div>
   </div>
-  <!-- Page body -->
+  
   <div class="page-body">
     <div class="container-xl">
 
@@ -56,7 +56,6 @@
       <div class="col-12">
         <div  class="card">
 
-          <!-- Início Tabela -->
           <div class="table-responsive">
             <table class="table table-vcenter card-table">
               <thead>
@@ -85,7 +84,6 @@
                       | selectattr('deletado', 'equalto', False)
                       | list %}
                     
-
                     {% if assoc_validas %}
                     {% set total = assoc_validas | length %}
                     {% for assoc in assoc_validas[:3] %}
@@ -124,7 +122,7 @@
                   </td>
                   <td>
                     <div class="btn-list flex-nowrap">
-                      <!-- Botão: Editar motorista -->
+                      
                       <a href="{{ url_for('editar_motorista', id=m.id) }}"
                         class="btn btn-icon btn-outline-warning"
                         data-bs-toggle="tooltip" data-bs-placement="top"
@@ -141,7 +139,7 @@
                         </svg>
                       </a>
                       {%if m.ativo == 1%}
-                      <!-- Botão: Desativar motorista -->
+                      
                       <a href="#"
                         class="btn btn-icon btn-outline-danger excluir {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%}"
                         data-bs-toggle="modal"
@@ -167,7 +165,7 @@
                               aria-label="Close"></button>
                             <div class="modal-status bg-danger"></div>
                             <div class="modal-body text-center py-4">
-                              <!-- Download SVG icon from http://tabler.io/icons/icon/alert-triangle -->
+                              
                               <svg xmlns="http://www.w3.org/2000/svg" width="24"
                                 height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor"
@@ -206,7 +204,7 @@
                         </div>
                       </div>
                       {%else%}
-                      <!-- Botão: Ativar motorista -->
+                      
                       <a href="{{ url_for('ativar_motorista', id=m.id) }}"
                         class="btn btn-icon btn-outline-success {%if current_user.role_id != 1 and current_user.role_id != 2 and current_user.role_id != 3%} disabled {%endif%} ativar"
                         data-bs-toggle="tooltip" data-bs-placement="top"
@@ -233,7 +231,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1"
     role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -274,7 +271,7 @@
             </a>
             <button type="submit" class="btn btn-primary btn-5 ms-auto"
               data-bs-dismiss="modal">
-              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2"

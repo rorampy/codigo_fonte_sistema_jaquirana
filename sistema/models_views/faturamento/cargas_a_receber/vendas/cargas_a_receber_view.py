@@ -41,10 +41,8 @@ def inject_situacoes_financeiras():
 def listagem_a_receber():
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
 
-    # Carregar apenas entidades necessárias para os selects que ainda são selects
     statusPagamentos = SituacaoPagamentoModel.listar_status_filtro()
 
-    # Obter semanas disponíveis para o filtro semanal
     semanas_disponiveis = UtilitariosSemana.obter_semanas_do_mes_atual()
 
     verificar_e_limpar_conciliacao_incorreta('a_receber') 
@@ -57,19 +55,16 @@ def listagem_a_receber():
     fitid_conciliar = dados_conciliacao.get('fitid')
 
     if any(request.args.values()):
-        # Verificar o tipo de filtro (semanal ou data)
         tipo_filtro = request.args.get("tipo_filtro", "semanal")
         semana_selecionada = request.args.get("semanaSelecionada")
         data_inicio_form = request.args.get("dataInicio")
         data_fim_form = request.args.get("dataFim")
         
-        # Determinar data_inicio e data_fim baseado no tipo de filtro
         if tipo_filtro == "data" and data_inicio_form and data_fim_form:
             from datetime import datetime
             data_inicio = datetime.strptime(data_inicio_form, "%Y-%m-%d").date()
             data_fim = datetime.strptime(data_fim_form, "%Y-%m-%d").date()
         else:
-            # Usar filtro semanal
             valor_padrao_semana = next((semana['valor'] for semana in semanas_disponiveis if semana.get('is_atual')), None)
             data_inicio, data_fim = UtilitariosSemana.processar_semana_selecionada(
                 semana_selecionada or valor_padrao_semana
@@ -143,7 +138,6 @@ def informar_recebimento_carga(id):
         transacao_ofx = None
         if conciliar_transacao_id:
             transacao_ofx = ImportacaoOfx.query.get(conciliar_transacao_id)
-            print(f"[DEBUG] transacao_ofx encontrada: {transacao_ofx}")
 
         valor_total_recebimento = registro.valor_total_nota_100 or 0
             
@@ -185,21 +179,19 @@ def informar_recebimento_carga(id):
                 db.session.add(novo_recebimento)
                 db.session.flush()
 
-                registro.situacao_financeira_id = 5  # 
+                registro.situacao_financeira_id = 5
                 registro.valor_total_nota_100 = valor_recebido
 
-                # Calcular valor líquido após crédito
                 valor_bruto = valor_recebido
                 valor_credito = 0
                 valor_liquido = valor_recebido
 
-                # Criação do faturamento para o registro individual (adaptado para extrator)
                 novo_faturamento = FaturamentoModel(
                     usuario_id=current_user.id,
                     codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
-                    valor_total=valor_liquido,  # Valor líquido após crédito
-                    ids_fornecedores=None,  # Para extrator não usa ids_registros
-                    ids_a_receber=str(registro.id),  # Para extrator usa ids_extratores
+                    valor_total=valor_liquido,
+                    ids_fornecedores=None,
+                    ids_a_receber=str(registro.id),
                     utilizou_credito=0,
                     situacao_pagamento_id=7,
                     tipo_operacao=1,
@@ -210,17 +202,16 @@ def informar_recebimento_carga(id):
                 if hasattr(novo_faturamento, 'valor_credito_aplicado'):
                     novo_faturamento.valor_credito_aplicado = valor_credito
                 if hasattr(novo_faturamento, 'valor_fornecedor'):
-                    novo_faturamento.valor_fornecedor = 0  # Para extrator, valor fornecedor é 0
+                    novo_faturamento.valor_fornecedor = 0
                 if hasattr(novo_faturamento, 'valor_transportadora'):
-                    novo_faturamento.valor_transportadora = 0  # Para extrator, valor transportadora é 0
+                    novo_faturamento.valor_transportadora = 0
                 if hasattr(novo_faturamento, 'valor_extrator'):
-                    novo_faturamento.valor_extrator = 0  # Valor vai para extrator
+                    novo_faturamento.valor_extrator = 0
                 if hasattr(novo_faturamento, 'valor_comissionado'):
-                    novo_faturamento.valor_comissionado = 0  # Para extrator, valor comissionado é 0
+                    novo_faturamento.valor_comissionado = 0
                 if hasattr(novo_faturamento, 'valor_receita'):
-                    novo_faturamento.valor_receita = valor_liquido  # Valor vai para receber
+                    novo_faturamento.valor_receita = valor_liquido
                 
-                # Preparar detalhes do faturamento para extrator
                 valor_bruto_registro = valor_bruto
                 valor_credito_registro = valor_credito
                 valor_faturado = valor_liquido
@@ -234,7 +225,6 @@ def informar_recebimento_carga(id):
                         numero_nf = registro.numero_nota_fiscal
                 
 
-                # Detalhes para extrator (vai no array de extratores)
                 detalhes_extratores = [{
                     "carga_a_receber_id": registro.id,
                     "solicitacao_id": registro.solicitacao_nf_id if registro.solicitacao else "",
@@ -258,7 +248,6 @@ def informar_recebimento_carga(id):
                     "transportadora_identificacao": registro.solicitacao.transportadora_exibicao.identificacao if registro.solicitacao else "",
                 }]
 
-                # Salvar detalhes (array vazio para fornecedores, detalhes_extratores)
                 novo_faturamento.salvar_detalhes(cargas_a_receber=detalhes_extratores)
 
                 db.session.add(novo_faturamento)
@@ -275,9 +264,6 @@ def informar_recebimento_carga(id):
                         valor_ofx_centavos = int(transacao_ofx.valor * 100) if transacao_ofx.valor else 0
                         diferenca_centavos = valor_ofx_centavos - valor_recebido
                         
-                        print(f"Valor OFX: {valor_ofx_centavos} centavos")
-                        print(f"Valor Recebido: {valor_recebido} centavos")
-                        print(f"Diferença: {diferenca_centavos} centavos")
                         
                         if diferenca_centavos > 0:
                             db.session.commit()
@@ -390,7 +376,7 @@ def informar_recebimento_massa():
                 flash(("IDs inválidos selecionados!", "warning"))
                 return redirect(url_for("listagem_a_receber"))
 
-        else:  # POST
+        else:
             ids_selecionados = request.form.get('ids_registros', '') or request.form.get('ids_cargas', '')
             ids_nfs_complementares = request.form.get('ids_nfs_complementares', '') or request.form.get('ids_nf_complementar', '')
             ids_nfs_servico = request.form.get('ids_nfs_servico', '') or request.form.get('ids_nf_servico', '')
@@ -406,7 +392,7 @@ def informar_recebimento_massa():
                 return redirect(url_for("listagem_a_receber"))
 
         registros = [RegistroOperacionalModel.obter_por_id(registro_id) for registro_id in ids_list]
-        registros = [r for r in registros if r and r.situacao_financeira_id != 5]  # Filtrar já recebidos
+        registros = [r for r in registros if r and r.situacao_financeira_id != 5]
 
         if not registros:
             flash(("Nenhum registro válido encontrado para recebimento!", "warning"))
@@ -421,7 +407,7 @@ def informar_recebimento_massa():
 
         clientes_dict = {}
         valor_total_geral = 0
-        valores_recebidos_dict = {}  # id do registro -> valor editado (centavos)
+        valores_recebidos_dict = {}
 
         for registro in registros:
             if request.method == "POST":
@@ -462,7 +448,6 @@ def informar_recebimento_massa():
             clientes_dict[cliente_id]['registros'].append(registro_dict)
             clientes_dict[cliente_id]['valor_total'] += valor_total_recebimento
 
-        # Processar NFs complementares agrupadas (se houver)
         nfs_complementares_dict = {}
         if ids_nfs_complementares:
             try:
@@ -484,9 +469,8 @@ def informar_recebimento_massa():
                     nfs_complementares_dict[cliente_id]['valor_total'] += (nf.valor_total_nota_100 or 0)
                     valor_total_geral += (nf.valor_total_nota_100 or 0)
             except Exception as e:
-                print(f"[ERROR] Erro ao processar NFs complementares: {e}")
+                pass
 
-        # Processar NFs de serviço agrupadas (se houver)
         nfs_servico_dict = {}
         if ids_nfs_servico:
             try:
@@ -508,7 +492,7 @@ def informar_recebimento_massa():
                     nfs_servico_dict[cliente_id]['valor_total'] += (nf.total_liquido_100 or 0)
                     valor_total_geral += (nf.total_liquido_100 or 0)
             except Exception as e:
-                print(f"[ERROR] Erro ao processar NFs de serviço: {e}")
+                pass
 
         contas_bancarias = ContaBancariaModel.obter_contas_bancarias_ativas()
         
@@ -529,7 +513,6 @@ def informar_recebimento_massa():
                     detalhes_nf_complementar = []
                     detalhes_nf_servico = []
 
-                    # Processar cargas a receber
                     for registro in registros:
                         valor_recebido = valores_recebidos_dict.get(registro.id, registro.valor_total_nota_100 or 0)
 
@@ -581,7 +564,6 @@ def informar_recebimento_massa():
                             "transportadora_identificacao": registro.solicitacao.transportadora_exibicao.identificacao if registro.solicitacao else "",
                         })
 
-                    # Processar NFs complementares agrupadas
                     if ids_nfs_complementares:
                         from sistema.models_views.faturamento.cargas_a_receber.nf_complementar.nf_complementar_model import NfComplementarModel
                         ids_nfs_comp = [int(id.strip()) for id in ids_nfs_complementares.split(',') if id.strip()]
@@ -602,7 +584,6 @@ def informar_recebimento_massa():
                                     "destinatario_data_emissao": nf_complementar.destinatario_data_emissao.strftime('%d/%m/%Y') if nf_complementar.destinatario_data_emissao else None,
                                 })
 
-                    # Processar NFs de serviço agrupadas  
                     if ids_nfs_servico:
                         from sistema.models_views.faturamento.cargas_a_receber.nf_servico.nf_servico_model import NfServicoModel
                         ids_nfs_serv = [int(id.strip()) for id in ids_nfs_servico.split(',') if id.strip()]
@@ -622,7 +603,6 @@ def informar_recebimento_massa():
                                     "data_emissao": nf_servico.data_emissao.strftime('%d/%m/%Y') if nf_servico.data_emissao else None,
                                 })
 
-                    # Criação do faturamento em massa (um único faturamento para todos os registros)
                     ids_nfs_comp_str = ','.join([str(nf_id) for nf_id in ids_nfs_comp]) if 'ids_nfs_comp' in locals() else ''
                     ids_nfs_serv_str = ','.join([str(nf_id) for nf_id in ids_nfs_serv]) if 'ids_nfs_serv' in locals() else ''
                     
@@ -653,7 +633,6 @@ def informar_recebimento_massa():
                     if hasattr(novo_faturamento, 'valor_receita'):
                         novo_faturamento.valor_receita = valor_total_processado
 
-                    # Salvar detalhes incluindo cargas a receber, NFs complementares e NFs de serviço
                     novo_faturamento.salvar_detalhes(
                         cargas_a_receber=detalhes_faturamento,
                         nf_complementar=detalhes_nf_complementar,
@@ -707,7 +686,6 @@ def informar_recebimento_massa():
                         return redirect(url_for("listagem_a_receber"))
 
                 except Exception as e:
-                    print(f"[ERROR] Erro ao processar faturamento em massa: {e}")
                     db.session.rollback()
                     dados_conciliacao = session.get('dados_conciliacao', {})
                     if dados_conciliacao.get('transacao_id'):
@@ -738,7 +716,6 @@ def informar_recebimento_massa():
         )
 
     except Exception as e:
-        print(f"[ERROR] Erro interno: {e}")
         db.session.rollback()
         dados_conciliacao = session.get('dados_conciliacao', {})
         if dados_conciliacao.get('transacao_id'):
@@ -758,11 +735,10 @@ def cancelar_informe_recebimento(id):
             tipo = "warning"
             sucesso = False
         else:
-            registro.situacao_financeira_id = 2  # 2 = Pendente
+            registro.situacao_financeira_id = 2
 
             recebimento = RecebimentoModel.obter_recebimento_pore_registro_id(registro.id)
             if recebimento:
-                # Obter conta bancária do recebimento
                 conta_bancaria_id = recebimento.conta_bancaria_id
                 
                 recebimento.deletado = 1
@@ -770,7 +746,6 @@ def cancelar_informe_recebimento(id):
 
                 valor_recebido_100 = recebimento.valor_total_recebimento_100
 
-                # Cancelar movimentação
                 movimentacao = MovimentacaoFinanceiraModel.obter_recebimento_por_id(recebimento.id)
                 if movimentacao:
                     movimentacao.deletado = 1
@@ -779,7 +754,6 @@ def cancelar_informe_recebimento(id):
                     movimentacao.data_movimentacao = datetime.now()
                     movimentacao.movimentacao_financeira_id = None
                 
-                # Atualizar saldo (subtrair o valor que havia sido recebido)
                 saldo_total = SaldoMovimentacaoFinanceiraModel.obter_registro_conta_bancaria(conta_bancaria_id)
                 if saldo_total:
                     saldo_total.valor_total_saldo_100 -= valor_recebido_100
@@ -794,7 +768,6 @@ def cancelar_informe_recebimento(id):
             
             db.session.commit()
             
-            # Registrar pontuação
             PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                 current_user.id,
                 TipoAcaoEnum.EDICAO,
@@ -813,7 +786,6 @@ def cancelar_informe_recebimento(id):
         return redirect(url_for("listagem_a_receber"))
 
     except Exception as e:
-        print(f"Erro ao cancelar recebimento: {e}")
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return jsonify({
                 "success": False,

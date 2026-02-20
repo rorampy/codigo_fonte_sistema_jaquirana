@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             GERENCIAMENTO DE CONTA
           </div>
@@ -18,7 +18,7 @@
       </div>
     </div>
   </div>
-  <!-- Page body -->
+  
   <div class="page-body">
     <div class="container-xl">
 
@@ -159,39 +159,34 @@
     </div>
   </div>
   
-  <!-- Contador de caracteres do textarea - Adaptado para Edição -->
   <script>
     const textarea = document.getElementById('autorTextArea');
     const charCount = document.getElementById('caracteresRestantes');
     
     textarea.addEventListener('input', function() {
-      updateCharCount(); // Chama a função para atualizar o contador
+      updateCharCount(); 
     });
   
-    // Função para atualizar o contador e a cor do texto
     function updateCharCount() {
       const remainingChars = 150 - textarea.value.length;
       charCount.textContent = `${remainingChars} caracteres restantes`;
   
-      // Alterando a cor do texto quando chega próximo do mínimo
       if (remainingChars < 10) {
-        charCount.style.color = '#FF6961'; // Cor vermelha
+        charCount.style.color = '#FF6961'; 
       } else {
-        charCount.style.color = 'black'; // Cor preta
+        charCount.style.color = 'black'; 
       }
     }
   
-    // Chame a função para configurar o contador ao carregar a página
     updateCharCount();
   </script>
 
-  <!-- Exibe Campo de upload de Foto de Perfil -->
   <script>
     const botaoMostrar = document.getElementById('mostrarInput');
     const meuInput = document.getElementById('inputFotoPerfil');
 
     botaoMostrar.addEventListener('click', () => {
-      meuInput.style.display = 'block'; // Define o estilo para "block" para exibir o input
+      meuInput.style.display = 'block'; 
     });
   </script>
 

@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             CENTRO CUSTO
           </div>
@@ -32,21 +32,13 @@
               </svg>
               Cadastrar Centro Custo
             </a>
-            <!-- <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-report">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path
-                  d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
-              </svg>
-              Filtrar </a> -->
+            
           </div>
         </div>
       </div>
     </div>
   </div>
-  <!-- Page body -->
+  
   <div class="page-body">
     <div class="container-xl">
 
@@ -56,7 +48,7 @@
         <div class="card">
 
           {% if centro_custo %}
-          <!-- Início Tabela -->
+          
           <div class="table-responsive">
             <table class="table table-vcenter card-table">
               <thead>
@@ -86,7 +78,7 @@
                   </td>
                   <td>
                     <div class="btn-list flex-nowrap">
-                      <!-- Botão: Editar cliente -->
+                      
                       <a href="{{url_for('editar_centro_custo', id=cen.id)}}"
                         class="btn btn-icon btn-outline-warning"
                         data-bs-toggle="tooltip"
@@ -112,7 +104,7 @@
                         </svg>
                       </a>
                       {% if cen.ativo == 1 %}
-                      <!-- Botão: Desativar cliente -->
+                      
                       <a href="#"
                         class="btn btn-icon btn-outline-danger desativar"
                         data-bs-toggle="modal"
@@ -152,7 +144,7 @@
                               class="modal-status bg-danger"></div>
                             <div
                               class="modal-body text-center py-4">
-                              <!-- Download SVG icon from http://tabler.io/icons/icon/alert-triangle -->
+                              
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="24"
@@ -232,7 +224,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1"
     role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document"
@@ -270,7 +261,7 @@
             <button type="submit"
               class="btn btn-primary btn-5 ms-auto"
               data-bs-dismiss="modal">
-              <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+              
               <svg xmlns="http://www.w3.org/2000/svg" width="24"
                 height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2"

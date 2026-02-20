@@ -3,7 +3,7 @@
 {% include 'estrutura/header.html' %}
 
 <div class="page-wrapper">
-  {# ========== HEADER ========== #}
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
@@ -27,12 +27,10 @@
     </div>
   </div>
 
-  {# ========== BODY ========== #}
   <div class="page-body">
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
 
-      {# --- Totalizadores --- #}
       {% if registros %}
       <div class="row mb-3">
         <div class="col-md-6">
@@ -62,7 +60,6 @@
       </div>
       {% endif %}
 
-      {# --- Card de Filtros Ativos --- #}
       {% set filtros_ativos = [] %}
       {% if dados_corretos.get('dataInicio') %}
         {% set data_ini_raw = dados_corretos.get('dataInicio') %}
@@ -137,7 +134,6 @@
       </div>
       {% endif %}
 
-      {# --- Tabela de dados --- #}
       <div class="col-12">
         <div class="card">
           <div class="card-body p-0">
@@ -205,7 +201,6 @@
     </div>
   </div>
 
-  {# ========== MODAL FILTROS ========== #}
   {% include 'relatorios/relatorios_financeiros/relatorios_contas_ap_ar/_filtros.html' with context %}
 
   {% include 'estrutura/footer.html' %}

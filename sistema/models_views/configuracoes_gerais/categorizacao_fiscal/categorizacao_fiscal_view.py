@@ -14,13 +14,10 @@ from sistema._utilitarios import *
 @requires_roles
 def listar_categorizacao_fiscal():
     try:
-        # Inicializar categorias padrão se não existirem
         inicializar_categorias_padrao_categorizacao_fiscal()
 
-        # Buscar categorias principais
         categorias_principais = CategorizacaoFiscalModel.buscar_principais()
 
-        # Montar estrutura hierárquica
         estrutura = []
         for categoria in categorias_principais:
             categoria_dict = categoria.to_dict()
@@ -53,23 +50,18 @@ def criar_subcategoria_categorizacao_fiscal():
         if not parent_code:
             return jsonify({"erro": "Código pai é obrigatório"}), 400
 
-        # Buscar categoria pai (apenas ativas)
         categoria_pai = CategorizacaoFiscalModel.buscar_por_codigo(parent_code)
         if not categoria_pai:
             return jsonify({"erro": "Categoria pai não encontrada ou inativa"}), 404
 
-        # Gerar próximo código (agora considera apenas registros ativos)
         novo_codigo = CategorizacaoFiscalModel.gerar_proximo_codigo(parent_code)
         if not novo_codigo:
             return jsonify({"erro": "Não foi possível gerar código"}), 400
 
-        # Calcular nível
         nivel = novo_codigo.count(".") + 1
 
-        # ✅ VERIFICAÇÃO ADICIONAL: Se código já existe ativo
         if not CategorizacaoFiscalModel.verificar_codigo_disponivel(novo_codigo):
-            # Tentar gerar um código alternativo
-            for tentativa in range(1, 100):  # Máximo 99 tentativas
+            for tentativa in range(1, 100):
                 codigo_alternativo = CategorizacaoFiscalModel.gerar_proximo_codigo(parent_code)
                 if CategorizacaoFiscalModel.verificar_codigo_disponivel(codigo_alternativo):
                     novo_codigo = codigo_alternativo
@@ -77,14 +69,12 @@ def criar_subcategoria_categorizacao_fiscal():
             else:
                 return jsonify({"erro": "Não foi possível gerar código único"}), 400
 
-        # ✅ TRATAMENTO INTELIGENTE: Reativar se existir inativo ou criar novo
         categoria_inativa = CategorizacaoFiscalModel.query.filter_by(
             codigo=novo_codigo, 
             ativo=False
         ).first()
         
         if categoria_inativa:
-            # Reativar categoria existente
             categoria_inativa.nome = nome
             categoria_inativa.tipo = categoria_pai.tipo
             categoria_inativa.parent_id = categoria_pai.id
@@ -94,7 +84,6 @@ def criar_subcategoria_categorizacao_fiscal():
             nova_categoria = categoria_inativa
             action_message = "reativada"
         else:
-            # Criar nova categoria
             nova_categoria = CategorizacaoFiscalModel(
                 codigo=novo_codigo,
                 nome=nome,
@@ -107,7 +96,6 @@ def criar_subcategoria_categorizacao_fiscal():
 
         db.session.commit()
 
-        # Registrar pontuação do usuário
         try:
             PontuacaoUsuarioModel.registrar_acao(
                 usuario_id=current_user.id,
@@ -115,7 +103,7 @@ def criar_subcategoria_categorizacao_fiscal():
                 detalhes=f"Subcategoria {action_message}: {nome} ({novo_codigo})",
             )
         except:
-            pass  # Não falhar se pontuação der erro
+            pass
 
         return jsonify(
             {
@@ -156,7 +144,6 @@ def listar_categorias_categorizacao_fiscal_inativas():
     except Exception as e:
         return jsonify({"erro": f"Erro ao listar inativos: {str(e)}"}), 500
 
-# ✅ ROTA ADICIONAL: Para reativar categoria específica
 @app.route("/configuracoes/gerais/categorizacao-fiscal/reativar/<int:categoria_id>", methods=["POST"])
 @login_required
 @requires_roles
@@ -168,7 +155,6 @@ def reativar_categoria_categorizacao_fiscal(categoria_id):
         if categoria.ativo:
             return jsonify({"erro": "Categoria já está ativa"}), 400
         
-        # Verificar se código não conflita com categoria ativa
         conflito = CategorizacaoFiscalModel.query.filter_by(
             codigo=categoria.codigo,
             ativo=True
@@ -179,11 +165,9 @@ def reativar_categoria_categorizacao_fiscal(categoria_id):
                 "erro": f"Não é possível reativar: código {categoria.codigo} já está em uso"
             }), 400
         
-        # Reativar
         categoria.ativo = True
         db.session.commit()
         
-        # Registrar pontuação
         try:
             PontuacaoUsuarioModel.registrar_acao(
                 usuario_id=current_user.id,
@@ -221,7 +205,6 @@ def editar_categoria_categorizacao_fiscal(categoria_id):
         categoria.nome = novo_nome
         db.session.commit()
 
-        # Registrar pontuação
         try:
             PontuacaoUsuarioModel.registrar_acao(
                 usuario_id=current_user.id,
@@ -253,7 +236,6 @@ def excluir_categoria_categorizacao_fiscal(categoria_id):
     try:
         categoria = CategorizacaoFiscalModel.query.get_or_404(categoria_id)
 
-        # Verificar se tem subcategorias ativas
         filhos = categoria.get_children_ordenados()
         if filhos:
             return (
@@ -265,12 +247,10 @@ def excluir_categoria_categorizacao_fiscal(categoria_id):
                 400,
             )
 
-        # Soft delete
         nome_categoria = categoria.nome
         categoria.ativo = False
         db.session.commit()
 
-        # Registrar pontuação
         try:
             PontuacaoUsuarioModel.registrar_acao(
                 usuario_id=current_user.id,
@@ -318,22 +298,18 @@ def inicializar_categorias_padrao_categorizacao_fiscal():
     ]
 
     for codigo, nome, tipo in categorias_padrao:
-        # Verificar se existe categoria ativa
         existe_ativa = CategorizacaoFiscalModel.buscar_por_codigo(codigo)
         if not existe_ativa:
-            # Verificar se existe inativa para reativar
             categoria_inativa = CategorizacaoFiscalModel.query.filter_by(
                 codigo=codigo,
                 ativo=False
             ).first()
             
             if categoria_inativa:
-                # Reativar
                 categoria_inativa.nome = nome
                 categoria_inativa.tipo = tipo
                 categoria_inativa.ativo = True
             else:
-                # Criar nova
                 categoria = CategorizacaoFiscalModel(
                     codigo=codigo, 
                     nome=nome, 
@@ -346,7 +322,6 @@ def inicializar_categorias_padrao_categorizacao_fiscal():
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        print(f"Erro ao inicializar categorias padrão: {str(e)}")
 
 
 def obter_subcategorias_recursivo_categorizacao_fiscal(parent_id):
@@ -367,7 +342,6 @@ def limpar_codigos_orfaos():
     USE COM CUIDADO - apenas para limpeza de dados
     """
     try:
-        # Buscar registros inativo que não têm pai válido
         orfaos = CategorizacaoFiscalModel.query.filter(
             CategorizacaoFiscalModel.ativo == False,
             CategorizacaoFiscalModel.parent_id.isnot(None)
@@ -375,7 +349,6 @@ def limpar_codigos_orfaos():
         
         removidos = []
         for orfao in orfaos:
-            # Verificar se pai ainda existe e está ativo
             pai = CategorizacaoFiscalModel.query.filter_by(
                 id=orfao.parent_id,
                 ativo=True
@@ -383,7 +356,7 @@ def limpar_codigos_orfaos():
             
             if not pai:
                 removidos.append(f"{orfao.codigo} - {orfao.nome}")
-                db.session.delete(orfao)  # Delete definitivo para órfãos
+                db.session.delete(orfao)
         
         db.session.commit()
         return removidos
@@ -393,11 +366,7 @@ def limpar_codigos_orfaos():
         raise
 
 
-# ========================================
-# VERSÃO ALTERNATIVA COM MAIS TRATAMENTO DE FLASH
-# ========================================
 
-# Se você quiser adicionar mais mensagens flash no processo:
 
 @app.route("/configuracoes/gerais/categorizacao-fiscal/criar-com-flash", methods=["POST"])
 @login_required
@@ -416,22 +385,18 @@ def criar_subcategoria_com_flash_categorizacao_fiscal():
             flash(("Código pai é obrigatório", "error"))
             return redirect(url_for("listar_categorizacao_fiscal"))
 
-        # Buscar categoria pai
         categoria_pai = CategorizacaoFiscalModel.buscar_por_codigo(parent_code)
         if not categoria_pai:
             flash(("Categoria pai não encontrada", "error"))
             return redirect(url_for("listar_categorizacao_fiscal"))
 
-        # Gerar próximo código
         novo_codigo = CategorizacaoFiscalModel.gerar_proximo_codigo(parent_code)
         if not novo_codigo:
             flash(("Não foi possível gerar código", "error"))
             return redirect(url_for("listar_categorizacao_fiscal"))
 
-        # Calcular nível
         nivel = novo_codigo.count(".") + 1
 
-        # Criar nova subcategoria
         nova_categoria = CategorizacaoFiscalModel(
             codigo=novo_codigo,
             nome=nome,
@@ -443,10 +408,8 @@ def criar_subcategoria_com_flash_categorizacao_fiscal():
         db.session.add(nova_categoria)
         db.session.commit()
 
-        # ✅ Mensagem de sucesso com tupla
         flash((f'Subcategoria "{nome}" criada com sucesso!', "success"))
 
-        # Registrar pontuação do usuário
         try:
             PontuacaoUsuarioModel.registrar_acao(
                 usuario_id=current_user.id,

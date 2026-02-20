@@ -12,17 +12,14 @@ from sistema._utilitarios import *
 @login_required
 @requires_roles
 def importar_ofx():
-    # Limpar dados de sessão da importação anterior
     chaves_ofx = ['ofx_transacoes', 'ofx_resumo', 'arquivo_nome', 'data_importacao']
     for key in chaves_ofx:
         if key in session:
             del session[key]
     session.modified = True
 
-    # Obter conta bancária selecionada via parâmetro (para pré-selecionar)
     conta_bancaria_selecionada_id = request.args.get('conta_bancaria_id', type=int)
 
-    # Obter dados para o template
     stats_transacoes = ImportacaoOfxService.obter_estatisticas_transacoes()
     contas_bancarias = ContaBancariaModel.obter_contas_bancarias_ativas()
     
@@ -30,18 +27,15 @@ def importar_ofx():
     transacoes_conciliadas = stats_transacoes.get('conciliadas', 0) 
     transacoes_nao_conciliadas = stats_transacoes.get('nao_conciliadas', 0)
 
-    # Inicializar variáveis de validação seguindo o padrão cadastrar_cliente
     validacao_campos_obrigatorios = {}
     validacao_campos_erros = {}
     dados_corretos = {}
     gravar_banco = True
 
     if request.method == "POST":
-        # Obter dados do formulário
         arquivo = request.files.get('arquivo_ofx')
         conta_bancaria_id = request.form.get('conta_bancaria')
         
-        # Campos obrigatórios seguindo o padrão cadastrar_cliente
         campos = {
             "arquivo_ofx": ["Arquivo OFX", arquivo.filename if arquivo else ""],
             "conta_bancaria": ["Conta Bancária", conta_bancaria_id]
@@ -54,21 +48,17 @@ def importar_ofx():
             dados_corretos = request.form.to_dict()
             flash(("Verifique os campos destacados em vermelho!", "warning"))
 
-        # Validações específicas do arquivo OFX
         if arquivo and arquivo.filename:
-            # Validação de extensão
             if not allowed_file(arquivo.filename):
                 gravar_banco = False
                 dados_corretos = request.form.to_dict()
                 validacao_campos_erros["arquivo_ofx"] = "Formato de arquivo não suportado! Use apenas .ofx ou .qfx"
             
-            # Validação de tamanho (10MB)
             if arquivo.content_length and arquivo.content_length > 10 * 1024 * 1024:
                 gravar_banco = False
                 dados_corretos = request.form.to_dict()
                 validacao_campos_erros["arquivo_ofx"] = "Arquivo muito grande! Máximo permitido: 10MB"
 
-        # Validação da conta bancária
         if conta_bancaria_id:
             conta_existe = ContaBancariaModel.query.filter_by(id=conta_bancaria_id, ativo=True).first()
             if not conta_existe:
@@ -76,29 +66,23 @@ def importar_ofx():
                 dados_corretos = request.form.to_dict()
                 validacao_campos_erros["conta_bancaria"] = "Conta bancária selecionada não é válida ou está inativa"
 
-        # Se passou nas validações básicas, processar o arquivo
         if gravar_banco == True and arquivo:
-            # Manter dados do formulário para o template
             dados_corretos = request.form.to_dict()
             
             try:
-                # Ler conteúdo do arquivo
                 arquivo_conteudo = arquivo.read()
                 
-                # Validação adicional de tamanho após leitura
                 if len(arquivo_conteudo) > 10 * 1024 * 1024:
                     gravar_banco = False
                     dados_corretos = request.form.to_dict()
                     validacao_campos_erros["arquivo_ofx"] = "Arquivo muito grande! Máximo permitido: 10MB"
                 
-                # Validação básica de formato OFX
                 if not arquivo_conteudo or b'<OFX>' not in arquivo_conteudo:
                     gravar_banco = False
                     dados_corretos = request.form.to_dict()
                     validacao_campos_erros["arquivo_ofx"] = "Arquivo não parece ser um OFX válido!"
                 
                 if gravar_banco == True:
-                    # Processar arquivo
                     processor = OFXProcessor()
                     sucesso, mensagem = processor.processar_arquivo(arquivo_conteudo)
                     
@@ -106,14 +90,12 @@ def importar_ofx():
                         resumo = processor.get_resumo()
                         transacoes = processor.get_transacoes()
                         
-                        # Verificar se há transações
                         if not transacoes:
                             gravar_banco = False
                             dados_corretos = request.form.to_dict()
                             validacao_campos_erros["arquivo_ofx"] = "Arquivo OFX válido, mas não contém transações!"
                         
                         if gravar_banco == True:
-                            # Preparar dados das transações com todos os campos necessários
                             transacoes_completas = []
                             for t in transacoes:
                                 transacao_data = {
@@ -129,7 +111,6 @@ def importar_ofx():
                                 }
                                 transacoes_completas.append(transacao_data)
                             
-                            # Preparar informações do arquivo para gravação no banco
                             arquivo_info = {
                                 'arquivo_nome': secure_filename(arquivo.filename),
                                 'data_importacao': datetime.now().isoformat(),
@@ -144,7 +125,6 @@ def importar_ofx():
                                 }
                             }
                             
-                            # Gravar transações no banco de dados
                             sucesso_bd, resultado = ImportacaoOfxService.inserir_transacoes_lote(
                                 transacoes_completas, 
                                 arquivo_info,
@@ -157,7 +137,6 @@ def importar_ofx():
                                 duplicadas = resultado.get('duplicadas', 0) if isinstance(resultado, dict) else 0
                                 mensagem_duplicadas = resultado.get('mensagem_duplicadas', '') if isinstance(resultado, dict) else ''
                                 
-                                # Se não houve inserções mas havia duplicadas
                                 if total_inseridas == 0 and duplicadas > 0:
                                     flash((
                                         f'Nenhuma transação nova encontrada. {mensagem_duplicadas}',
@@ -234,14 +213,11 @@ def limpar_dados_conciliacao():
     if 'dados_conciliacao' in session:
         dados = session['dados_conciliacao']
         
-        # Log específico se há diferenças sendo removidas
         if dados.get('tem_diferenca'):
-            print("[DEBUG] Removendo dados de diferença de conciliação da sessão")
+            pass
         
         session.pop('dados_conciliacao', None)
-        print("[DEBUG] Dados de conciliação removidos da sessão")
         
-        # Garantir que a sessão seja modificada
         session.modified = True
 
 def verificar_e_limpar_conciliacao_incorreta(tipo_esperado):
@@ -254,17 +230,12 @@ def verificar_e_limpar_conciliacao_incorreta(tipo_esperado):
     tipo_ativo = dados_conciliacao.get('tipo_conciliacao')
     tem_diferenca = dados_conciliacao.get('tem_diferenca', False)
     
-    print(f"[DEBUG] tipo_ativo: {tipo_ativo}, tem_diferenca: {tem_diferenca}, tipo_esperado: {tipo_esperado}")
     
-    # Se há dados de diferença mas estamos em qualquer página QUE NÃO SEJA outros_pagamentos
     if tem_diferenca and tipo_esperado != 'outros_pagamentos':
-        print(f"[DEBUG] Limpando dados de diferença - usuário saiu da página de diferenças")
         limpar_dados_conciliacao()
         return
     
-    # Se o tipo ativo é diferente do esperado (apenas quando há tipo_ativo)
     if tipo_ativo and tipo_ativo != tipo_esperado:
-        print(f"[DEBUG] Limpando conciliação incorreta - Esperado: {tipo_esperado}, Ativo: {tipo_ativo}")
         limpar_dados_conciliacao()
         return
 
@@ -337,7 +308,6 @@ def conciliar_transacao(transacao_id, tipo):
         return redirect(url_for(redirects[tipo]))
         
     except Exception as e:
-        print(f"[ERROR] Erro detalhado na conciliação: {str(e)}")
         flash((f'Erro ao processar transação: {str(e)}', 'error'))
         return redirect(url_for('listagem_ofx'))
 
@@ -362,12 +332,10 @@ def ignorar_movimentacao_ofx(id):
             flash(('Justificativa deve ter no máximo 50 caracteres', 'danger'))
             return redirect(url_for('listagem_ofx'))
             
-        # Verificar se já está conciliada
         if transacao.conciliado:
             flash(('Não é possível ignorar uma transação já conciliada', 'warning'))
             return redirect(url_for('listagem_ofx'))
         
-        # Marcar como deletada
         transacao.ofx_deletada = True
         transacao.ofx_justificativa_deletada = justificativa
         
@@ -378,7 +346,6 @@ def ignorar_movimentacao_ofx(id):
         
     except Exception as e:
         db.session.rollback()
-        print(f"[ERROR] Erro ao ignorar movimentação: {str(e)}")
         flash(('Erro interno do servidor', 'danger'))
         return redirect(url_for('listagem_ofx'))
 

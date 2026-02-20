@@ -4,12 +4,12 @@
 <link href="{{ url_for('static', filename='css/cadastro-veiculo.css') }}"
   rel="stylesheet" />
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             MOTORISTA
           </div>
@@ -21,7 +21,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -41,14 +40,13 @@
                   <div id="container-transportadoras">
                     {% set transportadoras_a_exibir = transportadoras_atuais if transportadoras_atuais else [None] %}
 
-
                     {% for assoc in transportadoras_a_exibir %}
                     <div class="row mb-2 transportadora-item">
                       <div class="col-md-3">
-                        <!-- Campo oculto com ID da associação -->
+                        
                         <input type="hidden" name="idTransportadora[]"
                           value="{{ assoc.id if assoc else '' }}">
-                        <!-- Select com transportadoras -->
+                        
                         <select name="transportadoras[]" class="form-select">
                           <option value selected>Selecione...</option>
                           {% for t in transportadoras %}
@@ -91,7 +89,6 @@
                     {% endfor %}
                   </div>
 
-                  <!-- Mensagem de erro -->
                   <div class="invalid-feedback d-block">
                     {% if 'transportadoraVeiculo' in campos_obrigatorios %}
                     {{ campos_obrigatorios['transportadoraVeiculo'] }}

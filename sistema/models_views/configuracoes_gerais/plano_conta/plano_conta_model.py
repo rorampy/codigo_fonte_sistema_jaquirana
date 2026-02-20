@@ -13,13 +13,12 @@ class PlanoContaModel(BaseModel):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     codigo = db.Column(db.String(255), unique=True, nullable=False, index=True)
     nome = db.Column(db.String(255), nullable=False)
-    tipo = db.Column(db.Integer, nullable=False)  # 1=Receita, 2=Despesa, 3=Movimentação
-    nivel = db.Column(db.Integer, nullable=False, default=1)  # 1=Principal, 2=Sub, 3=SubSub
+    tipo = db.Column(db.Integer, nullable=False)
+    nivel = db.Column(db.Integer, nullable=False, default=1)
     parent_id = db.Column(db.Integer, db.ForeignKey('plan_plano_conta.id'), nullable=True)
     controle_estrutura = db.Column(db.Boolean, default=False, nullable=False)
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
-    # Relacionamentos
     parent = relationship("PlanoContaModel", remote_side=[id], backref="children")
     
     def __init__(self, controle_estrutura=None, codigo=None, nome=None, tipo=None, parent_id=None, nivel=1, ativo=True):
@@ -31,7 +30,6 @@ class PlanoContaModel(BaseModel):
         self.nivel = nivel
         self.ativo = ativo
 
-    # Metodo complementar para permitir a liberação da estrutura para role_id != 1
     @staticmethod
     def listar_todos_planos():
         """
@@ -105,7 +103,6 @@ class PlanoContaModel(BaseModel):
             return None
         
         if '.' not in parent_code:
-            # Para subcategorias (1.01, 1.02, etc.)
             subcategorias = cls.query.filter(
                 cls.codigo.like(f"{parent_code}.%"),
                 ~cls.codigo.like(f"{parent_code}.%.%"),
@@ -115,7 +112,6 @@ class PlanoContaModel(BaseModel):
             if not subcategorias:
                 return f"{parent_code}.01"
             
-            # Extrair números das subcategorias (ativas e inativas)
             numeros = []
             for sub in subcategorias:
                 try:
@@ -124,7 +120,6 @@ class PlanoContaModel(BaseModel):
                 except (IndexError, ValueError):
                     continue
             
-            # Encontrar próximo número disponível
             proximo = 1
             while proximo in numeros:
                 proximo += 1
@@ -132,7 +127,6 @@ class PlanoContaModel(BaseModel):
             return f"{parent_code}.{proximo:02d}"
         
         else:
-            # Para sub-subcategorias e níveis mais profundos
             sub_subcategorias = cls.query.filter(
                 cls.codigo.like(f"{parent_code}.%"),
                 cls.ativo == True
@@ -141,20 +135,18 @@ class PlanoContaModel(BaseModel):
             if not sub_subcategorias:
                 return f"{parent_code}.01"
             
-            # Extrair números das sub-subcategorias (ativas e inativas)
             numeros = []
-            nivel_esperado = parent_code.count('.') + 2  # Próximo nível
+            nivel_esperado = parent_code.count('.') + 2
             
             for subsub in sub_subcategorias:
                 try:
                     parts = subsub.codigo.split('.')
                     if len(parts) == nivel_esperado:
-                        num = int(parts[-1])  # Último número do código
+                        num = int(parts[-1])
                         numeros.append(num)
                 except (IndexError, ValueError):
                     continue
             
-            # Encontrar próximo número disponível
             proximo = 1
             while proximo in numeros:
                 proximo += 1
@@ -226,12 +218,10 @@ class PlanoContaModel(BaseModel):
         Returns:
             None
         """
-        # Excluir filhos recursivamente
         filhos = self.get_children_ordenados()
         for filho in filhos:
             filho.soft_delete()
         
-        # Excluir esta categoria
         self.ativo = False
         db.session.commit()
 
@@ -261,27 +251,21 @@ class PlanoContaModel(BaseModel):
         Returns:
             list: Lista estruturada com categorias principais e seus filhos aninhados
         """
-        # Buscar todas as categorias ativas e não deletadas ordenadas por código
         todas_categorias = cls.query.filter_by(ativo=True, deletado=False).order_by(cls.codigo).all()
         
-        # Criar um dicionário para facilitar a busca por ID
         categorias_dict = {cat.id: cat.to_dict() for cat in todas_categorias}
         
-        # Adicionar lista de filhos para cada categoria
         for cat in categorias_dict.values():
             cat['children'] = []
         
-        # Organizar a hierarquia
         estrutura_raiz = []
         
         for categoria in todas_categorias:
             cat_dict = categorias_dict[categoria.id]
             
             if categoria.parent_id is None:
-                # Categoria principal (raiz)
                 estrutura_raiz.append(cat_dict)
             else:
-                # Categoria filha - adicionar ao parent
                 if categoria.parent_id in categorias_dict:
                     categorias_dict[categoria.parent_id]['children'].append(cat_dict)
         
@@ -301,7 +285,6 @@ class PlanoContaModel(BaseModel):
         
         def processar_nivel(categorias, nivel_indentacao=0):
             for categoria in categorias:
-                # Adicionar a categoria atual com indicação de nível
                 item = {
                     'id': categoria['id'],
                     'codigo': categoria['codigo'],
@@ -316,7 +299,6 @@ class PlanoContaModel(BaseModel):
                 }
                 lista_plana.append(item)
                 
-                # Processar recursivamente os filhos
                 if categoria['children']:
                     processar_nivel(categoria['children'], nivel_indentacao + 1)
         
@@ -343,22 +325,18 @@ def criar_categoria_com_tratamento_duplicacao(codigo, nome, tipo, parent_id=None
         Exception: Se ocorrer erro durante criação/reativação
     """
     try:
-        # Verificar se código já existe como registro ativo
         categoria_existente = PlanoContaModel.buscar_por_codigo(codigo)
         if categoria_existente:
             raise ValueError(f"Código {codigo} já existe e está ativo")
         
-        # Verificar se existe registro inativo com mesmo código
         categoria_inativa = PlanoContaModel.query.filter_by(codigo=codigo, ativo=False).first()
         
         if categoria_inativa:
-            # Reativar categoria existente
-            categoria_inativa.nome = nome  # Atualizar nome
+            categoria_inativa.nome = nome
             categoria_inativa.ativo = True
             db.session.commit()
             return categoria_inativa
         else:
-            # Criar nova categoria
             nova_categoria = PlanoContaModel(
                 codigo=codigo,
                 nome=nome,

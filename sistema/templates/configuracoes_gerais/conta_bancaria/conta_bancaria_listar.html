@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             CONTAS BANCÁRIAS
           </div>
@@ -37,7 +37,7 @@
       </div>
     </div>
   </div>
-  <!-- Page body -->
+  
   <div class="page-body">
     <div class="container-xl">
 
@@ -47,7 +47,7 @@
         <div class="card">
 
           {% if conta_bancaria %}
-          <!-- Início Tabela -->
+          
           <div class="table-responsive">
             <table class="table table-vcenter card-table">
               <thead>
@@ -88,7 +88,7 @@
                   </td>
                   <td>
                     <div class="btn-list flex-nowrap">
-                      <!-- Botão: Editar conta -->
+                      
                       <a href="{{url_for('editar_conta_bancaria', id=cb.id)}}"
                         class="btn btn-icon btn-outline-warning"
                         data-bs-toggle="tooltip"
@@ -107,7 +107,6 @@
                         </svg>
                       </a>
 
-                      <!-- Botão: Excluir conta -->
                       <a href="#"
                         class="btn btn-icon btn-outline-danger"
                         data-bs-toggle="modal"
@@ -129,7 +128,6 @@
                         </svg>
                       </a>
 
-                      <!-- Modal: Confirmar exclusão -->
                       <div class="modal modal-blur fade"
                         id="modal-excluir-{{cb.id}}"
                         tabindex="-1" role="dialog"

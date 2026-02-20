@@ -32,23 +32,18 @@ import json
 def listagem_despesas_avulsas():
     """Lista todas as despesas avulsas ativas baseadas nos agendamentos com paginação"""
     try:
-        # Obter parâmetros de paginação da URL
         pagina = request.args.get('pagina', 1, type=int)
         por_pagina = request.args.get('por_pagina', 200, type=int)
         
-        # Obter parâmetro de pesquisa
         termo_pesquisa = request.args.get('pesquisa', '').strip()
-        # Filtros de data de vencimento (YYYY-MM-DD)
         data_inicio = request.args.get('data_inicio', '').strip()
         data_fim = request.args.get('data_fim', '').strip()
 
-        # Garantir valores válidos
         if pagina < 1:
             pagina = 1
         if por_pagina < 1 or por_pagina > 200:
             por_pagina = 200
             
-        # Buscar despesas avulsas através dos agendamentos com paginação e pesquisa
         resultado_paginacao = AgendamentoPagamentoModel.listar_despesas_avulsas_agendamentos(
             pagina=pagina,
             por_pagina=por_pagina,
@@ -67,7 +62,6 @@ def listagem_despesas_avulsas():
         )
         
     except Exception as e:
-        print(e)
         flash(("Erro ao carregar listagem de despesas! Contate o suporte.", "warning"))
         return redirect(url_for("listagem_despesas_avulsas"))
 
@@ -82,9 +76,7 @@ def cadastrar_despesa_avulsa():
     dados_corretos = {}
     gravar_banco = True
     
-    # Carregar dados para os selects
     pessoas_financeiro = PessoaFinanceiroModel.listar_pessoas_ativas()
-    # Processar documentos formatados para cada pessoa
     for p in pessoas_financeiro:
         if p.numero_documento and len(p.numero_documento.strip()) > 0:
             p.documento_formatado = ValidaDocs.insere_pontuacao_cnpj(p.numero_documento) if len(p.numero_documento) == 14 else ValidaDocs.insere_pontuacao_cpf(p.numero_documento)
@@ -95,13 +87,11 @@ def cadastrar_despesa_avulsa():
     centros_custo = CentroCustoModel.obter_centro_custos_ativos()
     contas_bancarias = ContaBancariaModel.obter_contas_bancarias_ativas()
     
-    # Inicializar e carregar plano de contas para despesas (tipo 2)
     inicializar_categorias_padrao()
-    estrutura_plano_contas = obter_estrutura_com_folhas([2])  # 2 = Despesas
+    estrutura_plano_contas = obter_estrutura_com_folhas([2])
 
-    # Inicializar e carregar categorização fiscal para despesas
     inicializar_categorias_padrao_categorizacao_fiscal()
-    principais_fiscal = CategorizacaoFiscalModel.buscar_filhos(2)  # 2 = Despesas
+    principais_fiscal = CategorizacaoFiscalModel.buscar_filhos(2)
     estrutura_fiscal = []
     for cat in principais_fiscal:
         categoria_data = {'id': cat.id, 'codigo': cat.codigo, 'nome': cat.nome, 'children': []}
@@ -111,7 +101,6 @@ def cadastrar_despesa_avulsa():
     try:
         
         if request.method == "POST":
-            # Capturar dados do formulário - dados básicos
             data_vencimento = request.form.get("data_vencimento", "")
             data_competencia = request.form.get("data_competencia", "")
             conta_bancaria_id = request.form.get("conta_bancaria_id", "")
@@ -120,7 +109,6 @@ def cadastrar_despesa_avulsa():
             referencia = request.form.get("referencia", "")
             valor = request.form.get("valor", "").strip()
 
-            # Capturar dados de categorização
             categorias_json = request.form.get("categorias_json", "")
             centros_custo_json = request.form.get("centros_custo_json", "")
             valores_detalhados_ativo = request.form.get("valores_detalhados_ativo") == "true"
@@ -129,7 +117,6 @@ def cadastrar_despesa_avulsa():
             dias_entre_parcelas = request.form.get("dias_entre_parcelas", "30")
             parcelas_json = request.form.get("parcelas_json", "")
 
-            # Preparar dados_corretos
             dados_corretos = {
                 'data_vencimento': data_vencimento,
                 'data_competencia': data_competencia,
@@ -147,7 +134,6 @@ def cadastrar_despesa_avulsa():
                 'parcelas_json': parcelas_json
             }
 
-            # Validações obrigatórias
             if not data_vencimento.strip():
                 validacao_campos_obrigatorios['data_vencimento'] = 'Campo obrigatório'
             
@@ -165,7 +151,6 @@ def cadastrar_despesa_avulsa():
             if not valor.strip():
                 validacao_campos_obrigatorios['valor'] = 'Campo obrigatório'
 
-            # Validações de formato
             data_vencimento_obj = None
             if data_vencimento:
                 try:
@@ -180,7 +165,6 @@ def cadastrar_despesa_avulsa():
                 except ValueError:
                     validacao_campos_erros['data_competencia'] = 'Competência inválida'
 
-            # Validar valor
             valor_float = 0
             if valor:
                 try:
@@ -190,7 +174,6 @@ def cadastrar_despesa_avulsa():
                 except:
                     validacao_campos_erros['valor'] = 'Valor inválido'
 
-            # Validar categorias JSON
             categorias_obj = None
             if not categorias_json or not categorias_json.strip():
                 validacao_campos_obrigatorios['categorias_json'] = 'Deve haver pelo menos uma categoria informada'
@@ -200,10 +183,8 @@ def cadastrar_despesa_avulsa():
                     if not isinstance(categorias_obj, list) or len(categorias_obj) == 0:
                         validacao_campos_erros['categorias_json'] = 'Deve haver pelo menos uma categoria'
                     else:
-                        # Validar estrutura e valores das categorias
                         soma_categorias = 0
                         for i, categoria in enumerate(categorias_obj, 1):
-                            # Verificar campos obrigatórios da categoria
                             if not categoria.get('categoria_id'):
                                 validacao_campos_erros['categorias_json'] = f'Categoria {i}: ID da categoria é obrigatório'
                                 break
@@ -211,9 +192,7 @@ def cadastrar_despesa_avulsa():
                                 validacao_campos_erros['categorias_json'] = f'Categoria {i}: Valor deve ser maior que zero'
                                 break
                                 
-                            # Somar valores das categorias
                             try:
-                                # O valor vem em centavos, converter para reais
                                 valor_categoria_centavos = float(categoria['valor'])
                                 valor_categoria = valor_categoria_centavos / 100
                                 soma_categorias += valor_categoria
@@ -221,7 +200,6 @@ def cadastrar_despesa_avulsa():
                                 validacao_campos_erros['categorias_json'] = f'Categoria {i}: Valor inválido'
                                 break
                         
-                        # Verificar se a soma não ultrapassa o valor total (apenas se não há outros erros)
                         if 'categorias_json' not in validacao_campos_erros and valor_float > 0:
                             if soma_categorias > valor_float:
                                 validacao_campos_erros['categorias_json'] = f'A soma dos valores das categorias não pode ser maior que o valor total'
@@ -230,7 +208,6 @@ def cadastrar_despesa_avulsa():
                 except:
                     validacao_campos_erros['categorias_json'] = 'JSON de categorias inválido'
 
-            # Validar centros de custo se ativo
             centros_custo_obj = []
             if valores_detalhados_ativo:
                 if centros_custo_json:
@@ -243,7 +220,6 @@ def cadastrar_despesa_avulsa():
                 else:
                     validacao_campos_obrigatorios['centros_custo_json'] = 'Centros de custo são obrigatórios quando valores detalhados estão ativos'
 
-            # Validar parcelas se parcelamento ativo
             parcelas_obj = []
             if parcelamento_ativo:
                 if not numero_parcelas or int(numero_parcelas) < 2:
@@ -259,7 +235,6 @@ def cadastrar_despesa_avulsa():
                 else:
                     validacao_campos_obrigatorios['parcelas_json'] = 'Parcelas são obrigatórias quando parcelamento está ativo'
 
-            # Se há erros, não gravar
             if validacao_campos_obrigatorios or validacao_campos_erros:
                 gravar_banco = False
                 flash(("Verifique os campos destacados em vermelho!", "warning"))
@@ -267,19 +242,17 @@ def cadastrar_despesa_avulsa():
             if gravar_banco:
                 valor_formatado = int(valor_float * 100)
 
-                # Criar nova despesa
                 nova_despesa = LancamentoAvulsoModel(
-                    tipo_movimentacao=2,  # Despesa
+                    tipo_movimentacao=2,
                     descricao=descricao,
                     valor_movimentacao_100=valor_formatado,
                     usuario_id=current_user.id,
-                    situacao_pagamento_id=6  # Pendente
+                    situacao_pagamento_id=6
                 )
 
                 db.session.add(nova_despesa)
-                db.session.flush()  # Para obter o ID
+                db.session.flush()
 
-                # Criar agendamento de pagamento com categorização
                 novo_agendamento = AgendamentoPagamentoModel(
                     faturamento_id=None,
                     lancamento_avulso_id=nova_despesa.id,
@@ -295,22 +268,19 @@ def cadastrar_despesa_avulsa():
                     numero_parcelas=int(numero_parcelas) if numero_parcelas else None,
                     dias_entre_parcelas=int(dias_entre_parcelas),
                     conta_bancaria_id=conta_bancaria_id,
-                    situacao_pagamento_id=6  # Categorizado
+                    situacao_pagamento_id=6
                 )
 
                 db.session.add(novo_agendamento)
                 db.session.flush()
 
-                # Atualizar situação da despesa para categorizada
-                nova_despesa.situacao_pagamento_id = 6  # Categorizada
+                nova_despesa.situacao_pagamento_id = 6
 
-                # Salvar parcelas se parcelamento ativo
                 if parcelamento_ativo and parcelas_json:
                     try:
                         parcelas_dados = json.loads(parcelas_json) if isinstance(parcelas_json, str) else parcelas_json
                         if isinstance(parcelas_dados, list):
                             for i, parcela_data in enumerate(parcelas_dados, 1):
-                                print(f"Salvando parcela {i}: {parcela_data}")
                                 nova_parcela = ParcelaCategorizacaoModel(
                                     agendamento_id=novo_agendamento.id,
                                     numero_parcela=i,
@@ -318,16 +288,13 @@ def cadastrar_despesa_avulsa():
                                     valor_parcela=int(parcela_data['valor']),
                                     descricao=parcela_data.get('descricao', ''),
                                     referencia=parcela_data.get('referencia', ''),
-                                    situacao_pagamento_id=2  # Pendente
+                                    situacao_pagamento_id=2
                                 )
                                 db.session.add(nova_parcela)
-                                print(f"Parcela {i} adicionada: Valor {parcela_data['valor']}, Vencimento: {parcela_data['vencimento']}")
                     except Exception as e:
-                        print(f"Erro ao salvar parcelas: {e}")
                         import traceback
                         traceback.print_exc()
 
-                # Pontuação do usuário
                 acao = TipoAcaoEnum.CADASTRO
                 PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                     current_user.id,
@@ -356,7 +323,6 @@ def cadastrar_despesa_avulsa():
         )
         
     except Exception as e:
-        print(e)
         flash(("Erro ao processar despesa! Entre em contato com o suporte.", "warning"))
         return redirect(url_for("listagem_despesas_avulsas"))
 
@@ -373,7 +339,6 @@ def editar_despesa_avulsa(id):
     gravar_banco = True
 
     try:
-        # Buscar a despesa existente
         despesa_existente = LancamentoAvulsoModel.obter_lancamento_por_id(id)
         if not despesa_existente or despesa_existente.tipo_movimentacao != 2:
             flash(("Despesa não encontrada!", "warning"))
@@ -385,17 +350,14 @@ def editar_despesa_avulsa(id):
 
         
         if request.method == "POST":
-            # Capturar dados do formulário
             descricao = request.form.get("descricao", "").strip()
             valor = request.form.get("valor", "").strip()
 
-            # Preparar dados_corretos
             dados_corretos = {
                 "descricao": descricao,
                 "valor": valor,
             }
 
-            # Validações
             campos = {
                 "descricao": ["Descrição", descricao],
                 "valor": ["Valor", descricao],
@@ -407,17 +369,14 @@ def editar_despesa_avulsa(id):
                 gravar_banco = False
                 flash("Verifique os campos destacados em vermelho!", "warning")
 
-            # Validação adicional do valor
             valor_float = ValoresMonetarios.converter_string_brl_para_float(valor)
 
             if gravar_banco:
                 valor_formatado = int(valor_float * 100)
 
-                # Atualizar a despesa
                 despesa_existente.descricao = descricao
                 despesa_existente.valor_movimentacao_100 = valor_formatado
 
-                # Pontuação do usuário
                 acao = TipoAcaoEnum.EDICAO
                 PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                     current_user.id,
@@ -446,7 +405,6 @@ def editar_despesa_avulsa(id):
         )
         
     except Exception as e:
-        print(e)
         flash(("Erro ao tentar editar despesa! Entre em contato com o suporte.", "warning"))
         return redirect(url_for("listagem_despesas_avulsas"))
 
@@ -457,16 +415,13 @@ def editar_despesa_avulsa(id):
 def excluir_despesa_avulsa(id):
     """Exclui uma despesa avulsa (soft delete) e reverte conciliação se houver"""
     try:
-        print(f"[EXCLUSAO] Iniciando exclusão do agendamento ID: {id}")
         
-        # Buscar o agendamento primeiro (o ID vem do agendamento, não da despesa)
         agendamento = AgendamentoPagamentoModel.obter_agendamento_por_id(id)
         
         if not agendamento:
             flash(("Agendamento não encontrado!", "warning"))
             return redirect(url_for("listagem_despesas_avulsas"))
         
-        # Buscar a despesa relacionada se existir
         despesa_existente = None
         if agendamento.lancamento_avulso_id:
             despesa_existente = LancamentoAvulsoModel.obter_lancamento_por_id(agendamento.lancamento_avulso_id)
@@ -474,15 +429,12 @@ def excluir_despesa_avulsa(id):
                 flash(("Esta não é uma despesa válida!", "warning"))
                 return redirect(url_for("listagem_despesas_avulsas"))
 
-        # Importar model necessário para verificação de conciliação
         from sistema.models_views.importacao_ofx.importacao_ofx_model import ImportacaoOfx
         
-        # Verificar se existe conciliação para esta despesa/agendamento
         conciliacao_existe = False
         transacao_conciliada = None
         
         if agendamento:
-            # Buscar transação OFX que pode estar conciliada com este agendamento
             transacao_conciliada = ImportacaoOfx.query.filter(
                 ImportacaoOfx.conciliado == True,
                 ImportacaoOfx.dados_conciliacao_json.contains(f'"agendamentos_ids": [{agendamento.id}]') |
@@ -492,19 +444,13 @@ def excluir_despesa_avulsa(id):
             if transacao_conciliada:
                 conciliacao_existe = True
 
-        # Iniciar transação de exclusão
         try:
-            # Rastrear IDs de movimentações já revertidas na conciliação para não duplicar
             movimentacoes_ja_revertidas = set()
 
-            # Se existe conciliação, reverter primeiro
             if conciliacao_existe and transacao_conciliada:
-                print(f"[EXCLUSAO] Revertendo conciliação da transação {transacao_conciliada.id}")
                 
-                # Importar função de reversão de conciliação
                 import json
                 
-                # Obter dados da conciliação - verificar se já é dict ou se precisa fazer parse
                 if isinstance(transacao_conciliada.dados_conciliacao_json, dict):
                     dados_conciliacao = transacao_conciliada.dados_conciliacao_json
                 elif isinstance(transacao_conciliada.dados_conciliacao_json, str):
@@ -512,27 +458,23 @@ def excluir_despesa_avulsa(id):
                 else:
                     dados_conciliacao = {}
                 
-                # Reverter status da transação
                 transacao_conciliada.conciliado = False
                 transacao_conciliada.dados_conciliacao_json = None
                 transacao_conciliada.data_conciliacao = None
                 
-                # Reverter agendamentos vinculados
                 agendamentos_ids = dados_conciliacao.get('agendamentos_ids', [])
                 for agend_id in agendamentos_ids:
                     agend = AgendamentoPagamentoModel.obter_agendamento_por_id(agend_id)
                     if agend and agend.situacao_pagamento_id in [8, 9 , 10]:
                         agend.ativo = False
                         agend.deletado = True
-                        agend.situacao_pagamento_id = 11  # Cancelado/Excluido
+                        agend.situacao_pagamento_id = 11
                 
-                # Reverter movimentações financeiras vinculadas
                 movimentacoes_ids = dados_conciliacao.get('movimentacoes_ids', [])
                 for mov_id in movimentacoes_ids:
                     movimentacoes_ja_revertidas.add(mov_id)
                     movimentacao = MovimentacaoFinanceiraModel.query.get(mov_id)
                     if movimentacao:
-                        # Reverter o impacto no saldo antes de excluir a movimentação
                         if movimentacao.conta_bancaria_id:
                             saldo_conta = SaldoMovimentacaoFinanceiraModel.query.filter(
                                 SaldoMovimentacaoFinanceiraModel.conta_bancaria_id == movimentacao.conta_bancaria_id,
@@ -541,22 +483,17 @@ def excluir_despesa_avulsa(id):
                             ).first()
                             
                             if saldo_conta:
-                                print(f"[EXCLUSAO] Revertendo saldo para conta {saldo_conta.conta_bancaria_id} pela movimentação {movimentacao.id}, {movimentacao.valor_movimentacao_100}")
                                 
-                                # Criar nova movimentação financeira para registrar a reversão
                                 valor_reversao = movimentacao.valor_movimentacao_100
                                 tipo_reversao = None
                                 
-                                # Se era saída (tipo 2), criar entrada para reverter
                                 if movimentacao.tipo_movimentacao == 2:
                                     saldo_conta.valor_total_saldo_100 += valor_reversao
-                                    tipo_reversao = 1  # Entrada para compensar a saída
-                                # Se era entrada (tipo 1), criar saída para reverter
+                                    tipo_reversao = 1
                                 elif movimentacao.tipo_movimentacao == 1:
                                     saldo_conta.valor_total_saldo_100 -= valor_reversao
-                                    tipo_reversao = 2  # Saída para compensar a entrada
+                                    tipo_reversao = 2
                                 
-                                # Criar movimentação de reversão para aparecer na listagem
                                 if tipo_reversao:
                                     movimentacao_reversao = MovimentacaoFinanceiraModel(
                                         tipo_movimentacao=tipo_reversao,
@@ -564,20 +501,17 @@ def excluir_despesa_avulsa(id):
                                         data_movimentacao=DataHora.obter_data_atual_padrao_en(),
                                         valor_movimentacao_100=valor_reversao,
                                         conta_bancaria_id=movimentacao.conta_bancaria_id,
-                                        agendamento_id=None,  # Não vinculada a agendamento
+                                        agendamento_id=None,
                                         observacao_movimentacao=f"Reversão de conciliação - Exclusão do agendamento {agendamento.descricao}"
                                     )
                                     db.session.add(movimentacao_reversao)
                                 
                                 saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
                         
-                        # Desativar a movimentação original para não duplicar no relatório
                         movimentacao.ativo = False
                         movimentacao.deletado = True
                 
-                print(f"[EXCLUSAO] Conciliação revertida com sucesso para transação {transacao_conciliada.id}")
 
-            # Reverter movimentações financeiras da liquidação (vinculadas via agendamento_id)
             movimentacoes_liquidacao = MovimentacaoFinanceiraModel.query.filter(
                 MovimentacaoFinanceiraModel.agendamento_id == agendamento.id,
                 MovimentacaoFinanceiraModel.ativo == True,
@@ -585,12 +519,9 @@ def excluir_despesa_avulsa(id):
             ).all()
 
             for movimentacao in movimentacoes_liquidacao:
-                # Pular movimentações já revertidas no bloco de conciliação
                 if movimentacao.id in movimentacoes_ja_revertidas:
-                    print(f"[EXCLUSAO] Movimentação {movimentacao.id} já revertida na conciliação, pulando")
                     continue
 
-                print(f"[EXCLUSAO] Revertendo movimentação de liquidação {movimentacao.id} - tipo {movimentacao.tipo_movimentacao} - valor {movimentacao.valor_movimentacao_100}")
                 
                 if movimentacao.conta_bancaria_id:
                     saldo_conta = SaldoMovimentacaoFinanceiraModel.query.filter(
@@ -603,16 +534,13 @@ def excluir_despesa_avulsa(id):
                         valor_reversao = movimentacao.valor_movimentacao_100
                         tipo_reversao = None
                         
-                        # Se era saída (tipo 2 - liquidação de despesa), criar entrada para reverter
                         if movimentacao.tipo_movimentacao == 2:
                             saldo_conta.valor_total_saldo_100 += valor_reversao
-                            tipo_reversao = 1  # Entrada para compensar a saída
-                        # Se era entrada (tipo 1), criar saída para reverter
+                            tipo_reversao = 1
                         elif movimentacao.tipo_movimentacao == 1:
                             saldo_conta.valor_total_saldo_100 -= valor_reversao
-                            tipo_reversao = 2  # Saída para compensar a entrada
+                            tipo_reversao = 2
                         
-                        # Criar movimentação de reversão para aparecer na listagem
                         if tipo_reversao:
                             movimentacao_reversao = MovimentacaoFinanceiraModel(
                                 tipo_movimentacao=tipo_reversao,
@@ -627,13 +555,11 @@ def excluir_despesa_avulsa(id):
                         
                         saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
                 
-                # Desativar a movimentação original
                 movimentacao.ativo = False
                 movimentacao.deletado = True
 
             liquidacao_revertida = len(movimentacoes_liquidacao) > 0
 
-            # Agora excluir o agendamento e a despesa se existir
             agendamento.deletado = True
             agendamento.ativo = False
             
@@ -641,10 +567,8 @@ def excluir_despesa_avulsa(id):
                 despesa_existente.ativo = False
                 despesa_existente.deletado = True
 
-            # Commit das alterações
             db.session.commit()
 
-            # Mensagem de sucesso diferenciada
             if conciliacao_existe and liquidacao_revertida:
                 flash(("Despesa excluída com sucesso! A conciliação bancária e a liquidação foram revertidas automaticamente.", "success"))
             elif conciliacao_existe:
@@ -658,14 +582,12 @@ def excluir_despesa_avulsa(id):
             
         except Exception as e:
             db.session.rollback()
-            print(f"[EXCLUSAO] Erro durante exclusão: {e}")
             import traceback
             traceback.print_exc()
             flash(("Erro ao excluir despesa e reverter conciliação! Entre em contato com o suporte.", "warning"))
             return redirect(url_for("listagem_despesas_avulsas"))
                 
     except Exception as e:
-        print(f"[EXCLUSAO] Erro geral: {e}")
         import traceback
         traceback.print_exc()
         flash(("Erro ao tentar excluir despesa! Entre em contato com o suporte.", "warning"))
@@ -678,11 +600,9 @@ def excluir_despesa_avulsa(id):
 def liquidar_despesa():
     """Liquida uma despesa avulsa criando movimentação financeira"""
     try:
-        # Capturar dados do formulário
         agendamento_id = request.form.get("agendamento_id")
         conta_bancaria_id = request.form.get("conta_bancaria_id")
 
-        # Validações básicas
         if not agendamento_id:
             flash(("ID do agendamento não informado!", "warning"))
             return redirect(url_for("listagem_despesas_avulsas"))
@@ -691,25 +611,21 @@ def liquidar_despesa():
             flash(("Selecione uma conta bancária!", "warning"))
             return redirect(url_for("listagem_despesas_avulsas"))
 
-        # Buscar o agendamento
         agendamento = AgendamentoPagamentoModel.obter_agendamento_por_id(agendamento_id)
 
         if not agendamento:
             flash(("Agendamento não encontrado!", "warning"))
             return redirect(url_for("listagem_despesas_avulsas"))
 
-        # Verificar se já não foi liquidado
         if agendamento.situacao_pagamento_id == 9:
             flash(("Esta despesa já foi liquidada!", "warning"))
             return redirect(url_for("listagem_despesas_avulsas"))
 
-        # Validar conta bancária
         conta_bancaria = ContaBancariaModel.obter_conta_por_id(conta_bancaria_id)
         if not conta_bancaria:
             flash(("Conta bancária não encontrada!", "warning"))
             return redirect(url_for("listagem_despesas_avulsas"))
 
-        # Obter valor da despesa
         if agendamento.faturamento_id and agendamento.faturamento:
             valor_despesa = int(agendamento.faturamento.valor_total) if agendamento.faturamento.valor_total else 0
         elif agendamento.lancamento_avulso_id and agendamento.lancamento_avulso:
@@ -717,9 +633,8 @@ def liquidar_despesa():
         else:
             valor_despesa = agendamento.valor_total_100
 
-        # Criar movimentação financeira (saída de dinheiro)
         nova_movimentacao = MovimentacaoFinanceiraModel(
-            tipo_movimentacao=2,  # 2 = Saída
+            tipo_movimentacao=2,
             usuario_id=current_user.id,
             data_movimentacao=date.today(),
             valor_movimentacao_100=valor_despesa,
@@ -727,60 +642,51 @@ def liquidar_despesa():
             agendamento_id=agendamento_id
         )
 
-        # Atualizar situação do agendamento para liquidado
-        agendamento.situacao_pagamento_id = 9  # 9 = Pago/Liquidado
+        agendamento.situacao_pagamento_id = 9
         agendamento.conta_bancaria_id = conta_bancaria_id
 
         
         if agendamento.faturamento_id:
-            agendamento.faturamento.situacao_pagamento_id = 9  # 9 = Pago/Liquidado
+            agendamento.faturamento.situacao_pagamento_id = 9
             
-            # Obter detalhes das cargas a pagar do faturamento
             detalhes = agendamento.faturamento.obter_detalhes()
             
-            # Atualizar situação de pagamento das cargas de fornecedores
             fornecedores = detalhes.get("fornecedores", [])
             for fornecedor in fornecedores:
                 if "fornecedor_a_pagar_id" in fornecedor:
                     fornecedor_pagar = FornecedorPagarModel.obter_fornecedor_a_pagar_id(fornecedor["fornecedor_a_pagar_id"])
                     if fornecedor_pagar:
-                        fornecedor_pagar.situacao_pagamento_id = 9  # 9 = Pago/Liquidado
+                        fornecedor_pagar.situacao_pagamento_id = 9
             
-            # Atualizar situação de pagamento das cargas de transportadoras
             transportadoras = detalhes.get("transportadoras", [])
             for transportadora in transportadoras:
                 if "frete_a_pagar_id" in transportadora:
                     frete_pagar = FretePagarModel.obter_frete_a_pagar_id(transportadora["frete_a_pagar_id"])
                     if frete_pagar:
-                        frete_pagar.situacao_pagamento_id = 9  # 9 = Pago/Liquidado
+                        frete_pagar.situacao_pagamento_id = 9
             
-            # Atualizar situação de pagamento das cargas de extratores
             extratores = detalhes.get("extratores", [])
             for extrator in extratores:
                 if "extrator_a_pagar_id" in extrator:
                     extrator_pagar = ExtratorPagarModel.obter_extrator_a_pagar_id(extrator["extrator_a_pagar_id"])
                     if extrator_pagar:
-                        extrator_pagar.situacao_pagamento_id = 9  # 9 = Pago/Liquidado
+                        extrator_pagar.situacao_pagamento_id = 9
             
-            # Atualizar situação de pagamento das cargas de comissionados
             comissionados = detalhes.get("comissionados", [])
             for comissionado in comissionados:
                 if "comissionado_a_pagar_id" in comissionado:
                     comissionado_pagar = ComissionadoPagarModel.obter_comissionado_a_pagar_id(comissionado["comissionado_a_pagar_id"])
                     if comissionado_pagar:
-                        comissionado_pagar.situacao_pagamento_id = 9  # 9 = Pago/Liquidado
+                        comissionado_pagar.situacao_pagamento_id = 9
         else:
-            agendamento.lancamento_avulso.situacao_pagamento_id = 9  # 9 = Pago/Liquidado
+            agendamento.lancamento_avulso.situacao_pagamento_id = 9
 
-        # Atualizar saldo da conta bancária
-        # Buscar o registro de saldo da conta
         saldo_conta = SaldoMovimentacaoFinanceiraModel.query.filter(
             SaldoMovimentacaoFinanceiraModel.conta_bancaria_id == conta_bancaria_id,
             SaldoMovimentacaoFinanceiraModel.ativo == True,
             SaldoMovimentacaoFinanceiraModel.deletado == False
         ).first()
         
-        # Se não existir registro de saldo, criar um
         if not saldo_conta:
             saldo_conta = SaldoMovimentacaoFinanceiraModel(
                 data_movimentacao=date.today(),
@@ -790,16 +696,13 @@ def liquidar_despesa():
             )
             db.session.add(saldo_conta)
         
-        # Atualizar o saldo - liquidação de despesa é saída (diminui saldo)
         saldo_conta.valor_total_saldo_100 -= valor_despesa
         saldo_conta.data_movimentacao = DataHora.obter_data_atual_padrao_en()
         db.session.add(saldo_conta)
 
-        # Salvar no banco
         db.session.add(nova_movimentacao)
         db.session.commit()
 
-        # Pontuação do usuário
         acao = TipoAcaoEnum.CADASTRO if hasattr(TipoAcaoEnum, 'LIQUIDACAO') else TipoAcaoEnum.CADASTRO
         PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
             current_user.id,
@@ -813,6 +716,5 @@ def liquidar_despesa():
 
     except Exception as e:
         db.session.rollback()
-        print(f"Erro ao liquidar despesa: {e}")
         flash(("Erro ao liquidar despesa! Entre em contato com o suporte.", "warning"))
         return redirect(url_for("listagem_despesas_avulsas"))

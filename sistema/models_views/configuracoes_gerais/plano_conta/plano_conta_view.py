@@ -18,19 +18,14 @@ from sistema._utilitarios import *
 @requires_roles
 def listar_plano_contas():
     try:
-        # Inicializar categorias padrão se não existirem
         inicializar_categorias_padrao()
 
-        # Buscar categorias principais
         categorias_principais = PlanoContaModel.buscar_principais()
-        print(categorias_principais)
 
-        # Verificar se o controle de estrutura está ativo (verifica qualquer categoria)
         controle_estrutura_ativo = PlanoContaModel.query.filter_by(
             controle_estrutura=True,
             ativo=True).first() is not None
 
-        # Montar estrutura hierárquica
         estrutura = []
         for categoria in categorias_principais:
             categoria_dict = categoria.to_dict()
@@ -67,33 +62,26 @@ def criar_subcategoria():
         if not parent_code:
             return jsonify({"erro": "Código pai é obrigatório"}), 400
 
-        # Buscar categoria pai (apenas ativas)
         categoria_pai = PlanoContaModel.buscar_por_codigo(parent_code)
         if not categoria_pai:
             return jsonify({"erro": "Categoria pai não encontrada ou inativa"}), 404
 
-        # Gerar próximo código (agora considera TODOS os registros)
         novo_codigo = PlanoContaModel.gerar_proximo_codigo(parent_code)
         if not novo_codigo:
             return jsonify({"erro": "Não foi possível gerar código único"}), 400
 
-        # Verificação adicional para garantir que o código não existe
         codigo_existente = PlanoContaModel.query.filter_by(codigo=novo_codigo).first()
         if codigo_existente:
             if codigo_existente.ativo:
                 return jsonify({"erro": f"Código {novo_codigo} já existe e está ativo"}), 400
-            # Se existe mas está inativo, será reativado abaixo
 
-        # Calcular nível
         nivel = novo_codigo.count(".") + 1
 
-        # Reativar se existir inativo ou criar novo
         categoria_inativa = PlanoContaModel.query.filter_by(
             codigo=novo_codigo, 
         ).first()
         
         if categoria_inativa:
-            # Reativar categoria existente
             categoria_inativa.nome = nome
             categoria_inativa.tipo = categoria_pai.tipo
             categoria_inativa.parent_id = categoria_pai.id
@@ -103,12 +91,10 @@ def criar_subcategoria():
             nova_categoria = categoria_inativa
             action_message = "reativada"
         else:
-            # Verificar novamente se não existe nenhum registro com esse código
             categoria_existente = PlanoContaModel.query.filter_by(codigo=novo_codigo).first()
             if categoria_existente:
                 return jsonify({"erro": f"Código {novo_codigo} já existe no sistema"}), 400
             
-            # Criar nova categoria
             nova_categoria = PlanoContaModel(
                 codigo=novo_codigo,
                 nome=nome,
@@ -135,11 +121,9 @@ def criar_subcategoria():
         )
 
     except Exception as e:
-        print(e)
         db.session.rollback()
         return jsonify({"erro": f"Erro interno: {str(e)}"}), 500
 
-# listar categorias inativas (para debug/administração)
 @app.route("/configuracoes/gerais/plano-contas/inativos", methods=["GET"])
 @login_required
 @requires_roles
@@ -167,7 +151,6 @@ def listar_categorias_inativas():
     except Exception as e:
         return jsonify({"erro": f"Erro ao listar inativos: {str(e)}"}), 500
 
-# reativar categoria específica
 @app.route("/configuracoes/gerais/plano-contas/reativar/<int:categoria_id>", methods=["POST"])
 @login_required
 @requires_roles
@@ -179,7 +162,6 @@ def reativar_categoria(categoria_id):
         if categoria.ativo:
             return jsonify({"erro": "Categoria já está ativa"}), 400
         
-        # Verificar se código não conflita com categoria ativa
         conflito = PlanoContaModel.query.filter_by(
             codigo=categoria.codigo,
             ativo=True
@@ -190,11 +172,9 @@ def reativar_categoria(categoria_id):
                 "erro": f"Não é possível reativar: código {categoria.codigo} já está em uso"
             }), 400
         
-        # Reativar
         categoria.ativo = True
         db.session.commit()
         
-        # Registrar pontuação
         try:
             PontuacaoUsuarioModel.registrar_acao(
                 usuario_id=current_user.id,
@@ -230,7 +210,6 @@ def editar_categoria(categoria_id):
         categoria.nome = novo_nome
         db.session.commit()
 
-        # Registrar pontuação
         try:
             PontuacaoUsuarioModel.registrar_acao(
                 usuario_id=current_user.id,
@@ -262,7 +241,6 @@ def excluir_categoria(categoria_id):
     try:
         categoria = PlanoContaModel.query.get_or_404(categoria_id)
 
-        # Verificar se tem subcategorias ativas
         filhos = categoria.get_children_ordenados()
         if filhos:
             return (
@@ -274,12 +252,10 @@ def excluir_categoria(categoria_id):
                 400,
             )
 
-        # Soft delete
         nome_categoria = categoria.nome
         categoria.ativo = False
         db.session.commit()
 
-        # Registrar pontuação
         try:
             PontuacaoUsuarioModel.registrar_acao(
                 usuario_id=current_user.id,
@@ -329,22 +305,18 @@ def inicializar_categorias_padrao():
     ]
 
     for codigo, nome, tipo in categorias_padrao:
-        # Verificar se existe categoria ativa
         existe_ativa = PlanoContaModel.buscar_por_codigo(codigo)
         if not existe_ativa:
-            # Verificar se existe inativa para reativar
             categoria_inativa = PlanoContaModel.query.filter_by(
                 codigo=codigo,
                 ativo=False
             ).first()
             
             if categoria_inativa:
-                # Reativar
                 categoria_inativa.nome = nome
                 categoria_inativa.tipo = tipo
                 categoria_inativa.ativo = True
             else:
-                # Criar nova
                 categoria = PlanoContaModel(
                     codigo=codigo, 
                     nome=nome, 
@@ -357,7 +329,6 @@ def inicializar_categorias_padrao():
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        print(f"Erro ao inicializar categorias padrão: {str(e)}")
 
 
 def obter_subcategorias_recursivo(parent_id):
@@ -368,20 +339,17 @@ def obter_subcategorias_recursivo(parent_id):
     for sub in subcategorias:
         sub_dict = sub.to_dict()
         sub_dict["children"] = obter_subcategorias_recursivo(sub.id)
-        # Marcar se é categoria folha (não tem filhos = selecionável)
         sub_dict["is_leaf"] = len(sub_dict["children"]) == 0
         resultado.append(sub_dict)
 
     return resultado
 
-# FUNÇÃO PARA LIMPAR CÓDIGOS ÓRFÃOS (para usar esporadicamente)
 def limpar_codigos_orfaos():
     """
     Remove registros órfãos que podem estar causando conflitos
     USE COM CUIDADO - apenas para limpeza de dados
     """
     try:
-        # Buscar registros inativo que não têm pai válido
         orfaos = PlanoContaModel.query.filter(
             PlanoContaModel.ativo == False,
             PlanoContaModel.parent_id.isnot(None)
@@ -389,7 +357,6 @@ def limpar_codigos_orfaos():
         
         removidos = []
         for orfao in orfaos:
-            # Verificar se pai ainda existe e está ativo
             pai = PlanoContaModel.query.filter_by(
                 id=orfao.parent_id,
                 ativo=True
@@ -397,7 +364,7 @@ def limpar_codigos_orfaos():
             
             if not pai:
                 removidos.append(f"{orfao.codigo} - {orfao.nome}")
-                db.session.delete(orfao)  # Delete definitivo para órfãos
+                db.session.delete(orfao)
         
         db.session.commit()
         return removidos
@@ -407,11 +374,7 @@ def limpar_codigos_orfaos():
         raise
 
 
-# ========================================
-# VERSÃO ALTERNATIVA COM MAIS TRATAMENTO DE FLASH
-# ========================================
 
-# Se você quiser adicionar mais mensagens flash no processo:
 
 @app.route("/configuracoes/gerais/plano-contas/criar-com-flash", methods=["POST"])
 @login_required
@@ -430,22 +393,18 @@ def criar_subcategoria_com_flash():
             flash(("Código pai é obrigatório", "error"))
             return redirect(url_for("listar_plano_contas"))
 
-        # Buscar categoria pai
         categoria_pai = PlanoContaModel.buscar_por_codigo(parent_code)
         if not categoria_pai:
             flash(("Categoria pai não encontrada", "error"))
             return redirect(url_for("listar_plano_contas"))
 
-        # Gerar próximo código
         novo_codigo = PlanoContaModel.gerar_proximo_codigo(parent_code)
         if not novo_codigo:
             flash(("Não foi possível gerar código", "error"))
             return redirect(url_for("listar_plano_contas"))
 
-        # Calcular nível
         nivel = novo_codigo.count(".") + 1
 
-        # Criar nova subcategoria
         nova_categoria = PlanoContaModel(
             codigo=novo_codigo,
             nome=nome,
@@ -459,7 +418,6 @@ def criar_subcategoria_com_flash():
 
         flash((f'Subcategoria "{nome}" criada com sucesso!', "success"))
 
-        # Registrar pontuação do usuário
         try:
             PontuacaoUsuarioModel.registrar_acao(
                 usuario_id=current_user.id,
@@ -488,7 +446,6 @@ def obter_estrutura_com_folhas(tipo_plano_conta):
     """
     inicializar_categorias_padrao()
     
-    # Buscar categorias principais do tipo especificado
     principais = PlanoContaModel.query.filter(
         PlanoContaModel.tipo.in_(tipo_plano_conta),
         PlanoContaModel.nivel == 1,
@@ -500,7 +457,6 @@ def obter_estrutura_com_folhas(tipo_plano_conta):
     for cat in principais:
         d = cat.to_dict()
         d["children"] = obter_subcategorias_recursivo(cat.id)
-        # Marcar se é categoria folha (não tem filhos = selecionável)
         d["is_leaf"] = len(d["children"]) == 0
         estrutura.append(d)
     
@@ -532,7 +488,6 @@ def permitir_alterar_estrutura():
         if not categorias:
             return jsonify({"erro": "Nenhuma categoria encontrada"}), 404
         
-        # Atualizar todas as categorias
         for categoria in categorias:
             categoria.controle_estrutura = True
         
@@ -565,7 +520,6 @@ def negar_alterar_estrutura():
         if not categorias:
             return jsonify({"erro": "Nenhuma categoria encontrada"}), 404
         
-        # Atualizar todas as categorias
         for categoria in categorias:
             categoria.controle_estrutura = False
         

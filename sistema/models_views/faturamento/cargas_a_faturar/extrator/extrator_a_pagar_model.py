@@ -53,12 +53,10 @@ class ExtratorPagarModel(BaseModel):
 
     utiliza_credito = db.Column(db.Boolean, nullable=True)
 
-    # Caso utiliza credito
     valor_credito_100 = db.Column(db.Integer, nullable=True)
 
     utiliza_saldo_movimentacao = db.Column(db.Boolean, nullable=True)
 
-    # Guarda valor saldo debitado
     valor_saldo_debitado_100 = db.Column(db.Integer, nullable=True)
 
     comprovante_pagamento_complementar_id = db.Column(
@@ -91,7 +89,6 @@ class ExtratorPagarModel(BaseModel):
     preco_custo_bitola_100 = db.Column(db.Integer, nullable=False)
     valor_total_a_pagar_100 = db.Column(db.Integer, nullable=False)
 
-    # Associação com movimentação financeira de pagamento em massa (conciliada)
     movimentacao_financeira_id = db.Column(db.Integer, db.ForeignKey('mov_movimentacao_financeira.id'), nullable=True)
     movimentacao_financeira = db.relationship('MovimentacaoFinanceiraModel', foreign_keys=[movimentacao_financeira_id], backref=db.backref('extratores_pagos_massa', lazy=True))
 
@@ -375,13 +372,13 @@ class ExtratorPagarModel(BaseModel):
                 MovimentacaoFinanceiraModel,
                 and_(
                     MovimentacaoFinanceiraModel.extrator_pagamento_id == ExtratorPagarModel.id,
-                    MovimentacaoFinanceiraModel.tipo_movimentacao == 2,  # saída/pagamento
+                    MovimentacaoFinanceiraModel.tipo_movimentacao == 2,
                 )
             )
             .filter(
                 ExtratorPagarModel.deletado == False,
                 ExtratorPagarModel.ativo == True,
-                ExtratorPagarModel.situacao_pagamento_id == 1,  # somente pagos
+                ExtratorPagarModel.situacao_pagamento_id == 1,
             )
         )
 
@@ -498,11 +495,9 @@ class ExtratorPagarModel(BaseModel):
             data_inicio = date.today() - timedelta(days=30)
             data_fim = date.today()
 
-        # Determinar o campo de data para o filtro
         if tipo_data_filtro == 'data_emissao':
             campo_data = RegistroOperacionalModel.destinatario_data_emissao
         else:
-            # Padrão: data de entrega do ticket
             campo_data = ExtratorPagarModel.data_entrega_ticket
 
         query = (
@@ -529,7 +524,6 @@ class ExtratorPagarModel(BaseModel):
             )
         )
 
-        # Aplica filtros de data
         if data_inicio and data_fim:
             query = query.filter(
                 campo_data.isnot(None),
@@ -546,7 +540,6 @@ class ExtratorPagarModel(BaseModel):
                 campo_data <= data_fim,
             )
 
-        # JOINs condicionais - só quando necessários
         if cliente:
             query = query.join(ClienteModel, CargaModel.cliente).filter(ClienteModel.identificacao.ilike(f"%{cliente}%"))
             
@@ -624,7 +617,6 @@ class ExtratorPagarModel(BaseModel):
             List: Lista de extratores a pagar no período
         """
         query = ExtratorPagarModel.query
-        # Aplicar filtros de data se fornecidos
         if data_inicio or data_fim:        
             if data_inicio:
                 query = query.filter(ExtratorPagarModel.data_entrega_ticket >= data_inicio)
@@ -633,9 +625,7 @@ class ExtratorPagarModel(BaseModel):
                 data_fim_inclusiva = data_fim + timedelta(days=1)
                 query = query.filter(ExtratorPagarModel.data_entrega_ticket < data_fim_inclusiva)
         
-        # Filtrar apenas registros com data de entrega
         query = query.filter(ExtratorPagarModel.data_entrega_ticket.isnot(None))
         
-        # Ordenar por data de entrega mais recente primeiro
         query = query.order_by(ExtratorPagarModel.data_entrega_ticket.desc())
         return query.all()

@@ -191,7 +191,6 @@ def cadastrar_solicitacao():
                 flash(("Solicitação cadastrada com sucesso!", "success"))
                 return redirect(url_for("listagem_solicitacoes"))
             except Exception as e:
-                print(e)
                 db.session.rollback()
                 flash((f"Erro ao cadastrar solicitação! Entre em contato com o suporte.", "error"))
 
@@ -289,7 +288,6 @@ def editar_solicitacao(id):
                     modulo='solicitacao_nf'
                 )
 
-            # Verifica se possui frete a pagar
             frete = FretePagarModel.obter_frete_por_solicitacao_id(solicitacao.id)
             if frete:
                 frete.transportadora_id = transportadoraSolicitacao

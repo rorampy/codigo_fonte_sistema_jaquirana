@@ -41,7 +41,6 @@ def cadastrar_veiculo():
         placa_veiculo = request.form["placaVeiculo"]
         capacidade_veiculo = request.form["capacidadeVeiculo"]
 
-        # Obtem somente as que contem informação
         transportadoras_ids = [t for t in transportadoras_ids if t.strip().isdigit()]
 
         campos = {
@@ -119,11 +118,9 @@ def editar_veiculo(id):
         flash(("Veículo não pode ser editado, pois está inativo!", "warning"))
         return redirect(url_for("listar_veiculos"))
 
-    # Busca todas as associações ativas e não deletadas para esse veículo
     transportadorasAssociadas = TransportadoraVeiculoAssocModel.obter_transportadoras_assoc_veiculo_id(veiculo.id)
     associacoes_atuais = { str(assoc.id): assoc for assoc in transportadorasAssociadas }
 
-    # Se não houver associação nova, mas o veículo ainda tiver o campo legado preenchido
     if not transportadorasAssociadas and veiculo.transportadora_id:
         assoc_simulada = TransportadoraVeiculoAssocModel(
             transportadora_id=veiculo.transportadora_id,
@@ -141,7 +138,6 @@ def editar_veiculo(id):
         id_list = request.form.getlist("idTransportadora[]")
         transportadora_id_list = request.form.getlist("transportadoras[]")
 
-        # Obtem somente as que contem informação
         transportadora_id_list = [t for t in transportadora_id_list if t.strip().isdigit()]
 
         campo_transportadora = ", ".join(transportadora_id_list) if transportadora_id_list else ""

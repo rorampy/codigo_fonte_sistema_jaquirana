@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             GERENCIAMENTO DE USUÁRIOS
           </div>
@@ -15,7 +15,7 @@
             Listagem de Usuários
           </h2>
         </div>
-        <!-- Page title actions -->
+        
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="d-flex">
             <input type="search" class="form-control d-inline-block w-9 me-3"
@@ -38,7 +38,7 @@
       </div>
     </div>
   </div>
-  <!-- Page body -->
+  
   <div class="page-body">
     <div class="container-xl">
 
@@ -186,7 +186,7 @@
     document.querySelectorAll('.desativar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            // 12345 é aleatório, apenas para ser substituido pelo id
+            
             const url = `{{ url_for('usuario_desativar', id=12345) }}`.replace('12345', id);
             confirmButtonDesativar.setAttribute('data-url', url);
         });
@@ -205,7 +205,7 @@
     document.querySelectorAll('.ativor').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            // 12345 é aleatório, apenas para ser substituido pelo id
+            
             const url = `{{ url_for('usuario_ativar', id=12345) }}`.replace('12345', id);
             confirmButtonAtivar.setAttribute('data-url', url);
         });

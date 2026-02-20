@@ -19,7 +19,6 @@
 
         <div class="relatorio-title">Relatório Financeiro a pagar Extrator</div>
 
-        <!-- Filtros aplicados se existirem -->
         {% if dados_corretos %}
         <div class="dados-registro no-break">
           <div class="filtros-title">Filtros Aplicados</div>
@@ -75,13 +74,13 @@
 
         {% if registros %}
         {% for cliente_group in registros|groupby('extrator.identificacao') %}
-        <!-- Seção do Cliente -->
+        
         <div class="no-break" style="margin-top: 20px;">
           <div class="filtros-title">Extrator: {{ cliente_group.grouper }}</div>
         </div>
 
         {% for produto_group in cliente_group.list|groupby('produto') %}
-        <!-- Produto dentro do Cliente -->
+        
         <div class="section-title no-break">
           Produto: {{ produto_group.grouper }}
           <span style="float: right; font-weight: normal; font-size: 12px;">
@@ -89,7 +88,6 @@
           </span>
         </div>
 
-        <!-- Tabela de cargas para este produto -->
         <table>
           <thead>
             <tr>
@@ -161,7 +159,6 @@
         </table>
         {% endfor %}
         
-        <!-- Totalizador do Extrator como linha de tabela -->
         {% if totalizadores and totalizadores.por_extrator and cliente_group.grouper in totalizadores.por_extrator %}
         <table style="margin-top: 5px;">
           <tbody>
@@ -188,7 +185,6 @@
 
         {% endfor %}
         
-        <!-- Totalizador Geral como linha de tabela (somente se houver mais de um extrator) -->
         {% if totalizadores and totalizadores.quantidade_extratores > 1 %}
         <table style="margin-top: 20px;">
           <tbody>
@@ -214,7 +210,7 @@
         {% endif %}
 
         {% else %}
-        <!-- Estado vazio -->
+        
         <div style="text-align: center; padding: 50px 0;">
           <h3 style="color: #666;">Nenhum registro encontrado</h3>
           <p style="color: #999;">Não há registros de extrator a pagar </p>

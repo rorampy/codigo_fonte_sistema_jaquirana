@@ -3,15 +3,14 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 
-<!-- CSS específico para esta página -->
 <link href="{{ url_for('static', filename='css/pages/despesa-avulsa-listagem.css') }}" rel="stylesheet">
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             FINANCEIRO
           </div>
@@ -19,8 +18,7 @@
             Despesas Categorizadas
           </h2>
         </div>
-        <!-- Page title actions -->
-        <!-- Page title actions -->
+        
         <div class="col-auto ms-auto d-print-none">
           <div class="btn-list">
             <a href="{{url_for('cadastrar_despesa_avulsa')}}" class="btn btn-primary d-none d-sm-inline-block">
@@ -38,7 +36,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
@@ -46,12 +43,11 @@
       <div class="card">
         {%if agendamentos%}
 
-        <!-- Card Header com Filtros -->
         <div class="card-header">
           <div class="row w-100 align-items-end">
             <div class="col-md-12">
               <div class="row g-2 align-items-end">
-                <!-- Campo de Pesquisa -->
+                
                 <div class="col-md-6">
                   <label class="form-label">Pesquisar</label>
                   <div class="input-icon">
@@ -75,7 +71,6 @@
                   </div>
                 </div>
 
-                <!-- Filtros de Data -->
                 <div class="col-md-2">
                   <label class="form-label">Data Início</label>
                   <input type="date" id="data-inicio" class="form-control form-control"
@@ -86,7 +81,6 @@
                   <input type="date" id="data-fim" class="form-control form-control" title="Data fim do vencimento">
                 </div>
 
-                <!-- Botão Limpar Filtros -->
                 <div class="col-md-2 text-end">
                   <button type="button" class="btn btn-outline-primary" id="limpar-filtros"
                     title="Limpar todos os filtros">
@@ -106,7 +100,6 @@
           </div>
         </div>
 
-        <!-- Painel de Seleção -->
         <div class="selection-panel">
           <div class="selection-controls">
             <div class="checkbox-wrapper">
@@ -146,7 +139,7 @@
               {% for agendamento in agendamentos %}
               <tr>
                 <td class="text-center">
-                  {# Sempre usar o valor_total_100 (em centavos) e dividir por 100 para consistência #}
+                  
                   {% set valor_centavos = agendamento.valor_total_100 %}
                   {% set valor_item = valor_centavos / 100 %}
                   <input type="checkbox" class="form-check-input item-checkbox"
@@ -204,7 +197,7 @@
                 </td>
                 <td class="d-flex justify-content-center">
                   <div class="btn-list flex-nowrap">
-                    <!-- Botão para visualizar detalhes -->
+                    
                     {% if agendamento.faturamento_id and agendamento.faturamento %}
                     <button class="btn btn-icon btn-outline-primary" data-bs-toggle="modal"
                       data-bs-target="#modal-faturamento-{{ agendamento.faturamento_id }}" data-bs-placement="top"
@@ -231,7 +224,6 @@
                     </button>
                     {% endif %}
 
-                    <!-- Botão para editar categorização -->
                     <a href="{{ url_for('editar_categorizacao', agendamento_id=agendamento.id) }}"
                       class="btn btn-icon btn-outline-warning {%if agendamento.situacao_pagamento_id in [8,9] %}disabled{%endif%}"
                       data-bs-toggle="tooltip" data-bs-placement="top" title="Editar Categorização">
@@ -244,7 +236,6 @@
                       </svg>
                     </a>
 
-                    <!-- Botão para liquidar -->
                     <button type="button"
                       class="btn btn-icon btn-outline-success {%if agendamento.situacao_pagamento_id in [8,9] %}disabled{%endif%}"
                       data-bs-toggle="modal" data-bs-target="#modal-liquidacao-{{ agendamento.id }}"
@@ -259,7 +250,6 @@
                       </svg>
                     </button>
 
-                    <!-- Botão para Excluir -->
                     <button type="button" class="btn btn-icon btn-outline-danger" data-bs-toggle="modal"
                       data-bs-target="#modal-excluir-{{ agendamento.id }}" title="Excluir">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -277,7 +267,6 @@
                   </div>
                 </td>
               </tr>
-
 
               {% endfor %}
             </tbody>
@@ -299,7 +288,7 @@
               <div class="col-auto">
                 {% if paginacao and paginacao.total_paginas > 1 %}
                 <ul class="pagination">
-                  <!-- Botão Anterior -->
+                  
                   <li class="page-item {% if paginacao.pagina <= 1 %}disabled{% endif %}">
                     {% if paginacao.pagina > 1 %}
                     <a class="page-link"
@@ -319,7 +308,6 @@
                   {% set inicio_pag = [1, paginacao.pagina - 2]|max %}
                   {% set fim_pag = [paginacao.total_paginas, paginacao.pagina + 2]|min %}
 
-                  <!-- Primeira página se não estiver no início -->
                   {% if inicio_pag > 1 %}
                   <li class="page-item">
                     <a class="page-link"
@@ -330,7 +318,6 @@
                   {% endif %}
                   {% endif %}
 
-                  <!-- Páginas do meio -->
                   {% for p in range(inicio_pag, fim_pag + 1) %}
                   <li class="page-item {% if p == paginacao.pagina %}active{% endif %}">
                     <a class="page-link"
@@ -339,7 +326,6 @@
                   </li>
                   {% endfor %}
 
-                  <!-- Última página se não estiver no final -->
                   {% if fim_pag < paginacao.total_paginas %} {% if fim_pag < paginacao.total_paginas - 1 %} <li
                     class="page-item disabled"><span class="page-link">...</span></li>
                     {% endif %}
@@ -350,7 +336,6 @@
                     </li>
                     {% endif %}
 
-                    <!-- Botão Próximo -->
                     <li class="page-item {% if paginacao.pagina >= paginacao.total_paginas %}disabled{% endif %}">
                       {% if paginacao.pagina < paginacao.total_paginas %} <a class="page-link"
                         href="?pagina={{ paginacao.pagina + 1 }}&por_pagina={{ paginacao.por_pagina }}{% if paginacao.termo_pesquisa %}&pesquisa={{ paginacao.termo_pesquisa }}{% endif %}">
@@ -388,7 +373,7 @@
   </div>
 
   <div id="container-modais-faturamento">
-  <!-- Modais para Faturamentos -->
+  
   {% for agendamento in agendamentos %}
   {% if agendamento.faturamento_id and agendamento.faturamento %}
   <div class="modal modal-blur fade" id="modal-faturamento-{{ agendamento.faturamento_id }}" tabindex="-1" role="dialog"
@@ -403,7 +388,7 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-0">
-          <!-- Resumo Financeiro Destacado -->
+          
           <div class="p-4"
             style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-bottom: 1px solid #dee2e6;">
             <div class="row g-4">
@@ -456,13 +441,11 @@
 
           <div class="p-4">
 
-            <!-- Detalhes do Faturamento -->
             {% set detalhes = agendamento.faturamento.obter_detalhes() %}
 
-            <!-- Seção Fornecedores -->
             {% set fornecedores = detalhes.fornecedores %}
             {% if fornecedores %}
-            <!-- Agrupar fornecedores por identificação -->
+            
             {% set fornecedores_agrupados = {} %}
             {% for fornecedor in fornecedores %}
             {% set identificacao = fornecedor.fornecedor_identificacao %}
@@ -530,10 +513,9 @@
             {% endfor %}
             {% endif %}
 
-            <!-- Seção Transportadoras -->
             {% set transportadoras = detalhes.transportadoras %}
             {% if transportadoras %}
-            <!-- Agrupar transportadoras por identificação -->
+            
             {% set transportadoras_agrupadas = {} %}
             {% for transportadora in transportadoras %}
             {% set identificacao = transportadora.nome %}
@@ -600,10 +582,9 @@
             {% endfor %}
             {% endif %}
 
-            <!-- Seção Extratores -->
             {% set extratores = detalhes.extratores %}
             {% if extratores %}
-            <!-- Agrupar extratores por identificação -->
+            
             {% set extratores_agrupados = {} %}
             {% for extrator in extratores %}
             {% set identificacao = extrator.extrator_identificacao %}
@@ -667,10 +648,9 @@
             {% endfor %}
             {% endif %}
 
-            <!-- Seção Comissionados -->
             {% set comissionados = detalhes.comissionados %}
             {% if comissionados %}
-            <!-- Agrupar comissionados por identificação -->
+            
             {% set comissionados_agrupados = {} %}
             {% for comissionado in comissionados %}
             {% set identificacao = comissionado.comissionado_identificacao %}
@@ -736,7 +716,6 @@
             {% endfor %}
             {% endif %}
 
-            <!-- Seção Créditos Utilizados -->
             {% set credito_fornecedor = detalhes.credito_fornecedor %}
             {% set credito_transportadora = detalhes.credito_transportadora %}
             {% set credito_extrator = detalhes.credito_extrator %}
@@ -829,7 +808,6 @@
             </div>
             {% endif %}
 
-            <!-- Mensagem quando não há dados -->
             {% if not fornecedores and not transportadoras and not extratores and not comissionados and not
             todos_creditos %}
             <div class="text-center py-4 text-muted">
@@ -847,7 +825,6 @@
             </div>
             {% endif %}
 
-            <!-- Anexos do Faturamento -->
             {% set anexos_agendamento = agendamento.anexos %}
             
             <div class="row g-4 mb-4">
@@ -958,7 +935,7 @@
   </div>
 
   <div id="container-modais-excluir">
-  <!-- Modal para Excluir -->
+  
   {% for agendamento in agendamentos %}
   <div class="modal modal-blur fade" id="modal-excluir-{{ agendamento.id }}" tabindex="-1" role="dialog"
     aria-hidden="true">
@@ -966,7 +943,7 @@
       <div class="modal-content">
         <div class="modal-status bg-danger"></div>
         <div class="modal-body text-center py-4">
-          <!-- Download SVG icon from http://tabler.io/icons/icon/alert-triangle -->
+          
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
             class="icon mb-2 text-danger icon-lg">
@@ -1003,7 +980,7 @@
   </div>
 
   <div id="container-modais-lancamento">
-  <!-- Modais para Lançamentos Avulsos -->
+  
   {% for agendamento in agendamentos %}
   {% if agendamento.lancamento_avulso_id and agendamento.lancamento_avulso %}
   <div class="modal modal-blur fade" id="modal-lancamento-{{ agendamento.lancamento_avulso_id }}" tabindex="-1"
@@ -1019,7 +996,7 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-0">
-          <!-- Resumo Financeiro Destacado -->
+          
           <div class="p-4"
             style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-bottom: 1px solid #dee2e6;">
             <div class="row g-4">
@@ -1087,7 +1064,6 @@
               </div>
             </div>
             
-            <!-- Anexos do Lançamento Avulso -->
             {% set anexos_agendamento = agendamento.anexos %}
             
             <div class="row g-4 mb-4">
@@ -1197,7 +1173,7 @@
   </div>
 
   <div id="container-modais-liquidacao">
-  <!-- Modais para Liquidação -->
+  
   {% for agendamento in agendamentos %}
   <div class="modal modal-blur fade" id="modal-liquidacao-{{ agendamento.id }}" tabindex="-1" role="dialog"
     aria-hidden="true">
@@ -1222,7 +1198,7 @@
           <input type="hidden" name="agendamento_id" value="{{ agendamento.id }}">
 
           <div class="modal-body p-0">
-            <!-- Resumo da Receita -->
+            
             <div class="p-4"
               style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-bottom: 1px solid #dee2e6;">
               <div class="row g-4">
@@ -1328,7 +1304,6 @@
 
   {% include 'estrutura/footer.html' %}
 
-  <!-- JavaScript específico para esta página -->
   <script src="{{ url_for('static', filename='js/pages/despesa-avulsa-listagem.js') }}"></script>
 
   <script>

@@ -8,7 +8,6 @@ class LancamentoMovimentacaoExtraModel(BaseModel):
     __tablename__ = 'lan_lancamento_movimentacao_extra'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
 
-    # 1 - Receitas | 2 - Despesas
     tipo_movimentacao = db.Column(db.Integer, nullable=False)
 
     vencimento = db.Column(db.Date, nullable=False)

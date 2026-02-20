@@ -2,7 +2,6 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 
-<!-- CSS específico da página -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/contas-bancarias.css') }}">
 
 <div class="page-wrapper">
@@ -47,9 +46,8 @@
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
 
-      <!-- Layout Principal com Contas Bancárias -->
       <div class="row">
-        <!-- Sidebar com Contas Bancárias -->
+        
         <div class="col-lg-3">
           <div class="card shadow-sm border-0 rounded-3 mb-4">
             <div class="card-header card-header-gradient">
@@ -65,7 +63,7 @@
               </h4>
             </div>
             <div class="card-body p-0">
-              <!-- Lista de Contas -->
+              
               <div class="list-group list-group-flush">
                 {% if contas_bancarias %}
                 {% for conta in contas_bancarias %}
@@ -97,7 +95,7 @@
                       <div class="fw-bold {% if ns.saldo_conta >= 0 %}text-success{% else %}text-danger{% endif %}">
                         {{ ns.saldo_conta | formatar_float_para_brl }}
                       </div>
-                      <!-- Debug: {{ conta.conta_bancaria_saldo|length if conta.conta_bancaria_saldo else 'sem saldo' }} -->
+                      
                     </div>
                   </div>
                 </div>
@@ -119,7 +117,6 @@
                 {% endif %}
               </div>
 
-              <!-- Totais -->
               {% if contas_bancarias %}
               <div class="border-top pt-3 px-3 pb-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -134,9 +131,8 @@
           </div>
         </div>
 
-        <!-- Área Principal do Extrato -->
         <div class="col-lg-9">
-          <!-- Cards de Informações -->
+          
           <div class="row row-cards mb-4">
             <div class="col-md-6 col-lg-4">
               <div class="card border shadow-lg rounded-3 card-border-madeireira">
@@ -203,7 +199,6 @@
             </div>
           </div>
 
-          <!-- Extrato de Movimentações Bancárias -->
           <div class="row mt-4">
             <div class="col">
               <div class="card shadow-sm border-0 rounded-3">
@@ -594,7 +589,6 @@
         </div>
       </div>
 
-      <!-- Modal para Filtros do Extrato -->
       <div class="modal modal-blur fade" id="modal-filtros-extrato" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
           <form id="filtroExtratoForm" method="get">
@@ -614,7 +608,7 @@
               </div>
               <div class="modal-body">
                 <div class="row g-3">
-                  <!-- Conta Bancária -->
+                  
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Conta Bancária</label>
                     <select class="form-select" name="conta_bancaria_id">
@@ -627,7 +621,6 @@
                     </select>
                   </div>
 
-                  <!-- Tipo de Movimentação -->
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Tipo de Movimentação</label>
                     <select class="form-select" name="tipo_movimentacao">
@@ -637,31 +630,26 @@
                     </select>
                   </div>
 
-                  <!-- Data Inicial -->
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Data Inicial</label>
                     <input type="date" class="form-control" name="data_inicial">
                   </div>
 
-                  <!-- Data Final -->
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Data Final</label>
                     <input type="date" class="form-control" name="data_final">
                   </div>
 
-                  <!-- Valor Mínimo -->
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Valor Mínimo</label>
                     <input type="text" class="form-control campo-moeda-brl" name="valor_minimo" placeholder="R$ 0,00">
                   </div>
 
-                  <!-- Valor Máximo -->
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Valor Máximo</label>
                     <input type="text" class="form-control campo-moeda-brl" name="valor_maximo" placeholder="R$ 0,00">
                   </div>
 
-                  <!-- Status Conciliação -->
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Status de Conciliação</label>
                     <select class="form-select" name="status_conciliacao">
@@ -671,7 +659,6 @@
                     </select>
                   </div>
 
-                  <!-- Ordenação -->
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Ordenar Por</label>
                     <select class="form-select" name="ordenacao">
@@ -702,7 +689,6 @@
         </div>
       </div>
 
-<!-- JavaScript específico da página -->
 <script src="{{ url_for('static', filename='js/pages/contas-bancarias.js') }}"></script>
 
 {% endblock conteudo %}

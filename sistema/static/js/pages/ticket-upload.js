@@ -1,24 +1,17 @@
-/**
- * Upload e extração de dados de tickets
- * Versão refatorada com modal de upload, preview e confirmação
- */
 
 (() => {
   'use strict';
 
-  // Estado do módulo
   let arquivoSelecionado = null;
   let imagemBase64 = null;
   let estaProcessando = false;
 
-  // Elementos do DOM
   const elementos = {
-    // Áreas principais
+    
     areaUploadInicial: null,
     areaFormulario: null,
     rodapeFormulario: null,
 
-    // Modal de upload
     modalUpload: null,
     dropZone: null,
     dropZoneConteudo: null,
@@ -28,44 +21,35 @@
     nomeArquivo: null,
     btnProcessarUpload: null,
 
-    // Modal de visualização
     modalVisualizarImagem: null,
     imagemVisualizacao: null,
 
-    // Modal de confirmação
     modalConfirmacao: null,
     btnConfirmarCadastro: null,
 
-    // Botões do formulário
     btnAlterarImagem: null,
     btnConfirmar: null,
 
-    // Campos do formulário
     campos: {},
 
-    // Formulário
     formTicket: null,
     arquivoTicket: null,
 
-    // Loader
     loaderFullscreen: null
   };
 
-  // Inicialização
   const inicializar = () => {
     cachearElementos();
     criarLoaderFullscreen();
     vincularEventos();
   };
 
-  // Cache dos elementos
   const cachearElementos = () => {
-    // Áreas principais
+    
     elementos.areaUploadInicial = document.getElementById('areaUploadInicial');
     elementos.areaFormulario = document.getElementById('areaFormulario');
     elementos.rodapeFormulario = document.getElementById('rodapeFormulario');
 
-    // Modal de upload
     elementos.modalUpload = document.getElementById('modalUpload');
     elementos.dropZone = document.getElementById('dropZone');
     elementos.dropZoneConteudo = document.getElementById('dropZoneConteudo');
@@ -75,34 +59,27 @@
     elementos.nomeArquivo = document.getElementById('nomeArquivo');
     elementos.btnProcessarUpload = document.getElementById('btnProcessarUpload');
 
-    // Imagem direta na tela (sem modal)
     elementos.imagemTicketDireta = document.getElementById('imagemTicketDireta');
 
-    // Miniatura da imagem
     elementos.imagemMiniatura = document.getElementById('imagemMiniatura');
 
-    // Modal de confirmação
     elementos.modalConfirmacao = document.getElementById('modalConfirmacao');
     elementos.btnConfirmarCadastro = document.getElementById('btnConfirmarCadastro');
     elementos.confirmaImagemTicket = document.getElementById('confirma-imagem-ticket');
 
-    // Botões do formulário
     elementos.btnAlterarImagem = document.getElementById('btnAlterarImagem');
     elementos.btnConfirmar = document.getElementById('btnConfirmar');
 
-    // Campos do formulário
     elementos.campos = {
       numeroNf: document.getElementById('numeroNf'),
       pesoLiquido: document.getElementById('pesoLiquido'),
       dataEntrega: document.getElementById('dataEntregaTicket')
     };
 
-    // Formulário
     elementos.formTicket = document.getElementById('formTicket');
     elementos.arquivoTicket = document.getElementById('arquivoTicket');
   };
 
-  // Cria loader fullscreen
   const criarLoaderFullscreen = () => {
     const loader = document.createElement('div');
     loader.id = 'ticket-loader';
@@ -129,15 +106,13 @@
     elementos.loaderFullscreen = loader;
   };
 
-  // Vincula eventos
   const vincularEventos = () => {
-    // Evento de click na zona de drop
+    
     if (elementos.dropZone) {
       elementos.dropZone.addEventListener('click', () => {
         elementos.inputUploadModal.click();
       });
 
-      // Drag and drop
       elementos.dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         elementos.dropZone.style.borderColor = 'var(--tblr-success)';
@@ -162,7 +137,6 @@
       });
     }
 
-    // Input file no modal
     if (elementos.inputUploadModal) {
       elementos.inputUploadModal.addEventListener('change', (e) => {
         const arquivo = e.target.files[0];
@@ -172,30 +146,25 @@
       });
     }
 
-    // Botão processar upload
     if (elementos.btnProcessarUpload) {
       elementos.btnProcessarUpload.addEventListener('click', processarUpload);
     }
 
-    // Botão alterar imagem
     if (elementos.btnAlterarImagem) {
       elementos.btnAlterarImagem.addEventListener('click', abrirModalAlterarImagem);
     }
 
-    // Botão confirmar (abre modal de confirmação)
     if (elementos.btnConfirmar) {
       elementos.btnConfirmar.addEventListener('click', abrirModalConfirmacao);
     }
 
-    // Botão confirmar cadastro no modal
     if (elementos.btnConfirmarCadastro) {
       elementos.btnConfirmarCadastro.addEventListener('click', confirmarCadastro);
     }
 
-    // Reset do modal de upload ao fechar
     if (elementos.modalUpload) {
       elementos.modalUpload.addEventListener('hidden.bs.modal', () => {
-        // Não reseta se já tem arquivo selecionado
+        
         if (!arquivoSelecionado) {
           resetarModalUpload();
         }
@@ -203,16 +172,14 @@
     }
   };
 
-  // Processa arquivo selecionado para preview
   const processarArquivoSelecionado = (arquivo) => {
-    // Valida tipo
+    
     const tiposPermitidos = ['image/jpeg', 'image/png', 'image/jpg'];
     if (!tiposPermitidos.includes(arquivo.type)) {
       exibirToast('Arquivo deve estar em formato JPG, JPEG ou PNG.', 'error');
       return;
     }
 
-    // Valida tamanho (10MB)
     if (arquivo.size > 10 * 1024 * 1024) {
       exibirToast('Arquivo deve ter no máximo 10MB.', 'error');
       return;
@@ -220,40 +187,34 @@
 
     arquivoSelecionado = arquivo;
 
-    // Gera preview
     const reader = new FileReader();
     reader.onload = (e) => {
       imagemBase64 = e.target.result;
       elementos.imagemPreview.src = imagemBase64;
       elementos.nomeArquivo.textContent = arquivo.name;
 
-      // Mostra preview, esconde conteúdo padrão
       elementos.dropZoneConteudo.classList.add('d-none');
       elementos.dropZonePreview.classList.remove('d-none');
 
-      // Habilita botão de processar
       elementos.btnProcessarUpload.disabled = false;
     };
     reader.readAsDataURL(arquivo);
   };
 
-  // Processa upload e extrai dados
   const processarUpload = async () => {
     if (!arquivoSelecionado || estaProcessando) return;
 
     estaProcessando = true;
 
-    // Fecha modal de upload
     const modalUploadInstance = bootstrap.Modal.getInstance(elementos.modalUpload);
     if (modalUploadInstance) {
       modalUploadInstance.hide();
     }
 
-    // Mostra loader
     exibirLoader();
 
     try {
-      // Envia para API de extração
+      
       const formData = new FormData();
       formData.append('arquivo', arquivoSelecionado);
 
@@ -273,7 +234,6 @@
 
       const dados = await resposta.json();
 
-      // Preenche campos com dados extraídos (apenas NF, Peso e Data)
       if (dados.dados) {
         if (dados.dados.numero_nf && elementos.campos.numeroNf) {
           elementos.campos.numeroNf.value = dados.dados.numero_nf;
@@ -286,13 +246,10 @@
         }
       }
 
-      // Transfere arquivo para o input do formulário
       transferirArquivoParaInput();
 
-      // Mostra formulário
       exibirFormulario();
 
-      // Mostra mensagem de sucesso
       exibirToast('Imagem processada! Verifique os dados extraídos.', 'success');
 
     } catch (erro) {
@@ -304,20 +261,16 @@
     estaProcessando = false;
   };
 
-  // Transfere arquivo para input file do formulário
   const transferirArquivoParaInput = () => {
     if (!arquivoSelecionado || !elementos.arquivoTicket) return;
 
-    // Cria DataTransfer para setar o arquivo
     const dataTransfer = new DataTransfer();
     dataTransfer.items.add(arquivoSelecionado);
     elementos.arquivoTicket.files = dataTransfer.files;
     
-    // Atualiza a imagem direta na tela
     atualizarImagemDireta();
   };
 
-  // Atualiza a imagem direta na tela
   const atualizarImagemDireta = () => {
     const imagemSrc = imagemBase64 || window.imagemBase64;
     if (imagemSrc && elementos.imagemTicketDireta) {
@@ -325,21 +278,18 @@
     }
   };
 
-  // Exibe formulário
   const exibirFormulario = () => {
     elementos.areaUploadInicial.style.display = 'none';
     elementos.areaFormulario.style.display = 'block';
     elementos.rodapeFormulario.style.display = 'block';
   };
 
-  // Abre modal para alterar imagem
   const abrirModalAlterarImagem = () => {
     resetarModalUpload();
     const modal = new bootstrap.Modal(elementos.modalUpload);
     modal.show();
   };
 
-  // Reseta modal de upload
   const resetarModalUpload = () => {
     elementos.dropZoneConteudo.classList.remove('d-none');
     elementos.dropZonePreview.classList.add('d-none');
@@ -351,9 +301,8 @@
     imagemBase64 = null;
   };
 
-  // Abre modal de confirmação
   const abrirModalConfirmacao = () => {
-    // Valida campos obrigatórios
+    
     const fornecedor = document.getElementById('fornecedorIdentificacao');
     const numeroNf = elementos.campos.numeroNf;
     const pesoLiquido = elementos.campos.pesoLiquido;
@@ -361,7 +310,6 @@
     const placaVeiculo = document.querySelector('input[name="placaVeiculo"]');
     const motorista = document.querySelector('input[name="motoristaTicket"]');
 
-    // Verifica campos obrigatórios
     let camposInvalidos = [];
 
     if (!fornecedor?.value) camposInvalidos.push('Fornecedor');
@@ -376,12 +324,10 @@
       return;
     }
 
-    // Pega informações estáticas da página (vindas do backend)
     const infoInputs = document.querySelectorAll('.card.border-primary input[disabled]');
     let cliente = '-', produto = '-', bitola = '-', nfVenda = '-';
     let transportadora = '-', documento = '-', telefone = '-';
 
-    // Pega valores dos inputs desabilitados do card de informações
     if (infoInputs.length >= 9) {
       cliente = infoInputs[0]?.value || '-';
       produto = infoInputs[1]?.value || '-';
@@ -392,7 +338,6 @@
       telefone = infoInputs[6]?.value || '-';
     }
 
-    // Preenche dados da solicitação
     const confirmaCliente = document.getElementById('confirma-cliente');
     const confirmaProduto = document.getElementById('confirma-produto');
     const confirmaBitola = document.getElementById('confirma-bitola');
@@ -409,7 +354,6 @@
     if (confirmaDocumento) confirmaDocumento.value = documento;
     if (confirmaTelefone) confirmaTelefone.value = telefone;
 
-    // Preenche dados do ticket (preenchidos pelo usuário)
     document.getElementById('confirma-nf').value = numeroNf.value;
     document.getElementById('confirma-peso').value = pesoLiquido.value;
     document.getElementById('confirma-data').value = formatarData(dataEntrega.value);
@@ -418,53 +362,45 @@
     document.getElementById('confirma-placa').value = placaVeiculo.value;
     document.getElementById('confirma-motorista').value = motorista.value;
 
-    // Preenche imagem do ticket no modal de confirmação
     const imagemSrc = imagemBase64 || window.imagemBase64;
     if (imagemSrc && elementos.confirmaImagemTicket) {
       elementos.confirmaImagemTicket.src = imagemSrc;
     }
 
-    // Abre modal
     const modal = new bootstrap.Modal(elementos.modalConfirmacao);
     modal.show();
   };
 
-  // Confirma cadastro e submete formulário
   const confirmarCadastro = () => {
-    // Fecha modal
+    
     const modalInstance = bootstrap.Modal.getInstance(elementos.modalConfirmacao);
     if (modalInstance) {
       modalInstance.hide();
     }
 
-    // Submete formulário
     elementos.formTicket.submit();
   };
 
-  // Formata data para exibição
   const formatarData = (dataISO) => {
     if (!dataISO) return '-';
     const [ano, mes, dia] = dataISO.split('-');
     return `${dia}/${mes}/${ano}`;
   };
 
-  // Exibe loader
   const exibirLoader = () => {
     if (elementos.loaderFullscreen) {
       elementos.loaderFullscreen.style.display = 'flex';
     }
   };
 
-  // Esconde loader
   const esconderLoader = () => {
     if (elementos.loaderFullscreen) {
       elementos.loaderFullscreen.style.display = 'none';
     }
   };
 
-  // Exibe toast de notificação
   const exibirToast = (mensagem, tipo = 'info') => {
-    // Remove toast anterior se existir
+    
     const toastAnterior = document.getElementById('toast-ticket');
     if (toastAnterior) {
       toastAnterior.remove();
@@ -510,7 +446,6 @@
     toast.show();
   };
 
-  // Inicia quando DOM estiver pronto
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', inicializar);
   } else {

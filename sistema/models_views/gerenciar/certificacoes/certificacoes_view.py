@@ -50,21 +50,16 @@ def cadastrar_certificacao():
             gravar_banco = False
             flash(("Verifique os campos destacados em vermelho!", "warning"))
 
-        # Validação robusta para valor do estoque
         valor_estoque_float = None
         try:
             if valor_estoque:
-                # Remover espaços e substituir vírgula por ponto
                 valor_limpo = valor_estoque.replace(',', '.').strip()
                 
-                # Verificar se não está vazio após limpeza
                 if not valor_limpo:
                     raise ValueError("Valor vazio")
                 
-                # Tentar converter para float
                 valor_estoque_float = float(valor_limpo)
                 
-                # Verificar se é NaN, infinito ou negativo
                 import math
                 if math.isnan(valor_estoque_float):
                     raise ValueError("Valor inválido (NaN)")
@@ -75,11 +70,9 @@ def cadastrar_certificacao():
                 if valor_estoque_float < 0:
                     raise ValueError("Valor não pode ser negativo")
                 
-                # Verificar se é um número muito grande
                 if valor_estoque_float > 999999.99:
                     raise ValueError("Valor muito alto (máximo: 999.999,99 toneladas)")
                     
-                # Arredondar para 2 casas decimais
                 valor_estoque_float = round(valor_estoque_float, 2)
                 
             else:
@@ -101,16 +94,14 @@ def cadastrar_certificacao():
                     ativo=True
                 )
                 db.session.add(certificacao)
-                db.session.flush()  # Força a validação antes do commit
+                db.session.flush()
 
-                # Processar múltiplos anexos
                 anexos = request.files.getlist('anexos')
                 anexos_validos = [anexo for anexo in anexos if anexo and anexo.filename != '']
 
                 if anexos_validos:
                     for i, anexo in enumerate(anexos_validos):
                         try:
-                            # Nome mais conciso para o arquivo
                             nome_arquivo = f"anexo_cert_{certificacao.id}_{i+1}"
                             objeto_upload = upload_arquivo(
                                 anexo, 
@@ -132,7 +123,6 @@ def cadastrar_certificacao():
                 
                 db.session.commit()
 
-                # Pontuação do usuário
                 acao = TipoAcaoEnum.CADASTRO
                 PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                     current_user.id,
@@ -174,7 +164,6 @@ def editar_certificacao(id):
     validacao_campos_erros = {}
     gravar_banco = True
 
-    # Dados para preencher o formulário
     dados_corretos = {
         "nome": certificacao.nome or "",
         "descricao": certificacao.descricao or "",
@@ -199,7 +188,6 @@ def editar_certificacao(id):
             gravar_banco = False
             flash(("Verifique os campos destacados em vermelho!", "warning"))
 
-        # Validar se valor do estoque é numérico
         try:
             valor_estoque_float = float(valor_estoque.replace(',', '.'))
         except (ValueError, AttributeError):
@@ -207,7 +195,6 @@ def editar_certificacao(id):
             validacao_campos_erros["valor_estoque"] = "Valor de estoque inválido."
 
         if gravar_banco:
-            # Atualizar certificação
             certificacao.nome = nome
             certificacao.descricao = descricao if descricao else None
             certificacao.descricao_nota = descricao_nota if descricao_nota else None
@@ -216,23 +203,19 @@ def editar_certificacao(id):
 
             db.session.commit()
 
-            # Processar novos anexos 
             anexos = request.files.getlist('anexos')
             if anexos:
-                # Contar anexos existentes para continuar numeração
                 anexos_existentes = len(certificacao.obter_anexos_ativos())
                 
                 for i, anexo in enumerate(anexos):
                     if anexo and anexo.filename != '':
                         try:
-                            # Upload para pasta _estoque_certificacoes
                             objeto_upload = upload_arquivo(
                                 anexo, 
                                 "UPLOAD_ESTOQUE_CERTIFICACOES", 
                                 f"cert_{certificacao.id}_anexo_{anexos_existentes + i + 1}_{anexo.filename}"
                             )
                             
-                            # Criar novo registro de anexo independente
                             certificacao_anexo = CertificacaoAnexoModel(
                                 certificacao_id=certificacao.id,
                                 arquivo_upload_id=objeto_upload.id,
@@ -271,7 +254,6 @@ def detalhes_certificacao(id):
         flash(("Certificação não encontrada!", "warning"))
         return redirect(url_for("listar_certificacoes"))
     
-    # Obter anexos ativos ordenados
     anexos = sorted(certificacao.obter_anexos_ativos(), key=lambda x: x.ordem_exibicao)
     
     return render_template(
@@ -290,7 +272,6 @@ def excluir_certificacao(id):
     if certificacao is None:
         flash(("Certificação não encontrada", "warning"))
     else:
-        # Verificar se pode excluir (adicione regras de negócio se necessário)
         certificacao.deletado = True
         certificacao.ativo = False
         db.session.commit()

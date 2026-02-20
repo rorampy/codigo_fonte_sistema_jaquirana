@@ -30,16 +30,13 @@ class NfComplementarModel(BaseModel):
     
     preco_un_nf = db.Column(db.Integer, nullable=True)
 
-    # Dados do transportador (nota fiscal)
     transportador_nome = db.Column(db.String(200), nullable=True)
     transportador_cnpj_cpf = db.Column(db.String(20), nullable=True)
     transportador_insc_estadual = db.Column(db.String(50), nullable=True)
 
-    # Dados transporte NF
     placa_nf = db.Column(db.String(50), nullable=True)
     motorista_nf = db.Column(db.String(200), nullable=True)
 
-    # Arquivos
     arquivo_nota_id = db.Column(db.Integer, db.ForeignKey("upload_arquivo.id"), nullable=True)
     arquivo_nota = db.relationship("UploadArquivoModel",foreign_keys=[arquivo_nota_id], backref=db.backref("arquivo_nf_complementar", lazy=True))
     
@@ -282,7 +279,6 @@ class NfComplementarModel(BaseModel):
         if not registros_operacionais:
             raise Exception("Nenhum registro operacional fornecido")
         
-        # Verificar se todos os registros são do mesmo cliente
         primeiro_cliente_id = registros_operacionais[0].solicitacao.cliente_id if registros_operacionais[0].solicitacao else None
         cliente_nome = registros_operacionais[0].solicitacao.cliente.identificacao if registros_operacionais[0].solicitacao.cliente else None
         
@@ -293,18 +289,15 @@ class NfComplementarModel(BaseModel):
             if registro.solicitacao.cliente_id != primeiro_cliente_id:
                 raise Exception("Todos os registros devem ser do mesmo cliente")
         
-        # Calcular peso total da diferença (soma das diferenças positivas)
         peso_total_diferenca = 0
         detalhes_registros = []
         
         for registro in registros_operacionais:
-            # Usar peso da NF com exceção se existir, senão usar peso normal
             peso_nf_final = registro.peso_nf_ton_com_excecao if registro.peso_ton_nf_excesso else registro.peso_ton_nf
             
             if peso_nf_final and registro.peso_liquido_ticket:
                 diferenca = peso_nf_final - registro.peso_liquido_ticket
                 
-                # Só somar diferenças positivas (quando NF > Ticket)
                 if diferenca > 0:
                     peso_total_diferenca += diferenca
                 
@@ -322,10 +315,8 @@ class NfComplementarModel(BaseModel):
         if peso_total_diferenca <= 0:
             raise Exception("Não há diferenças positivas para emitir nota complementar")
         
-        # Pegar dados do primeiro registro para usar como base
         primeiro_registro = registros_operacionais[0]
         
-        # Preparar dados JSON com todos os detalhes
         nf_complementar_detalhes = {
             "registros_operacionais": detalhes_registros,
             "peso_total_diferenca": round(peso_total_diferenca, 3),
@@ -335,11 +326,9 @@ class NfComplementarModel(BaseModel):
             "observacoes": f"NF Complementar gerada automaticamente a partir de {len(registros_operacionais)} registro(s) operacional(is)"
         }
         
-        # Gerar número sequencial para a NF complementar (temporário)
         ultimo_numero = db.session.query(func.max(NfComplementarModel.id)).scalar() or 0
         numero_nf_complementar = f"COMP{ultimo_numero + 1:06d}"
         
-        # Calcular valor estimado (usar preço do primeiro registro se disponível)
         valor_estimado = None
         if primeiro_registro.preco_un_nf and peso_total_diferenca:
             valor_estimado = int(primeiro_registro.preco_un_nf * peso_total_diferenca)

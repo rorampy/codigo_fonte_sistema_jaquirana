@@ -18,12 +18,10 @@ def dre_analitico():
     Rota para exibir DRE Analítico com filtros por período
     """
     try:
-        # Valores padrão - mês atual
         data_fim_default = date.today()
-        data_inicio_default = date(data_fim_default.year, data_fim_default.month, 1)  # Primeiro dia do mês atual
-        exercicio_default = DataHora.obter_exercicio_mes_atual()  # Exercício do mês atual
+        data_inicio_default = date(data_fim_default.year, data_fim_default.month, 1)
+        exercicio_default = DataHora.obter_exercicio_mes_atual()
         
-        # Coletar dados do formulário
         dados_form = {
             'data_inicio': request.form.get('data_inicio') or request.args.get('data_inicio', data_inicio_default.strftime('%Y-%m-%d')),
             'data_fim': request.form.get('data_fim') or request.args.get('data_fim', data_fim_default.strftime('%Y-%m-%d')),
@@ -32,19 +30,15 @@ def dre_analitico():
             'exportar_excel': request.form.get('exportar_excel')
         }
         
-        # Processar datas - SEMPRE usar dados do formulário primeiro
         if dados_form['exercicio'] and dados_form['exercicio'] != exercicio_default:
             try:
-                # Usar a função dos utilitários para obter período completo
                 data_inicio, data_fim = DataHora.obter_periodo_completo_mes(dados_form['exercicio'])
                 
-                # Atualizar dados_form
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
                 
             except ValueError as e:
                 flash((str(e), 'error'))
-                # Usar dados do formulário como fallback
                 try:
                     data_inicio = datetime.strptime(dados_form['data_inicio'], '%Y-%m-%d').date()
                     data_fim = datetime.strptime(dados_form['data_fim'], '%Y-%m-%d').date()
@@ -55,13 +49,10 @@ def dre_analitico():
                     dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
                 dados_form['exercicio'] = ''
         else:
-            # Converter strings de data para objetos date - PRIORIZAR dados do form
             try:
                 data_inicio = datetime.strptime(dados_form['data_inicio'], '%Y-%m-%d').date()
                 data_fim = datetime.strptime(dados_form['data_fim'], '%Y-%m-%d').date()
                 
-                # Debug: log das datas processadas do range
-                print(f"DEBUG DRE Analítico - Range manual processado: Data início: {data_inicio}, Data fim: {data_fim}")
                 
             except ValueError:
                 flash(('Datas inválidas fornecidas!', 'error'))
@@ -70,7 +61,6 @@ def dre_analitico():
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
             
-            # Verificar se as datas são válidas
             if data_inicio > data_fim:
                 flash(('Data de início não pode ser maior que data de fim!', 'error'))
                 data_inicio = data_inicio_default
@@ -78,11 +68,9 @@ def dre_analitico():
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
         
-        # Gerar DRE analítico com as datas processadas
         dre_dados = DREModel.gerar_dre_analitico(data_inicio, data_fim)
         
         if dados_form['exportar_pdf']:
-            print(f"DEBUG: Exportando PDF DRE Analítico com data_inicio: {data_inicio}, data_fim: {data_fim}")
             return exportar_dre_pdf(dre_dados, data_inicio, data_fim)
         
 
@@ -114,12 +102,10 @@ def dre_sintetico():
     Rota para exibir DRE Sintético com filtros por período
     """
     try:
-        # Valores padrão - mês atual
         data_fim_default = date.today()
-        data_inicio_default = date(data_fim_default.year, data_fim_default.month, 1)  # Primeiro dia do mês atual
-        exercicio_default = DataHora.obter_exercicio_mes_atual()  # Exercício do mês atual
+        data_inicio_default = date(data_fim_default.year, data_fim_default.month, 1)
+        exercicio_default = DataHora.obter_exercicio_mes_atual()
         
-        # Coletar dados do formulário
         dados_form = {
             'data_inicio': request.form.get('data_inicio') or request.args.get('data_inicio', data_inicio_default.strftime('%Y-%m-%d')),
             'data_fim': request.form.get('data_fim') or request.args.get('data_fim', data_fim_default.strftime('%Y-%m-%d')),
@@ -128,27 +114,17 @@ def dre_sintetico():
             'exportar_excel': request.form.get('exportar_excel')
         }
         
-        # Debug: log dos dados capturados do formulário
-        print(f"DEBUG DRE Sintético - Dados do form: data_inicio={dados_form['data_inicio']}, data_fim={dados_form['data_fim']}, exercicio={dados_form['exercicio']}")
-        print(f"DEBUG DRE Sintético - Request form: {dict(request.form)}")
-        print(f"DEBUG DRE Sintético - Request args: {dict(request.args)}")
         
-        # Processar datas - SEMPRE usar dados do formulário primeiro
         if dados_form['exercicio'] and dados_form['exercicio'] != exercicio_default:
             try:
-                # Usar a função dos utilitários para obter período completo
                 data_inicio, data_fim = DataHora.obter_periodo_completo_mes(dados_form['exercicio'])
                 
-                # Atualizar dados_form
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
                 
-                # Debug: log das datas processadas do exercício
-                print(f"DEBUG DRE Sintético - Exercício processado: {dados_form['exercicio']}, Data início: {data_inicio}, Data fim: {data_fim}")
                 
             except ValueError as e:
                 flash((str(e), 'error'))
-                # Usar dados do formulário como fallback
                 try:
                     data_inicio = datetime.strptime(dados_form['data_inicio'], '%Y-%m-%d').date()
                     data_fim = datetime.strptime(dados_form['data_fim'], '%Y-%m-%d').date()
@@ -159,13 +135,10 @@ def dre_sintetico():
                     dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
                 dados_form['exercicio'] = ''
         else:
-            # Converter strings de data para objetos date - PRIORIZAR dados do form
             try:
                 data_inicio = datetime.strptime(dados_form['data_inicio'], '%Y-%m-%d').date()
                 data_fim = datetime.strptime(dados_form['data_fim'], '%Y-%m-%d').date()
                 
-                # Debug: log das datas processadas do range
-                print(f"DEBUG DRE Sintético - Range manual processado: Data início: {data_inicio}, Data fim: {data_fim}")
                 
             except ValueError:
                 flash(('Datas inválidas fornecidas!', 'error'))
@@ -174,7 +147,6 @@ def dre_sintetico():
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
             
-            # Verificar se as datas são válidas
             if data_inicio > data_fim:
                 flash(('Data de início não pode ser maior que data de fim!', 'error'))
                 data_inicio = data_inicio_default
@@ -182,16 +154,11 @@ def dre_sintetico():
                 dados_form['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
                 dados_form['data_fim'] = data_fim.strftime('%Y-%m-%d')
         
-        # Gerar DRE sintético com as datas processadas
-        print(f"DEBUG: Gerando DRE Sintético com data_inicio: {data_inicio}, data_fim: {data_fim}")
         dre_dados = DREModel.gerar_dre_sintetico(data_inicio, data_fim)
         
         if dados_form['exportar_pdf']:
-            print(f"DEBUG: Exportando PDF DRE Sintético com data_inicio: {data_inicio}, data_fim: {data_fim}")
             return exportar_dre_sintetico_pdf(dre_dados, data_inicio, data_fim)
         
-        # Log da consulta realizada (opcional)
-        # ChangelogModel é usado para versionamento do sistema, não para logs de uso
         
         return render_template(
             'relatorios/relatorios_financeiros/relatorio_dfc_dre/dre/dre_sintetico.html',
@@ -218,16 +185,11 @@ def exportar_dre_pdf(dre_dados, data_inicio, data_fim):
     Exporta DRE Analítico para PDF
     """
     try:
-        # Debug: log das datas recebidas na função de exportação
-        print(f"DEBUG: exportar_dre_pdf recebeu data_inicio: {data_inicio}, data_fim: {data_fim}")
         
-        # Obter data atual como objeto datetime
         data_hoje = datetime.now()
         
-        # Obter caminho do logo
         logo_path = obter_url_absoluta_de_imagem('logo.png')
         
-        # Renderizar template para PDF
         html = render_template(
             'relatorios/relatorios_financeiros/relatorio_dfc_dre/dre/dre_analitico_pdf.html',
             logo_path=logo_path,
@@ -238,10 +200,8 @@ def exportar_dre_pdf(dre_dados, data_inicio, data_fim):
             formatar_float_para_brl=formatar_float_para_brl
         )
         
-        # Nome do arquivo de saída
         nome_arquivo_saida = f'dre-analitico_{data_inicio.strftime("%Y%m%d")}_{data_fim.strftime("%Y%m%d")}'
         
-        # Gerar PDF usando a função padrão do sistema
         return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo_saida)
         
     except Exception as e:
@@ -254,16 +214,11 @@ def exportar_dre_sintetico_pdf(dre_dados, data_inicio, data_fim):
     Exporta DRE Sintético para PDF
     """
     try:
-        # Debug: log das datas recebidas na função de exportação
-        print(f"DEBUG: exportar_dre_sintetico_pdf recebeu data_inicio: {data_inicio}, data_fim: {data_fim}")
         
-        # Obter data atual como objeto datetime
         data_hoje = datetime.now()
         
-        # Obter caminho do logo
         logo_path = obter_url_absoluta_de_imagem('logo.png')
         
-        # Renderizar template para PDF
         html = render_template(
             'relatorios/relatorios_financeiros/relatorio_dfc_dre/dre/dre_sintetico_pdf.html',
             logo_path=logo_path,
@@ -274,10 +229,8 @@ def exportar_dre_sintetico_pdf(dre_dados, data_inicio, data_fim):
             formatar_float_para_brl=formatar_float_para_brl
         )
         
-        # Nome do arquivo de saída
         nome_arquivo_saida = f'dre-sintetico_{data_inicio.strftime("%Y%m%d")}_{data_fim.strftime("%Y%m%d")}'
         
-        # Gerar PDF usando a função padrão do sistema
         return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo_saida)
         
     except Exception as e:
@@ -293,21 +246,18 @@ def dre_categoria_detalhes(categoria_id):
     Busca dados completos do faturamento e lançamentos avulsos
     """
     try:
-        # Obter parâmetros da requisição
         data_inicio_str = request.args.get('data_inicio')
         data_fim_str = request.args.get('data_fim')
         
         if not data_inicio_str or not data_fim_str:
             return jsonify({'error': 'Datas são obrigatórias'}), 400
         
-        # Converter datas
         try:
             data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
             data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
         except ValueError:
             return jsonify({'error': 'Formato de data inválido. Use YYYY-MM-DD'}), 400
         
-        # Importar models necessários
         from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
         from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
         from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
@@ -317,13 +267,10 @@ def dre_categoria_detalhes(categoria_id):
         from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
         from sistema.models_views.faturamento.cargas_a_receber.nf_complementar.nf_complementar_model import NfComplementarModel
         
-        # Obter código da categoria para verificar se é uma categoria automática
         categoria = PlanoContaModel.query.filter_by(id=categoria_id, ativo=True, deletado=False).first()
         if not categoria:
             return jsonify({'error': 'Categoria não encontrada'}), 404
         
-        # Buscar registros da categoria no período com joins para obter dados completos
-        # Status: 6=Categorizado, 8=Conciliado, 9=Liquidado, 10=Parcialmente Conciliado
         registros = db.session.query(AgendamentoPagamentoModel)\
             .outerjoin(FaturamentoModel, AgendamentoPagamentoModel.faturamento_id == FaturamentoModel.id)\
             .outerjoin(LancamentoAvulsoModel, AgendamentoPagamentoModel.lancamento_avulso_id == LancamentoAvulsoModel.id)\
@@ -336,7 +283,6 @@ def dre_categoria_detalhes(categoria_id):
                 AgendamentoPagamentoModel.data_competencia <= data_fim
             ).all()
         
-        # Filtrar registros que contêm a categoria específica
         registros_categoria = []
         
         for registro in registros:
@@ -347,60 +293,49 @@ def dre_categoria_detalhes(categoria_id):
                     if isinstance(categorias, list):
                         for categoria_info in categorias:
                             if isinstance(categoria_info, dict) and categoria_info.get('categoria_id') == categoria_id:
-                                # Dividir por 100 pois valores estão multiplicados por 100 no banco
                                 valor_corrigido = float(categoria_info.get('valor', 0)) / 100.0
                                 
-                                # Determinar a origem dos dados
                                 origem = 'Sistema'
                                 tipo_documento = 'Lançamento'
                                 codigo_documento = f'AGD-{registro.id}'
                                 beneficiario = 'Não informado'
                                 observacoes = registro.descricao or ''
                                 
-                                # Se tem faturamento, buscar detalhes do faturamento
                                 if registro.faturamento:
                                     faturamento = registro.faturamento
                                     tipo_documento = 'Faturamento'
                                     codigo_documento = faturamento.codigo_faturamento
                                     
-                                    # Determinar tipo de operação
-                                    if faturamento.tipo_operacao == 1:  # Carga
+                                    if faturamento.tipo_operacao == 1:
                                         origem = 'Faturamento de Carga'
-                                    elif faturamento.tipo_operacao == 2:  # Lançamento
-                                        if faturamento.direcao_financeira == 1:  # Receita
+                                    elif faturamento.tipo_operacao == 2:
+                                        if faturamento.direcao_financeira == 1:
                                             origem = 'Receita Avulsa'
-                                        else:  # Despesa
+                                        else:
                                             origem = 'Despesa Avulsa'
-                                    elif faturamento.tipo_operacao == 3:  # Crédito
+                                    elif faturamento.tipo_operacao == 3:
                                         origem = 'Controle de Crédito'
                                     
-                                    # Buscar detalhes do JSON do faturamento
                                     if faturamento.detalhes_json:
                                         try:
                                             detalhes = json.loads(faturamento.detalhes_json) if isinstance(faturamento.detalhes_json, str) else faturamento.detalhes_json
                                             if isinstance(detalhes, dict):
-                                                # Construir descrição detalhada e explicativa
                                                 informacoes_detalhes = []
                                                 
-                                                # Verificar se o agendamento tem múltiplas categorias
                                                 categorias_agendamento = json.loads(registro.categorias_json) if isinstance(registro.categorias_json, str) else registro.categorias_json
                                                 tem_multiplas_categorias = len(categorias_agendamento) > 1 if categorias_agendamento else False
                                                 
-                                                # Adicionar informação sobre categorização múltipla
                                                 if tem_multiplas_categorias:
                                                     outras_categorias = [cat.get('categoria', 'N/A') for cat in categorias_agendamento if cat.get('categoria_id') != categoria_id]
                                                     if outras_categorias:
                                                         informacoes_detalhes.append(f"Faturamento rateado entre categorias: {', '.join(outras_categorias[:2])}")
                                                 
-                                                # ENTIDADES ENVOLVIDAS NO FATURAMENTO
                                                 entidades_envolvidas = []
                                                 
-                                                # FORNECEDORES
                                                 if 'fornecedores' in detalhes and detalhes['fornecedores']:
-                                                    fornecedores = detalhes['fornecedores'][:3]  # Limitar a 3
+                                                    fornecedores = detalhes['fornecedores'][:3]
                                                     nomes_fornecedores = []
                                                     for f in fornecedores:
-                                                        # Buscar identificação em diferentes campos possíveis
                                                         nome = (f.get('fornecedor_identificacao') or 
                                                                f.get('identificacao') or 
                                                                f.get('nome') or 
@@ -414,12 +349,10 @@ def dre_categoria_detalhes(categoria_id):
                                                     elif len(fornecedores) > 0:
                                                         entidades_envolvidas.append(f"{len(fornecedores)} fornecedor(es) cadastrado(s)")
                                                 
-                                                # TRANSPORTADORAS
                                                 if 'transportadoras' in detalhes and detalhes['transportadoras']:
-                                                    transportadoras = detalhes['transportadoras'][:3]  # Limitar a 3
+                                                    transportadoras = detalhes['transportadoras'][:3]
                                                     nomes_transportadoras = []
                                                     for t in transportadoras:
-                                                        # Buscar identificação em diferentes campos possíveis
                                                         nome = (t.get('transportadora_identificacao') or 
                                                                t.get('fornecedor_identificacao') or
                                                                t.get('identificacao') or 
@@ -434,12 +367,10 @@ def dre_categoria_detalhes(categoria_id):
                                                     elif len(transportadoras) > 0:
                                                         entidades_envolvidas.append(f"{len(transportadoras)} transportadora(s) cadastrada(s)")
                                                 
-                                                # EXTRATORES
                                                 if 'extratores' in detalhes and detalhes['extratores']:
-                                                    extratores = detalhes['extratores'][:3]  # Limitar a 3
+                                                    extratores = detalhes['extratores'][:3]
                                                     nomes_extratores = []
                                                     for e in extratores:
-                                                        # Buscar identificação em diferentes campos possíveis
                                                         nome = (e.get('extrator_identificacao') or 
                                                                e.get('identificacao') or 
                                                                e.get('nome') or 
@@ -452,12 +383,10 @@ def dre_categoria_detalhes(categoria_id):
                                                     elif len(extratores) > 0:
                                                         entidades_envolvidas.append(f"{len(extratores)} extrator(es) cadastrado(s)")
                                                 
-                                                # COMISSIONADOS
                                                 if 'comissionados' in detalhes and detalhes['comissionados']:
-                                                    comissionados = detalhes['comissionados'][:3]  # Limitar a 3
+                                                    comissionados = detalhes['comissionados'][:3]
                                                     nomes_comissionados = []
                                                     for c in comissionados:
-                                                        # Buscar identificação em diferentes campos possíveis
                                                         nome = (c.get('comissionado_identificacao') or 
                                                                c.get('identificacao') or 
                                                                c.get('nome') or 
@@ -470,12 +399,10 @@ def dre_categoria_detalhes(categoria_id):
                                                     elif len(comissionados) > 0:
                                                         entidades_envolvidas.append(f"{len(comissionados)} comissionado(s) cadastrado(s)")
                                                 
-                                                # PRODUTOS/CARGAS
                                                 if 'cargas_a_receber' in detalhes and detalhes['cargas_a_receber']:
-                                                    cargas = detalhes['cargas_a_receber'][:3]  # Limitar a 3
+                                                    cargas = detalhes['cargas_a_receber'][:3]
                                                     nomes_produtos = []
                                                     for c in cargas:
-                                                        # Buscar produto em diferentes campos possíveis
                                                         produto = (c.get('produto') or 
                                                                   c.get('nome_produto') or 
                                                                   c.get('descricao') or
@@ -488,7 +415,6 @@ def dre_categoria_detalhes(categoria_id):
                                                     elif len(cargas) > 0:
                                                         entidades_envolvidas.append(f"{len(cargas)} produto(s) cadastrado(s)")
                                                 
-                                                # CRÉDITOS UTILIZADOS (com explicação detalhada)
                                                 creditos_utilizados = []
                                                 if 'credito_fornecedor' in detalhes and detalhes['credito_fornecedor']:
                                                     creditos_fornecedor = detalhes['credito_fornecedor']
@@ -520,7 +446,6 @@ def dre_categoria_detalhes(categoria_id):
                                                         outros = f" +{len(creditos_extrator)-2} outros" if len(creditos_extrator) > 2 else ""
                                                         creditos_utilizados.append(f"Créditos Extrator: {' | '.join(descricoes)}{outros}")
                                                 
-                                                # DOCUMENTOS FISCAIS
                                                 documentos_fiscais = []
                                                 if 'nf_complementar' in detalhes and detalhes['nf_complementar']:
                                                     qtd = len(detalhes['nf_complementar'])
@@ -529,10 +454,9 @@ def dre_categoria_detalhes(categoria_id):
                                                     qtd = len(detalhes['nf_servico'])
                                                     documentos_fiscais.append(f"{qtd} NF Serviço(s)")
                                                 
-                                                # Montar descrição final organizada por seções
                                                 secoes_descricao = []
                                                 
-                                                if informacoes_detalhes:  # Info sobre categorização múltipla
+                                                if informacoes_detalhes:
                                                     secoes_descricao.extend(informacoes_detalhes)
                                                 
                                                 if entidades_envolvidas:
@@ -544,48 +468,37 @@ def dre_categoria_detalhes(categoria_id):
                                                 if documentos_fiscais:
                                                     secoes_descricao.extend(documentos_fiscais)
                                                 
-                                                # Juntar todas as seções
                                                 if secoes_descricao:
                                                     observacoes = " • ".join(secoes_descricao)
                                         except (json.JSONDecodeError, TypeError, KeyError):
                                             pass
                                 
-                                # Se tem lançamento avulso, buscar detalhes
                                 if registro.lancamento_avulso:
                                     lancamento = registro.lancamento_avulso
                                     tipo_documento = 'Lançamento Avulso'
                                     codigo_documento = f'LAN-{lancamento.id}'
                                     
-                                    if lancamento.tipo_movimentacao == 1:  # Receita
+                                    if lancamento.tipo_movimentacao == 1:
                                         origem = 'Receita Avulsa'
-                                    else:  # Despesa
+                                    else:
                                         origem = 'Despesa Avulsa'
                                     
                                     observacoes = lancamento.descricao or ''
                                 
-                                # Buscar beneficiário
                                 if registro.pessoa_financeiro:
                                     beneficiario = registro.pessoa_financeiro.identificacao
                                 
-                                # Para categorias automáticas, excluir lançamentos que não correspondem a operações reais
-                                # A DRE deve contemplar exclusivamente as operações de compra/venda de madeira
-                                # Vendas (1.01.01): excluir Receita Avulsa e Faturamento de Carga
                                 if categoria.codigo == '1.01.01' and origem in ['Receita Avulsa', 'Faturamento de Carga']:
                                     continue
-                                # Fornecedores (2.01.01): excluir Despesa Avulsa e Faturamento de Carga
                                 if categoria.codigo == '2.01.01' and origem in ['Despesa Avulsa', 'Faturamento de Carga']:
                                     continue
-                                # Fretes (2.01.02): excluir Despesa Avulsa e Faturamento de Carga
                                 if categoria.codigo == '2.01.02' and origem in ['Despesa Avulsa', 'Faturamento de Carga']:
                                     continue
-                                # Extração (2.01.03): excluir Despesa Avulsa e Faturamento de Carga
                                 if categoria.codigo == '2.01.03' and origem in ['Despesa Avulsa', 'Faturamento de Carga']:
                                     continue
-                                # Comissão (2.01.04): excluir Despesa Avulsa e Faturamento de Carga
                                 if categoria.codigo == '2.01.04' and origem in ['Despesa Avulsa', 'Faturamento de Carga']:
                                     continue
                                 
-                                # Verificar categorização incompleta
                                 valor_total_agd = registro.valor_total_100 or 0
                                 total_categorizado = sum(c.get('valor', 0) for c in (categorias or []) if isinstance(c, dict))
                                 categorizacao_incompleta = abs(valor_total_agd - total_categorizado) > 1
@@ -604,7 +517,6 @@ def dre_categoria_detalhes(categoria_id):
                                     'tipo_documento': tipo_documento,
                                     'codigo_documento': codigo_documento,
                                     'situacao_pagamento_id': registro.situacao_pagamento_id,
-                                    # Campos adicionais para mais detalhes
                                     'data_vencimento': registro.data_vencimento.strftime('%d/%m/%Y') if registro.data_vencimento else None,
                                     'valor_total_original': registro.valor_total_100 / 100 if registro.valor_total_100 else 0,
                                     'faturamento_id': registro.faturamento_id,
@@ -615,9 +527,7 @@ def dre_categoria_detalhes(categoria_id):
                 except (json.JSONDecodeError, TypeError):
                     continue
         
-        # Buscar registros das tabelas 'a pagar' para categorias automáticas
         if categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04', '1.01.01', '1.01.03']:
-            # Mapear código para modelo e descrição
             mapeamento_a_pagar = {
                 '2.01.01': {
                     'model': FornecedorPagarModel,
@@ -629,7 +539,7 @@ def dre_categoria_detalhes(categoria_id):
                     'model': FretePagarModel,
                     'tipo': 'Frete',
                     'origem': 'Transporte',
-                    'relacionamento': 'fornecedor'  # FretePagarModel usa fornecedor_id para transportadora
+                    'relacionamento': 'fornecedor'
                 },
                 '2.01.03': {
                     'model': ExtratorPagarModel,
@@ -641,7 +551,7 @@ def dre_categoria_detalhes(categoria_id):
                     'model': ComissionadoPagarModel,
                     'tipo': 'Comissionado',
                     'origem': 'Comissão',
-                    'relacionamento': 'fornecedor'  # ComissionadoPagarModel usa fornecedor_id para comissionado
+                    'relacionamento': 'fornecedor'
                 },
                 '1.01.01': {
                     'model': RegistroOperacionalModel,
@@ -661,8 +571,6 @@ def dre_categoria_detalhes(categoria_id):
             if config:
                 Model = config['model']
                 
-                # NF Complementar (1.01.03): buscar SEMPRE título a título via RegistroOperacionalModel
-                # usando data_entrega_ticket como competência (independente do status de emissão)
                 if categoria.codigo == '1.01.03':
                     query_nfc = RegistroOperacionalModel.query.filter(
                         RegistroOperacionalModel.ativo == True,
@@ -686,14 +594,12 @@ def dre_categoria_detalhes(categoria_id):
                         diferenca = (reg.peso_liquido_ticket or 0) - (reg.peso_ton_nf or 0)
                         valor = round(diferenca * (reg.preco_un_nf or 0)) / 100.0
                         
-                        # Buscar cliente
                         beneficiario = 'Não informado'
                         if hasattr(reg, 'solicitacao') and reg.solicitacao and hasattr(reg.solicitacao, 'cliente') and reg.solicitacao.cliente:
                             beneficiario = reg.solicitacao.cliente.identificacao
                         elif reg.destinatario_nome:
                             beneficiario = reg.destinatario_nome
                         
-                        # Informações do registro
                         numero_nf = reg.numero_nota_fiscal or ''
                         detalhes_obs = []
                         
@@ -708,7 +614,6 @@ def dre_categoria_detalhes(categoria_id):
                         if reg.placa_ticket:
                             detalhes_obs.append(f"Placa: {reg.placa_ticket}")
                         
-                        # Indicar se NF Complementar já foi emitida
                         is_emitida = reg.status_emissao_nf_complementar_id == 1
                         if is_emitida:
                             detalhes_obs.append("NF Compl. Emitida")
@@ -745,7 +650,6 @@ def dre_categoria_detalhes(categoria_id):
                             'tipo_nf_complementar': sinal_valor
                         })
                 else:
-                    # Para demais categorias (Vendas, Fornecedores, Fretes, etc.)
                     query_a_pagar = Model.query.filter(
                         Model.ativo == True,
                         Model.deletado == False,
@@ -753,7 +657,6 @@ def dre_categoria_detalhes(categoria_id):
                     )
                 
                     if categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
-                        # Exclui registros sem preço configurado (valor zero = preço não cadastrado)
                         query_a_pagar = query_a_pagar.filter(
                             Model.solicitacao_id.isnot(None),
                             Model.valor_total_a_pagar_100 > 0
@@ -768,8 +671,6 @@ def dre_categoria_detalhes(categoria_id):
                     
                     registros_a_pagar = query_a_pagar.all()
                     
-                    # Pré-carregar mapa fornecedor→extrator para a categoria de Extração (2.01.03)
-                    # Necessário pois registros antigos não têm extrator_id preenchido
                     _mapa_fornecedor_extrator = {}
                     if categoria.codigo == '2.01.03':
                         from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_extracao_model import FornecedorPrecoCustoExtracaoModel
@@ -786,7 +687,6 @@ def dre_categoria_detalhes(categoria_id):
                                     _mapa_fornecedor_extrator[cfg.fornecedor_id] = cfg.extrator.identificacao
                     
                     for registro in registros_a_pagar:
-                        # Para vendas NF Padrão (1.01.01)
                         if categoria.codigo == '1.01.01':
                             valor = (registro.valor_total_nota_100 or 0) / 100.0
                             
@@ -834,16 +734,13 @@ def dre_categoria_detalhes(categoria_id):
                                 'lancamento_avulso_id': None,
                                 'origem_automatica': True
                             })
-                        # Para categorias de custo/despesa operacional (2.01.01 a 2.01.04)
                         elif categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
                             valor = (registro.valor_total_a_pagar_100 or 0) / 100.0
                             
                             beneficiario = 'Não informado'
-                            # Cada categoria tem seu beneficiário específico
                             if categoria.codigo == '2.01.02' and hasattr(registro, 'transportadora') and registro.transportadora:
                                 beneficiario = registro.transportadora.identificacao
                             elif categoria.codigo == '2.01.03':
-                                # Prioriza extrator_id direto; fallback via mapa fornecedor→extrator
                                 if hasattr(registro, 'extrator') and registro.extrator:
                                     beneficiario = registro.extrator.identificacao
                                 elif registro.fornecedor_id and registro.fornecedor_id in _mapa_fornecedor_extrator:
@@ -900,18 +797,13 @@ def dre_categoria_detalhes(categoria_id):
                                 'origem_automatica': True
                             })
 
-            # 3. BUSCAR FATURAMENTOS (para categorias de receita)
         
-        # Ordenar por beneficiário A-Z
         registros_categoria.sort(key=lambda r: (r.get('beneficiario') or '').lower())
         
-        # Calcular total
         total = sum(reg['valor'] for reg in registros_categoria)
         
-        # Códigos das categorias automáticas que permitem exportação
         categorias_automaticas = ['1.01.01', '1.01.03', '2.01.01', '2.01.02', '2.01.03', '2.01.04']
         
-        # Subtotais para NF Complementar (1.01.03)
         subtotais_nfc = None
         if categoria.codigo == '1.01.03':
             total_positivas = sum(r['valor'] for r in registros_categoria if r.get('tipo_nf_complementar') == 'positiva')
@@ -930,7 +822,6 @@ def dre_categoria_detalhes(categoria_id):
                 'total_liquido_fmt': f"{sinal_total} {ValoresMonetarios.converter_float_brl_positivo(abs(total))}",
             }
         
-        # Detectar registros com categorização incompleta
         registros_incompletos = [r for r in registros_categoria if r.get('categorizacao_incompleta')]
         total_nao_categorizado = sum(r.get('valor_nao_categorizado', 0) for r in registros_incompletos)
         
@@ -956,7 +847,6 @@ def dre_categoria_detalhes(categoria_id):
         return jsonify(resposta)
         
     except Exception as e:
-        print(f"Erro em dre_categoria_detalhes: {e}")
         return jsonify({'error': f'Erro ao buscar detalhes: {str(e)}'}), 500
 
 
@@ -966,11 +856,9 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
     Retorna tuple: (categoria, registros, total, data_inicio, data_fim, erro)
     """
     try:
-        # Converter datas
         data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
         data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
         
-        # Importar models necessários
         from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_model import FaturamentoModel
         from sistema.models_views.financeiro.lancamento_avulso.lancamento_avulso_model import LancamentoAvulsoModel
         from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model import PessoaFinanceiroModel
@@ -980,14 +868,12 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
         from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado_a_pagar_model import ComissionadoPagarModel
         from sistema.models_views.faturamento.cargas_a_receber.nf_complementar.nf_complementar_model import NfComplementarModel
         
-        # Obter categoria
         categoria = PlanoContaModel.query.filter_by(id=categoria_id, ativo=True, deletado=False).first()
         if not categoria:
             return None, [], 0, data_inicio, data_fim, 'Categoria não encontrada'
         
         registros_categoria = []
         
-        # Mapeamento para categorias automáticas
         mapeamento_a_pagar = {
             '2.01.01': {'model': FornecedorPagarModel, 'tipo': 'Fornecedor', 'origem': 'Compra de Madeira'},
             '2.01.02': {'model': FretePagarModel, 'tipo': 'Frete', 'origem': 'Transporte'},
@@ -997,12 +883,10 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
             '1.01.03': {'model': NfComplementarModel, 'tipo': 'NF Complementar', 'origem': 'Venda NFe Complementar'}
         }
         
-        # Buscar registros das tabelas 'a pagar' para categorias automáticas
         if categoria.codigo in mapeamento_a_pagar:
             config = mapeamento_a_pagar.get(categoria.codigo)
             Model = config['model']
             
-            # NF Complementar (1.01.03): buscar SEMPRE título a título via RegistroOperacionalModel
             if categoria.codigo == '1.01.03':
                 query_nfc = RegistroOperacionalModel.query.filter(
                     RegistroOperacionalModel.ativo == True,
@@ -1068,9 +952,7 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                     Model.data_entrega_ticket.isnot(None)
                 )
                 
-                # Filtrar apenas operações vinculadas a cargas
                 if categoria.codigo in ['2.01.01', '2.01.02', '2.01.03', '2.01.04']:
-                    # Exclui registros sem preço configurado (valor zero = preço não cadastrado)
                     query_a_pagar = query_a_pagar.filter(
                         Model.solicitacao_id.isnot(None),
                         Model.valor_total_a_pagar_100 > 0
@@ -1085,7 +967,6 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                 
                 registros_a_pagar = query_a_pagar.all()
                 
-                # Pré-carregar mapa fornecedor→extrator para a categoria de Extração (2.01.03)
                 _mapa_fornecedor_extrator_exp = {}
                 if categoria.codigo == '2.01.03':
                     from sistema.models_views.gerenciar.fornecedor.fornecedor_preco_custo_extracao_model import FornecedorPrecoCustoExtracaoModel
@@ -1102,7 +983,6 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                                 _mapa_fornecedor_extrator_exp[cfg.fornecedor_id] = cfg.extrator.identificacao
                 
                 for registro in registros_a_pagar:
-                    # Para vendas NF Padrão (1.01.01)
                     if categoria.codigo == '1.01.01':
                         valor = (registro.valor_total_nota_100 or 0) / 100.0
                         beneficiario = registro.destinatario_nome or 'Não informado'
@@ -1133,15 +1013,12 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                             'codigo_documento': f"NF-{numero_nf}" if numero_nf else f"REG-{registro.id}"
                         })
                     else:
-                        # Para despesas (a pagar)
                         valor = (registro.valor_total_a_pagar_100 or 0) / 100.0
                         beneficiario = 'Não informado'
                         
-                        # Cada categoria tem seu beneficiário específico
                         if categoria.codigo == '2.01.02' and hasattr(registro, 'transportadora') and registro.transportadora:
                             beneficiario = registro.transportadora.identificacao
                         elif categoria.codigo == '2.01.03':
-                            # Prioriza extrator_id direto; fallback via mapa fornecedor→extrator
                             if hasattr(registro, 'extrator') and registro.extrator:
                                 beneficiario = registro.extrator.identificacao
                             elif registro.fornecedor_id and registro.fornecedor_id in _mapa_fornecedor_extrator_exp:
@@ -1177,9 +1054,7 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                             'codigo_documento': f"{config['tipo'].upper()[:3]}-{registro.id}"
                         })
         
-        # Para categorias NÃO automáticas, buscar agendamentos categorizados
         if categoria.codigo not in mapeamento_a_pagar:
-            # Status: 6=Categorizado, 8=Conciliado, 9=Liquidado, 10=Parcialmente Conciliado
             agendamentos = AgendamentoPagamentoModel.query.filter(
                 AgendamentoPagamentoModel.ativo == True,
                 AgendamentoPagamentoModel.deletado == False,
@@ -1204,7 +1079,6 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                         
                         valor = float(cat_info.get('valor', 0)) / 100.0
                         
-                        # Determinar origem
                         origem = 'Sistema'
                         beneficiario = 'Não informado'
                         observacoes = agendamento.descricao or ''
@@ -1243,7 +1117,6 @@ def _buscar_detalhes_categoria_para_exportacao(categoria_id, data_inicio_str, da
                 except (json.JSONDecodeError, TypeError):
                     continue
         
-        # Ordenar por beneficiário A-Z
         registros_categoria.sort(key=lambda r: (r.get('beneficiario') or '').lower())
         
         total = sum(reg['valor'] for reg in registros_categoria)
@@ -1280,7 +1153,6 @@ def dre_categoria_detalhes_excel(categoria_id):
             flash(('Nenhum registro encontrado para exportação.', 'warning'))
             return redirect(url_for('dre_analitico'))
         
-        # Preparar dados para Excel
         is_nfc = categoria.codigo == '1.01.03'
         dados_excel = []
         for reg in registros:
@@ -1296,7 +1168,6 @@ def dre_categoria_detalhes_excel(categoria_id):
             if is_nfc:
                 tipo = reg.get('tipo_nf_complementar', '')
                 linha['Tipo'] = 'POSITIVA' if tipo == 'positiva' else ('NEGATIVA' if tipo == 'negativa' else '')
-                # Reordenar para Tipo ficar antes de Valor
                 linha_ordenada = {
                     'Data': linha['Data'],
                     'Documento': linha['Documento'],
@@ -1311,37 +1182,31 @@ def dre_categoria_detalhes_excel(categoria_id):
             else:
                 dados_excel.append(linha)
         
-        # Subtotais para NF Complementar
         if is_nfc:
             total_positivas = sum(r['valor'] for r in registros if r.get('tipo_nf_complementar') == 'positiva')
             total_negativas = sum(r['valor'] for r in registros if r.get('tipo_nf_complementar') == 'negativa')
             qtd_pos = sum(1 for r in registros if r.get('tipo_nf_complementar') == 'positiva')
             qtd_neg = sum(1 for r in registros if r.get('tipo_nf_complementar') == 'negativa')
             
-            # Linha em branco separadora
             dados_excel.append({k: '' for k in dados_excel[0].keys()})
             
-            # Subtotal Positivas
             linha_pos = {k: '' for k in dados_excel[0].keys()}
             linha_pos['Referência'] = f'SUBTOTAL POSITIVAS ({qtd_pos} registros)'
             linha_pos['Tipo'] = 'POSITIVA'
             linha_pos['Valor (R$)'] = total_positivas
             dados_excel.append(linha_pos)
             
-            # Subtotal Negativas
             linha_neg = {k: '' for k in dados_excel[0].keys()}
             linha_neg['Referência'] = f'SUBTOTAL NEGATIVAS ({qtd_neg} registros)'
             linha_neg['Tipo'] = 'NEGATIVA'
             linha_neg['Valor (R$)'] = total_negativas
             dados_excel.append(linha_neg)
             
-            # Total Líquido
             linha_liq = {k: '' for k in dados_excel[0].keys()}
             linha_liq['Referência'] = f'TOTAL LÍQUIDO ({len(registros)} registros)'
             linha_liq['Valor (R$)'] = total
             dados_excel.append(linha_liq)
         else:
-            # Adicionar linha de total para categorias normais
             dados_excel.append({
                 'Data': '',
                 'Documento': '',
@@ -1357,7 +1222,6 @@ def dre_categoria_detalhes_excel(categoria_id):
         return ManipulacaoArquivos.exportar_excel(dados_excel, nome_arquivo)
         
     except Exception as e:
-        print(f"Erro ao exportar Excel DRE Detalhes: {e}")
         flash((f'Erro ao exportar para Excel: {str(e)}', 'error'))
         return redirect(url_for('dre_analitico'))
 
@@ -1389,10 +1253,8 @@ def dre_categoria_detalhes_pdf(categoria_id):
             flash(('Nenhum registro encontrado para exportação.', 'warning'))
             return redirect(url_for('dre_analitico'))
         
-        # Obter logo para o PDF
         logo_path = obter_url_absoluta_de_imagem('logo.png')
         
-        # Calcular subtotais para NF Complementar
         is_nfc = categoria.codigo == '1.01.03'
         subtotais_nfc = None
         if is_nfc:
@@ -1412,7 +1274,6 @@ def dre_categoria_detalhes_pdf(categoria_id):
                 'total_liquido_fmt': f"{sinal_total} {ValoresMonetarios.converter_float_brl_positivo(abs(total))}",
             }
         
-        # Renderizar template PDF
         html = render_template(
             'relatorios/relatorios_financeiros/relatorio_dfc_dre/dre/dre_categoria_detalhes_pdf.html',
             categoria=categoria,
@@ -1433,6 +1294,5 @@ def dre_categoria_detalhes_pdf(categoria_id):
         return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo, 'landscape')
         
     except Exception as e:
-        print(f"Erro ao exportar PDF DRE Detalhes: {e}")
         flash((f'Erro ao exportar para PDF: {str(e)}', 'error'))
         return redirect(url_for('dre_analitico'))

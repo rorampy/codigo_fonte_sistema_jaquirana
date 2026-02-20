@@ -19,7 +19,6 @@ def relatorio_sintetico_cliente():
     produto = ProdutoModel.listar_produtos()
     bitola = BitolaModel.listar_bitolas_ativas()
 
-    # Para exportações (POST), usar os dados do formulário
     if request.method == "POST":
         if any(request.form.values()) and not (request.form.get("exportar_pdf") or request.form.get("exportar_excel")):
             data_inicio = request.form.get("dataInicio")
@@ -41,7 +40,6 @@ def relatorio_sintetico_cliente():
             )
             dados_corretos = request.form
         else:
-            # Para exportações, reaplicar os filtros baseados nos hidden fields do form
             data_inicio = request.form.get("dataInicio")
             data_fim = request.form.get("dataFim")
             clienteFiltro = request.form.get("clienteFiltro", "")
@@ -64,7 +62,6 @@ def relatorio_sintetico_cliente():
                 registros = RegistroOperacionalModel.obter_registros_carga_agrupados()
             dados_corretos = request.form
     else:
-        # Para GET, usar args
         if any(request.args.values()):
             data_inicio = request.args.get("dataInicio")
             data_fim = request.args.get("dataFim")
@@ -91,7 +88,6 @@ def relatorio_sintetico_cliente():
     if request.method == "POST" and request.form.get("exportar_pdf"):
         logo_path = obter_url_absoluta_de_imagem("logo.png")
         
-        # Agrupar por cliente primeiro para calcular totalizadores corretos
         clientes_agrupados = {}
         for item in registros:
             cliente = item["cliente"]
@@ -109,7 +105,6 @@ def relatorio_sintetico_cliente():
             grupo["peso_total"] += registro.peso_liquido_ticket or 0
             grupo["valor_total"] += registro.valor_total_nota_100 or 0
         
-        # Calcular totalizadores gerais a partir dos grupos
         total_cargas = sum(dados["total_cargas"] for dados in clientes_agrupados.values())
         total_toneladas = sum(dados["peso_total"] for dados in clientes_agrupados.values())
         total_valores = sum(dados["valor_total"] for dados in clientes_agrupados.values())
@@ -133,7 +128,6 @@ def relatorio_sintetico_cliente():
     if request.method == "POST" and request.form.get("exportar_excel"):
         linhas = []
 
-        # Agrupar por cliente
         clientes_agrupados = {}
         
         for item in registros:
@@ -152,12 +146,10 @@ def relatorio_sintetico_cliente():
             grupo["peso_total"] += registro.peso_liquido_ticket or 0
             grupo["valor_total"] += registro.valor_total_nota_100 or 0
 
-        # Calcular totais gerais a partir dos grupos (não dos registros individuais)
         total_geral_cargas = sum(dados["total_cargas"] for dados in clientes_agrupados.values())
         total_geral_toneladas = sum(dados["peso_total"] for dados in clientes_agrupados.values())
         total_geral_valores = sum(dados["valor_total"] for dados in clientes_agrupados.values())
 
-        # Montar linhas para exportar
         for cliente, dados in clientes_agrupados.items():
             linha = {
                 "Cliente": cliente,
@@ -167,7 +159,6 @@ def relatorio_sintetico_cliente():
             }
             linhas.append(linha)
 
-        # Adicionar linha em branco
         linhas.append({
             "Cliente": "",
             "Total de Cargas": "",
@@ -175,7 +166,6 @@ def relatorio_sintetico_cliente():
             "Valor Total NF's (R$)": ""
         })
         
-        # Adicionar totalizadores gerais
         linhas.append({
             "Cliente": "TOTAIS GERAIS:",
             "Total de Cargas": total_geral_cargas,

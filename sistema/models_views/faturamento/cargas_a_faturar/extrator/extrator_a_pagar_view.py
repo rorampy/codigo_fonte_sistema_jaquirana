@@ -26,7 +26,6 @@ from sistema.models_views.financeiro.operacional.faturamento_model.faturamento_m
 from sistema._utilitarios import *
 from sistema._utilitarios.utilitario_semanal import UtilitariosSemana
 
-# === Nova Arquitetura de Créditos ===
 from sistema.models_views.financeiro.controle_adiantamentos.servico_creditos import ServicoCreditos
 from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import (
     TransacaoCreditoModel, TipoTransacaoCredito, TipoPessoa
@@ -56,17 +55,14 @@ def listagem_extratores_a_pagar():
 
     verificar_e_limpar_conciliacao_incorreta('pagamento_extrator') 
 
-    # Recuperar dados de conciliação da sessão
     dados_conciliacao = session.get('dados_conciliacao', {})
     
-    # Extrair dados para o template
     conciliar_transacao_id = dados_conciliacao.get('transacao_id')
     valor_conciliar = dados_conciliacao.get('valor')
     data_conciliar = dados_conciliacao.get('data')
     descricao_conciliar = dados_conciliacao.get('descricao')
     fitid_conciliar = dados_conciliacao.get('fitid')
 
-    # Obter semanas disponíveis
     semanas_disponiveis = UtilitariosSemana.obter_semanas_do_mes_atual()
     valor_padrao_semana = None
     
@@ -94,13 +90,11 @@ def listagem_extratores_a_pagar():
         cliente = request.args.get("clienteCarga")
         statusPagamento = request.args.get("statusPagamentoCarga")
 
-        # Determinar data_inicio e data_fim baseado no tipo de filtro
         if tipo_filtro == "data" and data_inicio_form and data_fim_form:
             from datetime import datetime
             data_inicio = datetime.strptime(data_inicio_form, "%Y-%m-%d").date()
             data_fim = datetime.strptime(data_fim_form, "%Y-%m-%d").date()
         else:
-            # Usar filtro semanal
             data_inicio, data_fim = UtilitariosSemana.processar_semana_selecionada(
                 semana_selecionada or valor_padrao_semana
             )
@@ -178,10 +172,8 @@ def atualizar_precos_extrator():
         else:
             return redirect(url_for("listagem_extratores_a_pagar"))
 
-        # Converter extrator_id para None se for "todos"
         extrator_filtro = None if extrator_id == "todos" else extrator_id
 
-        # Iniciar a tarefa assíncrona
         task = sincronizar_precos_extratores(data_inicio, data_fim, extrator_id=extrator_filtro)
 
         try:
@@ -231,12 +223,10 @@ def extrator_a_pagar(id):
             flash(("Registro já consta como faturado!", "warning"))
             return redirect(url_for("listagem_extratores_a_pagar"))
 
-        # === Usando nova arquitetura via ServicoCreditos ===
         extrator_id_registro = registro.obter_extrator_id()
         extrator_obj = registro.obter_extrator()
         credito_disponivel = ServicoCreditos.obter_saldo_extrator(extrator_id_registro)
         
-        # Buscar créditos individuais disponíveis do extrator
         creditos_individuais = ServicoCreditos.obter_creditos_disponiveis_extrator(
             extrator_id_registro
         )
@@ -287,7 +277,6 @@ def extrator_a_pagar(id):
             total_credito_aplicado = 0
 
             if usar_credito == "sim":
-                # === Extrair IDs dos créditos selecionados para este extrator ===
                 creditos_ids = []
                 total_creditos_selecionados = 0
                 
@@ -295,14 +284,12 @@ def extrator_a_pagar(id):
                     for extrator_id_str, ids_list in creditos_selecionados['extrator'].items():
                         if int(extrator_id_str) == extrator_id:
                             for credito_id in ids_list:
-                                # Usar TransacaoCreditoModel (nova arquitetura)
                                 credito = TransacaoCreditoModel.query.get(credito_id)
                                 saldo_credito = credito.obter_saldo_disponivel_100() if credito else 0
-                                if credito and saldo_credito != 0:  # Permite tanto créditos positivos quanto negativos (débitos)
+                                if credito and saldo_credito != 0:
                                     creditos_ids.append(int(credito_id))
                                     total_creditos_selecionados += saldo_credito
                                     
-                                    # Capturar detalhes para o faturamento
                                     detalhes_creditos_utilizados.append({
                                         'credito_id': credito_id,
                                         'extrator_id': extrator_id,
@@ -313,7 +300,6 @@ def extrator_a_pagar(id):
                                         'uso_parcial': False
                                     })
                 
-                # === Validações ===
                 if not creditos_ids:
                     flash(("Nenhum crédito selecionado para aplicar!", "warning"))
                     gravar_banco = False
@@ -321,9 +307,6 @@ def extrator_a_pagar(id):
                     flash(("Não há créditos disponíveis para usar!", "warning"))
                     gravar_banco = False
                 else:
-                    # === Calcular valor a utilizar ===
-                    # Para créditos negativos (débitos), usa o valor total
-                    # Para créditos positivos, limita ao valor pendente
                     if total_creditos_selecionados < 0:
                         valor_credito_a_usar = total_creditos_selecionados
                     else:
@@ -336,11 +319,9 @@ def extrator_a_pagar(id):
             if gravar_banco:
                 registro.situacao_pagamento_id = 5
 
-                # Calcular valor inicial (será atualizado se usar crédito)
                 valor_bruto = registro.valor_total_a_pagar_100 or 0
                 valor_liquido = valor_bruto
 
-                # === CRIAR FATURAMENTO PRIMEIRO (para ter o ID) ===
                 novo_faturamento = FaturamentoModel(
                     usuario_id=current_user.id,
                     codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
@@ -355,12 +336,11 @@ def extrator_a_pagar(id):
                 if hasattr(novo_faturamento, 'valor_bruto_total'):
                     novo_faturamento.valor_bruto_total = valor_bruto
                 if hasattr(novo_faturamento, 'valor_credito_aplicado'):
-                    novo_faturamento.valor_credito_aplicado = 0  # Será atualizado
+                    novo_faturamento.valor_credito_aplicado = 0
                 
                 db.session.add(novo_faturamento)
-                db.session.flush()  # Obter ID do faturamento ANTES de processar créditos
+                db.session.flush()
                 
-                # === AGORA PROCESSAR CRÉDITOS COM faturamento_id ===
                 resultado_creditos = None
                 if usar_credito == "sim" and creditos_ids:
                     resultado_creditos = ServicoCreditos.processar_utilizacao_creditos(
@@ -369,27 +349,22 @@ def extrator_a_pagar(id):
                         creditos_ids=creditos_ids,
                         valor_maximo_100=abs(valor_credito_a_usar),
                         usuario_id=current_user.id,
-                        faturamento_id=novo_faturamento.id,  # <<<< AGORA PASSAMOS O ID!
-                        descricao_base=None  # Usa padrão "Acerto {descricao_original}"
+                        faturamento_id=novo_faturamento.id,
+                        descricao_base=None
                     )
                     
                     if resultado_creditos['sucesso']:
-                        # ServicoCreditos já retorna o valor com sinal correto:
-                        # - Positivo para créditos (que reduzem o total)
-                        # - Negativo para débitos (que aumentam o total)
                         total_credito_aplicado = resultado_creditos['total_utilizado_100']
                         
                         registro.utiliza_credito = 1
                         registro.valor_credito_100 = total_credito_aplicado
                         
-                        # Recalcular valor líquido
                         valor_liquido = valor_bruto - total_credito_aplicado
                         novo_faturamento.valor_total = valor_liquido
                         
                         if hasattr(novo_faturamento, 'valor_credito_aplicado'):
                             novo_faturamento.valor_credito_aplicado = total_credito_aplicado
                         
-                        # Atualizar valores nos detalhes com os valores efetivamente utilizados
                         for i, proc in enumerate(resultado_creditos.get('creditos_processados', [])):
                             if i < len(detalhes_creditos_utilizados):
                                 detalhes_creditos_utilizados[i]['valor'] = proc.get('valor_utilizado', 0)
@@ -412,7 +387,6 @@ def extrator_a_pagar(id):
 
                 valor_bruto_registro = registro.valor_total_a_pagar_100 or 0
                 valor_credito_registro = registro.valor_credito_100 or 0
-                # Créditos negativos (débitos) aumentam o valor, positivos diminuem
                 valor_faturado = valor_bruto_registro - valor_credito_registro
                 preco_custo_registro = registro.preco_custo_bitola_100 or 0
 
@@ -458,11 +432,10 @@ def extrator_a_pagar(id):
                 )
                 
                 if novo_faturamento.valor_total == 0:
-                    novo_faturamento.situacao_pagamento_id = 8 # Conciliado
+                    novo_faturamento.situacao_pagamento_id = 8
                 else:
-                    novo_faturamento.situacao_pagamento_id = 7 # Não Categorizado
+                    novo_faturamento.situacao_pagamento_id = 7
 
-                # Créditos já vinculados automaticamente via faturamento_id em processar_utilizacao_creditos
 
                 if transacao_ofx and not transacao_ofx.conciliado:
                     transacao_ofx.conciliado = True
@@ -507,7 +480,6 @@ def extrator_a_pagar(id):
         )
 
     except Exception as e:
-        print("[ERROR extrator_a_pagar]", e)
         db.session.rollback()
         dados_conciliacao = session.get('dados_conciliacao', {})
         if dados_conciliacao.get('transacao_id'):
@@ -525,12 +497,10 @@ def extrator_a_pagar_massa():
     com suporte a aplicação de créditos/débitos via nova arquitetura TransacaoCreditoModel.
     """
     try:
-        # Validar se há usuário logado (previne erros de FK em faturamento)
         if not current_user or not current_user.is_authenticated:
             flash(("Sessão expirada. Faça login novamente.", "warning"))
             return redirect(url_for("login"))
         
-        # Validar se o usuário existe no banco
         from sistema.models_views.autenticacao.usuario_model import UsuarioModel
         usuario_existe = UsuarioModel.query.filter_by(id=current_user.id).first()
         if not usuario_existe:
@@ -543,11 +513,9 @@ def extrator_a_pagar_massa():
         gravar_banco = True
         creditos_selecionados = {}
         
-        # Obter dados de conciliação OFX (se houver)
         dados_conciliacao = session.get('dados_conciliacao', {})
         conciliar_transacao_id = dados_conciliacao.get('transacao_id')
 
-        # === OBTER E VALIDAR IDS SELECIONADOS ===
         if request.method == "GET":
             ids_selecionados = request.args.get('ids', '')
             if not ids_selecionados:
@@ -572,31 +540,23 @@ def extrator_a_pagar_massa():
                 flash(("IDs inválidos selecionados!", "warning"))
                 return redirect(url_for("listagem_extratores_a_pagar"))
 
-        # === BUSCAR REGISTROS DE EXTRATORES ===
-        # Buscar apenas registros com situação_pagamento_id = 2 (Pendente)
         registros = ExtratorPagarModel.query.filter(
             ExtratorPagarModel.id.in_(ids_list),
             ExtratorPagarModel.situacao_pagamento_id == 2
         ).all()
 
-        # Validar se encontrou registros válidos
         if not registros:
             flash(("Nenhum registro válido encontrado para faturamento!", "warning"))
             return redirect(url_for("listagem_extratores_a_pagar"))
 
-        # Verificar se algum registro já foi pago ou está indisponível
         if len(registros) != len(ids_list):
             flash(("Alguns registros selecionados não estão disponíveis para faturamento!", "warning"))
 
-        # === ASSOCIAR REGISTROS OPERACIONAIS ===
-        # Cada pagamento de extrator precisa ter seu registro operacional para acessar dados da carga
         for registro in registros:
             if not hasattr(registro, 'registro_operacional') or registro.registro_operacional is None:
                 registro_oper = RegistroOperacionalModel.obter_registro_solicitacao_por_id(registro.solicitacao_id)
                 registro.registro_operacional = registro_oper
 
-        # === AGRUPAR PAGAMENTOS POR EXTRATOR ===
-        # Agrupa múltiplos pagamentos do mesmo extrator e busca créditos disponíveis
         extratores_dict = {}
         valor_total_geral = 0
         
@@ -604,51 +564,39 @@ def extrator_a_pagar_massa():
             if registro.valor_total_a_pagar_100 is None:
                 continue
             
-            # Obter o extrator id
             extrator_id = registro.obter_extrator_id()
             valor_total_geral += registro.valor_total_a_pagar_100
 
-            # Se o extrator ainda não estiver no dicionário, criar estrutura
             if extrator_id not in extratores_dict:
-                # Buscar saldo total de créditos/débitos do extrator (nova arquitetura)
                 credito_disponivel = ServicoCreditos.obter_saldo_extrator(extrator_id)
                 
-                # Buscar lista detalhada de créditos individuais disponíveis
                 creditos_individuais_extrator = ServicoCreditos.obter_creditos_disponiveis_extrator(extrator_id)
                 
-                # Criar estrutura para armazenar dados deste extrator
                 extratores_dict[extrator_id] = {
-                    'registros': [],           # Lista de pagamentos deste extrator
-                    'valor_total': 0,          # Soma dos valores de todos os pagamentos
-                    'credito_disponivel': credito_disponivel or 0,  # Saldo total de créditos
-                    'creditos_individuais': creditos_individuais_extrator,  # Lista de créditos individuais
-                    'extrator': None           # Objeto do extrator (preenchido depois)
+                    'registros': [],
+                    'valor_total': 0,
+                    'credito_disponivel': credito_disponivel or 0,
+                    'creditos_individuais': creditos_individuais_extrator,
+                    'extrator': None
                 }
             
-            # Adicionar pagamento à lista do extrator
             extratores_dict[extrator_id]['registros'].append(registro)
             
-            # Somar valor ao total do extrator
             extratores_dict[extrator_id]['valor_total'] += registro.valor_total_a_pagar_100
             
-            # Obter objeto do extrator (apenas uma vez)
             if not extratores_dict[extrator_id]['extrator']:
                 extratores_dict[extrator_id]['extrator'] = registro.obter_extrator()
 
-        # === FUNÇÃO AUXILIAR PARA CALCULAR TOTAIS ===
         def calcular_totais():
             """Centraliza todos os cálculos de totais (valores e créditos).
             
             Returns:
                 dict: Dicionário com todos os totais calculados
             """
-            # Valor total de todos os pagamentos de extratores
             valor_total_extratores = sum(e['valor_total'] for e in extratores_dict.values())
             
-            # Total de registros
             total_registros = sum(len(e['registros']) for e in extratores_dict.values())
             
-            # Total de crédito disponível de todos os extratores
             credito_total = sum(e['credito_disponivel'] for e in extratores_dict.values())
             
             return {
@@ -657,25 +605,19 @@ def extrator_a_pagar_massa():
                 'total_credito_disponivel': credito_total
             }
         
-        # Calcular totais iniciais para exibição no template
         totais = calcular_totais()
         valor_total_geral = totais['valor_total_geral']
         total_credito_disponivel = totais['total_credito_disponivel']
 
-        # === PROCESSAMENTO POST - CONFIRMAÇÃO DE FATURAMENTO ===
         if request.method == "POST":
-            # Verificar se usuário quer usar créditos
             usar_credito = request.form.get("usar_credito")
             
-            # Parse dos créditos selecionados (vem como JSON do frontend)
             creditos_selecionados_json = request.form.get("creditos_selecionados", "{}")
             try:
                 creditos_selecionados = json.loads(creditos_selecionados_json) if creditos_selecionados_json else {}
             except json.JSONDecodeError:
                 creditos_selecionados = {}
             
-            # === PROCESSAR VALORES EDITADOS PELO USUÁRIO ===
-            # O frontend pode alterar preço de custo e valor total de cada pagamento
             valores_calculados_json = request.form.get("valores_calculados", "")
             valores_calculados = {}
 
@@ -684,57 +626,43 @@ def extrator_a_pagar_massa():
             if valores_calculados_json:
                 try:
                     valores_calculados = json.loads(valores_calculados_json)
-                    print(f"[DEBUG] Valores calculados recebidos: {valores_calculados}")
                 except json.JSONDecodeError as e:
-                    print(f"[ERROR] Erro ao decodificar JSON de valores calculados: {e}")
                     flash(("Erro nos valores calculados!", "warning"))
                     return redirect(request.url)
 
-            # Atualizar banco com valores editados pelo usuário no frontend
             for registro in registros:
                 registro_id_str = str(registro.id)
                 if registro_id_str in valores_calculados:
                     dados_calculo = valores_calculados[registro_id_str]
                     try:
-                        # Atualizar preço de custo se foi alterado
                         if 'preco_custo' in dados_calculo:
-                            # Converter de reais para centavos
                             preco_custo_frontend = float(dados_calculo['preco_custo'])
                             preco_custo_frontend_100 = preco_custo_frontend * 100
                             
-                            # Só atualizar se houver alteração real
                             preco_original = registro.preco_custo_bitola_100 or 0
                             if preco_custo_frontend_100 != preco_original:
                                 registro.preco_custo_bitola_100 = preco_custo_frontend_100
                                 alteracoes_detectadas = True
                         
-                        # Atualizar valor total se foi alterado
                         if 'valor_total' in dados_calculo:
-                            # Converter de reais para centavos
                             valor_total_frontend = float(dados_calculo['valor_total'])
                             valor_total_frontend_100 = valor_total_frontend * 100
                             
-                            # Só atualizar se houver alteração real
                             valor_original = registro.valor_total_a_pagar_100 or 0
                             if valor_total_frontend_100 != valor_original:
                                 registro.valor_total_a_pagar_100 = valor_total_frontend_100
                                 alteracoes_detectadas = True
                                 
                     except (ValueError, TypeError) as e:
-                        print(f"[ERROR] Erro ao processar valores do registro {registro.id}: {e}")
                         flash(f"Erro nos valores do registro {registro.id}!", "warning")
                         return redirect(request.url)
 
-            # Salvar alterações de preço/valor no banco (se houver)
             if alteracoes_detectadas:
                 db.session.commit()
-                print("[DEBUG] Alterações de preço custo e valores totais salvas")
 
-            # === RECALCULAR TOTAIS APÓS EDIÇÕES ===
-            # Os valores podem ter sido alterados pelo usuário, então recalcular tudo
             valor_total_geral = 0
             for extrator_id, dados in extratores_dict.items():
-                dados['valor_total'] = 0  # Zerar para recalcular
+                dados['valor_total'] = 0
                 
                 for registro in dados['registros']:
                     valor_registro = registro.valor_total_a_pagar_100 or 0
@@ -742,92 +670,74 @@ def extrator_a_pagar_massa():
                         dados['valor_total'] += valor_registro
                         valor_total_geral += valor_registro
 
-            # === CRIAR FATURAMENTO PRIMEIRO (para obter faturamento_id) ===
-            # O faturamento precisa ser criado ANTES de processar créditos
-            # para que tenhamos um faturamento_id válido para vincular os créditos
-            valor_final_a_faturar = valor_total_geral  # Será atualizado após aplicar créditos
+            valor_final_a_faturar = valor_total_geral
             
             novo_faturamento = FaturamentoModel(
-                usuario_id=current_user.id,                              # Usuário que está faturando
+                usuario_id=current_user.id,
                 codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
-                valor_total=valor_final_a_faturar,                      # Valor líquido (será atualizado)
-                ids_fornecedores=None,                                   # Não há fornecedores neste faturamento
-                ids_extratores=ids_selecionados,                         # IDs dos pagamentos sendo faturados
-                utilizou_credito=(usar_credito == "sim"),               # Flag se usou crédito
-                situacao_pagamento_id=7,                                 # 7 = Não Categorizado
-                tipo_operacao=1,                                         # 1 = Carga
-                direcao_financeira=2                                     # 2 = Despesa (saída)
+                valor_total=valor_final_a_faturar,
+                ids_fornecedores=None,
+                ids_extratores=ids_selecionados,
+                utilizou_credito=(usar_credito == "sim"),
+                situacao_pagamento_id=7,
+                tipo_operacao=1,
+                direcao_financeira=2
             )
 
-            # Configurar campos adicionais do faturamento (se o modelo suportar)
             if hasattr(novo_faturamento, 'valor_bruto_total'):
-                novo_faturamento.valor_bruto_total = valor_total_geral          # Valor antes de créditos
+                novo_faturamento.valor_bruto_total = valor_total_geral
             if hasattr(novo_faturamento, 'valor_credito_aplicado'):
-                novo_faturamento.valor_credito_aplicado = 0                     # Será atualizado após processar
+                novo_faturamento.valor_credito_aplicado = 0
             if hasattr(novo_faturamento, 'valor_fornecedor'):
-                novo_faturamento.valor_fornecedor = None                        # Não há fornecedor neste faturamento
+                novo_faturamento.valor_fornecedor = None
             if hasattr(novo_faturamento, 'valor_extrator'):
-                novo_faturamento.valor_extrator = valor_total_geral             # Valor total de extratores
+                novo_faturamento.valor_extrator = valor_total_geral
             
-            # Adicionar ao banco e fazer flush para obter o ID (necessário para vincular créditos)
             db.session.add(novo_faturamento)
             db.session.flush()
 
-            # === PROCESSAR CRÉDITOS/DÉBITOS COM faturamento_id ===
             total_credito_aplicado = 0
             detalhes_creditos_utilizados = {
-                'extratores': []  # Lista de créditos utilizados (para registro histórico)
+                'extratores': []
             }
 
             if usar_credito == "sim":
-                # Calcular total de créditos selecionados pelo usuário
                 total_creditos_selecionados = 0
                 
-                # Somar saldos de todos os créditos selecionados
                 for tipo_entidade, entidades in creditos_selecionados.items():
                     for entidade_id, credito_ids in entidades.items():
                         for credito_id in credito_ids:
                             if tipo_entidade == 'extrator':
                                 credito = TransacaoCreditoModel.query.get(credito_id)
                                 if credito:
-                                    # Soma créditos positivos e débitos negativos
                                     total_creditos_selecionados += credito.obter_saldo_disponivel_100()
                 
-                # Validar se há créditos selecionados
                 if not creditos_selecionados or ('extrator' not in creditos_selecionados and len(creditos_selecionados) == 0):
                     db.session.rollback()
                     flash(("Nenhum crédito selecionado para aplicar!", "warning"))
                     return redirect(request.url)
                 
-                # Calcular limite de crédito a usar
-                # Para débitos (negativos), não há limite - eles AUMENTAM o valor total
-                # Para créditos (positivos), limitar ao valor total da fatura
                 credito_restante_para_usar = float('inf') if total_creditos_selecionados < 0 else valor_total_geral
                 
-                # === UTILIZAR ServicoCreditos PARA PROCESSAR (COM faturamento_id) ===
                 if 'extrator' in creditos_selecionados:
                     for extrator_id_str, credito_ids in creditos_selecionados['extrator'].items():
                         extrator_id = int(extrator_id_str)
                         
-                        # Processar créditos/débitos via ServicoCreditos
-                        # IMPORTANTE: Passa faturamento_id para vincular automaticamente
                         resultado_utilizacao = ServicoCreditos.processar_utilizacao_creditos(
-                            tipo='extrator',                     # Tipo de entidade
-                            pessoa_id=extrator_id,                # ID do extrator
-                            creditos_ids=credito_ids,             # IDs dos créditos selecionados
+                            tipo='extrator',
+                            pessoa_id=extrator_id,
+                            creditos_ids=credito_ids,
                             valor_maximo_100=int(credito_restante_para_usar) if credito_restante_para_usar != float('inf') else 999999999,
-                            usuario_id=current_user.id,           # Usuário logado (quem fez a operação)
-                            faturamento_id=novo_faturamento.id,   # ID do faturamento (vincula automaticamente)
-                            descricao_base=None                   # Usar descrição padrão
+                            usuario_id=current_user.id,
+                            faturamento_id=novo_faturamento.id,
+                            descricao_base=None
                         )
                         
                         if resultado_utilizacao.get('sucesso'):
-                            # Obter valor utilizado (pode ser negativo para débitos)
                             valor_utilizado = resultado_utilizacao.get('total_utilizado_100', 0)
                             total_credito_aplicado += valor_utilizado
                             credito_restante_para_usar -= valor_utilizado
                             
-                            # Armazenar detalhes para registro histórico (salvar_detalhes)
                             for cred_proc in resultado_utilizacao.get('creditos_processados', []):
                                 detalhes_creditos_utilizados['extratores'].append({
                                     'credito_id': cred_proc.get('credito_id'),
@@ -837,69 +747,53 @@ def extrator_a_pagar_massa():
                                     'data_movimentacao': cred_proc.get('data_movimentacao', '')
                                 })
 
-                # === CALCULAR VALOR FINAL APÓS APLICAÇÃO DE CRÉDITOS ===
-                # Observação: Débitos (negativos) AUMENTAM o valor total
-                # Exemplo: R$ 2.000,00 - (-R$ 150,00) = R$ 2.150,00
                 total_credito_utilizado = total_credito_aplicado
                 valor_final_a_faturar = valor_total_geral - total_credito_utilizado
                 
-                # Atualizar valores no faturamento com créditos aplicados
                 novo_faturamento.valor_total = valor_final_a_faturar
                 if hasattr(novo_faturamento, 'valor_credito_aplicado'):
                     novo_faturamento.valor_credito_aplicado = total_credito_aplicado
                 if hasattr(novo_faturamento, 'valor_extrator'):
                     novo_faturamento.valor_extrator = valor_final_a_faturar
                 
-                # Marcar registros como utilizando crédito (para auditoria/relatórios)
                 if total_credito_aplicado != 0:
                     for extrator_id, dados_ext in extratores_dict.items():
                         for registro in dados_ext['registros']:
                             registro.utiliza_credito = 1
-                            registro.valor_credito_100 = 0  # Será calculado proporcionalmente se necessário
+                            registro.valor_credito_100 = 0
 
             else:
-                # === NÃO USAR CRÉDITO ===
-                # Manter valor original sem aplicação de créditos
                 valor_final_a_faturar = valor_total_geral
                 for dados_extrator in extratores_dict.values():
                     for registro in dados_extrator['registros']:
                         registro.utiliza_credito = 0
                         registro.valor_credito_100 = 0
 
-            # === ATUALIZAR STATUS DOS REGISTROS ===
-            # Marcar todos os pagamentos como faturados (situação 5)
             for registro in registros:
-                registro.situacao_pagamento_id = 5  # 5 = Faturado
+                registro.situacao_pagamento_id = 5
 
-            # === CRIAR DETALHES JSON PARA FRONTEND ===
-            # Preparar dados estruturados para salvar no campo JSON do faturamento
             detalhes_extratores = []
             for extrator_id, dados in extratores_dict.items():
                 for reg in dados['registros']:
-                    # Pular registros sem valor
                     if reg.valor_total_a_pagar_100 is None:
                         continue
                     
-                    # Obter dados do registro operacional
                     registro_oper = reg.registro_operacional
                     
-                    # Calcular valores (créditos negativos somam ao valor total)
                     valor_bruto_registro = reg.valor_total_a_pagar_100 or 0
                     valor_credito_registro = getattr(reg, 'valor_credito_100', 0) or 0
-                    valor_faturado = max(0, valor_bruto_registro - valor_credito_registro)  # Valor líquido
+                    valor_faturado = max(0, valor_bruto_registro - valor_credito_registro)
                     preco_custo_registro = reg.preco_custo_bitola_100 or 0
 
-                    # Obter número da nota fiscal (com marcação * se for estorno)
                     numero_nf = ""
                     if registro_oper:
                         if registro_oper.estorno_nf and registro_oper.numero_nota_fiscal_estorno:
-                            numero_nf = f"{registro_oper.numero_nota_fiscal_estorno} *"  # * indica estorno
+                            numero_nf = f"{registro_oper.numero_nota_fiscal_estorno} *"
                         elif registro_oper.numero_nota_fiscal:
                             numero_nf = registro_oper.numero_nota_fiscal
                         else:
                             numero_nf = ""
 
-                    # Adicionar dados estruturados deste pagamento à lista
                     detalhes_extratores.append({
                         "extrator_a_pagar_id": reg.id,
                         "extrator_id": extrator_id,
@@ -925,7 +819,6 @@ def extrator_a_pagar_massa():
                         "fornecedor_identificacao": registro_oper.solicitacao.fornecedor.identificacao if registro_oper.solicitacao and registro_oper.solicitacao.fornecedor else "",
                     })
                     
-                    # Registrar pontuação de gamificação para o usuário
                     PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                         current_user.id,
                         TipoAcaoEnum.CADASTRO,
@@ -933,27 +826,21 @@ def extrator_a_pagar_massa():
                         modulo=f"informar_faturamento_extrator_massa_{reg.id}",
                     )
 
-            # === SALVAR DETALHES NO FATURAMENTO ===
-            # Salva dados estruturados JSON com todos os detalhes da operação
             novo_faturamento.salvar_detalhes(
-                fornecedores=[],                                                # Não há fornecedores
-                transportadoras=[],                                             # Não há transportadoras
-                extratores=detalhes_extratores,                                # Lista de pagamentos faturados
-                credito_fornecedor=[],                                          # Não há créditos de fornecedor
-                credito_transportadora=[],                                      # Não há créditos de transportadora
-                credito_extrator=detalhes_creditos_utilizados['extratores']    # Créditos de extrator
+                fornecedores=[],
+                transportadoras=[],
+                extratores=detalhes_extratores,
+                credito_fornecedor=[],
+                credito_transportadora=[],
+                credito_extrator=detalhes_creditos_utilizados['extratores']
             )
             
-            # Definir situação final do faturamento
             if novo_faturamento.valor_total == 0:
-                novo_faturamento.situacao_pagamento_id = 8  # 8 = Conciliado (valor zerado por créditos)
+                novo_faturamento.situacao_pagamento_id = 8
             else:
-                novo_faturamento.situacao_pagamento_id = 7  # 7 = Não Categorizado (aguardando categorização)
+                novo_faturamento.situacao_pagamento_id = 7
             
-            # Créditos já foram vinculados automaticamente ao faturamento_id em processar_utilizacao_creditos
-            # (FaturamentoCreditoVinculoModel foi criado dentro do ServicoCreditos)
 
-            # Commit final de todas as alterações
             db.session.commit()
 
             if conciliar_transacao_id:
@@ -983,12 +870,10 @@ def extrator_a_pagar_massa():
         )
 
     except Exception as e:
-        print(f"[ERROR] Erro interno: {e}")
         db.session.rollback()
         dados_conciliacao = session.get('dados_conciliacao', {})
         if dados_conciliacao.get('transacao_id'):
             limpar_dados_conciliacao()
-            print("[DEBUG] Dados de conciliação limpos devido ao erro")
         flash((f"Erro interno: {str(e)}", "error"))
         return redirect(url_for("listagem_extratores_a_pagar"))
 
@@ -1019,9 +904,7 @@ def cancelar_pagamento_extrator(id):
         if mov_orig:
             mov_orig.deletado = True
 
-        # Estornar créditos se foram utilizados
         if usou_credito and valor_credito != 0:
-            # Buscar o faturamento associado a este pagamento
             faturamento = FaturamentoModel.query.filter(
                 FaturamentoModel.ids_extratores.contains(str(registro.id))
             ).first()
@@ -1033,7 +916,7 @@ def cancelar_pagamento_extrator(id):
                     motivo=f"Cancelamento de pagamento de extrator ID {registro.id}"
                 )
                 if not resultado_estorno.get('sucesso'):
-                    print(f"[WARN] Erro ao estornar créditos: {resultado_estorno.get('mensagem')}")
+                    pass
 
         if usou_saldo and valor_saldo > 0:
             mov_est_din = MovimentacaoFinanceiraModel(
@@ -1085,7 +968,6 @@ def cancelar_pagamento_extrator(id):
         flash(("Cancelamento efetuado e saldos ajustados com sucesso!", "success"))
 
     except Exception as e:
-        print("[ERROR cancelar_faturamento_extrator]", e)
         db.session.rollback()
         flash(("Erro ao cancelar informe de faturamento! Contate o suporte.", "warning"))
 

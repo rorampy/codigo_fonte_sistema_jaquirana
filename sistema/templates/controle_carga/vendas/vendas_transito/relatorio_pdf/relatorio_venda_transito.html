@@ -9,9 +9,6 @@
 
 <body>
 
-
-
-  <!-- Header -->
   <div class="header">
     <table>
       <tr>
@@ -28,7 +25,6 @@
 
   <div class="relatorio-title">Relatório de Vendas em Trânsito</div>
 
-  <!-- Filtros aplicados (se houver) -->
   {% if dados_corretos and (dados_corretos.get('data_inicio') or dados_corretos.get('data_fim') or dados_corretos.get('cliente_venda') or dados_corretos.get('nf_venda') or dados_corretos.get('transportadora_venda') or dados_corretos.get('produto_venda') or dados_corretos.get('bitola_venda') or dados_corretos.get('motorista_venda') or dados_corretos.get('placa_venda') or dados_corretos.get('origem_venda')) %}
   <div class="section-title">FILTROS APLICADOS</div>
   <table style="width: 100%; margin-bottom: 20px; border: 1px solid #ddd; border-collapse: collapse;">

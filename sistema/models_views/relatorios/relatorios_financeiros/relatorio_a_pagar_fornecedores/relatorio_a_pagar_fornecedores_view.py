@@ -12,9 +12,6 @@ from itertools import groupby
 from operator import itemgetter
 
 
-# ============================================================================
-# FUNÇÕES AUXILIARES
-# ============================================================================
 
 def calcular_totalizadores(registros):
     """
@@ -45,7 +42,6 @@ def calcular_totalizadores(registros):
                 "valor_100": 0,
             }
         
-        # Somar toneladas
         if registro_operacional and registro_operacional.peso_liquido_ticket:
             try:
                 peso = float(registro_operacional.peso_liquido_ticket)
@@ -54,7 +50,6 @@ def calcular_totalizadores(registros):
             except (ValueError, TypeError):
                 pass
         
-        # Somar valor (já está em centavos no banco)
         if registro and registro.valor_total_a_pagar_100:
             try:
                 valor_100 = int(registro.valor_total_a_pagar_100)
@@ -143,7 +138,6 @@ def formatar_valor_brl(valor):
         str: Valor formatado no padrão brasileiro
     """
     valor_str = "{:,.2f}".format(valor)
-    # Substitui ',' por '.' e vice-versa
     valor_str = valor_str.replace(',', 'X').replace('.', ',').replace('X', '.')
     return f"R$ {valor_str}"
 
@@ -161,14 +155,11 @@ def preparar_dados_excel(registros):
     dados_excel = []
     registros_por_origem = {}
     
-    # Colunas do Excel
     colunas = ["Origem", "Data Entrega", "Placa/Motorista", "Transportadora", "Bitola", "Preço/Ton", "Peso Ticket", "Número NF", "A pagar fornecedor", "Status pagamento", "Incompleto"]
     
-    # Totalizadores gerais
     total_geral_toneladas = 0
     total_geral_valor = 0
     
-    # Agrupar por origem e produto
     for item in registros:
         origem = item.get("origem", "Sem origem")
         if origem not in registros_por_origem:
@@ -180,11 +171,9 @@ def preparar_dados_excel(registros):
             
         registros_por_origem[origem][produto].append(item)
 
-    # Gerar linhas do Excel
     for origem in sorted(registros_por_origem.keys()):
         produtos_origem = registros_por_origem[origem]
         
-        # Cabeçalho da origem
         dados_excel.append({
             "Origem": origem.upper(),
             "Data Entrega": "",
@@ -199,14 +188,12 @@ def preparar_dados_excel(registros):
             "Incompleto": "",
         })
         
-        # Totalizadores do fornecedor
         total_fornecedor_toneladas = 0
         total_fornecedor_valor = 0
         
         for produto in sorted(produtos_origem.keys()):
             registros_produto = produtos_origem[produto]
             
-            # Cabeçalho do produto
             dados_excel.append({
                 "Origem": f"  PRODUTO: {produto}",
                 "Data Entrega": "",
@@ -228,7 +215,6 @@ def preparar_dados_excel(registros):
                 registro = item["registro"]
                 registro_operacional = item.get("registro_operacional")
                 
-                # Formatar motorista
                 motorista_nome = ""
                 if (registro.solicitacao and 
                     registro.solicitacao.motorista and 
@@ -239,32 +225,27 @@ def preparar_dados_excel(registros):
                     else:
                         motorista_nome = nome_split[0]
                 
-                # Formatar placa
                 placa = (registro.solicitacao.veiculo.placa_veiculo 
                         if registro.solicitacao and registro.solicitacao.veiculo 
                         and registro.solicitacao.veiculo.placa_veiculo else "")
                 placa_motorista = f"{placa} | {motorista_nome}" if motorista_nome else placa
                 
-                # Formatar transportadora
                 transportadora = ""
                 if (registro.solicitacao and 
                     registro.solicitacao.transportadora_exibicao and 
                     registro.solicitacao.transportadora_exibicao.identificacao):
                     transportadora = registro.solicitacao.transportadora_exibicao.identificacao
                 
-                # Formatar bitola
                 bitola = ""
                 if (registro.solicitacao and 
                     registro.solicitacao.bitola and 
                     registro.solicitacao.bitola.bitola):
                     bitola = registro.solicitacao.bitola.bitola
                 
-                # Formatar preço por bitola
                 preco_bitola = ""
                 if registro.preco_custo_bitola_100:
                     preco_bitola = formatar_valor_brl(registro.preco_custo_bitola_100 / 100)
                 
-                # Formatar peso
                 peso_ticket = "Sem peso"
                 peso_valor = 0
                 if registro_operacional and registro_operacional.peso_liquido_ticket:
@@ -277,7 +258,6 @@ def preparar_dados_excel(registros):
                     except (ValueError, TypeError):
                         peso_ticket = f"{registro_operacional.peso_liquido_ticket} Ton."
                 
-                # Formatar número NF
                 numero_nf = ""
                 if registro_operacional:
                     if registro_operacional.estorno_nf:
@@ -285,7 +265,6 @@ def preparar_dados_excel(registros):
                     elif registro_operacional.numero_nota_fiscal:
                         numero_nf = registro_operacional.numero_nota_fiscal
                 
-                # Calcular valor
                 valor_pagar = 0
                 if registro.valor_total_a_pagar_100:
                     valor_pagar = registro.valor_total_a_pagar_100 / 100
@@ -311,7 +290,6 @@ def preparar_dados_excel(registros):
                     "Incompleto": incompleto,
                 })
             
-            # Total do produto
             if registros_produto and total_produto > 0:
                 dados_excel.append({
                     "Origem": "",
@@ -327,10 +305,8 @@ def preparar_dados_excel(registros):
                     "Incompleto": "",
                 })
             
-            # Linha em branco após produto
             dados_excel.append({k: "" for k in colunas})
         
-        # Totalizador do fornecedor
         dados_excel.append({
             "Origem": f"TOTAL {origem.upper()}",
             "Data Entrega": "",
@@ -345,10 +321,8 @@ def preparar_dados_excel(registros):
             "Incompleto": "",
         })
         
-        # Linha em branco após origem
         dados_excel.append({k: "" for k in colunas})
     
-    # Totalizador geral (somente se houver mais de um fornecedor)
     if len(registros_por_origem) > 1:
         dados_excel.append({
             "Origem": "TOTAL GERAL",
@@ -367,9 +341,6 @@ def preparar_dados_excel(registros):
     return dados_excel
 
 
-# ============================================================================
-# VIEWS
-# ============================================================================
 
 @app.route("/relatorios/relatorios-financeiros/a-pagar-fornecedores", methods=["GET"])
 @login_required
@@ -382,11 +353,9 @@ def relatorio_a_pagar_fornecedores():
     produtos = ProdutoModel.listar_produtos()
     statusPagamentos = SituacaoPagamentoModel.listar_status()
     
-    # Obter filtros e dados
     filtros = obter_filtros()
     registros = buscar_registros(filtros)
     
-    # Calcular totalizadores
     totalizadores = calcular_totalizadores(registros)
     
     return render_template(
@@ -410,11 +379,9 @@ def relatorio_a_pagar_fornecedores_exportar_pdf():
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
     dataHoje = datetime.now().strftime("%d-%m-%Y")
     
-    # Obter filtros e dados
     filtros = obter_filtros()
     registros = buscar_registros(filtros)
     
-    # Calcular totalizadores
     totalizadores = calcular_totalizadores(registros)
     
     logo_path = obter_url_absoluta_de_imagem("logo.png")
@@ -441,11 +408,9 @@ def relatorio_a_pagar_fornecedores_exportar_excel():
     """
     dataHoje = datetime.now().strftime("%d-%m-%Y")
     
-    # Obter filtros e dados
     filtros = obter_filtros()
     registros = buscar_registros(filtros)
     
-    # Preparar dados para Excel
     dados_excel = preparar_dados_excel(registros)
     
     nome_arquivo_saida = f"relatorio-fornecedores-a-pagar-{dataHoje}"

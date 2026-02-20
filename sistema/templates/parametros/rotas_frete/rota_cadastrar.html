@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             Cadastrar
           </div>
@@ -19,7 +19,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -123,7 +122,7 @@
             <div class="row">
 
               {% for produto_id, produto_data in produtos_bitolas.items() %}
-              <!-- {{ produto_data.nome }} -->
+              
               <div class="col-md-12">
                 <div class="card border-0 shadow-sm mb-4">
                   <div class="card-header text-dark">
@@ -144,7 +143,6 @@
                       {% set prefix = nome_produto_lower[:5] %}
                     {% endif %}
                     
-                    <!-- Bitola {{ loop_index + 1 }} {{ produto_data.nome }} -->
                     <div class="row mb-3">
                       <div class="col-md-{% if produto_data.nome == 'Pinus' %}5{% else %}4{% endif %}">
                         <label class="form-label">{% if produto_data.nome == 'Biomassa' %}Tipo{% else %}Bitola{% endif %}</label>

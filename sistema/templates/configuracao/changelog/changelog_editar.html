@@ -114,7 +114,6 @@
                                     </div>
                                 </div>
 
-
                                 <div class="col-12">
                                     <label class="form-label required">Descrição Detalhada</label>
                                     <div class="card" style="border: 1px solid #dce1e7;">
@@ -177,18 +176,15 @@
             theme: 'snow'
         };
 
-        // Inicializa o editor
         const editor = new Quill('#editor-container', customOptions);
         const hiddenInput = document.querySelector('#conteudo-input');
 
-        // Carrega o conteúdo existente do changelog
         const conteudoExistente = `{{ request.form.get('conteudo', changelog.conteudo)|safe }}`;
         if (conteudoExistente && conteudoExistente.trim() !== '') {
             editor.clipboard.dangerouslyPasteHTML(conteudoExistente);
             hiddenInput.value = editor.root.innerHTML;
         }
 
-        // Sincroniza o conteúdo ao digitar
         editor.on('text-change', function () {
             hiddenInput.value = editor.root.innerHTML;
         });

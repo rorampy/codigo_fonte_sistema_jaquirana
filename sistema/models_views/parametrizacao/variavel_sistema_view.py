@@ -34,7 +34,6 @@ def variaveis_sistema_editar(id):
         cnpj_tratado = ValidaDocs.remove_pontuacao_cnpj(cnpj)
         tel_tratado = Tels.remove_pontuacao_telefone_celular_br(telefone)
 
-        # "chave": ["Label", valor_input]
         campos = {
             "nomeProjeto": ["Nome do Projeto", nome_projeto],
             "cnpj": ["CNPJ", cnpj_tratado],

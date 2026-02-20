@@ -10,9 +10,6 @@ from sistema.models_views.faturamento.cargas_a_faturar.comissionado.comissionado
 from sistema._utilitarios import ManipulacaoArquivos
 
 
-# ============================================================================
-# FUNÇÕES AUXILIARES
-# ============================================================================
 
 def calcular_totalizadores_comissionado(registros):
     """
@@ -40,35 +37,29 @@ def calcular_totalizadores_comissionado(registros):
     comissionados_unicos = set()
     
     for item in registros:
-        # Identificar comissionado
         comissionado_obj = item.get('comissionado')
         comissionado_id = comissionado_obj.identificacao if comissionado_obj else 'Sem comissionado'
         comissionados_unicos.add(comissionado_id)
         
-        # Inicializar totalizador do comissionado se não existir
         if comissionado_id not in totalizadores['por_comissionado']:
             totalizadores['por_comissionado'][comissionado_id] = {
                 'toneladas': 0.0,
                 'valor_100': 0
             }
         
-        # Obter toneladas
         registro_op = item.get('registro_operacional')
         toneladas = 0.0
         if registro_op and registro_op.peso_liquido_ticket:
             toneladas = float(registro_op.peso_liquido_ticket)
         
-        # Obter valor
         registro = item.get('registro')
         valor_100 = 0
         if registro and registro.valor_total_a_pagar_100:
             valor_100 = int(registro.valor_total_a_pagar_100)
         
-        # Acumular no comissionado
         totalizadores['por_comissionado'][comissionado_id]['toneladas'] += toneladas
         totalizadores['por_comissionado'][comissionado_id]['valor_100'] += valor_100
         
-        # Acumular no geral
         totalizadores['geral']['toneladas'] += toneladas
         totalizadores['geral']['valor_100'] += valor_100
     
@@ -148,7 +139,6 @@ def buscar_registros_comissionado(filtros_source):
     """
     filtros = obter_filtros_comissionado(filtros_source)
     
-    # Verifica se há algum filtro ativo (exceto valores None/vazios)
     tem_filtros = any(v for v in filtros.values() if v is not None and v != "")
     
     if tem_filtros:
@@ -190,7 +180,6 @@ def preparar_dados_excel_comissionado(registros):
         })
         return dados_excel
     
-    # Agrupar registros por comissionado e produto
     registros_por_comissionado = {}
     
     for item in registros:
@@ -315,11 +304,9 @@ def preparar_dados_excel_comissionado(registros):
                     "Status pagamento": status,
                 })
             
-            # Acumular totais do comissionado
             total_comissionado_toneladas += total_produto_toneladas
             total_comissionado_valor += total_produto_valor
             
-            # Total por produto (com toneladas)
             dados_excel.append({
                 "Comissionado": f"    SUBTOTAL {produto}:",
                 "Data Entrega": "",
@@ -332,11 +319,9 @@ def preparar_dados_excel_comissionado(registros):
                 "Status pagamento": "",
             })
         
-        # Acumular totais gerais
         total_geral_toneladas += total_comissionado_toneladas
         total_geral_valor += total_comissionado_valor
         
-        # Total por comissionado (com toneladas)
         dados_excel.append({
             "Comissionado": f"TOTAL {comissionado_id.upper()}:",
             "Data Entrega": "",
@@ -349,7 +334,6 @@ def preparar_dados_excel_comissionado(registros):
             "Status pagamento": "",
         })
         
-        # Linha em branco para separar comissionados
         dados_excel.append({
             "Comissionado": "",
             "Data Entrega": "",
@@ -362,7 +346,6 @@ def preparar_dados_excel_comissionado(registros):
             "Status pagamento": "",
         })
     
-    # Total geral (apenas se houver mais de 1 comissionado)
     if len(registros_por_comissionado) > 1:
         dados_excel.append({
             "Comissionado": "TOTAL GERAL:",
@@ -379,9 +362,6 @@ def preparar_dados_excel_comissionado(registros):
     return dados_excel
 
 
-# ============================================================================
-# ROTAS
-# ============================================================================
 
 @app.route("/relatorios/relatorios-financeiros/a-pagar-comissionado", methods=["GET"])
 @login_required

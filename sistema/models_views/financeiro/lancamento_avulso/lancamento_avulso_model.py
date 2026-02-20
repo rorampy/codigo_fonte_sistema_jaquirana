@@ -9,7 +9,6 @@ class LancamentoAvulsoModel(BaseModel):
     __tablename__ = 'lan_lancamento_avulso'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
 
-    # 1 - Receitas | 2 - Despesas
     tipo_movimentacao = db.Column(db.Integer, nullable=False)
     
     descricao = db.Column(db.String(255), nullable=False)

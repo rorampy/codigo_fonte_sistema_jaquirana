@@ -130,7 +130,6 @@ def cadastrar_comissionado():
             db.session.flush()
 
 
-            #Cadastrar pessoa financeira
             if criar_pessoa_financeiro == "sim":
                 try:
                     vinculos_operacionais = {
@@ -168,7 +167,6 @@ def cadastrar_comissionado():
                 
                 except Exception as e:
                     db.session.rollback()
-                    print(f"Erro ao criar Pessoa Financeira: {e}")
                     import traceback
                     traceback.print_exc()
                     flash((f"Comissionado cadastrado, mas houve erro ao criar Pessoa Financeira: {str(e)}", "warning"))
@@ -297,7 +295,6 @@ def editar_comissionado(id):
         if gravar_banco == True:
             telefone_tratado = Tels.remove_pontuacao_telefone_celular_br(telefone)
 
-            # === Comparação de Objetos ===
 
             obj2 = {
                 "tipoCadastro": tipoCadastro,
@@ -340,7 +337,6 @@ def editar_comissionado(id):
 
             if pessoa_financeira:
                 try:
-                    print(f"Atualizando Pessoa Financeira ID: {pessoa_financeira.id}")
 
                     pessoa_financeira.tipo_cadastro = True if tipoCadastroComissionado == 1 else False
                     pessoa_financeira.identificacao = identificacaoComissionado
@@ -351,7 +347,6 @@ def editar_comissionado(id):
                     pessoa_financeira.conta_bancaria = conta_bancaria.strip() if conta_bancaria else None
                     pessoa_financeira.chave_pix = chave_pix.strip() if chave_pix else None
 
-                    # Atualizar vínculos
                     vinculos_atuais = pessoa_financeira.vinculos_operacionais or {}
                     vinculos_atuais["comissionado"] = [{
                         "id": str(comissionado.id),
@@ -363,11 +358,8 @@ def editar_comissionado(id):
 
                     db.session.flush()
 
-                    print(f"Pessoa Financeira atualizada com sucesso!")
-                    print(f"Vínculos: {json.dumps(vinculos_atuais, indent=2, ensure_ascii=False)}")
 
                 except Exception as e:
-                    print(f"Erro ao atualizar Pessoa Financeira: {e}")
                     import traceback
                     traceback.print_exc()
 

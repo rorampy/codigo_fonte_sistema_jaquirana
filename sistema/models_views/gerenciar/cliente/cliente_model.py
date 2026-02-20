@@ -13,7 +13,6 @@ class ClienteModel(BaseModel):
     numero_documento = db.Column(db.String(20), nullable=False)
     telefone = db.Column(db.String(20), nullable=False)
 
-    # Bitolas e preços para Eucalipto
     euca_bitola_1_id = db.Column(db.Integer, nullable=True)
     euca_preco_venda_bitola_1_100 = db.Column(db.Integer, nullable=True)
     euca_bitola_2_id = db.Column(db.Integer, nullable=True)
@@ -26,7 +25,6 @@ class ClienteModel(BaseModel):
     bio_bitola_5_id = db.Column(db.Integer, nullable=True)
     bio_preco_venda_bitola_5_100 = db.Column(db.Integer, nullable=True)
 
-    # Bitolas e preços para Pinus
     pinus_bitola_1_id = db.Column(db.Integer, nullable=True)
     pinus_preco_venda_bitola_1_100 = db.Column(db.Integer, nullable=True)
     pinus_bitola_2_id = db.Column(db.Integer, nullable=True)

@@ -81,7 +81,7 @@
                       </svg>
                       {{ origem }}
                     </span>
-                    <!-- Exibir tags do fornecedor -->
+                    
                     {% if registros_origem[0].tags and registros_origem[0].tags|length > 0 %}
                     <div class="d-flex gap-1 me-3">
                       {% for tag in registros_origem[0].tags %}
@@ -281,7 +281,6 @@
     </div>
   </div>
 
-  <!-- MODAL DE CONFIRMAÇÃO PARA REGISTROS INVÁLIDOS -->
   <div class="modal modal-blur fade" id="modal-registros-invalidos" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -337,7 +336,6 @@
     </div>
   </div>
 
-  <!-- MODAL DE LOADING PARA ATUALIZAÇÃO DE PREÇOS -->
   <div class="modal modal-blur fade" id="modal-loading-atualizacao" tabindex="-1" role="dialog" aria-hidden="true"
     data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
@@ -361,7 +359,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
       <form action="{{ url_for('listagem_fornecedores_a_pagar') }}" method="GET">
@@ -372,7 +369,7 @@
           </div>
           <div class="modal-body">
             <div class="row">
-              <!-- Toggle entre Filtro Semanal e Por Data -->
+              
               <div class="col-12 mb-3">
                 <label class="form-label">Tipo de Filtro</label>
                 <div class="form-selectgroup form-selectgroup-boxes d-flex flex-row">
@@ -406,7 +403,6 @@
                 </div>
               </div>
 
-              <!-- Filtro Semanal -->
               <div id="filtro-semanal" class="col-12 mb-3" {% if dados_corretos.get('tipo_filtro')=='data'
                 %}style="display: none;" {% endif %}>
                 <label class="form-label">Selecionar Período</label>
@@ -423,7 +419,6 @@
                 </select>
               </div>
 
-              <!-- Filtro por Data -->
               <div id="filtro-data" class="row" {% if dados_corretos.get('tipo_filtro') !='data'
                 %}style="display: none;" {% endif %}>
                 <div class="col-md-4 mb-3">
@@ -455,7 +450,6 @@
                   value="{{ dados_corretos.get('placaCarga', '') }}" placeholder="Placa do veículo">
               </div>
 
-              <!-- Linha 2: Produto e Bitola -->
               <div class="col-md-4 mb-3">
                 <label class="form-label">Produto</label>
                 <input type="text" name="produtoCarga" class="form-control"
@@ -467,7 +461,6 @@
                   value="{{ dados_corretos.get('bitolaCarga', '') }}" placeholder="Bitola do produto">
               </div>
 
-              <!-- Linha 3: Pessoas e Empresas -->
               <div class="col-md-6 mb-3">
                 <label class="form-label">Transportadora</label>
                 <input type="text" name="transportadoraCarga" class="form-control"
@@ -484,7 +477,6 @@
                   value="{{ dados_corretos.get('clienteCarga', '') }}" placeholder="Nome do cliente">
               </div>
 
-              <!-- Linha 4: Origem -->
               <div class="col-md-6 mb-3">
                 <label class="form-label">Origem (Fornecedor/Floresta)</label>
                 <input type="text" name="fornecedorCarga" class="form-control"
@@ -525,7 +517,6 @@
     </div>
   </div>
 
-  <!-- MODAL DE CONFIRMAÇÃO PARA ATUALIZAÇÃO DE PREÇOS COM FILTROS -->
   <div class="modal modal-blur fade" id="modal-danger" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -585,7 +576,7 @@
   </div>
 
   <script>
-    // Inicializa Tom Select nos outros selects
+    
     document.querySelectorAll('select.form-select').forEach(function (select) {
       new TomSelect(select, {
         create: false,
@@ -593,7 +584,7 @@
       });
     });
     document.addEventListener('DOMContentLoaded', function () {
-      // Validação do formulário de atualização
+      
       const formAtualizacao = document.getElementById('form-atualizacao-precos');
       if (formAtualizacao) {
         formAtualizacao.addEventListener('submit', function (e) {
@@ -613,13 +604,11 @@
             return;
           }
 
-          // Fechar modal e mostrar loading
           const modalConfirmacao = bootstrap.Modal.getInstance(document.getElementById('modal-danger'));
           if (modalConfirmacao) {
             modalConfirmacao.hide();
           }
 
-          // Mostrar modal de loading
           setTimeout(() => {
             const modalLoading = new bootstrap.Modal(document.getElementById('modal-loading-atualizacao'));
             modalLoading.show();
@@ -627,7 +616,6 @@
         });
       }
 
-      // Definir data padrão (últimos 30 dias)
       const hoje = new Date();
       const dataInicio = new Date();
       dataInicio.setDate(hoje.getDate() - 30);
@@ -635,10 +623,8 @@
       document.querySelector('input[name="data_inicio"]').value = dataInicio.toISOString().split('T')[0];
       document.querySelector('input[name="data_fim"]').value = hoje.toISOString().split('T')[0];
 
-      // Inicializar Tom Select para o select de fornecedores
       let tomSelectFornecedor = null;
 
-      // Inicializar quando o modal for aberto
       const modalDanger = document.getElementById('modal-danger');
       if (modalDanger) {
         modalDanger.addEventListener('shown.bs.modal', function () {
@@ -659,7 +645,6 @@
           }
         });
 
-        // Limpar Tom Select quando o modal for fechado
         modalDanger.addEventListener('hidden.bs.modal', function () {
           if (tomSelectFornecedor) {
             tomSelectFornecedor.destroy();
@@ -672,7 +657,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Inicializar filtros de semana/data
+      
       inicializarFiltros();
 
       function formatarParaBRL(valor) {
@@ -766,11 +751,10 @@
           return;
         }
 
-        // Validar se todos os registros selecionados são elegíveis para pagamento
         let registrosInvalidos = 0;
         document.querySelectorAll('.registro-checkbox:checked').forEach(checkbox => {
           const row = checkbox.closest('tr');
-          const statusCell = row.querySelector('td:nth-child(10)'); // Coluna do status
+          const statusCell = row.querySelector('td:nth-child(10)'); 
           if (statusCell) {
             const statusText = statusCell.textContent.trim();
             if (statusText !== 'Pendente') {
@@ -780,46 +764,39 @@
         });
 
         if (registrosInvalidos > 0) {
-          // Usar modal em vez de confirm
+          
           document.getElementById('count-registros-invalidos').textContent = registrosInvalidos;
 
-          // Armazenar IDs para usar no modal
           window.idsSelecionadosPagamento = selecionados;
 
-          // Mostrar modal
           const modal = new bootstrap.Modal(document.getElementById('modal-registros-invalidos'));
           modal.show();
           return;
         }
 
-        // Se não há registros inválidos, prosseguir direto
         prosseguirPagamentoMassa(selecionados);
       }
 
       function prosseguirPagamentoMassa(selecionados) {
-        // Criar URL para Faturamento em massa
+        
         const idsParam = selecionados.join(',');
         const url = `/financeiro/a-pagar/fornecedor-a-pagar-massa?ids=${encodeURIComponent(idsParam)}`;
 
-        // Redirecionar para a tela de Faturamento em massa
         window.location.href = url;
       }
 
-      // Event listener para o botão de Faturamento em massa
       const btnPagamentoMassa = document.getElementById('btn-informar-pagamento-massa');
       if (btnPagamentoMassa) {
         btnPagamentoMassa.addEventListener('click', iniciarPagamentoMassa);
-        updatePagamentoMassaButton(); // Estado inicial
+        updatePagamentoMassaButton(); 
       }
 
-      // Event listener para confirmar no modal
       const btnConfirmarModal = document.getElementById('btn-confirmar-pagamento-massa');
       if (btnConfirmarModal) {
         btnConfirmarModal.addEventListener('click', function () {
           const modal = bootstrap.Modal.getInstance(document.getElementById('modal-registros-invalidos'));
           modal.hide();
 
-          // Usar os IDs armazenados
           if (window.idsSelecionadosPagamento) {
             prosseguirPagamentoMassa(window.idsSelecionadosPagamento);
           }
@@ -849,10 +826,8 @@
           }
         }
 
-        // Aplicar estado inicial baseado nos radio buttons já configurados pelo backend
         alternarFiltros();
 
-        // Event listeners
         radioSemanal.addEventListener('click', alternarFiltros);
         radioData.addEventListener('click', alternarFiltros);
         radioSemanal.addEventListener('change', alternarFiltros);

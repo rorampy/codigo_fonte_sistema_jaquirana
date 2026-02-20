@@ -28,7 +28,6 @@ class OFXProcessor:
             ofx = ofxparse.OfxParser.parse(arquivo_io)
             conta = ofx.account
             
-            # Informações completas da instituição financeira
             instituicao_info = {}
             if hasattr(conta, 'institution') and conta.institution:
                 instituicao_info = {
@@ -38,7 +37,6 @@ class OFXProcessor:
                     'url': getattr(conta.institution, 'url', ''),
                 }
             
-            # Informações completas da conta
             conta_info = {
                 'bank_id': getattr(conta, 'bank_id', ''),
                 'branch_id': getattr(conta, 'branch_id', ''),
@@ -48,7 +46,6 @@ class OFXProcessor:
                 'currency': getattr(conta, 'currency', 'BRL'),
             }
             
-            # Informações do statement
             statement_info = {}
             if hasattr(conta, 'statement') and conta.statement:
                 statement_info = {
@@ -61,7 +58,6 @@ class OFXProcessor:
                     'available_balance_date': conta.statement.available_balance_date.strftime('%Y-%m-%d %H:%M:%S') if hasattr(conta.statement, 'available_balance_date') and conta.statement.available_balance_date else '',
                 }
             
-            # Resumo consolidado
             self.resumo = {
                 'instituicao': instituicao_info,
                 'conta': conta_info,
@@ -70,7 +66,6 @@ class OFXProcessor:
                 'total_transacoes': len(conta.statement.transactions) if conta.statement else 0,
             }
             
-            # Processamento completo das transações
             total_creditos = 0
             total_debitos = 0
             tipos_transacao = {}
@@ -78,22 +73,18 @@ class OFXProcessor:
             for idx, transacao in enumerate(conta.statement.transactions):
                 valor = float(transacao.amount)
                 
-                # Todos os campos possíveis da transação
                 transacao_completa = {
-                    # Identificadores
                     'indice': idx + 1,
                     'fitid': getattr(transacao, 'id', ''),
                     'refnum': getattr(transacao, 'refnum', ''),
                     'checknum': getattr(transacao, 'checknum', ''),
                     'srvrtid': getattr(transacao, 'srvrtid', ''),
                     
-                    # Datas
                     'date': transacao.date.strftime('%Y-%m-%d') if transacao.date else '',
                     'date_user': transacao.date_user.strftime('%Y-%m-%d') if hasattr(transacao, 'date_user') and transacao.date_user else '',
                     'date_available': transacao.date_available.strftime('%Y-%m-%d') if hasattr(transacao, 'date_available') and transacao.date_available else '',
                     'date_posted': transacao.date.strftime('%Y-%m-%d %H:%M:%S') if transacao.date else '',
                     
-                    # Valores
                     'amount': valor,
                     'amount_original': getattr(transacao, 'amount_original', valor),
                     'commission': float(getattr(transacao, 'commission', 0)) if hasattr(transacao, 'commission') else 0,
@@ -101,46 +92,38 @@ class OFXProcessor:
                     'taxes': float(getattr(transacao, 'taxes', 0)) if hasattr(transacao, 'taxes') else 0,
                     'withholding': float(getattr(transacao, 'withholding', 0)) if hasattr(transacao, 'withholding') else 0,
                     
-                    # Tipos e categorias
                     'type': getattr(transacao, 'type', ''),
                     'trntype': getattr(transacao, 'type', ''),
                     'trntype_orig': getattr(transacao, 'trntype_orig', ''),
                     
-                    # Descrições
                     'memo': getattr(transacao, 'memo', ''),
                     'payee': getattr(transacao, 'payee', ''),
                     'name': getattr(transacao, 'name', ''),
                     'category': getattr(transacao, 'category', ''),
                     
-                    # Informações de investimento (se aplicável)
                     'security': getattr(transacao, 'security', ''),
                     'units': getattr(transacao, 'units', ''),
                     'unit_price': getattr(transacao, 'unit_price', ''),
                     'market_value': getattr(transacao, 'market_value', ''),
                     
-                    # Informações bancárias adicionais
                     'inv401k_source': getattr(transacao, 'inv401k_source', ''),
                     'bank_account_to': getattr(transacao, 'bank_account_to', ''),
                     'bank_account_from': getattr(transacao, 'bank_account_from', ''),
                     
-                    # Campos processados para facilitar uso
                     'valor_absoluto': abs(valor),
                     'tipo_movimento': 'CREDITO' if valor > 0 else 'DEBITO',
                     'descricao_limpa': self._limpar_descricao(getattr(transacao, 'memo', '')),
                     'categoria_automatica': self._determinar_tipo_transacao(transacao),
                     'valor_formatado': f'R$ {abs(valor):,.2f}'.replace('.', '_').replace(',', '.').replace('_', ','),
                     
-                    # Informações de debug/controle
                     'raw_data': {attr: str(getattr(transacao, attr, '')) for attr in dir(transacao) 
                                if not attr.startswith('_') and not callable(getattr(transacao, attr, None))},
                 }
                 
-                # Contabilização
                 if valor > 0:
                     total_creditos += valor
                 else:
                     total_debitos += abs(valor)
-                # Contagem por tipo
                 tipo = transacao_completa['categoria_automatica']
                 if tipo not in tipos_transacao:
                     tipos_transacao[tipo] = {'quantidade': 0, 'valor_total': 0}
@@ -149,10 +132,8 @@ class OFXProcessor:
                 
                 self.transacoes.append(transacao_completa)
             
-            # Ordenação por data
             self.transacoes.sort(key=lambda x: x['date'], reverse=True)
             
-            # Atualização do resumo com totais
             self.resumo.update({
                 'totais': {
                     'creditos': total_creditos,
@@ -236,14 +217,12 @@ class OFXProcessor:
             
         descricao = memo.strip()
         
-        # Remove códigos técnicos
         descricao = re.sub(r'-[A-Z]{2,3}\d+', '', descricao)
         descricao = re.sub(r'CX\d+\s*', '', descricao)
         descricao = re.sub(r'VE\d+\s*', '', descricao)
         descricao = re.sub(r'ID\s*\d+', '', descricao)
         descricao = re.sub(r'\d{11,}', '', descricao)
         
-        # Limpa espaços extras
         descricao = ' '.join(descricao.split())
         
         return descricao if descricao else "Descrição não disponível"

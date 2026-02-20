@@ -16,7 +16,6 @@
         <div class="relatorio-title">Relatório de Movimentações
           Financeiras</div>
 
-        <!-- Filtros aplicados se existirem -->
         {% if conta_label or data_inicio or data_fim %}
         <div class="dados-registro no-break">
           <div class="filtros-title">Filtros Aplicados</div>
@@ -45,35 +44,6 @@
         </div>
         {% endif %}
 
-        <!-- Resumo Financeiro -->
-        <!-- <div class="section-title no-break">Resumo Financeiro</div>
-        <table class="resumo-table no-break" style="margin-bottom: 20px;">
-          <tr>
-            <td style="width: 33%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
-              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Saldo Atual</div>
-              <div style="font-size: 18px; font-weight: bold; color: #1e5631;">
-                {{saldo_disponivel | formatar_float_para_brl}}
-              </div>
-            </td>
-            <td style="width: 5%;"></td>
-            <td style="width: 33%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
-              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Total Recebido</div>
-              <div style="font-size: 18px; font-weight: bold; color: #2b8a3e;">
-                {{total_recebido | formatar_float_para_brl}}
-              </div>
-            </td>
-            <td style="width: 5%;"></td>
-            <td style="width: 33%; padding: 15px; background-color: #f6f8f6; border-radius: 6px;">
-              <div style="font-weight: 600; color: #1e5631; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e7f0e7; padding-bottom: 5px;">Total Pago</div>
-              <div style="font-size: 18px; font-weight: bold; color: #c92a2a;">
-                {{valor_total_pago | formatar_float_para_brl}}
-              </div>
-            </td>
-          </tr>
-        </table> -->
-
-        
-        <!-- Totalizadores do Período -->
         {% if totalizadores %}
         <div class="section-title no-break">Totalizadores do Período</div>
         <table class="resumo-table no-break" style="margin-bottom: 20px;">
@@ -133,12 +103,12 @@
         {% endif %}
 
         {% if movimentacoes_por_dia %}
-        <!-- Extrato Detalhado com Totalização Diária -->
+        
         <div class="section-title no-break">Extrato Detalhado de
           Movimentações</div>
 
         {% for data_mov, grupo in movimentacoes_por_dia.items() %}
-        <!-- Cabeçalho do dia -->
+        
         <div class="dia-header no-break" style="background-color: #e7f0e7; padding: 8px 12px; margin-top: 15px; margin-bottom: 0; border-left: 4px solid #1e5631; border-radius: 4px 4px 0 0;">
           <strong style="color: #1e5631; font-size: 14px;">
             {{ data_mov.strftime('%d/%m/%Y') }}
@@ -211,7 +181,7 @@
               </td>
 
               <td class="text-center">
-                {# 1 - Entrada #}
+                
                 {% if mov.tipo_movimentacao == 1 %}
                   {% if mov.conciliacao_bancaria and mov.importacao_ofx %}
                     {% if mov.recebimentos_massa is defined and mov.recebimentos_massa|length > 0 %}
@@ -235,7 +205,6 @@
                     Entrada
                   {% endif %}
 
-                {# 2 - Saída / Inclusão de crédito e pagamentos #}
                 {% elif mov.tipo_movimentacao == 2 %}
                   {% if mov.conciliacao_bancaria and mov.importacao_ofx %}
                     {% if mov.fornecedores_pagos_massa is defined and mov.fornecedores_pagos_massa|length > 0 %}
@@ -269,11 +238,9 @@
                     Movimentação genérica
                   {% endif %}
 
-                {# 3 - Cancelamento #}
                 {% elif mov.tipo_movimentacao == 3 %}
                 Cancelamento de movimentação
 
-                {# 4 - Estorno de crédito #}
                 {% elif mov.tipo_movimentacao == 4 %}
                 {% if mov.credito_fornecedor %}
                 Estorno de crédito de fornecedor: {{
@@ -291,11 +258,9 @@
                 Estorno de crédito genérico
                 {% endif %}
 
-                {# 5 - Estorno de saldo de conta #}
                 {% elif mov.tipo_movimentacao == 5 %}
                 Estorno de saldo de conta
 
-                {# Fallback #}
                 {% else %}
                 Movimentação desconhecida
                 {% endif %}
@@ -339,7 +304,6 @@
             </tr>
             {% endfor %}
             
-            <!-- Totalização diária -->
             <tr class="totalizacao-dia no-break" style="background-color: #f0f4f0 !important; border-top: 2px solid #1e5631;">
               <td colspan="3" style="text-align: right; font-weight: 600; color: #1e5631; padding: 8px 10px;">
                 Subtotal {{ data_mov.strftime('%d/%m/%Y') }}:
@@ -364,7 +328,7 @@
         </table>
         {% endfor %}
         {% else %}
-        <!-- Estado vazio -->
+        
         <div style="text-align: center; padding: 50px 0;">
           <h3 style="color: #666;">Nenhuma movimentação encontrada</h3>
           <p style="color: #999;">Não há movimentações financeiras disponíveis para os filtros selecionados.</p>

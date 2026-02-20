@@ -3,12 +3,12 @@
 {% include 'estrutura/header.html' %}
 <link href="{{ url_for('static', filename='css/relatorio-cargas.css') }}" rel="stylesheet">
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             RELATÓRIOS
           </div>
@@ -40,7 +40,7 @@
                 Exportar em PDF
               </button>
             </form>
-            <!-- Formulário Excel Corrigido -->
+            
             <form action="{{ url_for('relatorio_sintetico_fornecedor') }}" method="POST" id="exportExcelForm">
               {% for key, value in dados_corretos.items() %}
               {% if key not in ['exportar_pdf', 'exportar_excel'] %}
@@ -75,13 +75,12 @@
       </div>
     </div>
   </div>
-  <!-- Page body -->
+  
   <div class="page-body">
     <div class="container-xl">
 
       {% include 'estrutura/mensagens_flash.html' %}
 
-      <!-- Indicador do período selecionado -->
       <div class="col-12 mb-3">
         <div class="alert {% if tipo_filtro == 'data' %}alert-info{% else %}alert-success{% endif %} d-flex align-items-center bg-white" role="alert">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -262,7 +261,7 @@
               {% endfor %}
             </div>
             {% else %}
-            <!-- mensagem de nenhum dado -->
+            
             <div class="area-info-card"
               style="padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: white;">
               <div class="icon-extrato" style="font-size: 70px; color: #fc7801; margin-bottom: 15px">❌</div>
@@ -280,7 +279,6 @@
     </div>
   </div>
 
-  <!-- Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="display: grid;">
       <form action="{{ url_for('relatorio_sintetico_fornecedor') }}" method="GET">
@@ -291,7 +289,7 @@
           </div>
           <div class="modal-body">
             <div class="row">
-              <!-- Toggle entre Filtro Semanal e Por Data -->
+              
               <div class="col-12 mb-3">
                 <label class="form-label">Tipo de Filtro</label>
                 <div class="form-selectgroup form-selectgroup-boxes d-flex flex-row">
@@ -326,7 +324,6 @@
                 </div>
               </div>
 
-              <!-- Filtro Semanal -->
               <div id="filtro-semanal" class="col-12 mb-3">
                 <label class="form-label">Selecionar Período</label>
                 <select name="semanaSelecionada" class="form-select" id="semanaSelecionada">
@@ -354,7 +351,6 @@
                 </div>
               </div>
 
-              <!-- Filtro por Data -->
               <div id="filtro-data" class="row" style="display: none;">
                 <div class="col-md-6 mb-3">
                   <label class="form-label">Data Início</label>
@@ -432,45 +428,32 @@
   {% include 'estrutura/footer.html' %}
 
   <script>
-    // Função de teste simples
+    
     function testarFiltros() {
-      console.log('=== TESTE DE FILTROS ===');
 
       const radioSemanal = document.getElementById('radio-semanal');
       const radioData = document.getElementById('radio-data');
       const filtroSemanal = document.getElementById('filtro-semanal');
       const filtroData = document.getElementById('filtro-data');
 
-      console.log('Estado atual:', {
-        radioSemanal: radioSemanal ? radioSemanal.checked : 'NÃO ENCONTRADO',
-        radioData: radioData ? radioData.checked : 'NÃO ENCONTRADO',
-        filtroSemanal: filtroSemanal ? getComputedStyle(filtroSemanal).display : 'NÃO ENCONTRADO',
-        filtroData: filtroData ? getComputedStyle(filtroData).display : 'NÃO ENCONTRADO'
-      });
-
-      // Forçar alternância
       if (radioSemanal && radioData && filtroSemanal && filtroData) {
         if (radioSemanal.checked) {
           radioData.checked = true;
           radioSemanal.checked = false;
           filtroSemanal.style.display = 'none';
           filtroData.style.display = 'block';
-          console.log('Mudou para: DATA');
         } else {
           radioSemanal.checked = true;
           radioData.checked = false;
           filtroSemanal.style.display = 'block';
           filtroData.style.display = 'none';
-          console.log('Mudou para: SEMANAL');
         }
       } else {
         console.error('Elementos não encontrados!');
       }
     }
 
-    // Script para alternar entre filtros
     window.addEventListener('load', function () {
-      console.log('Página carregada completamente');
 
       setTimeout(function () {
         inicializarFiltros();
@@ -478,19 +461,11 @@
     });
 
     function inicializarFiltros() {
-      console.log('Inicializando filtros...');
 
       const radioSemanal = document.getElementById('radio-semanal');
       const radioData = document.getElementById('radio-data');
       const filtroSemanal = document.getElementById('filtro-semanal');
       const filtroData = document.getElementById('filtro-data');
-
-      console.log('Elementos:', {
-        radioSemanal: !!radioSemanal,
-        radioData: !!radioData,
-        filtroSemanal: !!filtroSemanal,
-        filtroData: !!filtroData
-      });
 
       if (!radioSemanal || !radioData || !filtroSemanal || !filtroData) {
         console.error('Elementos não encontrados!');
@@ -498,35 +473,27 @@
       }
 
       function alternarFiltros() {
-        console.log('Alternando para:', radioSemanal.checked ? 'semanal' : 'data');
 
         if (radioSemanal.checked) {
           filtroSemanal.style.display = 'block';
           filtroData.style.display = 'none';
-          console.log('Mostrando filtro semanal');
         } else {
           filtroSemanal.style.display = 'none';
           filtroData.style.display = 'flex';
-          console.log('Mostrando filtro data');
         }
       }
 
-      // Inicializar
       alternarFiltros();
 
-      // Event listeners
       radioSemanal.addEventListener('click', alternarFiltros);
       radioData.addEventListener('click', alternarFiltros);
       radioSemanal.addEventListener('change', alternarFiltros);
       radioData.addEventListener('change', alternarFiltros);
 
-      console.log('Filtros configurados!');
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-      console.log('DOM carregado');
 
-      // Inicializar Tom Select
       document.querySelectorAll('select.form-select').forEach(function (select) {
         new TomSelect(select, {
           create: false,

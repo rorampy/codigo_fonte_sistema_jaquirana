@@ -46,7 +46,6 @@ def cadastrar_motorista():
         cpf = request.form["cpf"]
         celular = request.form["celular"]
 
-        # Obtem somente as que contem informação
         transportadoras_ids = [t for t in transportadoras_ids if t.strip().isdigit()]
 
         campos = {
@@ -128,11 +127,9 @@ def editar_motorista(id):
     validacao_campos_erros = {}
     gravar_banco = True
 
-    # Busca todas as associações ativas e não deletadas para esse motorista
     motoristasAssociados = TransportadoraMotoristaAssocModel.obter_transportadoras_assoc_motorista_id(motorista.id)
     associacoes_atuais = { str(assoc.id): assoc for assoc in motoristasAssociados }
 
-    # Se não houver associação nova, mas o motorista ainda tiver o campo legado preenchido
     if not motoristasAssociados and motorista.transportadora_id:
         assoc_simulada = TransportadoraMotoristaAssocModel(
             transportadora_id=motorista.transportadora_id,
@@ -151,7 +148,6 @@ def editar_motorista(id):
         id_list = request.form.getlist("idTransportadora[]")
         transportadora_id_list = request.form.getlist("transportadoras[]")
 
-        # Obtem somente as que contem informação
         transportadora_id_list = [t for t in transportadora_id_list if t.strip().isdigit()]
 
         campo_transportadora = ", ".join(transportadora_id_list) if transportadora_id_list else ""
@@ -188,7 +184,6 @@ def editar_motorista(id):
         if gravar_banco == True:
             celular_tratado = Tels.remove_pontuacao_telefone_celular_br(celular)
 
-            # === Comparação de Objetos ===
             obj1 = {
                 "transportadora_ids": [str(a.transportadora_id) for a in associacoes_atuais.values()],
                 "nome_completo": motorista.nome_completo.strip(),

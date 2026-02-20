@@ -9,18 +9,15 @@ class RotaFretePrecoBitolaModel(BaseModel):
     
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     
-    # Relacionamento com a rota de frete
     rota_frete_id = db.Column(db.Integer, db.ForeignKey('z_sys_rota_frete.id'), nullable=False)
     rota_frete = db.relationship('RotaFreteModel', backref=db.backref('precos_bitola', lazy=True))
     
-    # Produto e bitola (usando os nomes corretos das tabelas)
     produto_id = db.Column(db.Integer, db.ForeignKey('prod_produto.id'), nullable=False)
     produto = db.relationship('ProdutoModel', backref=db.backref('rota_frete_precos', lazy=True))
     
     bitola_id = db.Column(db.Integer, db.ForeignKey('z_sys_bitola.id'), nullable=False)
     bitola = db.relationship('BitolaModel', backref=db.backref('rota_frete_precos', lazy=True))
     
-    # Preço de frete (em centavos)
     preco_frete_100 = db.Column(db.Integer, nullable=True)
     
     ativo = db.Column(db.Boolean, default=True, nullable=False)

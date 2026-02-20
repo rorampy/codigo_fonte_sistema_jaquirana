@@ -2,7 +2,7 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
@@ -31,14 +31,13 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
       {% include 'estrutura/mensagens_flash.html' %}
 
       <div class="row">
-        <!-- Coluna Esquerda: Extratores já vinculados -->
+        
         <div class="col-md-5">
           <div class="card">
             <div class="card-header">
@@ -81,7 +80,6 @@
           </div>
         </div>
 
-        <!-- Coluna Direita: Formulário para adicionar extratores -->
         <div class="col-md-7">
           <form action="{{ url_for('gerenciar_fornecedor_extratores', fornecedor_id=fornecedor.id) }}" method="POST">
             <div class="card">
@@ -104,7 +102,7 @@
                 </p>
 
                 <div id="container-extratores">
-                  <!-- Primeiro bloco (modelo para clone) -->
+                  
                   <div class="row mb-3 extrator-item">
                     <div class="col-md-9">
                       <label class="form-label">Extrator</label>
@@ -162,26 +160,21 @@
     </div>
   </div>
 
-  <!-- JavaScript para gestão dinâmica de extratores -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const container = document.getElementById('container-extratores');
       if (!container) return;
 
-      // Dados dos extratores já vinculados (pré-carregados pelo backend)
       const idsVinculados = {{ ids_vinculados | tojson }};
 
-      // 1) Pré-popular com extratores já vinculados
       function prePopularExtratores() {
         if (idsVinculados.length === 0) return;
 
-        // Selecionar o primeiro extrator no bloco existente
         const primeiroSelect = container.querySelector('select[name="extratores[]"]');
         if (primeiroSelect && idsVinculados.length > 0) {
           primeiroSelect.value = idsVinculados[0];
         }
 
-        // Criar blocos adicionais para os demais extratores
         for (let i = 1; i < idsVinculados.length; i++) {
           adicionarNovoBloco(idsVinculados[i]);
         }
@@ -189,7 +182,6 @@
         atualizarBotoesRemover();
       }
 
-      // 2) Função para atualizar botões remover
       function atualizarBotoesRemover() {
         const blocos = container.querySelectorAll('.extrator-item');
         blocos.forEach(bloco => {
@@ -200,12 +192,10 @@
         });
       }
 
-      // 3) Função para adicionar novo bloco
       function adicionarNovoBloco(valorPadrao) {
         const blocoModelo = container.querySelector('.extrator-item');
         const novoBloco = blocoModelo.cloneNode(true);
 
-        // Limpar seleção
         const select = novoBloco.querySelector('select[name="extratores[]"]');
         if (select) {
           select.selectedIndex = 0;
@@ -214,7 +204,6 @@
           }
         }
 
-        // Habilitar botão remover
         const btnRemover = novoBloco.querySelector('.btn-remover-extrator');
         if (btnRemover) {
           btnRemover.disabled = false;
@@ -224,7 +213,6 @@
         atualizarBotoesRemover();
       }
 
-      // 4) Gerencia clique em adicionar/remover
       container.addEventListener('click', function (event) {
         if (event.target.closest('.btn-adicionar-extrator')) {
           adicionarNovoBloco();
@@ -239,7 +227,6 @@
         }
       });
 
-      // 5) Pré-popular ao carregar
       prePopularExtratores();
     });
   </script>

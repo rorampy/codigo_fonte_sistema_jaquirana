@@ -23,7 +23,6 @@
           <div class="card-body">
             <div class="row">
 
-              <!-- Empresa Emissora-->
               <div class="col-sm-3 col-md-3">
                 <div class="mb-3">
                   <label class="form-label required">Empresa Emissora</label>
@@ -44,7 +43,6 @@
                 </div>
               </div>
 
-              <!-- Cliente -->
               <div class="col-sm-3 col-md-3">
                 <div class="mb-3">
                   <label class="form-label required">Cliente</label>
@@ -79,7 +77,6 @@
                 </div>
               </div>
 
-              <!-- Bitola -->
               <div class="col-sm-2 col-md-2">
                 <div class="mb-3">
                   <label class="form-label required">Bitola</label>
@@ -94,7 +91,6 @@
                 </div>
               </div>
 
-              <!-- Grupo WhatsApp -->
               <div class="col-sm-2 col-md-2">
                 <div class="mb-3">
                   <label class="form-label">Nome grupo</label>
@@ -112,7 +108,6 @@
                 </div>
               </div>
               
-              <!-- Grupo Certificações -->
               <div class="col-sm-3 col-md-3">
                 <div class="mb-3">
                   <label class="form-label">Certificação</label>
@@ -130,24 +125,9 @@
                 </div>
               </div>
 
-              <!-- Data e hora msg grupo-->
-              <!-- <div class="col-sm-2 col-md-2">
-                <div class="mb-3">
-                  <label class="form-label">Data/hora MSG Grupo</label>
-                  <input type="datetime-local" name="dataHoraSolicitacao"
-                    value="{{ dados_corretos['dataHoraSolicitacao'] }}"
-                    class="form-control {% if 'dataHoraSolicitacao' in campos_obrigatorios or 'dataHoraSolicitacao' in campos_erros %}is-invalid{% endif %}">
-                  <div class="invalid-feedback">
-                    {{ campos_obrigatorios.get('dataHoraSolicitacao') or
-                    campos_erros.get('dataHoraSolicitacao') }}
-                  </div>
-                </div>
-              </div> -->
-
               <div class="row">
                 <h3 class="text-primary">Informações de transporte</h3>
 
-                <!-- Veículo -->
                 <div class="col-sm-2 col-md-2">
                   <div class="mb-3">
                     <label class="form-label required">Placa</label>
@@ -190,7 +170,6 @@
                   </div>
                 </div>
 
-                <!-- Motorista -->
                 <div class="col-sm-3 col-md-3">
                   <div class="mb-3">
                     <label class="form-label required">Motorista</label>
@@ -249,7 +228,6 @@
       const capacidadeCargaInput = document.getElementById('inputcapacidadeCarga');
       const capacidadeCargaHidden = document.getElementById('inputVeiculoId');
 
-      // Inicializar TomSelect para produto
       const tomProduto = new TomSelect(produtoSelect, {
         create: false,
         allowEmptyOption: false,
@@ -259,7 +237,6 @@
         }
       });
 
-      // Inicializar TomSelect para bitola
       let tomBitola = new TomSelect(bitolaSelect, {
         create: false,
         allowEmptyOption: false,
@@ -269,19 +246,16 @@
         }
       });
 
-      // Carregar bitolas quando produto for selecionado
       tomProduto.on('change', function(produtoId) {
         if (produtoId) {
           fetch(`/produto/${produtoId}/bitolas`)
             .then(response => response.json())
             .then(data => {
-              // Destruir e recriar TomSelect de bitola
+              
               tomBitola.destroy();
               
-              // Limpar select de bitola
               bitolaSelect.innerHTML = '<option value selected>Selecione...</option>';
               
-              // Adicionar bitolas do produto
               data.bitolas.forEach(b => {
                 const opt = document.createElement('option');
                 opt.value = b.id;
@@ -289,7 +263,6 @@
                 bitolaSelect.appendChild(opt);
               });
 
-              // Recriar TomSelect
               tomBitola = new TomSelect(bitolaSelect, {
                 create: false,
                 allowEmptyOption: false,
@@ -323,7 +296,6 @@
               capacidadeCargaInput.value = data.capacidade_carga;
               capacidadeCargaHidden.value = veiculoId;
 
-              // Preenche transportadoras
               transportadoraSelect.innerHTML = '<option value selected>Selecione...</option>';
               data.transportadoras.forEach(t => {
                 const opt = document.createElement('option');
@@ -332,7 +304,6 @@
                 transportadoraSelect.appendChild(opt);
               });
 
-              // Preenche motoristas
               motoristaSelect.innerHTML = '<option value selected>Selecione...</option>';
               data.motoristas.forEach(m => {
                 const opt = document.createElement('option');
@@ -359,7 +330,6 @@
       const motoristaSelect = document.getElementById('selectMotorista');
 
       transportadoraSelect.addEventListener('change', function () {
-        console.log('entrei aqui')
         const transportadoraId = this.value;
 
         if (transportadoraId) {
@@ -367,7 +337,6 @@
             .then(response => response.json())
             .then(data => {
 
-              // Preenche motoristas
               motoristaSelect.innerHTML = '<option value selected>Selecione...</option>';
               data.motoristas.forEach(m => {
                 const opt = document.createElement('option');
@@ -385,7 +354,6 @@
         }
       });
 
-      // Inicializa Tom Select nos outros selects
       document.querySelectorAll('select.form-select').forEach(function (select) {
         if (!['selectMotorista', 'selectTransportadora', 'selectBitola', 'selectProduto', 'selectVeiculo'].includes(select.id)) {
           new TomSelect(select, {
@@ -400,7 +368,6 @@
       });
     });
   </script>
-
 
 </div>
 {% endblock conteudo %}

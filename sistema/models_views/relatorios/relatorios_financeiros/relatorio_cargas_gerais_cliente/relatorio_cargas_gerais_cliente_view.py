@@ -20,7 +20,6 @@ def relatorio_cargas_gerais_cliente():
     changelog = ChangelogModel.obter_numero_versao_changelog_mais_recente()
     dataHoje = datetime.now().strftime("%d-%m-%Y")
     
-    # Obter filtros
     data_inicio = request.form.get("dataInicio")
     data_fim = request.form.get("dataFim")
     cliente = request.form.get("clienteCarga")
@@ -31,7 +30,6 @@ def relatorio_cargas_gerais_cliente():
     exportar_pdf = request.form.get("exportar_pdf")
     exportar_excel = request.form.get("exportar_excel")
     
-    # Filtrar registros
     registros = RegistroOperacionalModel.filtrar_registros_carga_cliente(
         data_inicio=data_inicio,
         data_fim=data_fim,
@@ -45,26 +43,21 @@ def relatorio_cargas_gerais_cliente():
     dados_corretos = request.form
     
     if exportar_pdf or exportar_excel:
-        # Processar registros para exportação
         dados_exportacao = []
         
         for item in registros:
             registro = item['registro']
             
-            # Calcular valores
             peso_nf = registro.peso_ton_nf if registro.peso_ton_nf else 0
             peso_ticket = registro.peso_liquido_ticket if registro.peso_liquido_ticket else 0
             peso_diferenca = round(peso_nf - peso_ticket, 2)
             
-            # Manter preco_nf em centavos para Excel
             preco_nf_centavos = registro.preco_un_nf if registro.preco_un_nf else 0
             preco_nf_float = preco_nf_centavos / 100
             
-            # Calcular valores em centavos (para usar formatar_float_para_brl no template)
             valor_total_nf_centavos = round(peso_nf * preco_nf_float * 100)
             valor_complementar_centavos = round(peso_diferenca * preco_nf_float * 100)
             
-            # Obter informações adicionais
             placa = registro.solicitacao.veiculo.placa_veiculo if registro.solicitacao and registro.solicitacao.veiculo else '-'
             
             origem = ''
@@ -98,29 +91,27 @@ def relatorio_cargas_gerais_cliente():
                 'nf': numero_nf,
                 'peso_liquido': peso_ticket,
                 'peso_nfe': peso_nf,
-                'preco_nfe': preco_nf_centavos,  # Em centavos para template
-                'preco_nfe_float': preco_nf_float,  # Float para Excel
-                'total_nfe': valor_total_nf_centavos,  # Em centavos para template
-                'total_nfe_float': valor_total_nf_centavos / 100,  # Float para Excel
-                'valor_complementar': valor_complementar_centavos,  # Em centavos para template
-                'valor_complementar_float': valor_complementar_centavos / 100,  # Float para Excel
+                'preco_nfe': preco_nf_centavos,
+                'preco_nfe_float': preco_nf_float,
+                'total_nfe': valor_total_nf_centavos,
+                'total_nfe_float': valor_total_nf_centavos / 100,
+                'valor_complementar': valor_complementar_centavos,
+                'valor_complementar_float': valor_complementar_centavos / 100,
                 'peso_complementar': peso_diferenca
             })
         
-        # Agrupar por cliente
         dados_exportacao.sort(key=lambda x: x['cliente'])
         registros_agrupados = []
         
         for cliente_nome, grupo_cliente in groupby(dados_exportacao, key=lambda x: x['cliente']):
             lista_cliente = list(grupo_cliente)
             
-            # Calcular totais por cliente
             total_peso_liquido = sum(item['peso_liquido'] for item in lista_cliente)
             total_peso_nfe = sum(item['peso_nfe'] for item in lista_cliente)
-            total_nfe = sum(item['total_nfe'] for item in lista_cliente)  # Em centavos
-            total_nfe_float = sum(item['total_nfe_float'] for item in lista_cliente)  # Float para Excel
-            total_valor_complementar = sum(item['valor_complementar'] for item in lista_cliente)  # Em centavos
-            total_valor_complementar_float = sum(item['valor_complementar_float'] for item in lista_cliente)  # Float para Excel
+            total_nfe = sum(item['total_nfe'] for item in lista_cliente)
+            total_nfe_float = sum(item['total_nfe_float'] for item in lista_cliente)
+            total_valor_complementar = sum(item['valor_complementar'] for item in lista_cliente)
+            total_valor_complementar_float = sum(item['valor_complementar_float'] for item in lista_cliente)
             total_peso_complementar = sum(item['peso_complementar'] for item in lista_cliente)
             
             registros_agrupados.append({
@@ -129,10 +120,10 @@ def relatorio_cargas_gerais_cliente():
                 'totais': {
                     'peso_liquido': total_peso_liquido,
                     'peso_nfe': total_peso_nfe,
-                    'total_nfe': total_nfe,  # Em centavos para template
-                    'total_nfe_float': total_nfe_float,  # Float para Excel
-                    'valor_complementar': total_valor_complementar,  # Em centavos para template
-                    'valor_complementar_float': total_valor_complementar_float,  # Float para Excel
+                    'total_nfe': total_nfe,
+                    'total_nfe_float': total_nfe_float,
+                    'valor_complementar': total_valor_complementar,
+                    'valor_complementar_float': total_valor_complementar_float,
                     'peso_complementar': total_peso_complementar
                 }
             })
@@ -152,12 +143,9 @@ def relatorio_cargas_gerais_cliente():
             return resposta
         
         if exportar_excel:
-            # Preparar dados para Excel
             linhas_excel = []
             
-            # Dados por cliente
             for grupo in registros_agrupados:
-                # Registros do cliente
                 for idx, reg in enumerate(grupo['registros']):
                     linhas_excel.append({
                         'Placa': reg['placa'],
@@ -173,7 +161,6 @@ def relatorio_cargas_gerais_cliente():
                         'Peso Complementar': f"{reg['peso_complementar']:.2f}" if reg['peso_complementar'] else '-'
                     })
                 
-                # Linha de totais do cliente
                 linhas_excel.append({
                     'Placa': '',
                     'Origem': '',
@@ -188,7 +175,6 @@ def relatorio_cargas_gerais_cliente():
                     'Peso Complementar': f"{grupo['totais']['peso_complementar']:.2f} TN"
                 })
                 
-                # Linha em branco entre clientes
                 linhas_excel.append({
                     'Placa': '', 'Origem': '', 'Cliente': '', 'Produto/Bitola': '',
                     'NF': '', 'Peso Líquido (Ton)': '', 'Peso NFe': '', 'Preço NFe': '',
@@ -199,7 +185,6 @@ def relatorio_cargas_gerais_cliente():
             resposta = ManipulacaoArquivos.exportar_excel(linhas_excel, nome_arquivo_saida)
             return resposta
     
-    # Se não for exportação, redirecionar
     from flask import redirect, url_for, flash
     flash(("Selecione uma opção de exportação (Excel ou PDF)", "warning"))
     return redirect(url_for('principal'))

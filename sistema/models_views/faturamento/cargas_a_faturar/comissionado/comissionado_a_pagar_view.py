@@ -57,7 +57,6 @@ def listagem_comissionados_a_pagar():
     descricao_conciliar = dados_conciliacao.get('descricao')
     fitid_conciliar = dados_conciliacao.get('fitid')
 
-    # Obter semanas disponíveis
     semanas_disponiveis = UtilitariosSemana.obter_semanas_do_mes_atual()
     semana_atual_info = None
     valor_padrao_semana = None
@@ -87,13 +86,11 @@ def listagem_comissionados_a_pagar():
         cliente = request.args.get("clienteCarga")
         statusPagamento = request.args.get("statusPagamentoCarga")
 
-        # Determinar data_inicio e data_fim baseado no tipo de filtro
         if tipo_filtro == "data" and data_inicio_form and data_fim_form:
             from datetime import datetime
             data_inicio = datetime.strptime(data_inicio_form, "%Y-%m-%d").date()
             data_fim = datetime.strptime(data_fim_form, "%Y-%m-%d").date()
         else:
-            # Usar filtro semanal
             data_inicio, data_fim = UtilitariosSemana.processar_semana_selecionada(
                 semana_selecionada or valor_padrao_semana
             )
@@ -113,16 +110,8 @@ def listagem_comissionados_a_pagar():
             tipo_data_filtro=request.args.get("tipoDataFiltro", "data_entrega"),
         )
         
-        # for registro_dict in registros:
-        #     registro = registro_dict.get('registro')
-        #     faturamento_codigo = FaturamentoModel.buscar_faturamento_origem_por_carga_pagar_id(registro.id, 'comissionado')
-        #     registro_dict['cod_faturamento'] = faturamento_codigo
     else:
         registros = ComissionadoPagarModel.obter_comissionados_agrupados()
-        # for registro_dict in registros:
-        #     registro = registro_dict.get('registro')
-        #     faturamento_codigo = FaturamentoModel.buscar_faturamento_origem_por_carga_pagar_id(registro.id, 'comissionado')
-        #     registro_dict['cod_faturamento'] = faturamento_codigo
 
     return render_template(
         "/financeiro/comissionado_a_pagar_listagem.html",
@@ -200,29 +189,28 @@ def comissionado_a_pagar(id):
             registro.utiliza_credito = 0
             registro.situacao_pagamento_id = 5
             
-             # Criação do faturamento para o registro individual (adaptado para extrator)
             novo_faturamento = FaturamentoModel(
                 usuario_id=current_user.id,
                 codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
-                valor_total=registro.valor_total_a_pagar_100,  # Valor líquido após crédito
-                ids_comissionados=str(registro.id),  # Para extrator usa ids_extratores
+                valor_total=registro.valor_total_a_pagar_100,
+                ids_comissionados=str(registro.id),
                 utilizou_credito=0,
                 situacao_pagamento_id=7,
-                tipo_operacao=1, # carga
-                direcao_financeira=2 # despesa
+                tipo_operacao=1,
+                direcao_financeira=2
             )
             if hasattr(novo_faturamento, 'valor_bruto_total'):
                 novo_faturamento.valor_bruto_total = registro.valor_total_a_pagar_100 or 0
             if hasattr(novo_faturamento, 'valor_credito_aplicado'):
                 novo_faturamento.valor_credito_aplicado =  0
             if hasattr(novo_faturamento, 'valor_fornecedor'):
-                novo_faturamento.valor_fornecedor = 0  # Para extrator, valor fornecedor é 0
+                novo_faturamento.valor_fornecedor = 0
             if hasattr(novo_faturamento, 'valor_transportadora'):
-                novo_faturamento.valor_transportadora = 0  # Para extrator, valor transportadora é 0
+                novo_faturamento.valor_transportadora = 0
             if hasattr(novo_faturamento, 'valor_extrator'):
-                novo_faturamento.valor_extrator = 0  # Valor vai para extrator
+                novo_faturamento.valor_extrator = 0
             if hasattr(novo_faturamento, 'valor_comissionado'):
-                novo_faturamento.valor_comissionado = registro.valor_total_a_pagar_100  # Valor vai para comissionado
+                novo_faturamento.valor_comissionado = registro.valor_total_a_pagar_100
                 
             preco_custo_registro = registro.preco_custo_bitola_100 or 0
             
@@ -233,7 +221,6 @@ def comissionado_a_pagar(id):
                 elif registro_oper.numero_nota_fiscal:
                     numero_nf = registro_oper.numero_nota_fiscal
 
-            # Detalhes para extrator (vai no array de fretes)
             detalhes_comissionados = [{
                 "comissionado_a_pagar_id": registro.id,
                 "comissionado_id": registro.comissionado_id if registro.comissionado_id else None,
@@ -259,7 +246,6 @@ def comissionado_a_pagar(id):
                 "fornecedor_identificacao": registro_oper.solicitacao.fornecedor.identificacao if registro_oper.solicitacao and registro_oper.solicitacao.fornecedor else ""
             }]
 
-            # Salvar detalhes (array vazio para fornecedores, detalhes_extratores)
             novo_faturamento.salvar_detalhes([], [], [], detalhes_comissionados)
 
             db.session.add(novo_faturamento)
@@ -301,7 +287,6 @@ def comissionado_a_pagar(id):
         )
 
     except Exception as e:
-        print(e)
         db.session.rollback()
         dados_conciliacao = session.get('dados_conciliacao', {})
         if dados_conciliacao.get('transacao_id'):
@@ -340,22 +325,18 @@ def comissionado_a_pagar_massa():
             flash(("Nenhum registro válido encontrado para faturamento!", "warning"))
             return redirect(url_for("listagem_comissionados_a_pagar"))
         
-        # Verificar se algum registro já foi faturado
         if len(registros) != len(ids_list):
             flash(("Alguns registros selecionados não estão disponíveis para faturamento!", "warning"))
 
-        # Verificar transação OFX para conciliação
         transacao_ofx = None
         if conciliar_transacao_id:
             transacao_ofx = ImportacaoOfx.query.get(conciliar_transacao_id)
 
-        # Atribui registro operacional a cada registro de comissionado
         for registro in registros:
             if not hasattr(registro, 'registro_operacional') or registro.registro_operacional is None:
                 registro_oper = RegistroOperacionalModel.obter_registro_solicitacao_por_id(registro.solicitacao_id)
                 registro.registro_operacional = registro_oper
         
-        # Processamento de comissionados
         comissionados_dict = {}
         valor_total_geral = 0
         
@@ -376,9 +357,7 @@ def comissionado_a_pagar_massa():
             comissionados_dict[comissionado_id]['registros'].append(registro)
             comissionados_dict[comissionado_id]['valor_total'] += registro.valor_total_a_pagar_100
 
-        # Processamento de confirmação de faturação
         if request.method == "POST":
-            # Processamento de valores editados pelo usuario
             valores_calculados_json = request.form.get("valores_calculados", "")
             valores_calculados = {}
 
@@ -387,29 +366,24 @@ def comissionado_a_pagar_massa():
             if valores_calculados_json:
                 valores_calculados = json.loads(valores_calculados_json)
 
-            # Atualizar registros de comissionados com valores calculados
             for registro in registros:
                 registro_id_str = str(registro.id)
                 if registro_id_str in valores_calculados:
                     dados_calculo = valores_calculados[registro_id_str]
                     try:
-                        # Verificar se o preço de custo foi alterado
                         if 'preco_custo' in dados_calculo:
                             preco_custo_frontend = float(dados_calculo['preco_custo'])
                             preco_custo_frontend_100 = preco_custo_frontend * 100
                             
-                            # Comparar com valor original do banco
                             preco_original = registro.preco_custo_bitola_100 or 0
                             if preco_custo_frontend_100 != preco_original:
                                 registro.preco_custo_bitola_100 = preco_custo_frontend_100
                                 alteracoes_detectadas = True
                         
-                        # Verificar se o valor total foi alterado
                         if 'valor_total' in dados_calculo:
                             valor_total_frontend = float(dados_calculo['valor_total'])
                             valor_total_frontend_100 = valor_total_frontend * 100
                             
-                            # Comparar com valor original do banco
                             valor_original = registro.valor_total_a_pagar_100 or 0
                             if valor_total_frontend_100 != valor_original:
                                 registro.valor_total_a_pagar_100 = valor_total_frontend_100
@@ -418,11 +392,9 @@ def comissionado_a_pagar_massa():
                         flash(f"Erro nos valores calculados para registro {registro.id}: {str(e)}", "warning")
                         return redirect(request.url)
 
-            # Salva as alterações de preço de custo e valores totais, se houver
             if alteracoes_detectadas:
                 db.session.commit()
 
-            # Recalcula totais após a verificação de edição de valores
             valor_total_geral = 0
 
             for comissionado_id, dados in comissionados_dict.items():
@@ -434,16 +406,13 @@ def comissionado_a_pagar_massa():
                         dados['valor_total'] += valor_registro
                         valor_total_geral += valor_registro
 
-            # Valor final a faturar (sem crédito para comissionados)
             valor_final_a_faturar = valor_total_geral
 
-            # Criando detalhes json para frontend
             detalhes_comissionados = []
             for comissionado_id, dados in comissionados_dict.items():
                 for reg in dados['registros']:
-                    # Para comissionados não há crédito
                     valor_bruto_registro = reg.valor_total_a_pagar_100 or 0
-                    valor_credito_registro = 0  # Sempre 0 para comissionados
+                    valor_credito_registro = 0
                     valor_faturado = valor_bruto_registro
                     preco_custo_registro = reg.preco_custo_bitola_100 or 0
 
@@ -471,7 +440,7 @@ def comissionado_a_pagar_massa():
                         "produto": reg.solicitacao.produto.nome if reg.solicitacao and reg.solicitacao.produto else "",
                         "bitola": reg.solicitacao.bitola.bitola if reg.solicitacao and reg.solicitacao.bitola else "",
                         "data_entrega": reg.data_entrega_ticket.strftime('%d/%m/%Y') if reg.data_entrega_ticket else "",
-                        "utiliza_credito": 0,  # Sempre 0 para comissionados
+                        "utiliza_credito": 0,
                         "registro_operacional_id": reg.registro_operacional.id if reg.registro_operacional else "",
                         "placa_veiculo": reg.solicitacao.veiculo.placa_veiculo if reg.solicitacao and reg.solicitacao.veiculo else "",
                         "motorista": reg.solicitacao.motorista.nome_completo if reg.solicitacao and reg.solicitacao.motorista else "",
@@ -488,7 +457,6 @@ def comissionado_a_pagar_massa():
                         modulo=f"informar_faturamento_comissionado_{reg.id}_massa",
                     )
 
-            # Criação de novo faturamento
             novo_faturamento = FaturamentoModel(
                 usuario_id=current_user.id,
                 codigo_faturamento=FaturamentoModel.gerar_codigo_novo_faturamento(),
@@ -496,25 +464,23 @@ def comissionado_a_pagar_massa():
                 ids_comissionados=ids_selecionados,  
                 utilizou_credito=False, 
                 situacao_pagamento_id=7,
-                tipo_operacao=1, # carga
-                direcao_financeira=2 # despesa
+                tipo_operacao=1,
+                direcao_financeira=2
             )
 
-            # Se o modelo suporta campos extras, adicionar:
             if hasattr(novo_faturamento, 'valor_bruto_total'):
                 novo_faturamento.valor_bruto_total = valor_total_geral
             if hasattr(novo_faturamento, 'valor_credito_aplicado'):
-                novo_faturamento.valor_credito_aplicado = 0  # Sempre 0 para comissionados
+                novo_faturamento.valor_credito_aplicado = 0
             if hasattr(novo_faturamento, 'valor_fornecedor'):
-                novo_faturamento.valor_fornecedor = 0  # Para comissionado, valor fornecedor é 0
+                novo_faturamento.valor_fornecedor = 0
             if hasattr(novo_faturamento, 'valor_transportadora'):
-                novo_faturamento.valor_transportadora = 0  # Para comissionado, valor transportadora é 0
+                novo_faturamento.valor_transportadora = 0
             if hasattr(novo_faturamento, 'valor_extrator'):
-                novo_faturamento.valor_extrator = 0  # Para comissionado, valor extrator é 0
+                novo_faturamento.valor_extrator = 0
             if hasattr(novo_faturamento, 'valor_comissionado'):
-                novo_faturamento.valor_comissionado = valor_final_a_faturar  # Valor vai para comissionado
+                novo_faturamento.valor_comissionado = valor_final_a_faturar
 
-            # Salvar detalhes (detalhes_comissionados para comissionados, arrays vazios para outros)
             novo_faturamento.salvar_detalhes([], [], [], detalhes_comissionados)
             db.session.add(novo_faturamento)
 
@@ -527,12 +493,11 @@ def comissionado_a_pagar_massa():
                 transacao_ofx.observacoes_conciliacao = f"Conciliado com faturamento em massa de comissionado ID {novo_faturamento.id}"
 
             try:
-                # Atualizar situação financeira dos registros de comissionado a pagar
                 for comissionado_id, dados in comissionados_dict.items():
                     for reg in dados['registros']:
-                        reg.utiliza_credito = 0  # Sempre 0 para comissionados
-                        reg.valor_credito_100 = 0  # Sempre 0 para comissionados
-                        reg.situacao_pagamento_id = 5  # 5 = Faturado
+                        reg.utiliza_credito = 0
+                        reg.valor_credito_100 = 0
+                        reg.situacao_pagamento_id = 5
 
                 db.session.commit()
 
@@ -564,12 +529,10 @@ def comissionado_a_pagar_massa():
         )
 
     except Exception as e:
-        print(f"[ERROR] Erro interno: {e}")
         db.session.rollback()
         dados_conciliacao = session.get('dados_conciliacao', {})
         if dados_conciliacao.get('transacao_id'):
             limpar_dados_conciliacao()
-            print("[DEBUG] Dados de conciliação limpos devido ao erro")
         flash((f"Erro interno: {str(e)}", "error"))
         return redirect(url_for("listagem_comissionados_a_pagar"))
 
@@ -675,7 +638,6 @@ def atualizar_precos_comissionado():
                 return redirect(url_for("listagem_comissionados_a_pagar"))
             
             try:
-                # Validar formato das datas
                 data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
                 data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
                 
@@ -689,7 +651,6 @@ def atualizar_precos_comissionado():
         else:
             return redirect(url_for("listagem_comissionados_a_pagar"))
         
-        # Converter comissionado_id para None se for "todos"
         comissionado_filtro = None if comissionado_id == "todos" else comissionado_id
         
         task = sincronizar_precos_comissionados(data_inicio, data_fim, comissionado_filtro)

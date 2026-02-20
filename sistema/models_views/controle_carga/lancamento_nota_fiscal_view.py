@@ -28,12 +28,11 @@ def limpar_todos_arquivos_anexados(objeto_nf_xml=None, objeto_nf_pdf=None, objet
                     os.remove(arquivo.caminho)
                 db.session.delete(arquivo)
             except Exception as cleanup_error:
-                print(f"Erro ao limpar arquivo {arquivo}: {cleanup_error}")
+                pass
     
     try:
         db.session.commit()
     except Exception as e:
-        print(f"Erro ao commitar remoção de arquivos: {e}")
         db.session.rollback()
 
 @app.route("/controle-cargas/notas-fiscais/detalhe/<int:id>", methods=["GET", "POST"])
@@ -63,7 +62,6 @@ def cadastrar_emissao(id):
     gravar_banco = True
 
     if request.method == "POST":
-        print(f"[DEBUG] Iniciando processamento POST para solicitação: {id}")
         
         arquivo_nf_xml = request.files.get("arquivoNfXml")
         arquivo_nf_pdf = request.files.get("arquivoNfPdf")
@@ -73,17 +71,10 @@ def cadastrar_emissao(id):
         lancamentoFrf = request.form.get("lancamentoFrf")
         cargaFrf = True if lancamentoFrf == 'lancamentoFrf' else False
 
-        print(f"[DEBUG] Parâmetros recebidos:")
-        print(f"  - cargaFrf: {cargaFrf}")
-        print(f"  - possui_nfe_excesso: {possui_nfe_excesso}")
-        print(f"  - arquivo_nf_xml: {arquivo_nf_xml.filename if arquivo_nf_xml else None}")
-        print(f"  - arquivo_nf_pdf: {arquivo_nf_pdf.filename if arquivo_nf_pdf else None}")
 
         campos = {}
         if cargaFrf:
-            print(f"[DEBUG] Extraindo dados FRF do formulário...")
             dados_frf = RegistroOperacionalModel.extrair_dados_frf_form(request)
-            print(f"[DEBUG] Dados FRF extraídos: {dados_frf is not None}")
             campos = {
                 "destinatarioFrf": ["Destinatário", dados_frf["destinatario_nome"]],
                 "destinatarioNumeroDocumento": ["CPF/CNPJ", dados_frf["destinatario_cnpj_cpf"]],
@@ -96,25 +87,20 @@ def cadastrar_emissao(id):
                 "valorTotalFrf": ["Valor", dados_frf["valor_total_nota_100"]],
             }
         else:
-            # Validar se pelo menos um arquivo (XML ou PDF) foi enviado
             if not ((arquivo_nf_xml and arquivo_nf_xml.filename) or (arquivo_nf_pdf and arquivo_nf_pdf.filename)):
                 campos["arquivoNf"] = ["Arquivo NF (XML ou PDF)", None]
         if possui_nfe_excesso == "sim":
-            # Validar se pelo menos um arquivo de excesso (XML ou PDF) foi enviado
             if not ((arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename) or (arquivo_nfe_excesso_pdf and arquivo_nfe_excesso_pdf.filename)):
                 campos["arquivoNFeExcesso"] = ["Arquivo NFe de Excesso (XML ou PDF)", None]
 
         validacao_campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)
         gravar_banco = True
-        print(f"[DEBUG] Validação campos obrigatórios - resultado: {validacao_campos_obrigatorios}")
         if not "validado" in validacao_campos_obrigatorios:
-            print(f"[DEBUG] Campos obrigatórios falharam, não gravando no banco")
             gravar_banco = False
             flash((f"Verifique os campos destacados em vermelho!", "warning"))
 
         validacao_campos_erros = {}
         if cargaFrf:
-            # Validação CPF/CNPJ Destinatário
             numero_documento_destinatario = ValidaDocs.somente_numeros(dados_frf["destinatario_cnpj_cpf"])
             if len(numero_documento_destinatario) > 11:
                 valida_documento_destinatario = ValidaForms.validar_cnpj(numero_documento_destinatario)
@@ -127,7 +113,6 @@ def cadastrar_emissao(id):
                     gravar_banco = False
                     validacao_campos_erros['destinatarioNumeroDocumento'] = valida_documento_destinatario.get('cpf', 'Erro na validação do CPF')
 
-            # Validação CPF/CNPJ Transportadora
             numero_documento_transportadora = ValidaDocs.somente_numeros(dados_frf["transportador_cnpj_cpf"])
             if len(numero_documento_transportadora) > 11:
                 valida_documento_transportadora = ValidaForms.validar_cnpj(numero_documento_transportadora)
@@ -142,29 +127,17 @@ def cadastrar_emissao(id):
 
         if gravar_banco:
             try:
-                print(f"[DEBUG] Iniciando processamento - Solicitação ID: {solicitacao.id}")
-                print(f"[DEBUG] Tipo de processamento - cargaFrf: {cargaFrf}")
-                print(f"[DEBUG] gravar_banco: {gravar_banco}")
                 
                 if cargaFrf:
-                    print(f"[DEBUG] Processando FRF - dados_frf keys: {list(dados_frf.keys()) if 'dados_frf' in locals() else 'N/A'}")
-                    # Conversão dos campos
                     try:
-                        print(f"[DEBUG] Convertendo peso: {dados_frf['peso_ton_nf']}")
                         pesoFrf_float = float(str(dados_frf["peso_ton_nf"]).replace(',', '.') if dados_frf["peso_ton_nf"] else 0)
-                        print(f"[DEBUG] Peso convertido: {pesoFrf_float}")
                         
-                        print(f"[DEBUG] Convertendo valor: {dados_frf['valor_total_nota_100']}")
                         valorTotalFrf_100 = int(ValoresMonetarios.converter_string_brl_para_float(dados_frf["valor_total_nota_100"]) * 100) if dados_frf["valor_total_nota_100"] else 0
-                        print(f"[DEBUG] Valor convertido: {valorTotalFrf_100}")
                     except Exception as conv_error:
-                        print(f"[ERRO] Erro na conversão de valores FRF: {conv_error}")
                         raise
-                    print(f"[DEBUG] Buscando registro operacional para solicitação: {solicitacao.id}")
                     obterRegistro = RegistroOperacionalModel.obter_registro_solicitacao_por_id(solicitacao.id)
                     
                     if solicitacao.certificacao_id:
-                        # Certificação - Atualiza o estoque da certificação associada à carga
                         resultado_atualizacao = CertificacoesModel.atualizar_estoque(pesoFrf_float, solicitacao.certificacao_id)
                         if "erro" in resultado_atualizacao or "invalido" in resultado_atualizacao:
                             if "invalido" in resultado_atualizacao:
@@ -218,44 +191,32 @@ def cadastrar_emissao(id):
                     flash((f"FRF lançado com sucesso!", "success"))
                     return redirect(url_for("listagem_solicitacoes"))
                 elif (arquivo_nf_xml and arquivo_nf_xml.filename) or (arquivo_nf_pdf and arquivo_nf_pdf.filename):
-                    print(f"[DEBUG] Processando NF - XML: {bool(arquivo_nf_xml and arquivo_nf_xml.filename)}, PDF: {bool(arquivo_nf_pdf and arquivo_nf_pdf.filename)}")
-                    print(f"[DEBUG] possui_nfe_excesso: {possui_nfe_excesso}")
                     
                     objeto_nf_xml = None
                     objeto_nf_pdf = None
                     
                     if arquivo_nf_xml and arquivo_nf_xml.filename:
-                        print(f"[DEBUG] Processando arquivo XML: {arquivo_nf_xml.filename}, mimetype: {arquivo_nf_xml.mimetype}")
                         if arquivo_nf_xml.mimetype in ["application/xml", "text/xml"]:
-                            print(f"[DEBUG] Fazendo upload do arquivo XML...")
                             objeto_nf_xml = upload_arquivo(
                                 arquivo_nf_xml, "UPLOAD_ARQUIVO_NF", f"{solicitacao.id}_xml"
                             )
-                            print(f"[DEBUG] Upload XML concluído, ID: {objeto_nf_xml.id if objeto_nf_xml else 'ERRO'}")
                         else:
-                            print(f"[ERRO] Tipo MIME inválido para XML: {arquivo_nf_xml.mimetype}")
                             flash(("O arquivo XML deve ter o tipo correto.", "warning"))
                             return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                     
                     if arquivo_nf_pdf and arquivo_nf_pdf.filename:
-                        print(f"[DEBUG] Processando arquivo PDF: {arquivo_nf_pdf.filename}, mimetype: {arquivo_nf_pdf.mimetype}")
                         if arquivo_nf_pdf.mimetype == "application/pdf":
-                            print(f"[DEBUG] Fazendo upload do arquivo PDF...")
                             objeto_nf_pdf = upload_arquivo(
                                 arquivo_nf_pdf, "UPLOAD_ARQUIVO_NF", f"{solicitacao.id}_pdf"
                             )
-                            print(f"[DEBUG] Upload PDF concluído, ID: {objeto_nf_pdf.id if objeto_nf_pdf else 'ERRO'}")
                         else:
-                            print(f"[ERRO] Tipo MIME inválido para PDF: {arquivo_nf_pdf.mimetype}")
                             flash(("O arquivo PDF deve ter o tipo correto.", "warning"))
                             return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                     
                     
                     try:
-                        print(f"[DEBUG] Extraindo dados da NF - objeto_nf_xml: {objeto_nf_xml is not None}")
                         
                         if not objeto_nf_xml:
-                            print(f"[AVISO] Tentativa de lançar NF sem arquivo XML.")
                             limpar_todos_arquivos_anexados(objeto_nf_xml, objeto_nf_pdf)
                             flash(("Para finalizar o lançamento, é preciso enviar o arquivo XML da nota fiscal. O PDF é opcional e pode ser usado para visualização.","warning"))
                             return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
@@ -263,15 +224,9 @@ def cadastrar_emissao(id):
                         dados_nf = RegistroOperacionalModel.extrair_dados_nota_fiscal(
                             objeto_nf_xml=objeto_nf_xml
                         )
-                        print(f"[DEBUG] Dados extraídos com sucesso: {dados_nf is not None}")
                         
                         if dados_nf:
-                            print(f"[DEBUG] Dados extraídos da NF:")
-                            print(f"  - numero_nota_fiscal: {dados_nf.get('numero_nota_fiscal')}")
-                            print(f"  - chave_acesso: {dados_nf.get('chave_acesso')}")
-                            print(f"  - razao_social_emissor: {dados_nf.get('razao_social_emissor')}")
-                            print(f"  - peso_ton_nf: {dados_nf.get('peso_ton_nf')}")
-                            print(f"  - valor_total_nota_100: {dados_nf.get('valor_total_nota_100')}")
+                            pass
                         
                         if not dados_nf:
                             
@@ -282,18 +237,14 @@ def cadastrar_emissao(id):
                         peso_nf = dados_nf["peso_ton_nf"]
                         preco_un = dados_nf["preco_un_nf"]
                         
-                        print(f"[DEBUG] Peso NF extraído: {peso_nf}")
-                        print(f"[DEBUG] Preço unitário extraído: {preco_un}")
                         
                         if peso_nf is None or peso_nf < 0 or peso_nf == "":
-                            print(f"[ERRO] Peso inválido detectado: {peso_nf}")
                             
                             limpar_todos_arquivos_anexados(objeto_nf_xml, objeto_nf_pdf)
                             flash(("O peso extraído da nota fiscal é inválido! Entre em contato com o suporte!", "warning"))
                             return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                             
                     except Exception as e:
-                        print(f"[ERRO] Erro ao extrair dados da NF: {e}")
                         
                         limpar_todos_arquivos_anexados(objeto_nf_xml, objeto_nf_pdf)
                         flash(("O XML da nota fiscal apresentou inconsistências ou está em formato inválido. Por favor, revise o arquivo e envie novamente.", "warning"))
@@ -306,23 +257,18 @@ def cadastrar_emissao(id):
                     peso_total_com_excesso = peso_nf
                     
                     if possui_nfe_excesso == "sim" and ((arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename) or (arquivo_nfe_excesso_pdf and arquivo_nfe_excesso_pdf.filename)):
-                        print(f"[DEBUG] Processando NFe de excesso...")
 
                         if not (arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename):
-                            print(f"[AVISO] Tentativa de lançar NFe de excesso sem arquivo XML")
                             limpar_todos_arquivos_anexados(objeto_nf_xml, objeto_nf_pdf)
                             flash(("Para lançar o excesso, é necessário enviar o arquivo XML da nota de excesso. O PDF é opcional.", "warning"))
                             return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                         
                         if arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename:
-                            print(f"[DEBUG] Processando XML de excesso: {arquivo_nfe_excesso_xml.filename}")
                             if arquivo_nfe_excesso_xml.mimetype in ["application/xml", "text/xml"]:
                                 objeto_nf_excesso_xml = upload_arquivo(
                                     arquivo_nfe_excesso_xml, "UPLOAD_ARQUIVO_NF_EXCESSO", f"{solicitacao.id}_excesso_xml"
                                 )
-                                print(f"[DEBUG] Upload XML excesso concluído, ID: {objeto_nf_excesso_xml.id if objeto_nf_excesso_xml else 'ERRO'}")
                             else:
-                                print(f"[ERRO] Tipo MIME inválido para XML de excesso: {arquivo_nfe_excesso_xml.mimetype}")
                                 flash(("O arquivo XML de excesso deve ter o tipo correto.", "warning"))
                                 return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                         
@@ -360,7 +306,6 @@ def cadastrar_emissao(id):
                                 return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                                 
                         except Exception as e:
-                            print(f"[ERRO] Erro ao extrair dados da NFe de excesso: {e}")
                             
                             limpar_todos_arquivos_anexados(objeto_nf_xml, objeto_nf_pdf, objeto_nf_excesso_xml, objeto_nf_excesso_pdf)
                             flash(("Erro ao processar os arquivos da NFe de excesso.", "warning"))
@@ -375,16 +320,9 @@ def cadastrar_emissao(id):
                     valor_total_nota_100 = dados_nf["valor_total_nota_100"]
 
                     
-                    print(f"[DEBUG] Buscando registro operacional para atualização - Solicitação: {solicitacao.id}")
                     obterRegistro = RegistroOperacionalModel.obter_registro_solicitacao_por_id(solicitacao.id)
-                    print(f"[DEBUG] Registro para atualização encontrado: {obterRegistro is not None}")
                     if obterRegistro:
-                        print(f"[DEBUG] Atualizando registro existente - ID: {obterRegistro.id}")
-                        print(f"[DEBUG] Verificando duplicatas antes da atualização:")
-                        print(f"  - Novo número NF: {dados_nf['numero_nota_fiscal']}")
-                        print(f"  - Nova chave de acesso: {dados_nf['chave_acesso']}")
                         
-                        # Verificar se outro registro já tem os mesmos dados (excluindo o atual)
                         conflito_numero = RegistroOperacionalModel.query.filter(
                             RegistroOperacionalModel.numero_nota_fiscal == dados_nf["numero_nota_fiscal"],
                             RegistroOperacionalModel.id != obterRegistro.id
@@ -395,17 +333,12 @@ def cadastrar_emissao(id):
                             RegistroOperacionalModel.id != obterRegistro.id
                         ).first()
                         
-                        print(f"[DEBUG] Conflitos na atualização:")
-                        print(f"  - Conflito número NF: {conflito_numero is not None}")
-                        print(f"  - Conflito chave de acesso: {conflito_chave is not None}")
                         
                         if conflito_numero:
-                            print(f"[ERRO] Conflito: outro registro já tem número NF {dados_nf['numero_nota_fiscal']} - ID: {conflito_numero.id}")
                             flash(("Erro: Número da nota fiscal já existe em outro registro.", "warning"))
                             return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                             
                         if conflito_chave:
-                            print(f"[ERRO] Conflito: outro registro já tem chave de acesso {dados_nf['chave_acesso']} - ID: {conflito_chave.id}")
                             flash(("Erro: Chave de acesso já existe em outro registro.", "warning"))
                             return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                         
@@ -428,29 +361,21 @@ def cadastrar_emissao(id):
                         obterRegistro.transportador_insc_estadual = dados_nf["transportador_insc_estadual"]
                         obterRegistro.placa_nf = dados_nf["placa_nf"]
                         obterRegistro.motorista_nf = dados_nf["motorista_nf"]
-                        obterRegistro.arquivo_nota_id = objeto_nf_pdf.id if objeto_nf_pdf else None  # PDF
-                        obterRegistro.arquivo_nota_xml_id = objeto_nf_xml.id if objeto_nf_xml else None  # XML
+                        obterRegistro.arquivo_nota_id = objeto_nf_pdf.id if objeto_nf_pdf else None
+                        obterRegistro.arquivo_nota_xml_id = objeto_nf_xml.id if objeto_nf_xml else None
                         obterRegistro.possui_excesso_carga = (possui_nfe_excesso == "sim")
                         obterRegistro.situacao_financeira_id = 2
                         
                         if possui_nfe_excesso == "sim":
-                            obterRegistro.arquivo_nota_excesso_id = objeto_nf_excesso_pdf.id if objeto_nf_excesso_pdf else None  # PDF excesso
-                            obterRegistro.arquivo_nota_excesso_xml_id = objeto_nf_excesso_xml.id if objeto_nf_excesso_xml else None  # XML excesso
+                            obterRegistro.arquivo_nota_excesso_id = objeto_nf_excesso_pdf.id if objeto_nf_excesso_pdf else None
+                            obterRegistro.arquivo_nota_excesso_xml_id = objeto_nf_excesso_xml.id if objeto_nf_excesso_xml else None
                             obterRegistro.peso_ton_nf_excesso = peso_nf_excesso if peso_nf_excesso > 0 else None
                             obterRegistro.peso_nf_ton_com_excecao = peso_total_com_excesso
                             obterRegistro.numero_nota_fiscal_excessao = numero_nota_excessao
                         obterRegistro.ativo = True
                         
                     else:
-                        print(f"[DEBUG] Criando novo registro operacional para solicitação: {solicitacao.id}")
-                        print(f"[DEBUG] Dados para criação:")
-                        print(f"  - numero_nota_fiscal: {dados_nf['numero_nota_fiscal']}")
-                        print(f"  - chave_acesso: {dados_nf['chave_acesso']}")
-                        print(f"  - razao_social_emissor: {dados_nf['razao_social_emissor']}")
-                        print(f"  - destinatario_cnpj_cpf: {dados_nf['destinatario_cnpj_cpf']}")
                         
-                        # Verificar se já existe registro com mesmo número de NF ou chave de acesso
-                        print(f"[DEBUG] Verificando duplicatas ANTES de criar registro...")
                         
                         registro_existente_nf = RegistroOperacionalModel.query.filter_by(
                             numero_nota_fiscal=dados_nf["numero_nota_fiscal"],
@@ -464,42 +389,27 @@ def cadastrar_emissao(id):
                             deletado = False
                         ).first()
                         
-                        print(f"[DEBUG] Verificação de duplicatas:")
-                        print(f"  - Registro com mesmo número NF: {registro_existente_nf is not None}")
-                        print(f"  - Registro com mesma chave de acesso: {registro_existente_chave is not None}")
                         
                         if registro_existente_nf:
-                            print(f"[AVISO] Já existe registro com número NF {dados_nf['numero_nota_fiscal']} - ID: {registro_existente_nf.id}")
-                            print(f"[AVISO] Solicitação existente: {registro_existente_nf.solicitacao_nf_id}")
-                            print(f"[AVISO] Ativo: {registro_existente_nf.ativo}")
                             
-                            # Se o registro existente é da mesma solicitação, atualizar ao invés de criar
                             if registro_existente_nf.solicitacao_nf_id == solicitacao.id:
-                                print(f"[DEBUG] Atualizando registro existente da mesma solicitação")
                                 obterRegistro = registro_existente_nf
                             else:
                                 flash(("Erro: Número da nota fiscal já foi cadastrado em outra solicitação.", "warning"))
                                 return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                         
                         elif registro_existente_chave:
-                            print(f"[AVISO] Já existe registro com chave de acesso {dados_nf['chave_acesso']} - ID: {registro_existente_chave.id}")
-                            print(f"[AVISO] Solicitação existente: {registro_existente_chave.solicitacao_nf_id}")
                             
-                            # Se o registro existente é da mesma solicitação, atualizar ao invés de criar
                             if registro_existente_chave.solicitacao_nf_id == solicitacao.id:
-                                print(f"[DEBUG] Atualizando registro existente da mesma solicitação")
                                 obterRegistro = registro_existente_chave
                             else:
                                 flash(("Erro: Chave de acesso da nota fiscal já foi cadastrada em outra solicitação.", "warning"))
                                 return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
                         
-                        # Se não encontrou duplicatas, buscar registro normal da solicitação
                         if not obterRegistro:
                             obterRegistro = RegistroOperacionalModel.obter_registro_solicitacao_por_id(solicitacao.id)
                         
-                        print(f"[DEBUG] Registro para processamento: {obterRegistro is not None}")
                         if obterRegistro:
-                            print(f"[DEBUG] Atualizando registro existente - ID: {obterRegistro.id}")
                             obterRegistro.solicitacao_nf_id = solicitacao.id
                             obterRegistro.floresta_id = None
                             obterRegistro.fornecedor_id = None
@@ -519,21 +429,20 @@ def cadastrar_emissao(id):
                             obterRegistro.transportador_insc_estadual = dados_nf["transportador_insc_estadual"]
                             obterRegistro.placa_nf = dados_nf["placa_nf"]
                             obterRegistro.motorista_nf = dados_nf["motorista_nf"]
-                            obterRegistro.arquivo_nota_id = objeto_nf_pdf.id if objeto_nf_pdf else None  # PDF
-                            obterRegistro.arquivo_nota_xml_id = objeto_nf_xml.id if objeto_nf_xml else None  # XML
+                            obterRegistro.arquivo_nota_id = objeto_nf_pdf.id if objeto_nf_pdf else None
+                            obterRegistro.arquivo_nota_xml_id = objeto_nf_xml.id if objeto_nf_xml else None
                             obterRegistro.possui_excesso_carga = (possui_nfe_excesso == "sim")
                             obterRegistro.situacao_financeira_id = 2
                             
                             if possui_nfe_excesso == "sim":
-                                obterRegistro.arquivo_nota_excesso_id = objeto_nf_excesso_pdf.id if objeto_nf_excesso_pdf else None  # PDF excesso
-                                obterRegistro.arquivo_nota_excesso_xml_id = objeto_nf_excesso_xml.id if objeto_nf_excesso_xml else None  # XML excesso
+                                obterRegistro.arquivo_nota_excesso_id = objeto_nf_excesso_pdf.id if objeto_nf_excesso_pdf else None
+                                obterRegistro.arquivo_nota_excesso_xml_id = objeto_nf_excesso_xml.id if objeto_nf_excesso_xml else None
                                 obterRegistro.peso_ton_nf_excesso = peso_nf_excesso if peso_nf_excesso > 0 else None
                                 obterRegistro.peso_nf_ton_com_excecao = peso_total_com_excesso
                                 obterRegistro.numero_nota_fiscal_excessao = numero_nota_excessao
                             obterRegistro.ativo = True
                             
                         else:
-                            print(f"[DEBUG] Criando novo registro operacional para solicitação: {solicitacao.id}")
                             RegistroOperacionalModel.criar_registro_operacional(
                             solicitacao_nf_id=solicitacao.id,
                             floresta_id=None,
@@ -554,13 +463,13 @@ def cadastrar_emissao(id):
                             transportador_insc_estadual=dados_nf["transportador_insc_estadual"],
                             placa_nf=dados_nf["placa_nf"],
                             motorista_nf=dados_nf["motorista_nf"],
-                            arquivo_nota_id=objeto_nf_pdf.id if objeto_nf_pdf else None,  # PDF
-                            arquivo_nota_xml_id=objeto_nf_xml.id if objeto_nf_xml else None,  # XML
+                            arquivo_nota_id=objeto_nf_pdf.id if objeto_nf_pdf else None,
+                            arquivo_nota_xml_id=objeto_nf_xml.id if objeto_nf_xml else None,
                             status_emissao_nf_complementar_id=2,
                             situacao_financeira_id=2,
                             possui_excesso_carga=(possui_nfe_excesso == "sim"),
-                            arquivo_nota_excesso_id=objeto_nf_excesso_pdf.id if objeto_nf_excesso_pdf and possui_nfe_excesso == "sim" else None,  # PDF excesso
-                            arquivo_nota_excesso_xml_id=objeto_nf_excesso_xml.id if objeto_nf_excesso_xml and possui_nfe_excesso == "sim" else None,  # XML excesso
+                            arquivo_nota_excesso_id=objeto_nf_excesso_pdf.id if objeto_nf_excesso_pdf and possui_nfe_excesso == "sim" else None,
+                            arquivo_nota_excesso_xml_id=objeto_nf_excesso_xml.id if objeto_nf_excesso_xml and possui_nfe_excesso == "sim" else None,
                             peso_ton_nf_excesso=peso_nf_excesso if peso_nf_excesso > 0 and possui_nfe_excesso == "sim" else None,
                             peso_nf_ton_com_excecao=peso_total_com_excesso if possui_nfe_excesso == "sim" else None,
                             numero_nota_fiscal_excessao=numero_nota_excessao if possui_nfe_excesso == "sim" else None,
@@ -568,11 +477,8 @@ def cadastrar_emissao(id):
                         )
 
                     
-                    print(f"[DEBUG] Marcando solicitação como NF emitida - ID: {solicitacao.id}")
                     solicitacao.nf_emitida = True
-                    print(f"[DEBUG] Iniciando commit da transação")
                     db.session.commit()
-                    print(f"[DEBUG] Commit realizado com sucesso")
                     
                     
                     acao = TipoAcaoEnum.CADASTRO
@@ -593,7 +499,6 @@ def cadastrar_emissao(id):
                     flash(("É necessário enviar pelo menos um arquivo (XML ou PDF) da Nota Fiscal.", "warning"))
                     return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
             except Exception as e:
-                print(f"[ERRO] Erro geral ao tentar lançar NF: {e}")
                 db.session.rollback()
                 flash(("Erro inesperado ao processar os dados. Entre em contato com o suporte.", "warning"))
                 return redirect(url_for("cadastrar_emissao", id=solicitacao.id))
@@ -645,11 +550,9 @@ def editar_emissao(id):
     gravar_banco = True
 
     if request.method == "POST":
-        # Captura dados FRF
         lancamentoFrf = request.form.get("lancamentoFrf")
         cargaFrf = True if lancamentoFrf == 'lancamentoFrf' else False
         
-        # Campos FRF
         destinatarioFrf = request.form.get("destinatarioFrf", "")
         destinatarioNumeroDocumento = request.form.get("destinatarioNumeroDocumento", "")
         dataLancamentoFrf = request.form.get("dataLancamentoFrf", "")
@@ -660,7 +563,6 @@ def editar_emissao(id):
         pesoFrf = request.form.get("pesoFrf", "")
         valorTotalFrf = request.form.get("valorTotalFrf", "")
         
-        # Campos originais
         opcao_nf = request.form.get("opcaoNf")
         opcao_excesso = request.form.get("opcaoExcesso")
         
@@ -685,17 +587,14 @@ def editar_emissao(id):
             campos["valorTotalFrf"] = ["Valor Total", valorTotalFrf]
         else:
             if opcao_nf == "nova":
-                # XML é obrigatório para nova NF
                 if not (arquivo_nf_nova_xml and arquivo_nf_nova_xml.filename):
                     campos["arquivoNfNovaXml"] = ["Arquivo NF Nova (XML)", arquivo_nf_nova_xml]
             
             if opcao_nf == "estorno":
-                # XML é obrigatório para estorno de NF
                 if not (arquivo_nf_estorno_xml and arquivo_nf_estorno_xml.filename):
                     campos["arquivoNfEstornoXml"] = ["Arquivo NF de Estorno (XML)", arquivo_nf_estorno_xml]
             
             if opcao_excesso == "novo":
-                # XML é obrigatório para novo excesso
                 if not (arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename):
                     campos["arquivoNfExcessoXml"] = ["Arquivo NFe de Excesso (XML)", arquivo_nfe_excesso_xml]
 
@@ -706,7 +605,6 @@ def editar_emissao(id):
             flash((f"Verifique os campos destacados em vermelho!", "warning"))
 
         if cargaFrf:
-            # Validação CPF/CNPJ Destinatário
             numero_documento_destinatario = ValidaDocs.somente_numeros(destinatarioNumeroDocumento)
             if len(numero_documento_destinatario) > 11:
                 valida_documento_destinatario = ValidaForms.validar_cnpj(numero_documento_destinatario)
@@ -719,7 +617,6 @@ def editar_emissao(id):
                     gravar_banco = False
                     validacao_campos_erros['destinatarioNumeroDocumento'] = valida_documento_destinatario.get('cpf', 'Erro na validação do CPF')
 
-            # Validação CPF/CNPJ Transportadora
             numero_documento_transportadora = ValidaDocs.somente_numeros(transportadoraNumeroDocumento)
             if len(numero_documento_transportadora) > 11:
                 valida_documento_transportadora = ValidaForms.validar_cnpj(numero_documento_transportadora)
@@ -734,9 +631,7 @@ def editar_emissao(id):
 
         if gravar_banco:
             if cargaFrf:
-                # Processamento para FRF
                 try:
-                    # Preparar dados para comparação (gamificação)
                     obj1 = {
                         "destinatario_nome": registro.destinatario_nome or "",
                         "destinatario_cnpj_cpf": registro.destinatario_cnpj_cpf or "",
@@ -805,7 +700,6 @@ def editar_emissao(id):
                             modulo='lancamento_nf'
                         )
 
-                    # Atualizar registro com dados FRF
                     registro.destinatario_nome = destinatarioFrf
                     registro.destinatario_cnpj_cpf = numero_documento_destinatario
                     registro.destinatario_data_emissao = dataLancamentoFrf if dataLancamentoFrf else None
@@ -818,7 +712,6 @@ def editar_emissao(id):
                     registro.carga_frf = True
                     registro.numero_nota_fiscal = '000000'
 
-                    # Limpar campos que não se aplicam ao FRF
                     registro.razao_social_emissor = None
                     registro.serie_nota = None
                     registro.chave_acesso = None
@@ -839,12 +732,10 @@ def editar_emissao(id):
                     return redirect(url_for("listagem_registros_operacionais"))
 
                 except Exception as e:
-                    print(f"[ERRO] Erro ao editar FRF: {e}")
                     flash(("Erro ao processar os dados FRF. Verifique os valores informados.", "warning"))
                     return redirect(url_for("editar_emissao", id=registro.id))
             
             else:
-                # Processamento original para NF (código existente)
                 peso_nf_atual = registro.peso_ton_nf
                 peso_excesso_atual = registro.peso_ton_nf_excesso or 0
                 
@@ -884,7 +775,6 @@ def editar_emissao(id):
                                     flash(("Arquivo XML enviado não é uma NF válida. Entre em contato com o suporte!", "warning"))
                                     return redirect(url_for("editar_emissao", id=registro.id))
 
-                                # Extrair dados do XML
                                 razao_social_emissor = dados_nota["razao_social_emissor"]
                                 numero_nota = dados_nota["numero_nota_fiscal"]
                                 serie = dados_nota["serie_nota"]
@@ -905,7 +795,6 @@ def editar_emissao(id):
                                 if destinatario_data_emissao:
                                     destinatario_data_emissao = DataHora.converter_data_str_br_em_objeto_date(destinatario_data_emissao)
 
-                                # Verificar se o peso é válido
                                 if peso_nf is None or peso_nf <= 0:
                                     
                                     if objeto_nf_xml and hasattr(objeto_nf_xml, 'caminho') and os.path.exists(objeto_nf_xml.caminho):
@@ -964,7 +853,6 @@ def editar_emissao(id):
                                         modulo='lancamento_nf'
                                     )
 
-                                # Atualizar dados da nota principal
                                 registro.razao_social_emissor = razao_social_emissor or None
                                 registro.numero_nota_fiscal = numero_nota or None
                                 registro.serie_nota = serie or None
@@ -983,7 +871,6 @@ def editar_emissao(id):
                                 registro.peso_ton_nf = peso_nf if peso_nf else None
                                 registro.carga_frf = False
                                 
-                                # Limpar dados de estorno caso existam
                                 registro.estorno_nf = False
                                 registro.arquivo_nota_estorno_id = None
                                 registro.numero_nota_fiscal_estorno = None
@@ -991,9 +878,7 @@ def editar_emissao(id):
                                 peso_nf_atual = peso_nf
 
                             except Exception as e:
-                                print(f"[ERRO] Erro ao processar XML da nova NF: {e}")
                                 
-                                # Remove o arquivo que foi feito upload em caso de erro
                                 if 'objeto_nf_xml' in locals() and objeto_nf_xml:
                                     try:
                                         if hasattr(objeto_nf_xml, 'caminho') and os.path.exists(objeto_nf_xml.caminho):
@@ -1009,14 +894,12 @@ def editar_emissao(id):
                             flash(("O arquivo XML deve ter o tipo correto.", "warning"))
                             return redirect(url_for("editar_emissao", id=registro.id))
                     
-                    # Atualizar as referências dos arquivos
                     if objeto_nf_xml:
                         registro.arquivo_nota_xml_id = objeto_nf_xml.id
                     
                     if objeto_nf_pdf:
                         registro.arquivo_nota_id = objeto_nf_pdf.id
 
-                # Tratamento para ESTORNO de nota fiscal
                 elif opcao_nf == "estorno":
                     arquivo_nf_estorno_pdf = arquivo_nf_estorno
                     arquivo_nf_estorno_xml = request.files.get("arquivoNfEstornoXml")
@@ -1024,7 +907,6 @@ def editar_emissao(id):
                     objeto_nf_estorno_xml = None
                     objeto_nf_estorno_pdf = None
                     
-                    # Upload do PDF se fornecido
                     if arquivo_nf_estorno_pdf and arquivo_nf_estorno_pdf.filename:
                         if arquivo_nf_estorno_pdf.mimetype == "application/pdf":
                             objeto_nf_estorno_pdf = upload_arquivo(arquivo_nf_estorno_pdf, "UPLOAD_ARQUIVO_ESTORNO", f"{registro.id}_estorno_pdf")
@@ -1032,17 +914,14 @@ def editar_emissao(id):
                             flash(("O arquivo PDF de estorno deve ter o tipo correto.", "warning"))
                             return redirect(url_for("editar_emissao", id=registro.id))
                     
-                    # Upload e processamento do XML (obrigatório)
                     if arquivo_nf_estorno_xml and arquivo_nf_estorno_xml.filename:
                         if arquivo_nf_estorno_xml.mimetype in ["application/xml", "text/xml"]:
                             try:
                                 objeto_nf_estorno_xml = upload_arquivo(arquivo_nf_estorno_xml, "UPLOAD_ARQUIVO_ESTORNO", f"{registro.id}_estorno_xml")
 
-                                # Extrair dados do XML para validação
                                 dados_nota = RegistroOperacionalModel.extrair_dados_nota_fiscal(objeto_nf_xml=objeto_nf_estorno_xml)
 
                                 if not dados_nota:
-                                    # Remove o arquivo que foi feito upload
                                     if objeto_nf_estorno_xml and hasattr(objeto_nf_estorno_xml, 'caminho') and os.path.exists(objeto_nf_estorno_xml.caminho):
                                         os.remove(objeto_nf_estorno_xml.caminho)
                                     if objeto_nf_estorno_xml:
@@ -1052,7 +931,6 @@ def editar_emissao(id):
                                     flash(("Arquivo XML de estorno enviado não é uma NF válida. Entre em contato com o suporte!", "warning"))
                                     return redirect(url_for("editar_emissao", id=registro.id))
 
-                                # Extrair dados do XML de estorno
                                 razao_social_emissor = dados_nota["razao_social_emissor"]
                                 numero_nota_estorno = dados_nota["numero_nota_fiscal"]
                                 serie = dados_nota["serie_nota"]
@@ -1073,9 +951,7 @@ def editar_emissao(id):
                                 if destinatario_data_emissao:
                                     destinatario_data_emissao = DataHora.converter_data_str_br_em_objeto_date(destinatario_data_emissao)
 
-                                # Verificar se o peso é válido
                                 if peso_nf is None or peso_nf <= 0:
-                                    # Remove o arquivo que foi feito upload
                                     if objeto_nf_estorno_xml and hasattr(objeto_nf_estorno_xml, 'caminho') and os.path.exists(objeto_nf_estorno_xml.caminho):
                                         os.remove(objeto_nf_estorno_xml.caminho)
                                     if objeto_nf_estorno_xml:
@@ -1085,7 +961,6 @@ def editar_emissao(id):
                                     flash(("O peso extraído da nota fiscal de estorno é inválido! Entre em contato com o suporte!", "warning"))
                                     return redirect(url_for("editar_emissao", id=registro.id))
 
-                                # Comparação para gamificação
                                 obj1 = {
                                     "razao_social_emissor": registro.razao_social_emissor or "",
                                     "numero_nota_fiscal_estorno": registro.numero_nota_fiscal_estorno or "",
@@ -1132,7 +1007,6 @@ def editar_emissao(id):
                                         modulo='lancamento_nf'
                                     )
 
-                                # Atualizar dados da nota de estorno
                                 registro.razao_social_emissor = razao_social_emissor or None
                                 registro.numero_nota_fiscal_estorno = numero_nota_estorno or None
                                 registro.serie_nota = serie or None
@@ -1155,9 +1029,7 @@ def editar_emissao(id):
                                 peso_nf_atual = peso_nf
 
                             except Exception as e:
-                                print(f"[ERRO] Erro ao processar XML de estorno: {e}")
                                 
-                                # Remove o arquivo que foi feito upload em caso de erro
                                 if 'objeto_nf_estorno_xml' in locals() and objeto_nf_estorno_xml:
                                     try:
                                         if hasattr(objeto_nf_estorno_xml, 'caminho') and os.path.exists(objeto_nf_estorno_xml.caminho):
@@ -1173,13 +1045,10 @@ def editar_emissao(id):
                             flash(("O arquivo XML de estorno deve ter o tipo correto.", "warning"))
                             return redirect(url_for("editar_emissao", id=registro.id))
                     
-                    # Atualizar as referências dos arquivos de estorno
-                    # Para estorno, substitui o XML principal e também salva como estorno
                     if objeto_nf_estorno_xml:
                         registro.arquivo_nota_xml_id = objeto_nf_estorno_xml.id
                     
                     if objeto_nf_estorno_pdf:
-                        # Para estorno, substitui o PDF principal e também salva como estorno
                         registro.arquivo_nota_id = objeto_nf_estorno_pdf.id
                         registro.arquivo_nota_estorno_id = objeto_nf_estorno_pdf.id
 
@@ -1202,7 +1071,6 @@ def editar_emissao(id):
                     arquivo_nfe_excesso_pdf = arquivo_nfe_excesso
                     arquivo_nfe_excesso_xml = request.files.get("arquivoNfExcessoXml")
                     
-                    # Verificar se foi fornecido pelo menos o XML para extração de dados
                     if not (arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename):
                         flash(("Para adicionar nota de excesso, é necessário enviar o arquivo XML. O PDF é opcional.", "warning"))
                         return redirect(url_for("editar_emissao", id=registro.id))
@@ -1211,7 +1079,6 @@ def editar_emissao(id):
                     objeto_nf_excesso_pdf = None
                     peso_excesso_final = 0
                     
-                    # Upload do PDF se fornecido
                     if arquivo_nfe_excesso_pdf and arquivo_nfe_excesso_pdf.filename:
                         if arquivo_nfe_excesso_pdf.mimetype == "application/pdf":
                             objeto_nf_excesso_pdf = upload_arquivo(arquivo_nfe_excesso_pdf, "UPLOAD_ARQUIVO_NF_EXCESSO", f"{registro.id}_excesso_pdf")
@@ -1219,17 +1086,14 @@ def editar_emissao(id):
                             flash(("O arquivo PDF de excesso deve ter o tipo correto.", "warning"))
                             return redirect(url_for("editar_emissao", id=registro.id))
                     
-                    # Upload e processamento do XML (obrigatório)
                     if arquivo_nfe_excesso_xml and arquivo_nfe_excesso_xml.filename:
                         if arquivo_nfe_excesso_xml.mimetype in ["application/xml", "text/xml"]:
                             try:
                                 objeto_nf_excesso_xml = upload_arquivo(arquivo_nfe_excesso_xml, "UPLOAD_ARQUIVO_NF_EXCESSO", f"{registro.id}_excesso_xml")
 
-                                # Extrair dados do XML para validação
                                 dados_nota_excesso = RegistroOperacionalModel.extrair_dados_nota_excesso(objeto_nf_excesso_xml=objeto_nf_excesso_xml)
 
                                 if not dados_nota_excesso:
-                                    # Remove o arquivo que foi feito upload
                                     if objeto_nf_excesso_xml and hasattr(objeto_nf_excesso_xml, 'caminho') and os.path.exists(objeto_nf_excesso_xml.caminho):
                                         os.remove(objeto_nf_excesso_xml.caminho)
                                     if objeto_nf_excesso_xml:
@@ -1242,9 +1106,7 @@ def editar_emissao(id):
                                 peso_excesso_final = dados_nota_excesso["peso_ton_nf_excesso"]
                                 numero_nota_excessao = dados_nota_excesso["numero_nota_fiscal_excessao"]
                                 
-                                # Verificar se o peso é válido
                                 if peso_excesso_final is None or peso_excesso_final <= 0:
-                                    # Remove o arquivo que foi feito upload
                                     if objeto_nf_excesso_xml and hasattr(objeto_nf_excesso_xml, 'caminho') and os.path.exists(objeto_nf_excesso_xml.caminho):
                                         os.remove(objeto_nf_excesso_xml.caminho)
                                     if objeto_nf_excesso_xml:
@@ -1254,16 +1116,13 @@ def editar_emissao(id):
                                     flash(("O peso extraído da NFe de excesso é inválido! Entre em contato com o suporte!", "warning"))
                                     return redirect(url_for("editar_emissao", id=registro.id))
 
-                                # Atualizar registro
                                 registro.possui_excesso_carga = True
                                 registro.peso_ton_nf_excesso = peso_excesso_final if peso_excesso_final > 0 else None
                                 registro.peso_nf_ton_com_excecao = peso_nf_atual + peso_excesso_final
                                 registro.numero_nota_fiscal_excessao = numero_nota_excessao
 
                             except Exception as e:
-                                print(f"[ERRO] Erro ao processar XML de excesso: {e}")
                                 
-                                # Remove o arquivo que foi feito upload em caso de erro
                                 if 'objeto_nf_excesso_xml' in locals() and objeto_nf_excesso_xml:
                                     try:
                                         if hasattr(objeto_nf_excesso_xml, 'caminho') and os.path.exists(objeto_nf_excesso_xml.caminho):
@@ -1279,7 +1138,6 @@ def editar_emissao(id):
                             flash(("O arquivo XML de excesso deve ter o tipo correto.", "warning"))
                             return redirect(url_for("editar_emissao", id=registro.id))
                     
-                    # Atualizar as referências dos arquivos de excesso
                     if objeto_nf_excesso_xml:
                         registro.arquivo_nota_excesso_xml_id = objeto_nf_excesso_xml.id
                     
@@ -1362,10 +1220,8 @@ def split_carga(id):
         bitola_nova = request.form.get("bitola_nova")
         peso_normal_novo = request.form.get("peso_normal_novo")
         
-        # Peso excesso novo só é capturado se o registro atual tem excesso
         peso_excesso_novo = request.form.get("peso_excesso_novo", "0") if registro.possui_excesso_carga else "0"
                  
-        # Verificar se registro tem excesso para determinar campos obrigatórios
         if registro.possui_excesso_carga:
             peso_normal_atual = request.form.get("peso_normal_atual")
             peso_excesso_atual = request.form.get("peso_excesso_atual")
@@ -1406,18 +1262,15 @@ def split_carga(id):
                     peso_total_atual = float(peso_atual or 0)
                                  
                 peso_normal_novo_float = float(peso_normal_novo or 0)
-                # Peso excesso novo só é considerado se o registro atual tem excesso
                 peso_excesso_novo_float = float(peso_excesso_novo or 0) if registro.peso_ton_nf_excesso else 0
                 peso_total_novo = peso_normal_novo_float + peso_excesso_novo_float
                                  
                 peso_total_split = peso_total_atual + peso_total_novo
                                  
-                # Verificar se os pesos conferem (tolerância de 0.01)
                 if abs(peso_total_split - peso_original) > 0.01:
                     gravar_banco = False
                     flash((f"Erro: A soma dos pesos ({peso_total_split:.2f}) não confere com o peso original ({peso_original:.2f})!", "warning"))
                                  
-                # Verificar se pelo menos os pesos normais são positivos
                 if peso_total_atual <= 0 or peso_normal_novo_float <= 0:
                     gravar_banco = False
                     flash(("Erro: Os pesos normais devem ser maiores que zero!", "warning"))
@@ -1428,7 +1281,6 @@ def split_carga(id):
 
         if gravar_banco:
             try:
-                # Criar nova solicitação baseada na atual
                 nova_solicitacao = CargaModel(
                     empresa_emissora_id=registro.solicitacao.empresa_emissora_id,
                     cliente_id=registro.solicitacao.cliente_id,
@@ -1448,14 +1300,12 @@ def split_carga(id):
                     ativo=True,
                 )
                 db.session.add(nova_solicitacao)
-                db.session.flush()  # Para obter o ID
+                db.session.flush()
 
-                # Criar novo registro operacional
                 novo_registro = RegistroOperacionalModel(
                     solicitacao_nf_id=nova_solicitacao.id,
                     fornecedor_id=registro.fornecedor_id,
                                          
-                    # Copiar dados da NF original
                     razao_social_emissor=registro.razao_social_emissor,
                     numero_nota_fiscal=registro.numero_nota_fiscal,
                     serie_nota=registro.serie_nota,
@@ -1466,38 +1316,31 @@ def split_carga(id):
                     destinatario_data_emissao=registro.destinatario_data_emissao,
                     valor_total_nota_100=registro.valor_total_nota_100,
                                          
-                    # Dados do transportador
                     transportador_nome=registro.transportador_nome,
                     transportador_cnpj_cpf=registro.transportador_cnpj_cpf,
                     transportador_insc_estadual=registro.transportador_insc_estadual,
                                          
-                    # Dados de transporte
                     placa_nf=registro.placa_nf,
                     motorista_nf=registro.motorista_nf,
                     placa_ticket=registro.placa_ticket,
                     motorista_ticket=registro.motorista_ticket,
                     data_entrega_ticket=registro.data_entrega_ticket,
                                          
-                    # Novos pesos
                     peso_ton_nf=peso_normal_novo_float,
                     peso_ton_nf_excesso=peso_excesso_novo_float if peso_excesso_novo_float > 0 else None,
                     peso_nf_ton_com_excecao=peso_total_novo if peso_excesso_novo_float > 0 else peso_normal_novo_float,
                     possui_excesso_carga=(peso_excesso_novo_float > 0),
                                          
-                    # Dados do ticket
                     numero_nota_fiscal_ticket=registro.numero_nota_fiscal_ticket,
                     peso_liquido_ticket=registro.peso_liquido_ticket,
                                          
-                    # Arquivos (referência aos mesmos)
                     arquivo_nota_id=registro.arquivo_nota_id,
                     arquivo_ticket_id=registro.arquivo_ticket_id,
                     arquivo_nota_excesso_id=registro.arquivo_nota_excesso_id if peso_excesso_novo_float > 0 else None,
                                          
-                    # Status e situação
                     status_emissao_nf_complementar_id=registro.status_emissao_nf_complementar_id,
                     situacao_financeira_id=registro.situacao_financeira_id,
                                          
-                    # Dados de estorno
                     estorno_nf=registro.estorno_nf,
                     arquivo_nota_estorno_id=registro.arquivo_nota_estorno_id,
                     numero_nota_fiscal_estorno=registro.numero_nota_fiscal_estorno,
@@ -1506,7 +1349,6 @@ def split_carga(id):
                 )
                 db.session.add(novo_registro)
 
-                # Atualizar registro atual
                 registro.realizado_split = True
                 registro.solicitacao.realizado_split = True
                 if registro.peso_ton_nf_excesso:
@@ -1522,7 +1364,6 @@ def split_carga(id):
 
                 db.session.commit()
 
-                # Registrar gamificação
                 acao = TipoAcaoEnum.EDICAO
                 PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                     current_user.id,

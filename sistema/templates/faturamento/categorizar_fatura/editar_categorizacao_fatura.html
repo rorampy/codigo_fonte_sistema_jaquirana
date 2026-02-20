@@ -85,7 +85,6 @@
                   </div>
                 </div>
 
-                <!-- Linha 2: Nome, Descrição, Referência -->
                 <div class="row mb-4">
                   <div class="col-md-4">
                     <label class="form-label required">Beneficiário</label>
@@ -127,12 +126,11 @@
                   </div>
                 </div>
 
-                <!-- Seção de Categorias com Alpine.js -->
                 <div class="mb-4">
                   <label class="form-label mb-3 required">Categoria</label>
                   
                   <div class="{% if 'categorias_json' in campos_obrigatorios or 'categorias_json' in campos_erros %}border border-danger rounded p-2{% endif %}">
-                    <!-- Lista de Categorias -->
+                    
                     <template x-for="(categoria, index) in lista" :key="index">
                       <div class="row mb-3 align-items-center">
                         <div class="col-lg-4 col-md-4 col-sm-6 col-12">
@@ -195,7 +193,6 @@
                       </div>
                     </template>
 
-                    <!-- Botão adicionar categoria -->
                     <div class="mt-3">
                       <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
                         @click="adicionarCategoria()">
@@ -222,10 +219,9 @@
                   {% endif %}
                 </div>
 
-                <!-- Opções adicionais -->
                 <div class="row mb-4">
                   <div class="col-12">
-                    <!-- Switch Valores Detalhados -->
+                    
                     <div class="form-check form-switch mb-3">
                       <input class="form-check-input" type="checkbox" id="valoresDetalhados"
                         x-model="mostrarValoresDetalhados" @change="validarTotalCompleto()">
@@ -234,12 +230,11 @@
                       </label>
                     </div>
 
-                    <!-- Painel Valores Detalhados -->
                     <div x-show="mostrarValoresDetalhados" x-transition class="card mb-3"
                       style="display: none; background-color: #F6F8FB !important;">
                       <div class="card-body">
                         <div class="{% if 'centros_custo_json' in campos_obrigatorios or 'centros_custo_json' in campos_erros %}border border-danger rounded p-2 mb-3{% endif %}">
-                        <!-- Tabs -->
+                        
                         <ul class="nav nav-tabs" role="tablist" style="border: unset !important;">
                           <li class="nav-item" role="presentation">
                             <a class="nav-link active" id="tab-centro-custo"
@@ -248,7 +243,6 @@
                           </li>
                         </ul>
 
-                        <!-- Tab Content -->
                         <div class="tab-content" style="background-color: white !important; padding: 30px;">
                           <div class="tab-pane fade show active" id="centro-custo" role="tabpanel">
                             <div class="mb-3">
@@ -271,7 +265,6 @@
                               </div>
                             </div>
 
-                            <!-- Lista de Centros de Custo -->
                             <template x-for="(centro, index) in centrosCusto" :key="index">
                               <div class="row mb-3 align-items-center">
                                 <div class="col-md-6">
@@ -311,7 +304,6 @@
                               </div>
                             </template>
 
-                            <!-- Botão adicionar centro de custo -->
                             <div class="mt-3">
                               <button type="button" class="btn btn-link text-primary p-0 d-flex align-items-center"
                                 @click="adicionarCentroCusto()">
@@ -331,7 +323,6 @@
                       </div>
                     </div>
                     
-                    <!-- Mensagens de erro para valores detalhados -->
                     {% if 'centros_custo_json' in campos_obrigatorios %}
                       <div class="text-danger mt-1 mb-3">
                         <small>{{ campos_obrigatorios['centros_custo_json'] }}</small>
@@ -342,8 +333,6 @@
                       </div>
                     {% endif %}
 
-
-                    <!-- Switch Parcelamento -->
                     <div class="form-check form-switch mb-3">
                       <input class="form-check-input" type="checkbox" id="parcelamento" 
                              name="parcelamento_ativo" value="true"
@@ -353,7 +342,7 @@
                         Parcelamento
                       </label>
                     </div>
-                    <!-- Painel Parcelamento -->
+                    
                     <div x-show="mostrarParcelamento" x-transition style="background-color: #F6F8FB !important;"
                       class="card mb-3 mt-3" style="display: none;">
                       <div class="card-body">
@@ -454,7 +443,6 @@
                       </div>
                     </div>
                     
-                    <!-- Mensagens de erro para parcelamento -->
                     {% if 'parcelas_json' in campos_obrigatorios %}
                       <div class="text-danger mt-1 mb-3">
                         <small>{{ campos_obrigatorios['parcelas_json'] }}</small>
@@ -467,7 +455,6 @@
                   </div>
                 </div>
 
-                <!-- Anexos -->
                 <div class="row mb-4">
                   <div class="col-12">
                     <div class="card bg-light">
@@ -482,7 +469,6 @@
                           Anexos <span class="text-muted">(opcional)</span>
                         </h4>
                         
-                        <!-- Anexos Existentes -->
                         {% if anexos_existentes and anexos_existentes|length > 0 %}
                         <div class="mb-4">
                           <h6 class="text-muted mb-3">Arquivos anexados:</h6>
@@ -557,7 +543,6 @@
                         </div>
                         {% endif %}
                         
-                        <!-- Upload de Novos Anexos -->
                         <div class="border border-2 border-dashed rounded p-4 text-center" style="border-color: #dee2e6 !important;">
                           <div class="mb-3">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
@@ -580,14 +565,12 @@
                   </div>
                 </div>
 
-                <!-- Campos hidden para envio dos dados JSON -->
                 <input type="hidden" name="categorias_json" id="categorias_json">
                 <input type="hidden" name="centros_custo_json" id="centros_custo_json">
                 <input type="hidden" name="parcelas_json" id="parcelas_json">
                 <input type="hidden" name="valores_detalhados_ativo" id="valores_detalhados_ativo" value="false">
                 <input type="hidden" name="anexos_excluir" id="anexos_excluir" value="[]">
 
-                <!-- Botões de ação -->
                 <div class="row">
                   <div class="col-12">
                     <div class="d-flex justify-content-end gap-2">
@@ -635,12 +618,10 @@
         });
       });
       
-      // NÃO limpar pré-seleção dos selects de categoria na edição, 
-      // pois os dados válidos serão aplicados pelo Alpine.js
   });
   
   function categorias() {
-    // Criar mapa completo de código para dados das categorias
+    
     const mapaCategorias = {};
     {% for cat in estrutura_plano_contas %}
       {% for sub in cat.children %}
@@ -660,7 +641,7 @@
     {% endfor %}
 
     return {
-      totalPagar: {{ faturamento.valor_total if faturamento else objeto_principal.valor_movimentacao_100 }}, // Total já em centavos do backend
+      totalPagar: {{ faturamento.valor_total if faturamento else objeto_principal.valor_movimentacao_100 }}, 
       mostrarValoresDetalhados: {% if dados_corretos.valores_detalhados_ativo %}true{% else %}false{% endif %},
       tipoDistribuicao: 'percentual',
       mapaCategorias: mapaCategorias,
@@ -669,7 +650,7 @@
           nome: '',
           detalhamento: '',
           referencia: '',
-          valor: 0 // Valor armazenado como inteiro (centavos)
+          valor: 0 
         }
       ],
       centrosCusto: [
@@ -680,7 +661,6 @@
         }
       ],
 
-      // === PARCELAMENTO ===
       mostrarParcelamento: {% if dados_corretos.parcelamento_ativo %}true{% else %}false{% endif %},
       qtdParcelas: {{ dados_corretos.numero_parcelas or 0 }},
       diasEntre: {{ dados_corretos.dias_entre_parcelas or 30 }},
@@ -688,9 +668,8 @@
       totalParcelas: 0,
       totalParcelasValido: true,
 
-      // === FUNÇÕES ===
       prepararEnvio() {
-        // Validar total das parcelas se parcelamento estiver ativo
+        
         if (this.mostrarParcelamento && this.parcelas.length > 0) {
           if (!this.totalParcelasValido) {
             alert('O total das parcelas deve ser igual ao valor total do faturamento!');
@@ -698,7 +677,6 @@
           }
         }
         
-        // Preparar categorias com código + nome combinados
         const categoriasComDados = this.lista.map(categoria => {
           const dadosCategoria = this.mapaCategorias[categoria.nome] || {};
           const categoriaCompleta = dadosCategoria.nome ? 
@@ -707,17 +685,15 @@
           
           return {
             categoria: categoriaCompleta,
-            categoria_id: dadosCategoria.id || null, // ID da categoria do plano de contas
+            categoria_id: dadosCategoria.id || null, 
             detalhamento: categoria.detalhamento,
             referencia: categoria.referencia,
             valor: categoria.valor
           };
         });
         
-        // Preparar dados JSON para envio
         document.getElementById('categorias_json').value = JSON.stringify(categoriasComDados);
         
-        // Enviar array vazio se valores detalhados não estiver ativo
         const centrosParaEnviar = this.mostrarValoresDetalhados ? this.centrosCusto : [];
         document.getElementById('centros_custo_json').value = JSON.stringify(centrosParaEnviar);
         
@@ -742,7 +718,6 @@
         const valorParcela = Math.floor(valorAgendamento / this.qtdParcelas);
         let resto = valorAgendamento - (valorParcela * this.qtdParcelas);
         
-        // Definir a data base para o dia 10 do mês atual ou próximo
         let hoje = new Date();
         let ano = hoje.getFullYear();
         let mes = hoje.getMonth();
@@ -788,13 +763,12 @@
       },
 
       initParcelamento() {
-        // Se já temos parcelas restauradas, não sobrescrever
+        
         if (this.parcelas.length > 0) {
           this.calcularTotalParcelas();
           return;
         }
         
-        // Caso contrário, gerar novas parcelas
         if (this.mostrarParcelamento && this.qtdParcelas > 0) {
           this.gerarParcelas();
         } else {
@@ -803,17 +777,16 @@
         }
       },
 
-      // === CATEGORIAS E CENTROS DE CUSTO ===
       adicionarCategoria() {
         this.lista.push({
           nome: '',
           detalhamento: '',
           referencia: '',
-          valor: 0 // Valor inicializado como inteiro (centavos)
+          valor: 0 
         });
         this.$nextTick(() => {
           this.aplicarMascaraMonetaria();
-          // Limpar apenas o último select adicionado (o novo)
+          
           const selects = document.querySelectorAll('select.categoria-select');
           const lastSelect = selects[selects.length - 1];
           if (lastSelect) {
@@ -847,7 +820,7 @@
       },
 
       aplicarMascaraMonetaria() {
-        // Máscara monetária aplicada via Alpine.js
+        
       },
 
       validarTotal() {
@@ -855,9 +828,9 @@
       },
 
       validarTotalCompleto() {
-        // Primeiro validar categorias duplicadas
+        
         if (this.validarCategoriasDuplicadas()) {
-          return; // Se há duplicadas, não prosseguir com outras validações
+          return; 
         }
         
         let totalCategorias = 0;
@@ -890,7 +863,7 @@
           if (categoria.nome && categoria.nome.trim() !== '') {
             if (categoriasUsadas.includes(categoria.nome)) {
               temDuplicada = true;
-              // Mostrar modal de erro com categoria completa
+              
               const dadosCategoria = this.mapaCategorias[categoria.nome] || {};
               const categoriaCompleta = dadosCategoria.nome ? 
                 `${categoria.nome} - ${dadosCategoria.nome}` : 
@@ -912,7 +885,6 @@
           }
         });
         
-        // Desabilitar botão salvar se há duplicadas
         const btnSalvar = document.getElementById('btnSalvarAgendamento');
         if (btnSalvar && temDuplicada) {
           btnSalvar.disabled = true;
@@ -975,7 +947,6 @@
         }
       },
 
-      // Extrair código da categoria de diferentes formatos
       extrairCodigoCategoria(cat) {
         if (cat.categoria && typeof cat.categoria === 'string' && cat.categoria.includes(' - ')) {
           return cat.categoria.split(' - ')[0].trim();
@@ -983,9 +954,8 @@
         return cat.codigo || cat.categoria || cat.nome || '';
       },
 
-      // Restaurar dados quando há erros ou na edição
       restaurarDados() {
-        // Restaurar categorias
+        
         {% if dados_corretos.categorias_json %}
         try {
           const categoriasSalvas = JSON.parse('{{ dados_corretos.categorias_json|safe }}');
@@ -998,12 +968,11 @@
             }));
           }
         } catch (jsonError) {
-          // Manter lista padrão se houver erro na restauração
+          
           this.lista = [{ nome: '', detalhamento: '', referencia: '', valor: 0 }];
         }
         {% endif %}
 
-        // Restaurar centros de custo
         {% if dados_corretos.centros_custo_json %}
         try {
           const centrosSalvos = JSON.parse('{{ dados_corretos.centros_custo_json|safe }}');
@@ -1015,11 +984,10 @@
             }));
           }
         } catch (e) {
-          // Erro ao restaurar centros de custo
+          
         }
         {% endif %}
 
-        // Restaurar parcelas
         {% if dados_corretos.parcelas_json %}
         try {
           const parcelasSalvas = JSON.parse('{{ dados_corretos.parcelas_json|safe }}');
@@ -1033,20 +1001,18 @@
             this.calcularTotalParcelas();
           }
         } catch (e) {
-          // Erro ao restaurar parcelas
+          
         }
         {% endif %}
       },
 
-      // Inicialização
       init() {
-        // Primeiro, restaurar os dados
+        
         this.restaurarDados();
         this.initParcelamento();
         
-        // Depois, aplicar os valores aos selects
         this.$nextTick(() => {
-          // Aplicar os valores das categorias aos selects de forma mais eficiente
+          
           document.querySelectorAll('select.categoria-select').forEach((select, index) => {
             if (this.lista[index] && this.lista[index].nome) {
               select.value = this.lista[index].nome;
@@ -1061,7 +1027,7 @@
 </script>
 
 <script>
-  // Mostrar arquivos selecionados com opção de remover
+  
   document.addEventListener('DOMContentLoaded', function() {
     const inputAnexos = document.getElementById('anexos');
     const listaArquivos = document.getElementById('listaArquivos');
@@ -1069,7 +1035,7 @@
     
     if (inputAnexos) {
       inputAnexos.addEventListener('change', function(e) {
-        // Adicionar novos arquivos à lista existente
+        
         arquivosSelecionados = [...arquivosSelecionados, ...Array.from(e.target.files)];
         atualizarListaArquivos();
       });
@@ -1118,7 +1084,7 @@
     }
     
     function atualizarInputFile() {
-      // Criar novo DataTransfer para atualizar o input file
+      
       const dt = new DataTransfer();
       arquivosSelecionados.forEach(file => dt.items.add(file));
       inputAnexos.files = dt.files;
@@ -1129,16 +1095,14 @@
       atualizarListaArquivos();
     };
     
-    // Função para excluir anexos existentes
     window.excluirAnexo = function(anexoId) {
       if (confirm('Tem certeza que deseja excluir este anexo?')) {
-        // Adicionar o ID ao campo hidden de anexos a excluir
+        
         const inputExcluir = document.getElementById('anexos_excluir');
         let anexosParaExcluir = JSON.parse(inputExcluir.value);
         anexosParaExcluir.push(anexoId);
         inputExcluir.value = JSON.stringify(anexosParaExcluir);
         
-        // Remover visualmente o anexo da lista
         const anexoElement = document.getElementById('anexo-' + anexoId);
         if (anexoElement) {
           anexoElement.style.transition = 'opacity 0.3s';
@@ -1146,7 +1110,6 @@
           setTimeout(() => {
             anexoElement.remove();
             
-            // Verificar se não há mais anexos e ocultar a seção
             const listaAnexos = document.getElementById('listaAnexosExistentes');
             if (listaAnexos && listaAnexos.children.length === 0) {
               listaAnexos.parentElement.style.display = 'none';

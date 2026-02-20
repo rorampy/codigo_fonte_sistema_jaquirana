@@ -165,7 +165,6 @@ def cadastrar_transportadora():
 
                 except Exception as e:
                     db.session.rollback()
-                    print(f"Erro ao criar Pessoa Financeira: {e}")
                     import traceback
                     traceback.print_exc()
                     flash((f"Transportadora cadastrada, mas houve erro ao criar Pessoa Financeira: {str(e)}", "warning"))
@@ -296,7 +295,6 @@ def editar_transportadora(id):
         if gravar_banco == True:
             telefone_tratado = Tels.remove_pontuacao_telefone_celular_br(telefone)
 
-            # === Comparação de Objetos ===
 
             obj2 = {
                 "tipoCadastro": tipoCadastro,
@@ -339,7 +337,6 @@ def editar_transportadora(id):
 
             if pessoa_financeira:
                 try:
-                     # Atualizar dados básicos
                     pessoa_financeira.tipo_cadastro = True if tipoCadastroTransportadora == 1 else False
                     pessoa_financeira.identificacao = identificacaoTransportadora
                     pessoa_financeira.numero_documento = numeroDocumento
@@ -361,7 +358,6 @@ def editar_transportadora(id):
                     db.session.flush()
 
                 except Exception as e:
-                    print(f"Erro ao atualizar Pessoa Financeira: {e}")
                     import traceback
                     traceback.print_exc()
 

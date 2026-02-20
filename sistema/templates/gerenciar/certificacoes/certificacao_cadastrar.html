@@ -36,7 +36,7 @@
 
       <form method="post" enctype="multipart/form-data" id="form-certificacao">
         <div class="row">
-          <!-- Formulário Principal -->
+          
           <div class="col-md-8">
             <div class="card">
               <div class="card-header">
@@ -102,7 +102,6 @@
             </div>
           </div>
 
-          <!-- Área de Upload de Anexos -->
           <div class="col-md-4">
             <div class="card">
               <div class="card-header">
@@ -119,7 +118,7 @@
                 </h3>
               </div>
               <div class="card-body">
-                <!-- Área de Upload Drag & Drop -->
+                
                 <div class="mb-3">
                   <label class="form-label">Documentos da Certificação</label>
                   <div id="upload-area" class="border-dashed rounded p-4 text-center bg-light">
@@ -156,14 +155,12 @@
                   </small>
                 </div>
 
-                <!-- Lista de Arquivos Selecionados -->
                 <div id="lista-arquivos" class="d-none">
                   <label class="form-label">Arquivos Selecionados:</label>
                   <div id="arquivos-preview" class="list-group list-group-flush">
                   </div>
                 </div>
 
-                <!-- Sugestões de Anexos -->
                 <div class="alert alert-info py-2 px-3">
                   <div class="d-flex">
                     <div>
@@ -190,7 +187,6 @@
               </div>
             </div>
 
-            <!-- Card de Preview do Estoque -->
             <div class="card mt-3">
               <div class="card-header">
                 <h3 class="card-title">
@@ -229,7 +225,6 @@
           </div>
         </div>
 
-        <!-- Botões de Ação -->
         <div class="row mt-4">
           <div class="col-12">
             <div class="card">
@@ -267,10 +262,9 @@
   {% include 'estrutura/footer.html' %}
 </div>
 
-<!-- JavaScript para funcionalidades dinâmicas -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    // Formatação de moeda para o campo valor_estoque
+    
     const valorEstoqueInput = document.getElementById('valor_estoque');
 
     valorEstoqueInput.addEventListener('input', function (e) {
@@ -278,11 +272,9 @@
       value = (parseInt(value) / 100).toFixed(2);
       e.target.value = value.replace('.', ',');
 
-      // Atualizar preview
       atualizarPreview(parseFloat(value.replace(',', '.')));
     });
 
-    // Função para atualizar o preview do estoque
     function atualizarPreview(valor) {
       const previewIcone = document.getElementById('preview-icone');
       const previewValor = document.getElementById('preview-valor');
@@ -319,13 +311,11 @@
       }
     }
 
-    // Gerenciar upload de arquivos
     const anexosInput = document.getElementById('anexos');
     const uploadArea = document.getElementById('upload-area');
     const listaArquivos = document.getElementById('lista-arquivos');
     const arquivosPreview = document.getElementById('arquivos-preview');
 
-    // Drag and drop
     uploadArea.addEventListener('dragover', function (e) {
       e.preventDefault();
       uploadArea.classList.add('border-primary');
@@ -356,7 +346,7 @@
 
         Array.from(files).forEach((file, index) => {
           const fileExtension = file.name.split('.').pop().toLowerCase();
-          let fileIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-16z"/></svg>'; // Ícone padrão
+          let fileIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-16z"/></svg>'; 
 
           if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
             fileIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg>';
@@ -391,7 +381,6 @@
       }
     }
 
-    // Função global para remover arquivo (necessária para o onclick)
     window.removerArquivo = function (index) {
       const dt = new DataTransfer();
       const files = anexosInput.files;

@@ -19,7 +19,6 @@
 
         <div class="relatorio-title">Relatório Unificado de Cargas</div>
 
-        <!-- Filtros aplicados se existirem -->
         {% if dados_corretos %}
         <div class="dados-registro no-break">
           <div class="filtros-title">Filtros Aplicados</div>
@@ -84,7 +83,7 @@
         {% for origem_group in registros|groupby('origem') %}
         {% set origem = origem_group.grouper %}
         {% set registros_origem = origem_group.list %}
-        <!-- Seção da Origem (Fornecedor/Floresta) -->
+        
         <div class="no-break" style="margin-top: 20px;">
           <div class="filtros-title">Origem: {{ origem }}</div>
           <div style="font-size: 12px; color: #666; margin-top: 5px;">
@@ -92,7 +91,6 @@
           </div>
         </div>
 
-        <!-- Tabela de cargas para esta origem -->
         <table>
           <thead>
             <tr>
@@ -185,7 +183,7 @@
         {% endfor %}
 
         {% else %}
-        <!-- Estado vazio -->
+        
         <div style="text-align: center; padding: 50px 0;">
           <h3 style="color: #666;">Nenhum registro encontrado</h3>
           <p style="color: #999;">Não há registros de cargas

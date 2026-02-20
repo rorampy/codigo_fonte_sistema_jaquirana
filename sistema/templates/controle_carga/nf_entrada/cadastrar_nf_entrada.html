@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             CADASTRAR NF ENTRADA
           </div>
@@ -19,7 +19,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -219,7 +218,7 @@
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // === NF Entrada ===
+      
       const radioManterNfEntrada = document.getElementById("opcaoManterNfEntrada");
       const radioAlterarNfEntrada = document.getElementById("opcaoAlterarNfEntrada");
       const inputUploadNfEntrada = document.getElementById("arquivoNfEntrada");
@@ -239,11 +238,9 @@
         radioManterNfEntrada.addEventListener("change", atualizarUploadNfEntrada);
         radioAlterarNfEntrada.addEventListener("change", atualizarUploadNfEntrada);
   
-        // Inicializa estado correto
         atualizarUploadNfEntrada();
       }
   
-      // === Contra Nota ===
       const radioManterContraNota = document.getElementById("opcaoManterContraNota");
       const radioAlterarContraNota = document.getElementById("opcaoAlterarContraNota");
       const inputUploadContraNota = document.getElementById("inputUploadContraNota");
@@ -263,7 +260,6 @@
         radioManterContraNota.addEventListener("change", atualizarUploadContraNota);
         radioAlterarContraNota.addEventListener("change", atualizarUploadContraNota);
   
-        // Inicializa estado correto
         atualizarUploadContraNota();
       }
     });

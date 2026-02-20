@@ -335,7 +335,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table>
       <tr>
@@ -352,14 +352,10 @@
 
   <div class="relatorio-title">Demonstrativo de Resultado do Exercício - Analítico</div>
 
-  <!-- Período do Relatório -->
   <div class="period-badge">
     <span class="badge">Período: {{ data_inicio.strftime('%d/%m/%Y') }} a {{ data_fim.strftime('%d/%m/%Y') }}</span>
   </div>
 
-  <!-- RECEITAS - Estrutura idêntica à web -->
-  
-  <!-- Definir variáveis globais para evitar erros -->
   {% set total_nao_op_sem_aplicacoes = [] %}
   {% for item in dre_dados['receitas']['nao_operacionais']['detalhes'] %}
     {% if not item.codigo.startswith('1.02.01') %}
@@ -393,7 +389,6 @@
   {% endfor %}
   {% set _ = grupos_ordenados.sort() %}
 
-  <!-- Receitas Não-Operacionais (exceto aplicações financeiras) -->
   {% set categorias_agrupadas_nao_op = {} %}
   {% for item in dre_dados['receitas']['nao_operacionais']['detalhes'] %}
     {% if item.valor != 0 and not item.codigo.startswith('1.02.01') %}
@@ -412,7 +407,7 @@
   {% set _ = grupos_ordenados_nao_op.sort() %}
 
   {% if grupos_ordenados|length > 0 or grupos_ordenados_nao_op|length > 0 %}
-  <!-- SEÇÃO RECEITAS -->
+  
   <div class="section-badge section-receitas">RECEITAS</div>
   
   <table class="table-borderless">
@@ -439,7 +434,6 @@
     {% endfor %}
     {% endfor %}
 
-    <!-- Receitas Não-Operacionais -->
     {% if grupos_ordenados_nao_op|length > 0 %}
     <tr class="bg-light-blue">
       <td><strong>RECEITAS NÃO-OPERACIONAIS</strong></td>
@@ -463,7 +457,6 @@
     {% endfor %}
     {% endif %}
 
-    <!-- Total Receitas -->
     <tr class="border-top-section">
       <td><strong>TOTAL DE RECEITAS</strong></td>
       <td class="valor-positivo"><strong>{{ total_receitas_sem_aplicacoes | formatar_float_para_brl }}</strong></td>
@@ -471,7 +464,6 @@
   </table>
   {% endif %}
 
-  <!-- CUSTOS - Estrutura idêntica à web -->
   {% set categorias_agrupadas_custos = {} %}
   {% for item in dre_dados['custos']['operacionais']['detalhes'] %}
     {% if item.valor != 0 and not item.codigo.startswith('2.01.11') and not item.codigo.startswith('2.02.05') %}
@@ -490,7 +482,7 @@
   {% set _ = grupos_ordenados_custos.sort() %}
 
   {% if grupos_ordenados_custos|length > 0 %}
-  <!-- SEÇÃO CUSTOS -->
+  
   <div class="section-badge section-custos">CUSTOS OPERACIONAIS</div>
   
   <table class="table-borderless">
@@ -510,7 +502,6 @@
     {% endfor %}
     {% endfor %}
 
-    <!-- Total Custos (excluindo compra de floresta e retirada de capital) -->
     <tr class="border-top-section">
       <td><strong>TOTAL CUSTOS OPERACIONAIS</strong></td>
       <td class="valor-negativo"><strong>-{{ total_custos_sem_floresta | sum(attribute='valor') | formatar_float_para_brl }}</strong></td>
@@ -518,7 +509,6 @@
   </table>
   {% endif %}
 
-  <!-- MARGEM DE CONTRIBUIÇÃO - Card como na web com cálculos filtrados -->
   {% set margem_contribuicao_pdf = total_receitas_sem_aplicacoes - (total_custos_sem_floresta | sum(attribute='valor')) %}
   {% set margem_percentual_pdf = (margem_contribuicao_pdf / total_receitas_sem_aplicacoes * 100) if total_receitas_sem_aplicacoes != 0 else 0 %}
   <div class="highlight-card">
@@ -527,7 +517,6 @@
     <div class="formula">Receitas Operacionais - Custos Operacionais ({{ "%.0f"|format(margem_percentual_pdf) }}%)</div>
   </div>
 
-  <!-- DESPESAS - Estrutura idêntica à web -->
   {% set categorias_agrupadas_despesas = {} %}
   {% for item in dre_dados['despesas']['operacionais']['detalhes'] %}
     {% if item.valor != 0 and not item.codigo.startswith('2.02.05') %}
@@ -546,7 +535,7 @@
   {% set _ = grupos_ordenados_despesas.sort() %}
 
   {% if grupos_ordenados_despesas|length > 0 %}
-  <!-- SEÇÃO DESPESAS -->
+  
   <div class="section-badge section-despesas">DESPESAS OPERACIONAIS</div>
   
   <table class="table-borderless">
@@ -566,7 +555,6 @@
     {% endfor %}
     {% endfor %}
 
-    <!-- Total Despesas (excluindo retirada de capital) -->
     {% set total_despesas_sem_retirada = [] %}
     {% for item in dre_dados['despesas']['operacionais']['detalhes'] %}
       {% if not item.codigo.startswith('2.02.05') %}
@@ -580,7 +568,6 @@
   </table>
   {% endif %}
 
-  <!-- RESULTADO OPERACIONAL - Card como na web com cálculos filtrados -->
   {% set resultado_operacional_pdf = margem_contribuicao_pdf - dre_dados['despesas']['operacionais']['total'] %}
   <div class="highlight-card">
     <div class="title">RESULTADO OPERACIONAL</div>
@@ -588,7 +575,6 @@
     <div class="formula">Margem de Contribuição - Despesas Operacionais</div>
   </div>
 
-  <!-- ATIVIDADES DE INVESTIMENTO - só mostra se há compra de floresta -->
   {% set compra_floresta = [] %}
   {% for item in dre_dados['custos']['operacionais']['detalhes'] %}
     {% if item.codigo.startswith('2.01.11') and item.valor != 0 %}
@@ -638,7 +624,6 @@
   </table>
   {% endif %}
 
-  <!-- ATIVIDADES DE FINANCIAMENTO - só mostra se há aplicações ou retiradas -->
   {% set aplicacoes_financeiras = [] %}
   {% set retirada_capital = [] %}
   
@@ -658,7 +643,7 @@
   <div class="section-badge section-financiamento">ATIVIDADES DE FINANCIAMENTO</div>
   
   <table class="table-borderless">
-    <!-- Receitas Não-Operacionais (se há aplicações financeiras) -->
+    
     {% if aplicacoes_financeiras|length > 0 %}
     <tr class="bg-light-blue">
       <td><strong>Receitas Não-Operacionais</strong></td>
@@ -673,7 +658,6 @@
     {% endfor %}
     {% endif %}
 
-    <!-- Despesas (se há retirada de capital) -->
     {% if retirada_capital|length > 0 %}
     <tr class="bg-light-blue">
       <td><strong>Despesas</strong></td>
@@ -704,16 +688,10 @@
   </table>
   {% endif %}
 
-  <!-- VARIAÇÃO DE CAIXA - Card como na web com cálculos filtrados -->
   {% set total_atividades_investimento_pdf = -(compra_floresta | sum(attribute='valor')) %}
   {% set total_atividades_financiamento_pdf = (aplicacoes_financeiras | sum(attribute='valor')) - (retirada_capital | sum(attribute='valor')) %}
   {% set variacao_caixa_pdf = resultado_operacional_pdf + total_atividades_investimento_pdf + total_atividades_financiamento_pdf %}
-  <!-- <div class="highlight-card">
-    <div class="title">VARIAÇÃO DE CAIXA</div>
-    <div class="value">{{ variacao_caixa_pdf | formatar_float_para_brl }}</div>
-    <div class="formula">Resultado Operacional + Atividades Investimento + Atividades Financiamento</div>
-  </div> -->
-
+  
   <div class="footer">
     <p><strong>Jaquirana Extração &copy; 2025</strong> - Todos os direitos reservados</p>
     <p><strong>Sistema de Gestão Jaquirana - Módulo Financeiro</strong></p>

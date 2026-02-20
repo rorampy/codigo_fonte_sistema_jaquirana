@@ -1,6 +1,3 @@
-/**
- * Gerenciamento de anexos com Dropzone para categorização de fatura
- */
 
 document.addEventListener('DOMContentLoaded', function() {
   const dropzoneElement = document.getElementById('dropzone-anexos');
@@ -10,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
-  // Configurar Dropzone
   const myDropzone = new Dropzone("#dropzone-anexos", {
     url: "#",
     autoProcessQueue: false,
@@ -25,18 +21,14 @@ document.addEventListener('DOMContentLoaded', function() {
     dictMaxFilesExceeded: "Arquivo muito grande"
   });
 
-  // Interceptar submit do formulário
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    // Criar FormData com todos os campos do formulário
     const formData = new FormData(form);
     
-    // Remover anexos que possam estar vazios
     formData.delete('anexos');
     
-    // Adicionar arquivos do Dropzone
     const files = myDropzone.files;
     if (files && files.length > 0) {
       files.forEach(function(file) {
@@ -44,7 +36,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    // Enviar formulário
     fetch(form.action || window.location.href, {
       method: 'POST',
       body: formData

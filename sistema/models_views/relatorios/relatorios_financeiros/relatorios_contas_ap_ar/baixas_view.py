@@ -27,9 +27,6 @@ from sistema.models_views.configuracoes_gerais.conta_bancaria.conta_bancaria_mod
 from .contas_ap_ar_service import ContasAPARService
 
 
-# =============================================================================
-# HELPERS
-# =============================================================================
 
 def _extrair_filtros():
     source = request.form if request.method == 'POST' else request.args
@@ -40,7 +37,6 @@ def _extrair_filtros():
         'plano_contas_id': source.get('planoContasId') or None,
         'centro_custo_id': source.get('centroCustoId') or None,
         'situacao_id': source.get('situacaoId') or None,
-        # Filtros avançados
         'codigo_faturamento': source.get('codigoFaturamento') or None,
         'nota_fiscal': source.get('notaFiscal') or None,
         'descricao_avulso': source.get('descricaoAvulso') or None,
@@ -62,9 +58,6 @@ def _contexto_base(direcao='ap'):
     }
 
 
-# =============================================================================
-# AP — PAGAMENTOS
-# =============================================================================
 
 @app.route('/relatorios/contas-a-pagar/pagamentos', methods=['GET'])
 @login_required
@@ -138,9 +131,6 @@ def relatorio_ap_pagamentos_excel():
     )
 
 
-# =============================================================================
-# AR — RECEBIMENTOS
-# =============================================================================
 
 @app.route('/relatorios/contas-a-receber/recebimentos', methods=['GET'])
 @login_required

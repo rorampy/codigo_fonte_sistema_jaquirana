@@ -226,7 +226,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table>
       <tr>
@@ -243,7 +243,6 @@
 
   <div class="relatorio-title">Relatório de Receitas Avulsas | {{ faturamento.codigo_faturamento }}</div>
 
-  <!-- Dados das Receitas Avulsas -->
   <div class="section-title">DADOS DAS RECEITAS AVULSAS</div>
   <div class="simple-info">
     <strong>Código:</strong> {{ faturamento.codigo_faturamento }}
@@ -257,7 +256,7 @@
   <div class="simple-info">
     <strong>Situação:</strong> {{ faturamento.situacao if faturamento.situacao else 'Pendente' }}
   </div>
-  <!-- Receitas Avulsas -->
+  
   {% if receitas_avulsas %}
   <div class="section-title">RECEITAS AVULSAS ({{ receitas_avulsas | length }} registros)</div>
 
@@ -292,7 +291,6 @@
   </table>
   {% endif %}
 
-  <!-- Consolidado Final das Receitas -->
   <div class="section-title">RESUMO FINANCEIRO</div>
   <table>
     <thead>

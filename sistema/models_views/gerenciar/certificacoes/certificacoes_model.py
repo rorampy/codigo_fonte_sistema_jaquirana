@@ -15,7 +15,6 @@ class CertificacoesModel(BaseModel):
     valor_estoque_atual = db.Column(db.Float, nullable=False, default=0.0)
     ativo = db.Column(db.Boolean, default=True, nullable=False)
 
-    # Relacionamento com anexos
     anexos = relationship("CertificacaoAnexoModel", back_populates="certificacao", cascade="all, delete-orphan")
 
     def __init__(self, nome, descricao=None, descricao_nota=None, valor_estoque_inicial=0.0, valor_estoque_atual=0.0, ativo=True):
@@ -108,7 +107,6 @@ class CertificacaoAnexoModel(BaseModel):
     descricao_anexo = db.Column(db.String(200), nullable=True)
     ordem_exibicao = db.Column(db.Integer, default=1)
 
-    # Relacionamento
     certificacao = relationship("CertificacoesModel", back_populates="anexos")
 
     def __init__(self, certificacao_id, arquivo_upload_id, descricao_anexo=None, ordem_exibicao=1):

@@ -8,7 +8,6 @@
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
 
-      <!-- Primeira Linha: Produto Principal -->
       <div class="row">
         <div class="col-12">
           <div class="mbr-card">
@@ -110,9 +109,8 @@
         </div>
       </div>
 
-      <!-- Segunda Linha: Fornecedor + Compra -->
       <div class="row">
-        <!-- Compra de Mercadoria -->
+        
         <div class="col-lg-12">
           <div class="mbr-card">
             <div class="mbr-card-header">
@@ -134,7 +132,7 @@
             </div>
             <div class="mbr-card-body">
               <div class="row">
-                <!-- Coluna Esquerda: Configurações -->
+                
                 <div class="col-lg-6">
                   <div class="mbr-field-group">
                     <div class="mbr-field-group-title">Configuração Fiscal</div>
@@ -231,12 +229,10 @@
                   </div>
                 </div>
 
-                <!-- Coluna Direita: Detalhamento de Impostos/Acréscimos -->
                 <div class="col-lg-6">
                   <div class="mbr-field-group">
                     <div class="mbr-field-group-title">Impostos e Acréscimos Aplicados</div>
 
-                    <!-- Área de Impostos (Com Nota Fiscal) -->
                     <div id="area-impostos" style="display: none;">
                       <div class="row mb-3">
                         <div class="col-4 mb-3">
@@ -267,7 +263,6 @@
                       </div>
                     </div>
 
-                    <!-- Área de Acréscimos (Sem Nota Fiscal) -->
                     <div id="area-acrescimos" style="display: none;">
                       <div class="row mb-3">
                         <div class="col-6">
@@ -286,7 +281,6 @@
                       </div>
                     </div>
 
-                    <!-- Mensagem quando não há impostos/acréscimos -->
                     <div id="area-sem-impostos">
                       <div class="text-center p-4"
                         style="background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
@@ -318,10 +312,8 @@
         </div>
       </div>
 
-
-      <!-- Terceira Linha: Serviços -->
       <div class="row" id="row-servicos">
-        <!-- Frete -->
+        
         <div class="col-lg-12" id="card-frete">
           <div class="mbr-card">
             <div class="mbr-card-header">
@@ -340,7 +332,7 @@
             </div>
             <div class="mbr-card-body">
               <div class="row">
-                <!-- Área de configurações -->
+                
                 <div class="col-12 col-md-12 col-lg-6">
                   <div class="mbr-field-group">
                     <div class="mbr-field-group-title">Configuração Fiscal</div>
@@ -420,12 +412,11 @@
                     </div>
                   </div>
                 </div>
-                <!-- Coluna Direita: Detalhamento de Impostos/Acréscimos -->
+                
                 <div class="col-lg-6">
                   <div class="mbr-field-group">
                     <div class="mbr-field-group-title">Impostos e Acréscimos Aplicados</div>
 
-                    <!-- Área de Impostos (Com Nota Fiscal) -->
                     <div id="area-impostos-frete" style="display: none;">
                       <div class="row mb-3">
                         <div class="col-4 mb-3">
@@ -449,7 +440,6 @@
                       </div>
                     </div>
 
-                    <!-- Área de Acréscimos (Sem Nota Fiscal) -->
                     <div id="area-acrescimos-frete" style="display: none;">
                       <div class="row mb-3">
                         <div class="col-4">
@@ -461,7 +451,6 @@
                       </div>
                     </div>
 
-                    <!-- Mensagem quando não há impostos/acréscimos -->
                     <div id="area-sem-impostos-frete">
                       <div class="text-center p-4"
                         style="background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
@@ -492,7 +481,6 @@
           </div>
         </div>
 
-        <!-- Extração -->
         <div class="col-lg-12" id="card-extracao">
           <div class="mbr-card mbr-card-compact">
             <div class="mbr-card-header">
@@ -564,12 +552,11 @@
                     </div>
                   </div>
                 </div>
-                <!-- Coluna Direita: Detalhamento de Impostos/Acréscimos -->
+                
                 <div class="col-lg-6">
                   <div class="mbr-field-group">
                     <div class="mbr-field-group-title">Impostos e Acréscimos Aplicados</div>
 
-                    <!-- Área de Impostos (Com Nota Fiscal) -->
                     <div id="area-impostos-extracao" style="display: none;">
                       <div class="row mb-3">
                         <div class="col-4 mb-3">
@@ -593,7 +580,6 @@
                       </div>
                     </div>
 
-                    <!-- Área de Acréscimos (Sem Nota Fiscal) -->
                     <div id="area-acrescimos-extracao" style="display: none;">
                       <div class="row mb-3">
                         <div class="col-4">
@@ -605,7 +591,6 @@
                       </div>
                     </div>
 
-                    <!-- Mensagem quando não há impostos/acréscimos -->
                     <div id="area-sem-impostos-extracao">
                       <div class="text-center p-4"
                         style="background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
@@ -636,7 +621,6 @@
           </div>
         </div>
 
-        <!-- Comissão -->
         <div class="col-lg-12" id="card-comissao">
           <div class="mbr-card mbr-card-compact">
             <div class="mbr-card-header">
@@ -710,12 +694,11 @@
                     </div>
                   </div>
                 </div>
-                <!-- Coluna Direita: Detalhamento de Impostos/Acréscimos -->
+                
                 <div class="col-lg-6">
                   <div class="mbr-field-group">
                     <div class="mbr-field-group-title">Impostos e Acréscimos Aplicados</div>
 
-                    <!-- Área de Impostos (Com Nota Fiscal) -->
                     <div id="area-impostos-comissao" style="display: none;">
                       <div class="row mb-3">
                         <div class="col-4 mb-3">
@@ -739,7 +722,6 @@
                       </div>
                     </div>
 
-                    <!-- Área de Acréscimos (Sem Nota Fiscal) -->
                     <div id="area-acrescimos-comissao" style="display: none;">
                       <div class="row mb-3">
                         <div class="col-4">
@@ -751,7 +733,6 @@
                       </div>
                     </div>
 
-                    <!-- Mensagem quando não há impostos/acréscimos -->
                     <div id="area-sem-impostos-comissao">
                       <div class="text-center p-4"
                         style="background: #f8f9fa; border-radius: 6px; border: 1px dashed #dee2e6;">
@@ -783,7 +764,6 @@
         </div>
       </div>
 
-      <!-- Seção de Resultados da Precificação -->
       <div class="row">
         <div class="col-12">
           <div class="mbr-card">
@@ -810,7 +790,7 @@
               </div>
             </div>
             <div class="mbr-card-body">
-              <!-- Resumo de Impostos por Operação -->
+              
               <div class="mbr-section">
                 <div class="mbr-section-title">Resumo de Impostos por Operação</div>
                 <div class="creditos-table-container">
@@ -872,7 +852,6 @@
                 </div>
               </div>
 
-              <!-- Custos com documentação - Ajuste Fiscal -->
               <div class="mbr-section">
                 <div class="mbr-section-title">Custos com documentação - Ajuste Fiscal</div>
                 <div class="creditos-table-container">
@@ -915,7 +894,6 @@
                 </div>
               </div>
 
-              <!-- Contribuições Sociais Rurais -->
               <div class="mbr-section">
                 <div class="mbr-section-title">Contribuições Sociais Rurais</div>
                 <div class="creditos-table-container">
@@ -943,7 +921,6 @@
                 </div>
               </div>
 
-              <!-- Resumo Financeiro Completo -->
               <div class="mbr-section">
                 <div class="mbr-section-title">Resumo Financeiro Completo</div>
                 <div class="creditos-table-container">
@@ -1000,21 +977,18 @@
         </div>
       </div>
 
-
       <div class="mbr-section" style="border-top: 1px solid #eaeaea6b;">
         <div class="row">
           <div class="col-12 text-center">
             <form id="form-relatorio" method="POST" action="{{ url_for('simular_precificacao') }}" target="_blank"
               onsubmit="return prepararRelatorio()">
 
-              <!-- Dados do Produto -->
               <input type="hidden" name="produto" id="hidden-produto">
               <input type="hidden" name="bitola" id="hidden-bitola">
               <input type="hidden" name="valor_unitario" id="hidden-valor-unitario">
               <input type="hidden" name="quantidade" id="hidden-quantidade">
               <input type="hidden" name="madeira_posta" id="hidden-madeira-posta">
 
-              <!-- Compra de Mercadoria -->
               <input type="hidden" name="emite_nota_compra" id="hidden-emite-nota-compra">
               <input type="hidden" name="doc_fiscal_compra" id="hidden-documentacao-fiscal-compra">
               <input type="hidden" name="funrural" id="hidden-funrural">
@@ -1024,7 +998,6 @@
               <input type="hidden" name="classificacao_fiscal" id="hidden-classificacao-fiscal">
               <input type="hidden" name="valor_ton_compra" id="hidden-valor-ton-compra">
 
-              <!-- Frete -->
               <input type="hidden" name="emite_nota_frete" id="hidden-emite-nota-frete">
               <input type="hidden" name="origem_frete" id="hidden-origem-frete">
               <input type="hidden" name="destino_frete" id="hidden-destino-frete">
@@ -1033,22 +1006,18 @@
               <input type="hidden" name="valor_frete" id="hidden-valor-frete">
               <input type="hidden" name="doc_fiscal_frete" id="hidden-documentacao-fiscal-frete">
 
-              <!-- Extração -->
               <input type="hidden" name="emite_nota_extracao" id="hidden-emite-nota-extracao">
               <input type="hidden" name="prestador_extracao" id="hidden-prestador-extracao">
               <input type="hidden" name="valor_extracao" id="hidden-valor-extracao">
               <input type="hidden" name="doc_fiscal_extracao" id="hidden-documentacao-fiscal-extracao">
 
-              <!-- Comissão -->
               <input type="hidden" name="emite_nota_comissao" id="hidden-emite-nota-comissao">
               <input type="hidden" name="prestador_comissao" id="hidden-prestador-comissao">
               <input type="hidden" name="valor_comissao" id="hidden-valor-comissao">
               <input type="hidden" name="doc_fiscal_comissao" id="hidden-documentacao-fiscal-comissao">
 
-              <!-- Campo para indicar tipo de relatório -->
               <input type="hidden" name="tipo_relatorio" id="hidden-tipo-relatorio">
 
-              <!-- Botões para os dois tipos de relatório -->
               <div class="d-flex justify-content-center gap-3 flex-wrap">
                 <button type="button" class="mbr-btn-primary" onclick="gerarRelatorio('detalhado')"
                   style="padding: 12px 30px; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 2px 8px rgba(30, 86, 49, 0.2);">
@@ -1081,7 +1050,6 @@
                 </button>
               </div>
 
-              <!-- Descrições dos tipos de relatório -->
               <div class="mt-3">
                 <small class="text-muted d-block mb-1">
                   <strong>Detalhado:</strong> Relatório completo com gráficos, análise fiscal e breakdown detalhado

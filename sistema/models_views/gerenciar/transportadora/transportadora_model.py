@@ -9,7 +9,6 @@ class TransportadoraModel(BaseModel):
     """
     __tablename__ = 'transp_transportadora'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    # 1 - PF | 0 - PJ
     tipo_cadastro = db.Column(db.Boolean, nullable=False)
     identificacao = db.Column(db.String(255), nullable=False)
     numero_documento = db.Column(db.String(20), nullable=False)
@@ -160,7 +159,6 @@ class TransportadoraModel(BaseModel):
         from sistema.models_views.parametros.rotas_frete.rota_frete_preco_bitola_model import RotaFretePrecoBitolaModel
         from sistema.models_views.controle_carga.produto.produto_model import ProdutoModel
         
-        # Primeiro busca rota específica para a transportadora
         rota_frete = RotaFreteModel.query.filter_by(
             cliente_id=cliente_id,
             transportadora_id=transportadora_id,
@@ -168,16 +166,14 @@ class TransportadoraModel(BaseModel):
             ativo=True
         ).filter(RotaFreteModel.deletado == False).first()
         
-        # Se não encontrar rota específica, busca a rota "Todos" (transportadora_id = None)
         if not rota_frete:
             rota_frete = RotaFreteModel.query.filter_by(
                 cliente_id=cliente_id,
-                transportadora_id=None,  # Rota "Todos"
+                transportadora_id=None,
                 fornecedor_id=fornecedor_identificacao,
                 ativo=True
             ).filter(RotaFreteModel.deletado == False).first()
         
-        # Se ainda não houver rota cadastrada
         if not rota_frete:
             return {
                 'preco_frete': 0,
@@ -185,7 +181,6 @@ class TransportadoraModel(BaseModel):
                 'rota_frete': None
             }
         
-        # Buscar produto_id pelo nome
         produto_obj = ProdutoModel.query.filter_by(nome=produto, deletado=False).first()
         if not produto_obj:
             return {
@@ -194,7 +189,6 @@ class TransportadoraModel(BaseModel):
                 'rota_frete': rota_frete
             }
         
-        # Buscar preço na tabela normalizada
         preco_frete_obj = RotaFretePrecoBitolaModel.query.filter_by(
             rota_frete_id=rota_frete.id,
             produto_id=produto_obj.id,

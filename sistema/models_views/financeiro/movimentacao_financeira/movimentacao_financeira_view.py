@@ -27,7 +27,6 @@ from sistema.models_views.parametrizacao.changelog_model import ChangelogModel
 from sistema._utilitarios import *
 
 
-# Processador de contexto, fornece a consulta em todo o escopo do projeto
 @app.context_processor
 def inject_contas_bancarias():
     contas = ContaBancariaModel.obter_contas_bancarias_ativas()
@@ -95,7 +94,6 @@ def nova_movimentacao_financeira():
         dados_conciliacao = session.get('dados_conciliacao', {})
         conciliar_transacao_id = dados_conciliacao.get('transacao_id')
         
-        # Verificar se é uma diferença de conciliação
         tem_diferenca = dados_conciliacao.get('tem_diferenca', False)
         transacao_ofx_id = dados_conciliacao.get('transacao_ofx_id')
         registro_recebimento_id = dados_conciliacao.get('registro_recebimento_id')
@@ -119,13 +117,10 @@ def nova_movimentacao_financeira():
             d["children"] = obter_subcategorias_recursivo_categorizacao_fiscal(cat.id)
             estrutura_fiscal.append(d)
 
-        # Debug para transação OFX
         transacao_ofx = None
         if conciliar_transacao_id:
             transacao_ofx = ImportacaoOfx.query.get(conciliar_transacao_id)
-            print(f"[DEBUG] transacao_ofx encontrada: {transacao_ofx}")
 
-        # Pré-preenchimento para diferenças
         dados_preenchidos = {}
         if tem_diferenca:
             dados_preenchidos = {
@@ -161,7 +156,7 @@ def nova_movimentacao_financeira():
 
             tipo_movimentacao = 1 if tipoMovimentacao == "receita" else 2
 
-            if tipo_movimentacao == 2:  # Despesa
+            if tipo_movimentacao == 2:
                 campos["centroCusto"] = ["Centro custo", centroCusto]
             
             validacao_campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)
@@ -191,7 +186,6 @@ def nova_movimentacao_financeira():
                 db.session.add(lancamento_extra)
                 db.session.flush()
 
-                # Movimentação financeira com campos de conciliação OFX
                 movimentacao = MovimentacaoFinanceiraModel(
                     tipo_movimentacao=tipo_movimentacao,
                     usuario_id=current_user.id,
@@ -205,7 +199,6 @@ def nova_movimentacao_financeira():
                 )
                 db.session.add(movimentacao)
 
-                # Atualizar saldo
                 saldo_total = SaldoMovimentacaoFinanceiraModel.obter_registro_conta_bancaria(contaBancaria)
                 if saldo_total == None:
                     saldo = SaldoMovimentacaoFinanceiraModel(
@@ -220,34 +213,29 @@ def nova_movimentacao_financeira():
                     saldo_total.valor_total_saldo_100 += valor_saldo_novo
                     saldo_total.conta_bancaria_id = contaBancaria
                 
-                # Tratar diferenças de conciliação
                 if tem_diferenca and transacao_ofx_id:
-                    # Se é uma diferença, vincular ao lançamento extra como observação
                     transacao_diferenca = ImportacaoOfx.query.get(transacao_ofx_id)
                     if transacao_diferenca:
                         observacao_diferenca = f"Diferença de conciliação - Transação OFX {transacao_diferenca.fitid}"
                         lancamento_extra.descricao = observacao_diferenca
 
-                # ALTERAÇÃO: Conciliação OFX melhorada (como no fornecedor_a_pagar)
                 if transacao_ofx and not transacao_ofx.conciliado:
                     transacao_ofx.conciliado = True
                     tipo_conciliacao_atual = dados_conciliacao.get('tipo_conciliacao', 'outros_pagamentos')
                     transacao_ofx.tipo_conciliacao = tipo_conciliacao_atual
                     
-                    # Vinculação específica por tipo de movimentação
                     transacao_ofx.pagamento_id = lancamento_extra.id
-                    if tipo_movimentacao == 1:  # Receita
+                    if tipo_movimentacao == 1:
                         observacao = f"Conciliado com receita extra ID {lancamento_extra.id}"
-                    else:  # Despesa
+                    else:
                         observacao = f"Conciliado com despesa extra ID {lancamento_extra.id}"
                     
                     transacao_ofx.data_conciliacao = datetime.now()
                     transacao_ofx.usuario_conciliacao_id = current_user.id
                     transacao_ofx.observacoes_conciliacao = observacao
                     
-                    print(f"[DEBUG] Transação OFX conciliada - Tipo: {tipo_movimentacao} ({'Receita' if tipo_movimentacao == 1 else 'Despesa'})")
                 else:
-                    print(f"[DEBUG] NÃO marcou - transacao_ofx: {transacao_ofx}, já conciliado: {transacao_ofx.conciliado if transacao_ofx else 'N/A'}")
+                    pass
 
                 acao = TipoAcaoEnum.CADASTRO
                 PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
@@ -259,7 +247,6 @@ def nova_movimentacao_financeira():
 
                 db.session.commit()
 
-                # Mensagens específicas para diferenças
                 if tem_diferenca:
                     limpar_dados_conciliacao()
                     flash(("Diferença de conciliação lançada com sucesso!", "success"))
@@ -273,14 +260,11 @@ def nova_movimentacao_financeira():
                     return redirect(url_for("movimentacoes_financeiras"))
                 
     except Exception as e:
-        print(f"[ERROR nova_movimentacao_financeira] {e}")
         db.session.rollback()
         
-        # Limpeza de dados de conciliação em caso de erro
         dados_conciliacao = session.get('dados_conciliacao', {})
         if dados_conciliacao.get('transacao_id') or dados_conciliacao.get('tem_diferenca'):
             limpar_dados_conciliacao()
-            print("[DEBUG] Dados de conciliação limpos devido ao erro")
         flash(("Erro ao tentar cadastrar nova movimentação! Entre em contato com o suporte.", "warning"))
         return redirect(url_for("nova_movimentacao_financeira"))
 
@@ -299,7 +283,6 @@ def nova_movimentacao_financeira():
         descricao_conciliar=dados_conciliacao.get('descricao'),
         fitid_conciliar=dados_conciliacao.get('fitid'),
         dados_conciliacao=dados_conciliacao,
-        # para diferenças
         tem_diferenca=tem_diferenca,
         valor_diferenca=int(dados_conciliacao.get('valor_sem_formatacao') * 100) if tem_diferenca else None,
         tipo_diferenca=dados_conciliacao.get('tipo_movimentacao_predefinido') if tem_diferenca else None

@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             CADASTRAR CTE
           </div>
@@ -19,7 +19,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -166,7 +165,7 @@
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // === CTE ===
+      
       const radioManterCTE = document.getElementById("opcaoManterCTE");
       const radioAlterarCTE = document.getElementById("opcaoAlterarCTE");
       const inputUploadCTE = document.getElementById("inputUploadCTE");
@@ -186,7 +185,6 @@
         radioManterCTE.addEventListener("change", atualizarUploadCTE);
         radioAlterarCTE.addEventListener("change", atualizarUploadCTE);
   
-        // Inicializa estado correto
         atualizarUploadCTE();
       }
     });

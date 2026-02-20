@@ -21,16 +21,12 @@ class PedidoCompraModel(BaseModel):
     """
     __tablename__ = 'ped_pedido_compra'
     
-    # === Campos Principais ===
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     codigo_transacao = db.Column(db.String(20), unique=True, nullable=False, index=True)
     
-    # === Relacionamento com Usuário ===
-    # Usuário que criou o pedido de compra
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     usuario = db.relationship('UsuarioModel', backref=db.backref('pedido_compra', lazy='dynamic'))
     
-    # === Status ===
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
     def __init__(self, usuario_id, ativo=True):
@@ -41,7 +37,6 @@ class PedidoCompraModel(BaseModel):
             usuario_id: ID do usuário que está criando o pedido
             ativo: Status inicial do pedido (default: True)
         """
-        # Gera automaticamente o código único do pedido
         self.codigo_transacao = self.gerar_codigo_novo_pedido_compra()
         self.usuario_id = usuario_id
         self.ativo = ativo
@@ -57,21 +52,17 @@ class PedidoCompraModel(BaseModel):
         Returns:
             str: Código único no formato PED-XXXXXX
         """
-        # Busca o último pedido ativo ordenado por ID decrescente
         ultimo_pedido = (
             PedidoCompraModel.query.filter(PedidoCompraModel.ativo == True)
             .order_by(desc(PedidoCompraModel.id))
             .first()
         )
 
-        # Se não existe nenhum pedido, começa do 1
         if not ultimo_pedido:
             codigo = "PED-000001"
         else:
-            # Incrementa o ID para gerar o próximo código
             id = str(ultimo_pedido.id + 1)
 
-            # Preenche com zeros à esquerda até ter 6 dígitos
             while len(id) < 6:
                 id = "0" + id
 
@@ -147,7 +138,7 @@ class PedidoCompraModel(BaseModel):
         agrupados = {}
         
         for item in itens:
-            fornecedor_id = item.fornecedor_id or 0  # 0 para itens sem fornecedor
+            fornecedor_id = item.fornecedor_id or 0
             if fornecedor_id not in agrupados:
                 agrupados[fornecedor_id] = []
             agrupados[fornecedor_id].append(item)

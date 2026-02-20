@@ -13,7 +13,6 @@ from sistema.models_views.gerenciar.pessoa_financeiro.pessoa_financeiro_model im
 from sistema.models_views.configuracoes_gerais.plano_conta.plano_conta_model import PlanoContaModel
 from sistema.models_views.configuracoes_gerais.centro_custo.centro_custo_model import CentroCustoModel
 
-# === Nova Arquitetura de Créditos ===
 from sistema.models_views.financeiro.controle_adiantamentos.transacao_credito_model import TransacaoCreditoModel
 from sistema.models_views.financeiro.controle_adiantamentos.faturamento_credito_vinculo_model import FaturamentoCreditoVinculoModel
 
@@ -26,24 +25,19 @@ def listagem_faturamentos_controle_credito():
     Lista todos os faturamentos de créditos (fornecedores e transportadoras).
     """
     try:
-        # Obter parâmetros de filtro
         beneficiario = request.args.get('beneficiario', type=int)
         situacao_faturamento = request.args.get('situacaoFaturamento', type=int)
         
-        # Se não há nenhum parâmetro na URL (acesso inicial), definir padrão como "não categorizado" (situação 7)
         if not request.args:
             situacao_faturamento = 7
-        # Se há parâmetros mas situacaoFaturamento está vazio/None, significa "Todos"
         elif 'situacaoFaturamento' in request.args and not situacao_faturamento:
             situacao_faturamento = None
         
         faturamentos = FaturamentoModel.filtrar_creditos_faturamentos(beneficiario, situacao_faturamento)
         
-        # Obter situações de faturamento
         situacoes_faturamento = SituacaoPagamentoModel.listar_situacoes_faturamento()
         beneficiarios = PessoaFinanceiroModel.listar_pessoas_ativas()
         
-        # Adicionar informação do usuário a cada faturamento
         for faturamento in faturamentos:
             if faturamento.usuario_id:
                 usuario = UsuarioModel.query.get(faturamento.usuario_id)
@@ -58,7 +52,6 @@ def listagem_faturamentos_controle_credito():
         )
         
     except Exception as e:
-        print(f"[ERROR listagem_faturamentos_controle_creditos] {e}")
         flash(("Erro ao carregar listagem de faturamentos! Contate o suporte.", "error"))
         return redirect(url_for("listagem_faturamentos_controle_credito"))
 
@@ -78,16 +71,13 @@ def detalhes_faturamento_controle_credito_ajax(id):
             
         detalhes = faturamento.obter_detalhes()
         
-        # Buscar informações do usuário
         usuario = UsuarioModel.query.get(faturamento.usuario_id) if faturamento.usuario_id else None
         
-        # Formatar valores monetários
         def formatar_valor(valor_centavos):
             if valor_centavos is None:
                 return "R$ 0,00"
             return f"R$ {valor_centavos / 100:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         
-        # Preparar dados do faturamento de créditos
         dados_faturamento = {
             "codigo_faturamento": faturamento.codigo_faturamento,
             "data_cadastro": faturamento.data_cadastro.strftime("%d/%m/%Y %H:%M") if faturamento.data_cadastro else "",
@@ -100,7 +90,6 @@ def detalhes_faturamento_controle_credito_ajax(id):
             "total_creditos_extratores": len(detalhes.get("credito_extrator", [])),
         }
 
-        # Créditos de fornecedores (seguindo padrão do cadastro de crédito)
         creditos_fornecedores = []
         for credito in detalhes.get("credito_fornecedor", []):
             creditos_fornecedores.append({
@@ -145,7 +134,6 @@ def detalhes_faturamento_controle_credito_ajax(id):
         })
         
     except Exception as e:
-        print(f"[ERROR detalhes_faturamento_ajax] {e}")
         return jsonify({"erro": "Erro interno do servidor"}), 500
     
     
@@ -155,37 +143,30 @@ def detalhes_faturamento_controle_credito_ajax(id):
 def detalhes_categorizacao_faturamento_controle_creditos_json(id):
     """Retorna JSON com os detalhes da categorização de um faturamento de Adiantamentos de Créditos"""
     try:
-        # Buscar o faturamento
         faturamento = FaturamentoModel.obter_faturamento_por_id(id)
         if not faturamento:
             return jsonify({'error': 'Faturamento não encontrado!'}), 404
             
-        # Verificar se é um faturamento de Adiantamentos de Créditos
         if faturamento.tipo_operacao != 3 or faturamento.direcao_financeira != 2:
             return jsonify({'error': 'Este não é um faturamento de Adiantamentos de Créditos.'}), 400
             
-        # Buscar o agendamento de pagamento
         agendamento = db.session.query(AgendamentoPagamentoModel).filter_by(faturamento_id=id).first()
         if not agendamento:
             return jsonify({'error': 'Este faturamento ainda não foi categorizado.'}), 404
             
-        # Buscar dados relacionados
         pessoa = PessoaFinanceiroModel.obter_pessoa_por_id(agendamento.pessoa_financeiro_id)
         situacao = SituacaoPagamentoModel.obter_situacao_por_id(agendamento.situacao_pagamento_id)
         
-        # Obter detalhes específicos de créditos do faturamento
         detalhes = faturamento.obter_detalhes()
         creditos_fornecedores = detalhes.get("credito_fornecedor", [])
         creditos_transportadoras = detalhes.get("credito_transportadora", [])
         creditos_extratores = detalhes.get("credito_extrator", [])
 
-        # Formatar valores monetários
         def formatar_valor(valor_centavos):
             if valor_centavos is None:
                 return 0.0
             return float(valor_centavos / 100) if isinstance(valor_centavos, (int, float)) else 0.0
         
-        # Processar créditos de fornecedores para garantir campos corretos
         creditos_fornecedores_processados = []
         for credito in creditos_fornecedores:
             credito_processado = {
@@ -199,7 +180,6 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
             }
             creditos_fornecedores_processados.append(credito_processado)
         
-        # Processar créditos de transportadoras para garantir campos corretos  
         creditos_transportadoras_processados = []
         for credito in creditos_transportadoras:
             credito_processado = {
@@ -213,7 +193,6 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
             }
             creditos_transportadoras_processados.append(credito_processado)
 
-        # Processar créditos de extratores para garantir campos corretos  
         creditos_extratores_processados = []
         for credito in creditos_extratores:
             credito_processado = {
@@ -227,11 +206,9 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
             }
             creditos_extratores_processados.append(credito_processado)
         
-        # Processar categorias
         categorias_processadas = []
         if agendamento.categorias_json:
             try:
-                # Verificar se é objeto JSON ou string e converter adequadamente
                 if isinstance(agendamento.categorias_json, (list, dict)):
                     categorias = agendamento.categorias_json
                 elif isinstance(agendamento.categorias_json, str) and agendamento.categorias_json.strip():
@@ -245,7 +222,6 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
                     categoria_detalhamento = cat.get('detalhamento', 'Não informado')
                     categoria_referencia = cat.get('referencia', 'Não informado')
                     
-                    # Se for ID numérico, buscar dados completos da categoria
                     if str(categoria_nome).isdigit():
                         plano_conta = PlanoContaModel.buscar_por_id(int(categoria_nome))
                         if plano_conta:
@@ -265,11 +241,9 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
             except (json.JSONDecodeError, ValueError):
                 categorias_processadas = []
                 
-        # Processar centros de custo  
         centros_custo_processados = []
         if agendamento.centros_custo_json:
             try:
-                # Verificar se é objeto JSON ou string e converter adequadamente
                 if isinstance(agendamento.centros_custo_json, (list, dict)):
                     centros_custo = agendamento.centros_custo_json
                 elif isinstance(agendamento.centros_custo_json, str) and agendamento.centros_custo_json.strip():
@@ -280,17 +254,14 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
                 for cc in centros_custo:
                     centro_nome = cc.get('centro', 'Não informado')
                     
-                    # Se for ID numérico, buscar dados completos do centro de custo
                     if str(centro_nome).isdigit():
                         centro_custo_obj = CentroCustoModel.obter_centro_custo_por_id(int(centro_nome))
                         if centro_custo_obj:
                             centro_nome = centro_custo_obj.nome
                     
-                    # Converter valor de centavos para reais (baseado no exemplo: 32323 -> R$ 323,23)
                     valor_raw = cc.get('valor', 0)
                     valor_convertido = float(valor_raw) / 100 if isinstance(valor_raw, (int, float)) else 0.0
                     
-                    # Converter percentual
                     percentual_raw = cc.get('percentual', 0)
                     percentual_convertido = float(percentual_raw) if percentual_raw and str(percentual_raw).strip() else 0.0
                     
@@ -300,12 +271,9 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
                         'percentual': percentual_convertido
                     })
                     
-                print(f"[DEBUG] Centros de custo processados: {centros_custo_processados}")
             except (json.JSONDecodeError, ValueError) as e:
-                print(f"[ERROR] Erro ao processar centros de custo: {e}")
                 centros_custo_processados = []
                 
-        # Buscar parcelas se houver parcelamento
         parcelas = []
         if agendamento.parcelamento_ativo:
             parcelas_obj = ParcelaCategorizacaoModel.obter_parcelas_por_agendamento(agendamento.id)
@@ -321,18 +289,15 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
                     'situacao_nome': situacao_parcela.situacao if situacao_parcela else 'N/A'
                 })
         
-        # Calcular totais dos créditos
         valor_total_final = float(faturamento.valor_total / 100) if faturamento.valor_total else 0.0
         valor_bruto_total = float(faturamento.valor_bruto_total / 100) if faturamento.valor_bruto_total else valor_total_final
         
-        # Calcular totais por tipo de crédito
         total_creditos_fornecedores = sum(c['valor_credito'] for c in creditos_fornecedores_processados)
         total_creditos_transportadoras = sum(c['valor_credito'] for c in creditos_transportadoras_processados)
         total_creditos_extratores = sum(c['valor_credito'] for c in creditos_extratores_processados)
         
         valor_credito_total = total_creditos_fornecedores + total_creditos_transportadoras + total_creditos_extratores
 
-        # Montar resposta JSON específica para Adiantamentos de Créditos
         dados = {
             'categorizacao_id': agendamento.id,
             'faturamento': {
@@ -363,7 +328,6 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
         return jsonify(dados)
         
     except Exception as e:
-        print(f"[ERRO] Erro ao buscar detalhes da categorização: {e}")
         return jsonify({'error': 'Erro interno do servidor. Tente novamente.'}), 500
 
 @app.route('/financeiro/faturamentos/exportar-pdf/<int:faturamento_id>', methods=['GET','POST'])
@@ -372,39 +336,30 @@ def detalhes_categorizacao_faturamento_controle_creditos_json(id):
 def exportar_controle_creditos_pdf(faturamento_id):
     """Gera PDF do faturamento de Adiantamentos de Créditos"""
     try:
-        # Buscar faturamento
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
-        # Verificar se é um faturamento de Adiantamentos de Créditos
         if faturamento.tipo_operacao != 3 or faturamento.direcao_financeira != 2:
             flash(("Este não é um faturamento de Adiantamentos de Créditos.", "error"))
             return redirect(url_for("listagem_faturamentos_controle_credito"))
         
-        # Processar dados do faturamento
         dados_processados = processar_dados_faturamento(faturamento)
         
-        # Dados adicionais para o template
         dados_extras = {
             'logo_path': obter_url_absoluta_de_imagem("logo.png"),
             'data_geracao': datetime.now().strftime('%d/%m/%Y %H:%M'),
             'usuario_geracao': current_user.nome if hasattr(current_user, 'nome') else 'Sistema'
         }
         
-        # Combinar todos os dados
         dados_template = {**dados_processados, **dados_extras}
         
-        # Renderizar template HTML específico para Adiantamentos de Créditos
         html = render_template('financeiro/operacional/controle_creditos/relatorio_faturamento/relatorio_faturamento.html', **dados_template)
 
-        # Gerar nome do arquivo
         codigo_fat = faturamento.codigo_faturamento
         nome_arquivo = f"Controle_Creditos_{codigo_fat}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Gerar PDF
         return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo, orientacao="Portrait", abrir_em_nova_aba=True)
         
     except Exception as e:
-        print(f"[ERROR exportar_controle_creditos_pdf] {e}")
         flash((f"Erro ao gerar PDF do Adiantamentos de Créditos! Contate o suporte. {e}", "error"))
         return redirect(url_for("listagem_faturamentos_controle_credito"))
     
@@ -415,39 +370,30 @@ def exportar_controle_creditos_pdf(faturamento_id):
 def exportar_controle_creditos_imagem(faturamento_id):
     """Gera imagem JPG do faturamento de Adiantamentos de Créditos"""
     try:
-        # Buscar faturamento
         faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
         
-        # Verificar se é um faturamento de Adiantamentos de Créditos
         if faturamento.tipo_operacao != 3 or faturamento.direcao_financeira != 2:
             flash(("Este não é um faturamento de Adiantamentos de Créditos.", "error"))
             return redirect(url_for("listagem_faturamentos_controle_credito"))
         
-        # Processar dados do faturamento
         dados_processados = processar_dados_faturamento(faturamento)
         
-        # Dados adicionais para o template
         dados_extras = {
             'logo_path': obter_url_absoluta_de_imagem("logo.png"),
             'data_geracao': datetime.now().strftime('%d/%m/%Y %H:%M'),
             'usuario_geracao': current_user.nome if hasattr(current_user, 'nome') else 'Sistema'
         }
         
-        # Combinar todos os dados
         dados_template = {**dados_processados, **dados_extras}
 
-        # Renderizar template HTML específico para Adiantamentos de Créditos (versão imagem)
         html = render_template('financeiro/operacional/controle_creditos/relatorio_faturamento/relatorio_faturamento_imagem.html', **dados_template)
 
-        # Gerar nome do arquivo
         codigo_fat = faturamento.codigo_faturamento
         nome_arquivo = f"Controle_Creditos_{codigo_fat}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Gerar IMAGEM
         return ManipulacaoArquivos.gerar_imagem_from_html(html, nome_arquivo, largura=1400, altura=1400)
         
     except Exception as e:
-        print(f"[ERROR exportar_controle_creditos_imagem] {e}")
         flash((f"Erro ao gerar imagem do Adiantamentos de Créditos! Contate o suporte. {e}", "error"))
         return redirect(url_for("listagem_faturamentos_controle_credito"))
 
@@ -467,52 +413,42 @@ def excluir_faturamento_creditos(faturamento_id):
     faturamento = FaturamentoModel.query.get_or_404(faturamento_id)
     
     try:
-        # Verificar se o faturamento possui situação 6 (não pode ser excluído)
         if faturamento.situacao_pagamento_id == 6:
             flash(('Não é possível excluir este faturamento pois ele possui situação que não permite exclusão.', 'error'))
             return redirect(url_for('listagem_faturamentos_controle_credito'))
         
-        # Buscar todos os agendamentos relacionados ao faturamento
         agendamentos = AgendamentoPagamentoModel.query.filter_by(
             faturamento_id=faturamento_id
         ).all()
         
-        # Verificar se algum agendamento possui situação 1 (não pode ser excluído)
         agendamentos_situacao_1 = [ag for ag in agendamentos if ag.situacao_pagamento_id == 1]
         if agendamentos_situacao_1:
             flash(('Não é possível excluir este faturamento pois possui agendamentos com situação que não permite exclusão.', 'error'))
             return redirect(url_for('listagem_faturamentos_controle_credito'))
         
-        # Atualizar situação de todos os agendamentos para 2 (pendente)
         for agendamento in agendamentos:
             agendamento.ativo = False
             agendamento.deletado = True
 
-        # Processar detalhes do faturamento para marcar créditos como deletados e debitar saldos
         if faturamento.detalhes_json:
             try:
                 detalhes = faturamento.detalhes_json
                 
-                # Processar créditos de fornecedores
                 creditos_fornecedores = detalhes.get('credito_fornecedor', [])
                 for credito_data in creditos_fornecedores:
-                    transacao_credito_id = credito_data.get('transacao_credito_id')  # Nova arquitetura
+                    transacao_credito_id = credito_data.get('transacao_credito_id')
                     
-                    # === Processar na nova arquitetura ===
                     if transacao_credito_id:
                         transacao_original = TransacaoCreditoModel.query.get(transacao_credito_id)
                         if transacao_original:
-                            # Cancelar a transação original
                             transacao_original.cancelar(
                                 usuario_id=current_user.id
                             )
 
-                # Processar créditos de transportadoras
                 creditos_transportadoras = detalhes.get('credito_transportadora', [])
                 for credito_data in creditos_transportadoras:
-                    transacao_credito_id = credito_data.get('transacao_credito_id')  # Nova arquitetura
+                    transacao_credito_id = credito_data.get('transacao_credito_id')
                     
-                    # === Processar na nova arquitetura ===
                     if transacao_credito_id:
                         transacao_original = TransacaoCreditoModel.query.get(transacao_credito_id)
                         if transacao_original:
@@ -520,12 +456,10 @@ def excluir_faturamento_creditos(faturamento_id):
                                 usuario_id=current_user.id
                             )
                             
-                # Processar créditos de extratores
                 creditos_extratores = detalhes.get('credito_extrator', [])
                 for credito_data in creditos_extratores:
-                    transacao_credito_id = credito_data.get('transacao_credito_id')  # Nova arquitetura
+                    transacao_credito_id = credito_data.get('transacao_credito_id')
                     
-                    # === Processar na nova arquitetura ===
                     if transacao_credito_id:
                         transacao_original = TransacaoCreditoModel.query.get(transacao_credito_id)
                         if transacao_original:
@@ -533,7 +467,6 @@ def excluir_faturamento_creditos(faturamento_id):
                                 usuario_id=current_user.id
                             )
                 
-                # === Marcar vínculos da nova arquitetura como inativos ===
                 vinculos = FaturamentoCreditoVinculoModel.query.filter_by(
                     faturamento_id=faturamento_id,
                     ativo=True
@@ -542,7 +475,6 @@ def excluir_faturamento_creditos(faturamento_id):
                     vinculo.ativo = False
                 
             except json.JSONDecodeError as e:
-                print(f"[ERROR] Erro ao processar JSON do faturamento: {e}")
                 pass
         
         faturamento.ativo = False
@@ -561,7 +493,6 @@ def excluir_faturamento_creditos(faturamento_id):
 def processar_dados_faturamento(faturamento):
     """Processa dados do faturamento para uso nos templates"""
     
-    # Dados básicos do faturamento
     dados = {
         'faturamento': {
             'id': faturamento.id,
@@ -577,28 +508,23 @@ def processar_dados_faturamento(faturamento):
         }
     }
     
-    # Obter detalhes do faturamento
     detalhes = faturamento.obter_detalhes()
     
-    # Processar créditos de fornecedores
     creditos_fornecedores = detalhes.get('credito_fornecedor', [])
     fornecedores_agrupados = agrupar_creditos_fornecedores_pdf(creditos_fornecedores)
     dados['fornecedores'] = fornecedores_agrupados
     dados['total_fornecedores'] = len(creditos_fornecedores)
     
-    # Processar créditos de transportadoras
     creditos_transportadoras = detalhes.get('credito_transportadora', [])
     transportadoras_agrupadas = agrupar_creditos_transportadoras_pdf(creditos_transportadoras)
     dados['transportadoras'] = transportadoras_agrupadas
     dados['total_transportadoras'] = len(creditos_transportadoras)
 
-    # Processar créditos de extratores
     creditos_extratores = detalhes.get('credito_extrator', [])
     extratores_agrupados = agrupar_creditos_extratores_pdf(creditos_extratores)
     dados['extratores'] = extratores_agrupados
     dados['total_extratores'] = len(creditos_extratores)
 
-    # Não há receitas nem despesas avulsas no Adiantamentos de Créditos
     dados['receitas_avulsas'] = []
     dados['total_receitas_avulsas'] = 0
     dados['despesas_avulsas'] = []
@@ -617,7 +543,6 @@ def agrupar_creditos_fornecedores_pdf(creditos_fornecedores):
         valor_centavos = credito.get('valor_credito_100', 0)
         valor_reais = valor_centavos / 100 if valor_centavos else 0.0
         
-        # Preparar dados do crédito
         credito_formatado = {
             'fornecedor_id': credito.get('fornecedor_id', 'N/A'),
             'fornecedor_identificacao': nome,
@@ -633,7 +558,6 @@ def agrupar_creditos_fornecedores_pdf(creditos_fornecedores):
         grupos[nome]['registros'].append(credito_formatado)
         grupos[nome]['total'] += valor_reais
     
-    # Formatar total de cada grupo
     for grupo in grupos.values():
         grupo['total_formatado'] = f"R$ {grupo['total']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     
@@ -650,7 +574,6 @@ def agrupar_creditos_transportadoras_pdf(creditos_transportadoras):
         valor_centavos = credito.get('valor_credito_100', 0)
         valor_reais = valor_centavos / 100 if valor_centavos else 0.0
         
-        # Preparar dados do crédito
         credito_formatado = {
             'transportadora_id': credito.get('transportadora_id', 'N/A'),
             'transportadora_identificacao': nome,
@@ -666,7 +589,6 @@ def agrupar_creditos_transportadoras_pdf(creditos_transportadoras):
         grupos[nome]['registros'].append(credito_formatado)
         grupos[nome]['total'] += valor_reais
     
-    # Formatar total de cada grupo
     for grupo in grupos.values():
         grupo['total_formatado'] = f"R$ {grupo['total']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     
@@ -683,7 +605,6 @@ def agrupar_creditos_extratores_pdf(creditos_extratores):
         valor_centavos = credito.get('valor_credito_100', 0)
         valor_reais = valor_centavos / 100 if valor_centavos else 0.0
         
-        # Preparar dados do crédito
         credito_formatado = {
             'extrator_id': credito.get('extrator_id', 'N/A'),
             'extrator_identificacao': nome,
@@ -699,7 +620,6 @@ def agrupar_creditos_extratores_pdf(creditos_extratores):
         grupos[nome]['registros'].append(credito_formatado)
         grupos[nome]['total'] += valor_reais
     
-    # Formatar total de cada grupo
     for grupo in grupos.values():
         grupo['total_formatado'] = f"R$ {grupo['total']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     

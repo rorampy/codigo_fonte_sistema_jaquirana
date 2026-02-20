@@ -1,9 +1,6 @@
 from ...base_model import BaseModel, db
 from sqlalchemy import and_
 
-# =========================> ATENÇÃO <=========================
-# Tabela descontinuada no projeto, agora é usada somente a tabela de fornecedores
-# =============================================================
 class FlorestaModel(BaseModel):
     """
     Model para registro de florestas

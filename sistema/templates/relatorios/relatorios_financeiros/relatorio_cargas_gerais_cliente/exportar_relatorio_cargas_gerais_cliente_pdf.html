@@ -14,7 +14,6 @@
 
         <h2>Relatório de Cargas Gerais por Clientes</h2>
 
-        <!-- Filtros aplicados -->
         {% if dados_corretos %}
         <div class="dados-registro no-break">
           <div class="filtros-title">Filtros Aplicados</div>
@@ -53,10 +52,9 @@
         </div>
         {% endif %}
 
-        <!-- Tabela de registros -->
         {% if registros_agrupados %}
         {% for grupo_cliente in registros_agrupados %}
-        <!-- Seção do Cliente -->
+        
         <div class="section-title no-break">
           Cliente: {{ grupo_cliente.cliente }}
           <span style="float: right; font-weight: normal; font-size: 12px;">
@@ -97,7 +95,6 @@
             </tr>
             {% endfor %}
             
-            <!-- Linha de totais -->
             <tr style="background-color: #e7f0e7; font-weight: 600;">
               <td colspan="5" class="text-center"><strong>Total {{grupo_cliente.cliente}}</strong></td>
               <td class="text-center"><strong>{{ "%.2f"|format(grupo_cliente.totais.peso_liquido) }} Ton.</strong></td>

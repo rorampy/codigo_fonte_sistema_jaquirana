@@ -92,7 +92,6 @@ def editar_grupo(id):
 
         if gravar_banco == True:
             
-            # === COMPARAÇÃO DE OBJETOS ===
             obj1 = {
                 "nomeGrupo": grupo.nome_grupo_whats.strip() if grupo.nome_grupo_whats else "",
             }

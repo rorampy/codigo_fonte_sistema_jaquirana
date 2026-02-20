@@ -33,50 +33,32 @@ class PedidoCompraItemModel(BaseModel):
     """
     __tablename__ = 'ped_pedido_compra_item'
     
-    # === Campos Principais ===
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     
-    # === Relacionamento com Pedido de Compra (pai) ===
-    # Cada item pertence a um pedido de compra
-    # lazy='dynamic' permite fazer queries adicionais nos itens
     pedido_compra_id = db.Column(db.Integer, db.ForeignKey('ped_pedido_compra.id'), nullable=False)
     pedido_compra = db.relationship('PedidoCompraModel', backref=db.backref('itens', lazy='dynamic'))
     
-    # === Datas ===
-    data_carga = db.Column(db.Date, nullable=False)      # Data que a carga será realizada
-    data_entrega = db.Column(db.Date, nullable=False)    # Data prevista de entrega ao cliente
+    data_carga = db.Column(db.Date, nullable=False)
+    data_entrega = db.Column(db.Date, nullable=False)
     
-    # === Relacionamento com Fornecedor/Floresta ===
-    # Fornecedor de onde a madeira será retirada
     fornecedor_id = db.Column(db.Integer, db.ForeignKey('for_fornecedor_cadastro.id'), nullable=True)
     fornecedor = db.relationship('FornecedorCadastroModel', backref=db.backref('pedido_compra_for_itens', lazy='dynamic'))
     
-    # === Relacionamento com Transportadora ===
-    # Empresa responsável pelo transporte
     transportadora_id = db.Column(db.Integer, db.ForeignKey('transp_transportadora.id'), nullable=True)
     transportadora = db.relationship('TransportadoraModel', backref=db.backref('pedido_compra_transp_itens', lazy='dynamic'))
     
-    # === Relacionamento com Motorista ===
-    # Motorista que fará o transporte
     motorista_id = db.Column(db.Integer, db.ForeignKey('transp_motorista.id'), nullable=True)
     motorista = db.relationship('MotoristaModel', backref=db.backref('pedido_compra_moto_itens', lazy='dynamic'))
     
-    # === Relacionamento com Veículo ===
-    # Placa do veículo que fará o transporte
     veiculo_id = db.Column(db.Integer, db.ForeignKey('transp_veiculo.id'), nullable=True)
     veiculo = db.relationship('VeiculoModel', backref=db.backref('pedido_compra_veic_itens', lazy='dynamic'))
     
-    # === Relacionamento com Extrator ===
-    # Empresa/pessoa responsável pelo corte/extração
     extrator_id = db.Column(db.Integer, db.ForeignKey('ext_extrator.id'), nullable=True)
     extrator = db.relationship('ExtratorModel', backref=db.backref('pedido_compra_extrator_itens', lazy='dynamic'))
     
-    # === Relacionamento com Usuário ===
-    # Usuário que criou este item
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=True)
     usuario = db.relationship('UsuarioModel', backref=db.backref('pedido_compra_usuario_itens', lazy='dynamic'))
     
-    # === Status ===
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
     def __init__(
@@ -227,7 +209,6 @@ class PedidoCompraItemModel(BaseModel):
         """
         from sistema.models_views.pedido_compra.pedido_compra_model import PedidoCompraModel
         
-        # Busca todos os itens de pedidos ativos
         itens = PedidoCompraItemModel.query.join(
             PedidoCompraModel, PedidoCompraItemModel.pedido_compra_id == PedidoCompraModel.id
         ).filter(
@@ -239,10 +220,9 @@ class PedidoCompraItemModel(BaseModel):
             PedidoCompraItemModel.data_carga.desc()
         ).all()
         
-        # Agrupa itens por fornecedor
         itens_por_fornecedor = {}
         for item in itens:
-            fornecedor_id = item.fornecedor_id or 0  # 0 para itens sem fornecedor
+            fornecedor_id = item.fornecedor_id or 0
             if fornecedor_id not in itens_por_fornecedor:
                 itens_por_fornecedor[fornecedor_id] = {
                     'fornecedor': item.fornecedor,

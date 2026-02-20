@@ -65,7 +65,6 @@ def cadastrar_fornecedor():
         bancos = InstituicoesFinanceirasModel.obter_todos_bancos()
         tags = TagModel.obter_tags_ativas()
         
-        # Buscar produtos e bitolas dinamicamente através do relacionamento
         produtos_bitolas = ProdutoBitolaModel.obter_produtos_com_bitolas()
 
         if request.method == "POST":
@@ -75,7 +74,7 @@ def cadastrar_fornecedor():
             classeFornecedor = request.form.get("classeFornecedor")
             controleEntrada = request.form.get("controleEntrada")
             valorContrato = request.form.get("valorContrato")
-            estimativaTonelada = request.form.get("estimativaTonelada", "") # Estimativa de Tonelada
+            estimativaTonelada = request.form.get("estimativaTonelada", "")
             tipo_cadastro = request.form.get("tipoCadastro", "")
             custoExtracao = request.form.get("custoExtracao", "")
             nome_completo = request.form.get("nomeCompleto", "").strip()
@@ -91,7 +90,6 @@ def cadastrar_fornecedor():
             conta_bancaria = request.form["conta_bancaria"]
             chave_pix = request.form["chave_pix"]
 
-            # Capturar preços de custo dinamicamente
             precos_custo_dados = {}
             produtos_bitolas = ProdutoBitolaModel.obter_produtos_com_bitolas()
             
@@ -99,7 +97,6 @@ def cadastrar_fornecedor():
                 produto_name = produto_data['nome']
                 bitolas = produto_data['bitolas']
                 
-                # Usar mesmos prefixos do frontend
                 if produto_name.lower() == 'eucalipto':
                     produto_key = 'euca'
                 elif produto_name.lower() == 'pinus':
@@ -121,7 +118,6 @@ def cadastrar_fornecedor():
             credito_fornecedor = request.form.get("credito_fornecedor", "0")
             contratoFornecedor = request.files.get("contratoFornecedor")
 
-            # Criar pessoa financeiro
 
             criar_pessoa_financeiro = request.form.get("criarPessoaFinanceiro", "nao")
 
@@ -131,7 +127,7 @@ def cadastrar_fornecedor():
             
             if classeFornecedor == "sim":
                 campos["valorContrato"] = ["Valor do Contrato", valorContrato]
-                campos["estimativaTonelada"] = ["Estimativa Tonelada", estimativaTonelada]  # Estimativa de Tonelada
+                campos["estimativaTonelada"] = ["Estimativa Tonelada", estimativaTonelada]
 
             if tipo_cadastro == "cpf":
                 campos["nomeCompleto"] = ["Nome Completo", nome_completo]
@@ -147,7 +143,6 @@ def cadastrar_fornecedor():
                 extratorNome = request.form.get("extratorNome", "")
                 campos["extratorNome"] = ["Extrator", extratorNome]
 
-                # Processar custos de extração dinamicamente
                 custos_extracao_dados = {}
                 produtos_bitolas = ProdutoBitolaModel.obter_produtos_com_bitolas()
                 
@@ -155,7 +150,6 @@ def cadastrar_fornecedor():
                     produto_name = produto_data['nome']
                     bitolas = produto_data['bitolas']
                     
-                    # Usar mesmos prefixos do frontend
                     if produto_name.lower() == 'eucalipto':
                         produto_key = 'euca'
                     elif produto_name.lower() == 'pinus':
@@ -178,14 +172,12 @@ def cadastrar_fornecedor():
                 if not lista_clientes_mp or all(not cid for cid in lista_clientes_mp):
                     campos["clienteMadeiraPosta"] = ["Cliente", ""]
 
-            # Validação de campos obrigatórios
             validacao_campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)
             if "validado" not in validacao_campos_obrigatorios:
                 gravar_banco = False
                 flash(("Verifique os campos destacados em vermelho!", "warning"))
             
 
-            # Validação de CPF / CNPJ
             if tipo_cadastro == "cpf":
                 verificacao_cpf = ValidaForms.validar_cpf(cpf)
                 if "validado" not in verificacao_cpf:
@@ -217,7 +209,6 @@ def cadastrar_fornecedor():
             if gravar_banco:
                 telefone_tratado = Tels.remove_pontuacao_telefone_celular_br(telefone)
 
-                # Converter preços de custo dinamicamente
                 precos_custo_convertidos = {}
                 for campo_nome, dados in precos_custo_dados.items():
                     valor_convertido = int(ValoresMonetarios.converter_string_brl_para_float(dados['valor']) * 100)
@@ -228,7 +219,6 @@ def cadastrar_fornecedor():
                     }
                 
 
-                # Converter custos de extração dinamicamente (se houver)
                 custos_extracao_convertidos = {}
                 if custoExtracao == 'possui':
                     for campo_nome, valor in custos_extracao_dados.items():
@@ -249,7 +239,6 @@ def cadastrar_fornecedor():
                     identificacao = razao_social
                     numero_documento = cnpj_tratado
 
-                # Criar fornecedor na nova tabela normalizada
                 fornecedor = FornecedorCadastroModel(
                     fatura_via_cpf=fatura_via_cpf,
                     identificacao=identificacao,
@@ -271,12 +260,10 @@ def cadastrar_fornecedor():
                 db.session.add(fornecedor)
                 db.session.flush()
                 
-                # Salvar preços de custo dinamicamente
                 for campo_nome, dados in precos_custo_convertidos.items():
                     FornecedorPrecoCustoBitolaModel.atualizar_ou_criar_preco_custo(
                         fornecedor.id, dados['produto_id'], dados['bitola_id'], dados['valor_100'])
                 
-                # Salvar custos de extração dinamicamente se habilitado
                 if custoExtracao == 'possui':
                     produtos_bitolas = ProdutoBitolaModel.obter_produtos_com_bitolas()
                     
@@ -284,7 +271,6 @@ def cadastrar_fornecedor():
                         produto_name = produto_data['nome']
                         bitolas = produto_data['bitolas']
                         
-                        # Usar mesmos prefixos do frontend
                         if produto_name.lower() == 'eucalipto':
                             produto_key = 'euca'
                         elif produto_name.lower() == 'pinus':
@@ -301,7 +287,6 @@ def cadastrar_fornecedor():
                             FornecedorPrecoCustoExtracaoModel.atualizar_ou_criar_custo_extracao(
                                 fornecedor.id, produto_id, bitola['id'], custo_convertido, int(extratorNome))
                 
-                # Salvar informações bancárias e crédito se informadas
                 if instituicao_financeira or agencia_bancaria or conta_bancaria or chave_pix:
                     conta_bancaria_obj = FornecedorContaBancariaModel(
                         fornecedor_id=fornecedor.id,
@@ -312,7 +297,6 @@ def cadastrar_fornecedor():
                     )
                     db.session.add(conta_bancaria_obj)
                 
-                # Salvar crédito do fornecedor se informado
                 if credito_fornecedor_ton_100 and credito_fornecedor_ton_100 > 0:
                     FornecedorCreditoModel.atualizar_ou_criar_credito(
                         fornecedor.id, credito_fornecedor_ton_100
@@ -327,7 +311,6 @@ def cadastrar_fornecedor():
                             }]
                         }
 
-                        # Extrator se HOUVER
                         if custoExtracao == 'possui' and extratorNome:
                             extrator = ExtratorModel.obter_extrator_por_id(int(extratorNome))
                             if extrator:
@@ -364,11 +347,9 @@ def cadastrar_fornecedor():
                         
                         vinculos_json = json.dumps(vinculos_operacionais)
 
-                        # Processar vínculos operacionais para pessoa financeira
                         tem_fornecedor, tem_transportadora, tem_extrator, tem_comissionado, vinculos_data = \
                         PessoaFinanceiroModel.processar_vinculos(vinculos_json)
 
-                        #Criar pessoa financeira
                         pessoa_financeira = PessoaFinanceiroModel(
                             tipo_cadastro=fatura_via_cpf,
                             identificacao=identificacao,
@@ -411,7 +392,6 @@ def cadastrar_fornecedor():
                         db.session.add(fornecedor_tag)
                         db.session.flush()
 
-                # Upload da declaração SENAR se fornecida
                 if tipoContribuicao == "senar" and declaracaoSenar and declaracaoSenar.filename:
                     if declaracaoSenar.mimetype in ["application/pdf", "image/jpeg", "image/png"]:
                         declaracao_upload = upload_arquivo(
@@ -425,7 +405,6 @@ def cadastrar_fornecedor():
                         flash(("A declaração senar deve estar em formato PDF ou JPG ou JPGE ou PNG.", "warning"))
                         return redirect(url_for("cadastrar_fornecedor"))
 
-                # Salvar contrato se houver
                 if contratoFornecedor and contratoFornecedor.filename:
                     if contratoFornecedor.mimetype == "application/pdf":
                         contrato_upload = upload_arquivo(
@@ -439,13 +418,10 @@ def cadastrar_fornecedor():
                         flash(("O contrato do fornecedor deve estar em formato PDF.", "warning"))
                         return redirect(url_for("cadastrar_fornecedor"))
 
-                # Inserir entradas de “Madeira Posta” se marcado
                 if madeira_posta:
-                    # Capturar listas do formulário
                     cliente_ids_list = request.form.getlist("clienteMadeiraPosta[]")
                     transportadora_ids_list = request.form.getlist("transportadoraMadeiraPosta[]")
                     
-                    # Capturar dados de madeira posta dinamicamente
                     madeira_posta_dinamica = {}
                     produtos_bitolas_cadastro = ProdutoBitolaModel.obter_produtos_com_bitolas()
                     
@@ -465,7 +441,6 @@ def cadastrar_fornecedor():
                         except ValueError:
                             continue
                         
-                        # Obter transportadora correspondente
                         tid = None
                         if idx < len(transportadora_ids_list):
                             try:
@@ -473,7 +448,6 @@ def cadastrar_fornecedor():
                             except (ValueError, IndexError):
                                 tid = None
 
-                        # Salvar preços de madeira posta dinamicamente
                         for chave_produto_bitola, valores_list in madeira_posta_dinamica.items():
                             if idx < len(valores_list):
                                 produto_id = int(chave_produto_bitola.split('_')[1])
@@ -481,28 +455,23 @@ def cadastrar_fornecedor():
                                 valor_str = valores_list[idx] if valores_list[idx] else '0'
                                 valor_convertido = int(ValoresMonetarios.converter_string_brl_para_float(valor_str) * 100)
                                 
-                                # Só salvar valores significativos (maiores que zero)
                                 if valor_convertido > 0:
                                     FornecedorMadeiraPostaPrecoBitolaModel.atualizar_ou_criar_preco_madeira_posta(
                                         fornecedor.id, cid, produto_id, bitola_id, valor_convertido, tid)
 
-                # Processar comissionados vinculados ao fornecedor (apenas se possui_comissionado = True)
                 if possui_comissionado:
                     comissionados_list = request.form.getlist("comissionados[]")
                     valores_comissao_list = request.form.getlist("valorComissaoTon[]")
                     tipos_comissao_list = request.form.getlist("tipoComissao[]")
 
-                    # Criar registros de FornecedorComissionadoModel
                     for idx, comissionado_id in enumerate(comissionados_list):
                         if comissionado_id and comissionado_id.strip():
                             valor_comissao_str = valores_comissao_list[idx] if idx < len(valores_comissao_list) else '0'
                             tipo_comissao = tipos_comissao_list[idx] if idx < len(tipos_comissao_list) else 'valor'
                             
                             if tipo_comissao == 'porcentagem':
-                                # Porcentagem: converte para inteiro (5.5% = 550)
                                 valor_comissao_100 = int(float(valor_comissao_str) * 100)
                             else:
-                                # Valor fixo: converte BRL para centavos
                                 valor_comissao_100 = int(ValoresMonetarios.converter_string_brl_para_float(valor_comissao_str) * 100)
                             
                             fornecedor_comissionado = FornecedorComissionadoModel(
@@ -513,7 +482,6 @@ def cadastrar_fornecedor():
                             )
                             db.session.add(fornecedor_comissionado)
 
-                # Registrar pontuação de cadastro
                 acao = TipoAcaoEnum.CADASTRO
                 PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                     current_user.id, acao, acao.pontos, modulo="fornecedor"
@@ -527,7 +495,6 @@ def cadastrar_fornecedor():
         flash(('Houve um erro ao tentar cadastrar fornecedor! Entre em contato com o suporte.', 'warning'))
         return redirect(url_for('cadastrar_fornecedor'))
 
-    # Definir valores padrão para o primeiro acesso (GET)
     dados_corretos_padrao = dict(request.form)
     if request.method == 'GET':
         dados_corretos_padrao['possuiComissionado'] = 'nao_possui'
@@ -552,7 +519,6 @@ def cadastrar_fornecedor():
 @requires_roles
 def editar_fornecedor(id):
     try:
-        # Buscar fornecedor na nova tabela normalizada
         fornecedor = FornecedorCadastroModel.obter_fornecedor_por_id(id)
         if fornecedor is None:
             flash(("Fornecedor não encontrado!", "warning"))
@@ -568,43 +534,33 @@ def editar_fornecedor(id):
         tags = TagModel.obter_tags_ativas()
         bancos = InstituicoesFinanceirasModel.obter_todos_bancos()
         
-        # Buscar produtos e bitolas dinamicamente através do relacionamento
         produtos_bitolas = ProdutoBitolaModel.obter_produtos_com_bitolas()
 
-        # Carregar tags do fornecedor (IDs das tags selecionadas)
         tags_fornecedor_obj = FornecedorTag.query.filter_by(fornecedor_id=fornecedor.id, ativo=True).all()
         tags_fornecedor_selecionadas = [ft.tag_id for ft in tags_fornecedor_obj]
 
-        # Carregar preços de custo normalizados
         precos_custo = FornecedorPrecoCustoBitolaModel.listar_precos_custo_fornecedor(fornecedor.id)
         
-        # Carregar custos de extração normalizados
         custos_extracao = FornecedorPrecoCustoExtracaoModel.listar_custos_extracao_fornecedor(fornecedor.id)
         
-        # Carregar dados de madeira posta normalizados
         madeiras_posta = FornecedorMadeiraPostaPrecoBitolaModel.listar_precos_madeira_posta_fornecedor(fornecedor.id)
-        madeiras_existentes = madeiras_posta  # Para compatibilidade com o template
+        madeiras_existentes = madeiras_posta
         
-        # Carregar conta bancária
         conta_bancaria = FornecedorContaBancariaModel.query.filter_by(
             fornecedor_id=fornecedor.id, ativo=True, deletado=False
         ).first()
         
-        # Carregar crédito
         credito = FornecedorCreditoModel.query.filter_by(
             fornecedor_id=fornecedor.id, ativo=True, deletado=False
         ).first()
 
-        # Carregar comissionados existentes
         fornecedor_comissionados = FornecedorComissionadoModel.listar_por_fornecedor(fornecedor.id)
 
-        # Organizar preços de custo por produto/bitola
         precos_dict = {}
         for preco in precos_custo:
             key = f"produto_{preco.produto_id}_bitola_{preco.bitola_id}"
             precos_dict[key] = preco.valor_preco_custo_100 or 0
 
-        # Organizar custos de extração por produto/bitola
         custos_dict = {}
         extrator_id_extracao = None
         for custo in custos_extracao:
@@ -613,7 +569,6 @@ def editar_fornecedor(id):
             if custo.extrator_id and not extrator_id_extracao:
                 extrator_id_extracao = custo.extrator_id
 
-        # Organizar dados de madeira posta
         madeira_posta_dict = {}
         for mp in madeiras_posta:
             cliente_id = mp.cliente_id
@@ -625,11 +580,9 @@ def editar_fornecedor(id):
             key = f"produto_{mp.produto_id}_bitola_{mp.bitola_id}"
             madeira_posta_dict[cliente_id]['precos'][key] = mp.preco_madeira_posta_100 or 0
 
-        # Preparar listas para madeira posta (para o formulário dinâmico)
         lista_clientes_mp = list(madeira_posta_dict.keys())
         lista_transportadoras_mp = [madeira_posta_dict[cid]['transportadora_id'] for cid in lista_clientes_mp]
         
-        # Preparar arrays de preços dinamicamente para cada cliente/transportadora
         listas_madeira_posta = {}
         produtos_bitolas_mp = ProdutoBitolaModel.obter_produtos_com_bitolas()
         
@@ -646,7 +599,6 @@ def editar_fornecedor(id):
                     for cid in lista_clientes_mp
                 ]
 
-        # Preencher valores iniciais em dados_corretos
         dados_corretos = {
             "tipoContribuicao": "funrural" if fornecedor.funrural else "senar",
             "classeFornecedor": "sim" if fornecedor.classe_fornecedor else "nao",
@@ -661,18 +613,15 @@ def editar_fornecedor(id):
             "telefone": fornecedor.telefone or "",
             "credito_fornecedor": credito.credito_ton_100 if credito else 0,
             
-            # Custos de extração normalizados - DINÂMICO
             "custoExtracao": "possui" if fornecedor.custo_extracao else "nao_possui",
             "extratorNome": extrator_id_extracao or "",
         }
         
-        # Adicionar preços de custo dinamicamente ao dados_corretos
         produtos_bitolas_dados = ProdutoBitolaModel.obter_produtos_com_bitolas()
         for produto_id, produto_data in produtos_bitolas_dados.items():
             produto_name = produto_data['nome']
             bitolas = produto_data['bitolas']
             
-            # Usar mesmos prefixos do frontend
             if produto_name.lower() == 'eucalipto':
                 produto_key = 'euca'
             elif produto_name.lower() == 'pinus':
@@ -688,12 +637,10 @@ def editar_fornecedor(id):
                 valor_dict = precos_dict.get(chave_dict, 0)
                 dados_corretos[campo_nome] = valor_dict
         
-        # Adicionar custos de extração dinamicamente ao dados_corretos
         for produto_id, produto_data in produtos_bitolas_dados.items():
             produto_name = produto_data['nome']
             bitolas = produto_data['bitolas']
             
-            # Usar mesmos prefixos do frontend
             if produto_name.lower() == 'eucalipto':
                 produto_key = 'euca'
             elif produto_name.lower() == 'pinus':
@@ -708,37 +655,28 @@ def editar_fornecedor(id):
                 chave_dict = f'produto_{produto_id}_bitola_{bitola["id"]}'
                 dados_corretos[campo_nome] = custos_dict.get(chave_dict, 0)
         
-        # Adicionar outros campos ao dados_corretos
         dados_corretos.update({
-            # Madeira posta e comissionados - verificar se realmente tem registros ativos
             "madeiraPosta": "possui" if fornecedor.madeira_posta else "nao_possui",
             "possuiComissionado": "possui" if len(fornecedor_comissionados) > 0 else "nao_possui",
             
-            # Listas para preencher campos dinâmicos de madeira posta
             "clienteMadeiraPosta": lista_clientes_mp,
             "transportadoraMadeiraPosta": lista_transportadoras_mp,
             
-            # Dados bancários
             "instituicao_financeira": conta_bancaria.instituicao_financeira_id if conta_bancaria else "",
             "agencia_bancaria": conta_bancaria.agencia_bancaria if conta_bancaria else "",
             "conta_bancaria": conta_bancaria.conta_bancaria if conta_bancaria else "",
             "chave_pix": conta_bancaria.chave_pix if conta_bancaria else "",
         })
         
-        # Adicionar listas dinâmicas de madeira posta ao dados_corretos
         dados_corretos.update(listas_madeira_posta)
 
-        # Preparar dados dos comissionados para edição
         dados_comissionados = []
         for fc in fornecedor_comissionados:
-            # Determinar o tipo baseado no valor armazenado
-            if fc.tipo_comissao == 1:  # porcentagem
+            if fc.tipo_comissao == 1:
                 tipo_exibicao = "porcentagem" 
-                # Dividir por 100 porque está armazenado em centavos como porcentagem 
                 valor_exibicao = fc.valor_comissao_ton_100 / 100.0
-            else:  # valor monetário (tipo_comissao == 0)
+            else:
                 tipo_exibicao = "valor"
-                # Manter em centavos para conversão posterior pela máscara monetária
                 valor_exibicao = fc.valor_comissao_ton_100
             
             dados_comissionados.append({
@@ -747,13 +685,11 @@ def editar_fornecedor(id):
                 'valor': valor_exibicao
             })
         
-        # Adicionar aos dados_corretos
         dados_corretos['comissionados'] = dados_comissionados
 
 
 
         if request.method == "POST":
-            # Capturar dados do formulário
             tipoContribuicao = request.form.get("tipoContribuicao", "")
             declaracaoSenar = request.files.get("declaracaoSenar")
             tipo_cadastro = request.form.get("tipoCadastro", "")
@@ -768,7 +704,6 @@ def editar_fornecedor(id):
             cnpj = request.form.get("cnpj", "").strip()
             telefone = request.form.get("telefone", "").strip()
             
-            # Capturar preços de custo dinamicamente na edição
             precos_custo_dados_edicao = {}
             produtos_bitolas_edicao = ProdutoBitolaModel.obter_produtos_com_bitolas()
             
@@ -776,7 +711,6 @@ def editar_fornecedor(id):
                 produto_name = produto_data['nome']
                 bitolas = produto_data['bitolas']
                 
-                # Usar mesmos prefixos do frontend
                 if produto_name.lower() == 'eucalipto':
                     produto_key = 'euca'
                 elif produto_name.lower() == 'pinus':
@@ -797,7 +731,6 @@ def editar_fornecedor(id):
             
             extratorNome = request.form.get("extratorNome", "")
             
-            # Processar custos de extração dinamicamente para edição
             custos_extracao_dados = {}
             if custoExtracao == 'possui':
                 produtos_bitolas = ProdutoBitolaModel.obter_produtos_com_bitolas()
@@ -805,7 +738,6 @@ def editar_fornecedor(id):
                     produto_name = produto_data['nome']
                     bitolas = produto_data['bitolas']
                     
-                    # Usar mesmos prefixos do frontend
                     if produto_name.lower() == 'eucalipto':
                         produto_key = 'euca'
                     elif produto_name.lower() == 'pinus':
@@ -823,16 +755,13 @@ def editar_fornecedor(id):
             credito_fornecedor = request.form.get("credito_fornecedor", "0")
             contratoFornecedor = request.files.get("contratoFornecedor")
             
-            # Capturar tags selecionadas
             tags_fornecedor = request.form.getlist("tags_fornecedor")
             
-            # Dados bancários
             instituicao_financeira = request.form["instituicao_financeira"]
             agencia_bancaria = request.form["agencia_bancaria"]
             conta_bancaria = request.form["conta_bancaria"]
             chave_pix = request.form["chave_pix"]
             
-            # Validação de campos obrigatórios
             campos = {
                 "telefone": ["Telefone", telefone]
             }
@@ -862,13 +791,11 @@ def editar_fornecedor(id):
                 if not lista_clientes_mp or all(not cid for cid in lista_clientes_mp):
                     campos["clienteMadeiraPosta"] = ["Cliente", ""]
 
-            # Validação de campos obrigatórios
             validacao_campos_obrigatorios = ValidaForms.campo_obrigatorio(campos)
             if "validado" not in validacao_campos_obrigatorios:
                 gravar_banco = False
                 flash(("Verifique os campos destacados em vermelho!", "warning"))
 
-            # Validação de CPF / CNPJ e existência
             if tipo_cadastro == "cpf":
                 verificacao_cpf = ValidaForms.validar_cpf(cpf)
                 if "validado" not in verificacao_cpf:
@@ -901,7 +828,6 @@ def editar_fornecedor(id):
             if gravar_banco:
                 telefone_tratado = Tels.remove_pontuacao_telefone_celular_br(telefone)
 
-                # Converter preços de custo dinamicamente na edição
                 precos_custo_convertidos_edicao = {}
                 for campo_nome, dados in precos_custo_dados_edicao.items():
                     valor_convertido = int(ValoresMonetarios.converter_string_brl_para_float(dados['valor']) * 100)
@@ -911,7 +837,6 @@ def editar_fornecedor(id):
                         'bitola_id': dados['bitola_id']
                     }
 
-                # Converter custos de extração dinamicamente se houver
                 custos_extracao_convertidos = {}
                 if custoExtracao == 'possui':
                     for campo_nome, valor in custos_extracao_dados.items():
@@ -932,7 +857,6 @@ def editar_fornecedor(id):
                     identificacao = razao_social
                     numero_documento = cnpj_tratado
 
-                # Atualizar dados básicos do fornecedor
                 fornecedor.fatura_via_cpf = fatura_via_cpf
                 fornecedor.identificacao = identificacao
                 fornecedor.numero_documento = numero_documento
@@ -948,12 +872,10 @@ def editar_fornecedor(id):
                 fornecedor.possui_comissionado = possui_comissionado
                 fornecedor.custo_extracao = True if custoExtracao == 'possui' else False
 
-                # Atualizar preços de custo dinamicamente
                 for campo_nome, dados in precos_custo_convertidos_edicao.items():
                     FornecedorPrecoCustoBitolaModel.atualizar_ou_criar_preco_custo(
                         fornecedor.id, dados['produto_id'], dados['bitola_id'], dados['valor_100'])
 
-                # Atualizar custos de extração dinamicamente se habilitado
                 if custoExtracao == 'possui':
                     produtos_bitolas = ProdutoBitolaModel.obter_produtos_com_bitolas()
                     
@@ -961,7 +883,6 @@ def editar_fornecedor(id):
                         produto_name = produto_data['nome']
                         bitolas = produto_data['bitolas']
                         
-                        # Usar mesmos prefixos do frontend
                         if produto_name.lower() == 'eucalipto':
                             produto_key = 'euca'
                         elif produto_name.lower() == 'pinus':
@@ -978,13 +899,11 @@ def editar_fornecedor(id):
                             FornecedorPrecoCustoExtracaoModel.atualizar_ou_criar_custo_extracao(
                                 fornecedor.id, produto_id, bitola['id'], custo_convertido, int(extratorNome))
                 else:
-                    # Remover custos de extração existentes se não tiver mais extração
                     custos_existentes = FornecedorPrecoCustoExtracaoModel.listar_custos_extracao_fornecedor(fornecedor.id)
                     for custo in custos_existentes:
                         custo.ativo = False
                         custo.deletado = True
 
-                # Atualizar conta bancária
                 conta_bancaria_existente = FornecedorContaBancariaModel.query.filter_by(
                     fornecedor_id=fornecedor.id, ativo=True, deletado=False
                 ).first()
@@ -1008,7 +927,6 @@ def editar_fornecedor(id):
                     conta_bancaria_existente.ativo = False
                     conta_bancaria_existente.deletado = True
 
-                # Atualizar crédito do fornecedor
                 if credito_fornecedor_ton_100 and credito_fornecedor_ton_100 > 0:
                     FornecedorCreditoModel.atualizar_ou_criar_credito(fornecedor.id, credito_fornecedor_ton_100)
                 else:
@@ -1019,17 +937,13 @@ def editar_fornecedor(id):
                         credito_existente.ativo = False
                         credito_existente.deletado = True
 
-                # Atualizar tags do fornecedor
-                # Desativar todas as tags existentes
                 tags_existentes = FornecedorTag.query.filter_by(fornecedor_id=fornecedor.id, ativo=True).all()
                 for tag_existente in tags_existentes:
                     tag_existente.ativo = False
 
-                # Adicionar novas tags selecionadas
                 if tags_fornecedor:
                     tags_fornecedor_ids = [int(tag_id) for tag_id in tags_fornecedor]
                     for tag_id in tags_fornecedor_ids:
-                        # Verificar se já existe uma tag para reativar
                         tag_existente = FornecedorTag.query.filter_by(
                             fornecedor_id=fornecedor.id, tag_id=tag_id
                         ).first()
@@ -1044,7 +958,6 @@ def editar_fornecedor(id):
                             )
                             db.session.add(nova_tag)
 
-                # Gerenciar arquivos (SENAR e Contrato)
                 if tipoContribuicao == "senar" and declaracaoSenar and declaracaoSenar.filename:
                     if declaracaoSenar.mimetype in ["application/pdf", "image/jpeg", "image/png"]:
                         declaracao_upload = upload_arquivo(
@@ -1069,7 +982,6 @@ def editar_fornecedor(id):
                         flash(("O contrato do fornecedor deve estar em formato PDF.", "warning"))
                         return redirect(url_for("editar_fornecedor", id=fornecedor.id))
 
-                # Atualizar madeira posta
                 if madeira_posta:
                     cliente_ids_list = request.form.getlist("clienteMadeiraPosta[]")
                     transportadora_ids_list = request.form.getlist("transportadoraMadeiraPosta[]")
@@ -1130,21 +1042,17 @@ def editar_fornecedor(id):
                                     )
                                     db.session.add(novo_registro)
                 else:
-                    # Desativar madeira posta se não possui mais
                     madeiras_existentes = FornecedorMadeiraPostaPrecoBitolaModel.listar_precos_madeira_posta_fornecedor(fornecedor.id)
                     for mp_existente in madeiras_existentes:
                         mp_existente.ativo = False
                         mp_existente.deletado = True
 
-                # Processar comissionados
                 if possui_comissionado:
-                    # Desativar comissionados existentes
                     comissionados_existentes = FornecedorComissionadoModel.listar_por_fornecedor(fornecedor.id)
                     for com_existente in comissionados_existentes:
                         com_existente.ativo = False
                         com_existente.deletado = True
 
-                    # Adicionar novos comissionados
                     comissionados_list = request.form.getlist("comissionados[]")
                     valores_comissao_list = request.form.getlist("valorComissaoTon[]")
                     tipos_comissao_list = request.form.getlist("tipoComissao[]")
@@ -1167,13 +1075,11 @@ def editar_fornecedor(id):
                             )
                             db.session.add(fornecedor_comissionado)
                 else:
-                    # Desativar comissionados se não possui mais
                     comissionados_existentes = FornecedorComissionadoModel.listar_por_fornecedor(fornecedor.id)
                     for com_existente in comissionados_existentes:
                         com_existente.ativo = False
                         com_existente.deletado = True
 
-                # Registrar pontuação de edição
                 acao = TipoAcaoEnum.EDICAO
                 PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                     current_user.id, acao, acao.pontos, modulo="fornecedor"
@@ -1183,7 +1089,6 @@ def editar_fornecedor(id):
                 flash(("Fornecedor atualizado com sucesso!", "success"))
                 return redirect(url_for("listar_fornecedores"))
     except Exception as e:
-        print(e)
         flash(('Houve um erro ao tentar editar fornecedor! Entre em contato com o suporte.', 'warning'))
         return redirect(url_for('editar_fornecedor', id=id))
 
@@ -1252,7 +1157,6 @@ def atualizar_precos_fornecedor_floresta():
                 return redirect(url_for("listagem_fornecedores_a_pagar"))
             
             try:
-                # Validar formato das datas
                 data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
                 data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
                 
@@ -1266,7 +1170,6 @@ def atualizar_precos_fornecedor_floresta():
         else:
             return redirect(url_for("listagem_fornecedores_a_pagar"))
         
-        # Converter fornecedor_id para None se for "todos"
         fornecedor_filtro = None if fornecedor_id == "todos" else fornecedor_id
         
         task = sincronizar_precos_fornecedores(data_inicio, data_fim, fornecedor_filtro)

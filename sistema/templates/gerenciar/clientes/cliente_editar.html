@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             CLIENTE
           </div>
@@ -19,7 +19,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -221,7 +220,6 @@
               <h3 class="text-primary mb-4">Preços de venda por Bitola</h3>
               <div class="row">
 
-                <!-- Eucalipto -->
                 <div class="col-md-4">
                   <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header text-dark">
@@ -229,7 +227,6 @@
                     </div>
                     <div class="card-body">
 
-                      <!-- Bitola 1 Eucalipto -->
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Bitola</label>
@@ -246,7 +243,6 @@
                         </div>
                       </div>
 
-                      <!-- Bitola 2 Eucalipto -->
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Bitola</label>
@@ -263,7 +259,6 @@
                         </div>
                       </div>
 
-                      <!-- Bitola 3 Eucalipto -->
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Bitola</label>
@@ -280,7 +275,6 @@
                         </div>
                       </div>
 
-                      <!-- Bitola 4 Eucalipto -->
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Bitola</label>
@@ -301,7 +295,6 @@
                   </div>
                 </div>
 
-                <!-- Pinus -->
                 <div class="col-md-4">
                   <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header text-dark">
@@ -309,7 +302,6 @@
                     </div>
                     <div class="card-body">
 
-                      <!-- Bitola 1 Pinus -->
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Bitola</label>
@@ -326,7 +318,6 @@
                         </div>
                       </div>
 
-                      <!-- Bitola 2 Pinus -->
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Bitola</label>
@@ -343,7 +334,6 @@
                         </div>
                       </div>
 
-                      <!-- Bitola 3 Pinus -->
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Bitola</label>
@@ -360,7 +350,6 @@
                         </div>
                       </div>
 
-                      <!-- Bitola 4 Pinus -->
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Bitola</label>
@@ -377,7 +366,6 @@
                         </div>
                       </div>
 
-                      <!-- Bitola 5 Pinus -->
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Bitola</label>
@@ -398,7 +386,6 @@
                   </div>
                 </div>
 
-                <!-- Biomassa -->
                 <div class="col-md-4">
                   <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header text-dark">
@@ -406,7 +393,6 @@
                     </div>
                     <div class="card-body">
 
-                      <!-- Bitola 1 Pinus -->
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Tipo</label>
@@ -462,7 +448,6 @@
     </div>
   </div>
 
-  <!-- Oculta exibe campos a partir da radio e também limpa a tela não usada -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       function limparCampos(grupoClasse) {
@@ -480,11 +465,11 @@
         if (radioCPF.checked) {
           grupoCPF.forEach(el => el.style.display = 'block');
           grupoCNPJ.forEach(el => el.style.display = 'none');
-          limparCampos('grupoCNPJ'); // Limpa campos do grupo CNPJ
+          limparCampos('grupoCNPJ'); 
         } else {
           grupoCPF.forEach(el => el.style.display = 'none');
           grupoCNPJ.forEach(el => el.style.display = 'block');
-          limparCampos('grupoCPF'); // Limpa campos do grupo CPF
+          limparCampos('grupoCPF'); 
         }
       }
 
@@ -492,7 +477,7 @@
         radio.addEventListener('change', alternarCampos);
       });
 
-      alternarCampos(); // Configura o estado inicial dos campos
+      alternarCampos(); 
 
       document.querySelectorAll('select.form-select').forEach(function (select) {
         new TomSelect(select, {

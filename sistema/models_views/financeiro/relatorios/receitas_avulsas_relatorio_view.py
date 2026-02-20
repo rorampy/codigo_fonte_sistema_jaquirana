@@ -36,7 +36,6 @@ def relatorio_dados_receitas_avulsas():
     status_pagamentos = SituacaoPagamentoModel.listar_status()
     
     def obter_registros_com_filtros():
-        # Para POST, primeiro verifica se há filtros no form, senão usa args
         filtros_source = request.form if request.method == "POST" and any(request.form.values()) else request.args
         
         if any(filtros_source.values()):
@@ -46,13 +45,11 @@ def relatorio_dados_receitas_avulsas():
             status_pagamento = filtros_source.get("statusPagamento")
             descricao = filtros_source.get("descricao")
             
-            # Filtros base
             query = LancamentoAvulsoModel.query.filter(
-                LancamentoAvulsoModel.tipo_movimentacao == 1,  # Receitas
+                LancamentoAvulsoModel.tipo_movimentacao == 1,
                 LancamentoAvulsoModel.ativo == True
             )
             
-            # Aplicar filtros opcionais
             if data_inicio:
                 try:
                     data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d')
@@ -63,7 +60,6 @@ def relatorio_dados_receitas_avulsas():
             if data_fim:
                 try:
                     data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d')
-                    # Adicionar 23:59:59 para incluir todo o dia
                     data_fim_obj = data_fim_obj.replace(hour=23, minute=59, second=59)
                     query = query.filter(LancamentoAvulsoModel.data_cadastro <= data_fim_obj)
                 except:
@@ -85,7 +81,6 @@ def relatorio_dados_receitas_avulsas():
                 LancamentoAvulsoModel.ativo == True
             ).order_by(LancamentoAvulsoModel.data_cadastro.desc()).all()
     
-    # Obtém os parâmetros de filtro corretos
     if request.method == "POST":
         dados_corretos = request.form if any(request.form.get(k) for k in ['dataInicio', 'dataFim', 'contaBancaria', 'statusPagamento', 'descricao']) else request.args
     else:

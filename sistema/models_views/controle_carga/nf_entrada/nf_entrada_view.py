@@ -27,7 +27,6 @@ def listagem_nf_entrada():
 
     except Exception as e:
         flash(("Não foi possível listar as NFs de entrada! Entre em contato com o suporte!", "warning"))
-        print(f"Erro nas listagens de NF de entrada: {e}")
         return redirect(url_for("principal"))
 
     return render_template(
@@ -169,7 +168,6 @@ def lancar_nf_entrada(id):
                 db.session.rollback()
 
     except Exception as e:
-        print(e)
         db.session.rollback()
         flash(
             (
@@ -247,7 +245,6 @@ def lancar_cte(id):
                 "warning",
             )
         )
-        print(e)
         return redirect(url_for("listagem_nf_entrada"))
 
     return render_template(
@@ -318,7 +315,6 @@ def lancar_mdf(id):
                 "warning",
             )
         )
-        print(e)
         return redirect(url_for("listagem_nf_entrada"))
 
     return render_template(

@@ -19,13 +19,10 @@ class DataHora:
             nova_data = adicionar_dias(data_original, dias_para_adicionar)
             print(nova_data)  # Saída: 2023-06-11 00:00:00
         '''
-        # Cria um objeto timedelta que representa o número de dias a serem adicionados
         delta = timedelta(days=dias)
         
-        # Adiciona o timedelta à data original
         nova_data = data + delta
         
-        # Retorna a nova data
         return nova_data
     
     
@@ -46,13 +43,10 @@ class DataHora:
             nova_data = remover_dias_em_data(data_original, dias_para_remover)
             print(nova_data)  # Saída: 2023-05-20 00:00:00
         '''
-        # Cria um objeto timedelta que representa o número de dias a serem removidos
         delta = timedelta(days=dias)
         
-        # Adiciona o timedelta à data original
         nova_data = data - delta
         
-        # Retorna a nova data
         return nova_data
     
     
@@ -119,14 +113,11 @@ class DataHora:
         strings contendo ano e mês anterior. ['aaaa', 'mm']
         '''
 
-        # Converte a string para um objeto datetime
         data_formatada = datetime.strptime(data_str, "%Y-%m-%d")
 
-        # Subtrai um mês da data
         primeiro_dia_mes_atual = data_formatada.replace(day=1)
         mes_anterior = primeiro_dia_mes_atual - timedelta(days=1)
 
-        # Obter o mês e ano do resultado
         mes_anterior_str = mes_anterior.strftime("%m")
         ano_anterior_str = mes_anterior.strftime("%Y")
 
@@ -215,7 +206,6 @@ class DataHora:
         um objeto datetime convetido. Apartir desse retorno é possível,
         é possível interagir com o objeto. Ex.: objeto.year, objeto.mouth.
         '''
-        # Converter a data em um objeto datetime
         data_convertida = datetime.strptime(data_str, '%Y-%m-%d')
 
         return data_convertida
@@ -231,7 +221,6 @@ class DataHora:
         retorno = converter_data_str_em_objeto_date(data_str)
         # retorno será um objeto date representando 25 de dezembro de 2025.
         """
-        # Converter a data em um objeto datetime e retornar apenas a parte da data
         data_convertida = datetime.strptime(data_str, '%d/%m/%Y').date()
         return data_convertida
 
@@ -282,7 +271,6 @@ class DataHora:
         hoje = date.today()
         exercicios = []
         
-        # Gerar lista do mês atual até janeiro do ano atual
         for mes in range(hoje.month, 0, -1):
             mes_formatado = f"{mes:02d}"
             ano = hoje.year
@@ -319,10 +307,8 @@ class DataHora:
             mes = int(mes)
             ano = int(ano)
             
-            # Primeiro dia do mês
             data_inicio = date(ano, mes, 1)
             
-            # Último dia do mês usando calendar
             import calendar
             ultimo_dia = calendar.monthrange(ano, mes)[1]
             data_fim = date(ano, mes, ultimo_dia)
@@ -374,13 +360,11 @@ class DataHora:
             return None
         
         try:
-            # PASSO 1: Verificar se é uma lista ou data única
             if isinstance(data_entrega_ou_lista, list):
                 todas_datas = data_entrega_ou_lista
             else:
                 todas_datas = [data_entrega_ou_lista]
             
-            # PASSO 2: Converter todas as datas para objetos date e filtrar datas válidas
             datas_convertidas = []
             for data_item in todas_datas:
                 if not data_item or data_item == '-':
@@ -405,7 +389,6 @@ class DataHora:
             if not datas_convertidas:
                 return None
             
-            # PASSO 3: Se há apenas uma data, retornar quinzena simples
             if len(datas_convertidas) == 1:
                 data_obj = datas_convertidas[0]
                 dia = data_obj.day
@@ -420,27 +403,22 @@ class DataHora:
                     fim = data_obj.replace(day=ultimo_dia)
                     return f"2ª Quinzena - {inicio.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}"
             
-            # PASSO 4: Para múltiplas datas, ordenar e detectar quinzenas abrangidas
             datas_ordenadas = sorted(datas_convertidas)
             primeira_data = datas_ordenadas[0]
             ultima_data = datas_ordenadas[-1]
             
-            # Verificar se todas as datas estão na mesma quinzena
             primeira_quinzena = 1 if primeira_data.day <= 15 else 2
             ultima_quinzena = 1 if ultima_data.day <= 15 else 2
             
-            # Se mesmo mês e mesma quinzena, retornar quinzena simples
             if (primeira_data.month == ultima_data.month and 
                 primeira_data.year == ultima_data.year and 
                 primeira_quinzena == ultima_quinzena):
                 return DataHora.obter_periodo_quinzenal(primeira_data)
             
-            # PASSO 5: Detectar todas as quinzenas no período
             quinzenas_encontradas = []
             data_atual = primeira_data
             
             while data_atual <= ultima_data:
-                # Determinar quinzena atual
                 if data_atual.day <= 15:
                     inicio_quinzena = data_atual.replace(day=1)
                     fim_quinzena = data_atual.replace(day=15)
@@ -452,13 +430,11 @@ class DataHora:
                     fim_quinzena = data_atual.replace(day=ultimo_dia)
                     nome_quinzena = "2ª Quinzena"
                 
-                # Verificar se esta quinzena intersecta com o período
                 if inicio_quinzena <= ultima_data and fim_quinzena >= primeira_data:
                     quinzena_formatada = f"{nome_quinzena} - {inicio_quinzena.strftime('%d/%m/%Y')} a {fim_quinzena.strftime('%d/%m/%Y')}"
                     if quinzena_formatada not in quinzenas_encontradas:
                         quinzenas_encontradas.append(quinzena_formatada)
                 
-                # Avançar para próxima quinzena
                 if data_atual.day <= 15:
                     data_atual = data_atual.replace(day=16)
                 else:
@@ -467,13 +443,11 @@ class DataHora:
                     else:
                         data_atual = data_atual.replace(month=data_atual.month + 1, day=1)
             
-            # PASSO 6: Retornar resultado formatado
             if len(quinzenas_encontradas) == 1:
                 return quinzenas_encontradas[0]
             elif len(quinzenas_encontradas) > 1:
                 return " e ".join(quinzenas_encontradas)
             else:
-                # Fallback
                 return DataHora.obter_periodo_quinzenal(primeira_data)
                 
         except Exception:

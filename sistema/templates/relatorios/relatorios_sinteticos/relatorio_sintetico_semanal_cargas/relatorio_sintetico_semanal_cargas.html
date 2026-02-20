@@ -3,7 +3,7 @@
 {% include 'estrutura/header.html' %}
 <link href="{{ url_for('static', filename='css/relatorio-cargas.css') }}" rel="stylesheet">
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
@@ -67,12 +67,10 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
 
-      <!-- Indicador da semana selecionada -->
       {% if dados_corretos.get('semanaSelecionada') %}
       <div class="col-12 mb-3">
         <div class="alert alert-success d-flex align-items-center bg-white" role="alert">
@@ -163,7 +161,6 @@
     </div>
   </div>
 
-  <!-- Modal de Filtro -->
   <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document" style="display: grid;">
       <form action="{{ url_for('relatorio_sintetico_semanal_cargas') }}" method="POST">
@@ -174,7 +171,7 @@
           </div>
           <div class="modal-body">
             <div class="row">
-              <!-- Select de Semanas -->
+              
               <div class="col-12 mb-3">
                 <label class="form-label">Selecionar Período</label>
                 <select name="semanaSelecionada" class="form-select" required>
@@ -231,7 +228,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     const select = document.querySelector('select[name="semanaSelecionada"]');
     if (select) {
-      // Destacar visualmente as opções especiais
+      
       const options = select.querySelectorAll('option');
       options.forEach(option => {
         if (option.hasAttribute('data-mes-completo')) {

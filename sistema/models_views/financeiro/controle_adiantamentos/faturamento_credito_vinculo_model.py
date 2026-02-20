@@ -22,15 +22,12 @@ class FaturamentoCreditoVinculoModel(BaseModel):
     
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     
-    # === Faturamento ===
     faturamento_id = db.Column(db.Integer, db.ForeignKey("fin_faturamento.id"), nullable=False, index=True)
     faturamento = db.relationship("FaturamentoModel", backref=db.backref("vinculos_credito", lazy="dynamic"))
     
-    # === Transação de Crédito (Nova estrutura) ===
     transacao_credito_id = db.Column(db.Integer, db.ForeignKey("cre_transacao_credito.id"), nullable=True, index=True)
     transacao_credito = db.relationship("TransacaoCreditoModel", backref=db.backref("vinculos_faturamento", lazy="dynamic"))
     
-    # === Referências Legado (para migração) ===
     extrato_credito_fornecedor_id = db.Column(db.Integer, db.ForeignKey("ex_extrato_credito_fornecedor.id"), nullable=True)
     extrato_credito_fornecedor = db.relationship("ExtratoCreditoFornecedorModel", 
                                                   backref=db.backref("vinculos_faturamento", lazy="dynamic"))
@@ -43,10 +40,8 @@ class FaturamentoCreditoVinculoModel(BaseModel):
     extrato_credito_extrator = db.relationship("ExtratoCreditoExtratorModel", 
                                                 backref=db.backref("vinculos_faturamento", lazy="dynamic"))
     
-    # === Tipo de Pessoa/Terceiro ===
-    tipo_pessoa = db.Column(db.Integer, nullable=False, index=True)  # TipoPessoa enum
+    tipo_pessoa = db.Column(db.Integer, nullable=False, index=True)
     
-    # === Pessoa vinculada (apenas um será preenchido) ===
     fornecedor_id = db.Column(db.Integer, db.ForeignKey("for_fornecedor_cadastro.id"), nullable=True, index=True)
     fornecedor = db.relationship("FornecedorCadastroModel", backref=db.backref("vinculos_credito_faturamento", lazy="dynamic"))
     
@@ -56,23 +51,17 @@ class FaturamentoCreditoVinculoModel(BaseModel):
     extrator_id = db.Column(db.Integer, db.ForeignKey("ext_extrator.id"), nullable=True, index=True)
     extrator = db.relationship("ExtratorModel", backref=db.backref("vinculos_credito_faturamento", lazy="dynamic"))
     
-    # === Valor aplicado neste vínculo ===
     valor_aplicado_100 = db.Column(db.Integer, nullable=False)
     
-    # === Data do vínculo ===
     data_vinculo = db.Column(db.DateTime, default=datetime.now, nullable=False)
     
-    # === Descrição/observação ===
     descricao = db.Column(db.String(500), nullable=True)
     
-    # === Usuário que criou o vínculo ===
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     usuario = db.relationship('UsuarioModel', backref=db.backref('vinculos_credito_faturamento', lazy='dynamic'))
     
-    # === Status ===
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     
-    # === Índices compostos ===
     __table_args__ = (
         db.Index('idx_vinculo_faturamento_tipo', 'faturamento_id', 'tipo_pessoa'),
         db.Index('idx_vinculo_transacao', 'transacao_credito_id', 'ativo'),
@@ -109,7 +98,6 @@ class FaturamentoCreditoVinculoModel(BaseModel):
         self.descricao = descricao
         self.ativo = ativo
     
-    # === Propriedades ===
     
     def obter_pessoa_id(self) -> int:
         """Retorna o ID da pessoa conforme o tipo"""
@@ -140,7 +128,6 @@ class FaturamentoCreditoVinculoModel(BaseModel):
         }
         return descricoes.get(self.tipo_pessoa, "Desconhecido")
     
-    # === Métodos de Classe (Queries) ===
     
     def buscar_por_faturamento(faturamento_id: int, tipo_pessoa: int = None) -> list:
         """

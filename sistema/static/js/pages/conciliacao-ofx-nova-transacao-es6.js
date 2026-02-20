@@ -1,13 +1,9 @@
-/**
- * Nova Transação OFX
- */
 
 class NovaTransacaoOFX {
   constructor(transacaoId, dadosIniciais) {
     this.transacaoId = transacaoId;
     this.dadosIniciais = dadosIniciais;
     
-    // Estado do componente 
     this.estado = {
       totalPagar: dadosIniciais.totalPagar || 0,
       mostrarValoresDetalhados: dadosIniciais.mostrarValoresDetalhados || false,
@@ -18,7 +14,7 @@ class NovaTransacaoOFX {
           nome: '',
           detalhamento: '',
           referencia: '',
-          valor: 0 // Valor armazenado como inteiro (centavos)
+          valor: 0 
         }
       ],
       centrosCusto: [
@@ -29,7 +25,6 @@ class NovaTransacaoOFX {
         }
       ],
 
-      // === PARCELAMENTO ===
       mostrarParcelamento: dadosIniciais.mostrarParcelamento || false,
       qtdParcelas: dadosIniciais.qtdParcelas || 0,
       diasEntre: dadosIniciais.diasEntre || 30,
@@ -40,7 +35,6 @@ class NovaTransacaoOFX {
     this.init();
   }
 
-  // === FUNÇÕES DE FORMATAÇÃO ===
   formatarMoeda(centavos) {
     const reais = centavos / 100;
     return 'R$ ' + reais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -54,7 +48,6 @@ class NovaTransacaoOFX {
     });
   }
 
-  // === RENDERIZAÇÃO DOM ===
   renderizarCategorias() {
     const container = document.getElementById(`listaCategorias-${this.transacaoId}`);
     container.innerHTML = '';
@@ -66,14 +59,12 @@ class NovaTransacaoOFX {
       
       container.appendChild(div);
       
-      // Definir valor do select
       const select = div.querySelector('select');
       select.value = categoria.nome;
     });
     
-    // Adicionar eventos
     this.adicionarEventosCategorias();
-    // Atualizar display do total
+    
     document.getElementById(`totalDisplay-${this.transacaoId}`).textContent = this.formatarMoeda(this.estado.totalPagar);
   }
 
@@ -112,7 +103,7 @@ class NovaTransacaoOFX {
   }
 
   adicionarEventosCategorias() {
-    // Eventos para selects de categoria
+    
     document.querySelectorAll(`#listaCategorias-${this.transacaoId} .categoria-select`).forEach(select => {
       select.addEventListener('change', () => {
         const index = parseInt(select.dataset.index);
@@ -121,7 +112,6 @@ class NovaTransacaoOFX {
       });
     });
 
-    // Eventos para inputs de detalhamento
     document.querySelectorAll(`#listaCategorias-${this.transacaoId} .detalhamento-input`).forEach(input => {
       input.addEventListener('input', () => {
         const index = parseInt(input.dataset.index);
@@ -129,7 +119,6 @@ class NovaTransacaoOFX {
       });
     });
 
-    // Eventos para inputs de valor
     document.querySelectorAll(`#listaCategorias-${this.transacaoId} .valor-input`).forEach(input => {
       input.addEventListener('input', () => {
         const index = parseInt(input.dataset.index);
@@ -137,7 +126,6 @@ class NovaTransacaoOFX {
       });
     });
 
-    // Eventos para botões de remover
     document.querySelectorAll(`#listaCategorias-${this.transacaoId} .btn-remover-categoria`).forEach(btn => {
       btn.addEventListener('click', () => {
         const index = parseInt(btn.dataset.index);
@@ -146,15 +134,13 @@ class NovaTransacaoOFX {
     });
   }
 
-  // === FUNÇÕES DE CATEGORIA ===
   adicionarCategoria() {
-    // Calcular valor atual das categorias
+    
     let valorAtual = 0;
     this.estado.lista.forEach(categoria => {
       valorAtual += categoria.valor;
     });
     
-    // Se não há valor atribuído ainda, pré-preencher a nova categoria com valor total
     const valorNovaCategoria = valorAtual === 0 ? this.estado.totalPagar : 0;
     
     this.estado.lista.push({
@@ -165,7 +151,6 @@ class NovaTransacaoOFX {
     });
     this.renderizarCategorias();
     
-    // Limpar último select adicionado
     setTimeout(() => {
       const selects = document.querySelectorAll('.categoria-select');
       const lastSelect = selects[selects.length - 1];
@@ -196,7 +181,7 @@ class NovaTransacaoOFX {
   }
 
   validarTotalCompleto() {
-    // Primeiro validar categorias duplicadas
+    
     if (this.validarCategoriasDuplicadas()) {
       return false;
     }
@@ -228,7 +213,6 @@ class NovaTransacaoOFX {
       btnSalvar.classList.remove('btn-secondary');
       btnSalvar.classList.add('btn-primary');
       
-      // Fechar modal de validação se estiver aberto
       const modalElement = document.getElementById('modalValidacao');
       if (modalElement && modalElement.classList.contains('show')) {
         const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
@@ -254,7 +238,7 @@ class NovaTransacaoOFX {
         if (categoriasUsadas.includes(categoria.nome)) {
           temDuplicada = true;
           indiceDuplicada = index;
-          // Obter dados da categoria para mensagem mais informativa
+          
           const dadosCategoria = this.estado.mapaCategorias[categoria.nome] || {};
           categoriaDuplicada = dadosCategoria.nome ? 
             `${categoria.nome} - ${dadosCategoria.nome}` : 
@@ -265,7 +249,6 @@ class NovaTransacaoOFX {
       }
     });
     
-    // Se há duplicada, mostrar modal
     if (temDuplicada && categoriaDuplicada) {
       const modalElement = document.getElementById('modalValidacao');
       const modalMensagem = document.getElementById('modalValidacaoMensagem');
@@ -274,26 +257,22 @@ class NovaTransacaoOFX {
       if (modalElement && modalMensagem) {
         modalMensagem.textContent = `A categoria "${categoriaDuplicada}" foi selecionada mais de uma vez! Por favor, escolha categorias diferentes.`;
         
-        // Configurar evento para limpar categoria duplicada ao clicar em "Entendi"
         if (btnEntendi) {
-          // Remove listeners anteriores
+          
           btnEntendi.onclick = null;
           
           btnEntendi.onclick = () => {
             
-            // Limpa a categoria duplicada
             if (indiceDuplicada >= 0) {
               this.estado.lista[indiceDuplicada].nome = '';
               this.estado.lista[indiceDuplicada].id = '';
 
-              // Atualiza o select correspondente usando o seletor correto
               const selectCategoria = document.querySelector(`#listaCategorias-${this.transacaoId} select[data-index="${indiceDuplicada}"]`);
 
               if (selectCategoria) {
                 selectCategoria.value = '';
                 selectCategoria.focus();
 
-                // Força uma nova validação para reabilitar o botão se necessário
                 this.validarTotalCompleto();
               } else {
                 console.error('Select de categoria não encontrado para índice:', indiceDuplicada);
@@ -302,7 +281,6 @@ class NovaTransacaoOFX {
           };
         }
         
-        // Mostrar modal apenas se não estiver já visível
         if (!modalElement.classList.contains('show')) {
           const modal = new bootstrap.Modal(modalElement);
           modal.show();
@@ -310,7 +288,6 @@ class NovaTransacaoOFX {
       }
     }
     
-    // Desabilitar botão salvar se há duplicadas
     const btnSalvar = document.getElementById(`btnSalvarAgendamento-${this.transacaoId}`);
     if (btnSalvar && temDuplicada) {
       btnSalvar.disabled = true;
@@ -321,7 +298,6 @@ class NovaTransacaoOFX {
     return temDuplicada;
   }
 
-  // === FUNÇÕES DE CENTROS DE CUSTO ===
   renderizarCentrosCusto() {
     const container = document.getElementById(`listaCentrosCusto-${this.transacaoId}`);
     container.innerHTML = '';
@@ -333,12 +309,10 @@ class NovaTransacaoOFX {
       
       container.appendChild(div);
       
-      // Definir valor do select
       const select = div.querySelector('select');
       select.value = centro.centro;
     });
     
-    // Adicionar eventos
     this.adicionarEventosCentrosCusto();
   }
 
@@ -378,7 +352,7 @@ class NovaTransacaoOFX {
   }
 
   adicionarEventosCentrosCusto() {
-    // Eventos para selects de centro
+    
     document.querySelectorAll(`#listaCentrosCusto-${this.transacaoId} .centro-select`).forEach(select => {
       select.addEventListener('change', () => {
         const index = parseInt(select.dataset.index);
@@ -387,7 +361,6 @@ class NovaTransacaoOFX {
       });
     });
 
-    // Eventos para inputs de percentual
     document.querySelectorAll(`#listaCentrosCusto-${this.transacaoId} .percentual-input`).forEach(input => {
       input.addEventListener('input', () => {
         const index = parseInt(input.dataset.index);
@@ -396,7 +369,6 @@ class NovaTransacaoOFX {
       });
     });
 
-    // Eventos para inputs de valor
     document.querySelectorAll(`#listaCentrosCusto-${this.transacaoId} .valor-centro-input`).forEach(input => {
       input.addEventListener('input', () => {
         const index = parseInt(input.dataset.index);
@@ -404,7 +376,6 @@ class NovaTransacaoOFX {
       });
     });
 
-    // Eventos para botões de remover
     document.querySelectorAll(`#listaCentrosCusto-${this.transacaoId} .btn-remover-centro`).forEach(btn => {
       btn.addEventListener('click', () => {
         const index = parseInt(btn.dataset.index);
@@ -464,7 +435,6 @@ class NovaTransacaoOFX {
     return true;
   }
 
-  // === FUNÇÕES DE PARCELAMENTO ===
   renderizarParcelas() {
     const tabelaContainer = document.getElementById(`tabelaParcelas-${this.transacaoId}`);
     const corpoTabela = document.getElementById(`corpoTabelaParcelas-${this.transacaoId}`);
@@ -498,10 +468,8 @@ class NovaTransacaoOFX {
         corpoTabela.appendChild(tr);
       });
       
-      // Atualizar total
       totalDisplay.textContent = this.formatarMoeda(this.estado.totalParcelas);
       
-      // Adicionar eventos
       this.adicionarEventosParcelas();
     } else {
       tabelaContainer.style.display = 'none';
@@ -509,7 +477,7 @@ class NovaTransacaoOFX {
   }
 
   adicionarEventosParcelas() {
-    // Eventos para vencimento
+    
     document.querySelectorAll(`#corpoTabelaParcelas-${this.transacaoId} .vencimento-parcela`).forEach(input => {
       input.addEventListener('change', () => {
         const index = parseInt(input.dataset.index);
@@ -517,7 +485,6 @@ class NovaTransacaoOFX {
       });
     });
 
-    // Eventos para descrição
     document.querySelectorAll(`#corpoTabelaParcelas-${this.transacaoId} .descricao-parcela`).forEach(input => {
       input.addEventListener('input', () => {
         const index = parseInt(input.dataset.index);
@@ -525,7 +492,6 @@ class NovaTransacaoOFX {
       });
     });
 
-    // Eventos para referência
     document.querySelectorAll(`#corpoTabelaParcelas-${this.transacaoId} .referencia-parcela`).forEach(input => {
       input.addEventListener('input', () => {
         const index = parseInt(input.dataset.index);
@@ -547,7 +513,6 @@ class NovaTransacaoOFX {
     const valorParcela = Math.floor(valorAgendamento / this.estado.qtdParcelas);
     let resto = valorAgendamento - (valorParcela * this.estado.qtdParcelas);
     
-    // Definir a data base para o dia 10 do mês atual ou próximo
     let hoje = new Date();
     let ano = hoje.getFullYear();
     let mes = hoje.getMonth();
@@ -593,9 +558,8 @@ class NovaTransacaoOFX {
     }
   }
 
-  // === FUNÇÕES DE PREPARAÇÃO PARA ENVIO ===
   prepararEnvio() {
-    // Preparar categorias com código + nome combinados
+    
     const categoriasComDados = this.estado.lista.map(categoria => {
       const dadosCategoria = this.estado.mapaCategorias[categoria.nome] || {};
       const categoriaCompleta = dadosCategoria.nome ? 
@@ -611,10 +575,8 @@ class NovaTransacaoOFX {
       };
     });
     
-    // Preparar dados JSON para envio
     document.getElementById(`categorias_json-${this.transacaoId}`).value = JSON.stringify(categoriasComDados);
     
-    // Enviar array vazio se valores detalhados não estiver ativo
     const centrosParaEnviar = this.estado.mostrarValoresDetalhados ? this.estado.centrosCusto : [];
     document.getElementById(`centros_custo_json-${this.transacaoId}`).value = JSON.stringify(centrosParaEnviar);
     
@@ -624,23 +586,20 @@ class NovaTransacaoOFX {
     return true;
   }
 
-  // === ENVIO AJAX ===
   async enviarFormulario() {
     const form = document.getElementById(`formNovaTransacao-${this.transacaoId}`);
     const btnSalvar = document.getElementById(`btnSalvarAgendamento-${this.transacaoId}`);
     
     try {
-      // Desabilitar botão
+      
       btnSalvar.disabled = true;
       btnSalvar.innerHTML = `
         <span class="spinner-border spinner-border-sm me-1" role="status"></span>
         Salvando...
       `;
 
-      // Preparar dados
       this.prepararEnvio();
 
-      // Fetch com async/await
       const response = await fetch('/api/salvar-nova-movimentacao', {
         method: 'POST',
         body: new FormData(form)
@@ -652,7 +611,6 @@ class NovaTransacaoOFX {
         throw new Error(resultado.mensagem);
       }
 
-      // Sucesso
       this.mostrarMensagem('Nova movimentação criada e conciliada com sucesso!', 'success');
       this.animarRemocaoTransacao();
 
@@ -660,7 +618,6 @@ class NovaTransacaoOFX {
       console.error('Erro ao salvar:', error);
       this.mostrarMensagem(error.message || 'Erro ao salvar nova movimentação', 'danger');
       
-      // Reabilitar botão
       btnSalvar.disabled = false;
       btnSalvar.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -693,7 +650,6 @@ class NovaTransacaoOFX {
     
     if (!linhaTransacao) return;
     
-    // Animação de sucesso seguida de remoção
     setTimeout(() => {
       Object.assign(linhaTransacao.style, {
         transition: 'all 0.6s ease-out',
@@ -710,17 +666,14 @@ class NovaTransacaoOFX {
     }, 1000);
   }
 
-  // === CONFIGURAÇÃO DE EVENTOS ===
   configurarEventos() {
-    // Botão adicionar categoria
+    
     document.getElementById(`btnAdicionarCategoria-${this.transacaoId}`)
       ?.addEventListener('click', () => this.adicionarCategoria());
     
-    // Botão adicionar centro de custo
     document.getElementById(`btnAdicionarCentroCusto-${this.transacaoId}`)
       ?.addEventListener('click', () => this.adicionarCentroCusto());
     
-    // Switch valores detalhados
     const switchValoresDetalhados = document.getElementById(`valoresDetalhados-${this.transacaoId}`);
     switchValoresDetalhados?.addEventListener('change', () => {
       this.estado.mostrarValoresDetalhados = switchValoresDetalhados.checked;
@@ -733,12 +686,10 @@ class NovaTransacaoOFX {
         painel.style.display = 'none';
       }
       
-      // Atualizar campo hidden
       document.getElementById(`valores_detalhados_ativo-${this.transacaoId}`).value = this.estado.mostrarValoresDetalhados;
       this.validarTotalCompleto();
     });
     
-    // Switch parcelamento
     const switchParcelamento = document.getElementById(`parcelamento-${this.transacaoId}`);
     switchParcelamento?.addEventListener('change', () => {
       this.estado.mostrarParcelamento = switchParcelamento.checked;
@@ -755,7 +706,6 @@ class NovaTransacaoOFX {
       }
     });
     
-    // Eventos para tipo de distribuição
     document.querySelectorAll(`input[name="tipoDistribuicao-${this.transacaoId}"]`).forEach(radio => {
       radio.addEventListener('change', () => {
         this.estado.tipoDistribuicao = radio.value;
@@ -764,7 +714,6 @@ class NovaTransacaoOFX {
       });
     });
     
-    // Eventos para parcelamento
     const selectQtdParcelas = document.getElementById(`qtdParcelas-${this.transacaoId}`);
     selectQtdParcelas?.addEventListener('change', () => {
       this.estado.qtdParcelas = parseInt(selectQtdParcelas.value) || 0;
@@ -785,7 +734,6 @@ class NovaTransacaoOFX {
       }
     });
     
-    // Evento de submit do formulário
     document.getElementById(`formNovaTransacao-${this.transacaoId}`)
       ?.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -795,19 +743,17 @@ class NovaTransacaoOFX {
       });
   }
 
-  // === INICIALIZAÇÃO ===
   init() {
-    // Iniciar com uma categoria com o valor total da transação pré-preenchido
+    
     this.estado.lista = [{
       nome: '',
       detalhamento: '',
       referencia: '',
-      valor: this.estado.totalPagar // Pré-preencher com valor total da transação
+      valor: this.estado.totalPagar 
     }];
     
     this.renderizarCategorias();
     
-    // Forçar selects de categoria para vazios
     setTimeout(() => {
       document.querySelectorAll('.categoria-select').forEach(select => {
         select.value = '';
@@ -815,7 +761,6 @@ class NovaTransacaoOFX {
       });
     }, 50);
 
-    // Inicializar painéis baseado nos dados
     const switchValoresDetalhados = document.getElementById(`valoresDetalhados-${this.transacaoId}`);
     if (switchValoresDetalhados) {
       switchValoresDetalhados.checked = this.estado.mostrarValoresDetalhados;
@@ -836,7 +781,7 @@ class NovaTransacaoOFX {
       
       if (this.estado.mostrarParcelamento) {
         painelParcelamento.style.display = 'block';
-        // Definir valores iniciais nos selects
+        
         const qtdSelect = document.getElementById(`qtdParcelas-${this.transacaoId}`);
         const diasSelect = document.getElementById(`diasEntre-${this.transacaoId}`);
         if (qtdSelect) qtdSelect.value = this.estado.qtdParcelas;
@@ -847,15 +792,12 @@ class NovaTransacaoOFX {
       }
     }
 
-    // Configurar todos os event listeners
     this.configurarEventos();
 
-    // Aguardar um pouco e validar
     setTimeout(() => {
       this.validarTotalCompleto();
     }, 100);
   }
 }
 
-// Exportar para uso global
 window.NovaTransacaoOFX = NovaTransacaoOFX;

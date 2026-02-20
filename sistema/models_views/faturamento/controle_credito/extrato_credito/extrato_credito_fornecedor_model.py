@@ -8,7 +8,6 @@ class ExtratoCreditoFornecedorModel(BaseModel):
     __tablename__ = 'ex_extrato_credito_fornecedor'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
 
-    # 1 - Entrada | 2 - Saída | 3 - Cancelamento | 4 - Estorno
     tipo_movimentacao = db.Column(db.Integer, nullable=True)
 
     plano_conta_id = db.Column(db.Integer, db.ForeignKey("plan_plano_conta.id"), nullable=True)
@@ -90,7 +89,6 @@ class ExtratoCreditoFornecedorModel(BaseModel):
             
             creditos_formatados = []
             for credito in creditos:
-                # Incluir tanto créditos positivos quanto negativos (débitos) com valor != 0
                 if credito.valor_credito_100 != 0:
                     creditos_formatados.append({
                         'id': credito.id,
@@ -99,12 +97,10 @@ class ExtratoCreditoFornecedorModel(BaseModel):
                         'valor_credito_100': credito.valor_credito_100,
                     })
             
-            print(f"[DEBUG] Créditos disponíveis para fornecedor {fornecedor_id}: {len(creditos_formatados)}")
             for c in creditos_formatados:
-                print(f"[DEBUG] - ID {c['id']}: {c['descricao']} = R$ {c['valor_credito_100']/100}")
+                pass
             
             return creditos_formatados
         except Exception as e:
-            print(f"[ERROR obter_creditos_disponiveis_fornecedor] {e}")
             return []
 

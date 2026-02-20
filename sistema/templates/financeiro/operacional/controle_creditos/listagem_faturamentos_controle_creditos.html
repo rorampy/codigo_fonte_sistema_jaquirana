@@ -15,7 +15,7 @@
         </div>
         <div class="col-12 col-md-auto ms-auto d-print-none">
           <div class="d-flex gap-2">
-            <!-- Botões de filtro rápido -->
+            
             <a href="{{ url_for('listagem_faturamentos_controle_credito', situacaoFaturamento='') }}"
               class="btn btn-outline-primary">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -73,7 +73,6 @@
 
       {% include 'estrutura/mensagens_flash.html' %}
 
-      <!-- Indicador dos filtros aplicados -->
       <div class="col-12 mb-3">
         <div class="alert alert-info d-flex align-items-center bg-white" role="alert">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -118,7 +117,7 @@
                   <th style="text-align: center;">Cód. Faturamento</th>
                   <th style="text-align: center;">Data/Hora</th>
                   <th style="text-align: center;">Valor Total</th>
-                  <!-- <th style="text-align: center;">Utilizou Crédito</th>-->
+                  
                   <th style="text-align: center;">Situação</th>
                   <th style="text-align: center;">Ações</th>
                 </tr>
@@ -170,7 +169,7 @@
                       </button>
 
                       {% if faturamento.situacao_pagamento_id == 6 or faturamento.situacao_pagamento_id == 8 %}
-                      <!-- Botão para ver categorização (já categorizado) -->
+                      
                       <button type="button" class="btn btn-icon btn-outline-dark" data-bs-toggle="modal"
                         data-bs-target="#modal-categorizacao" onclick="carregarCategorizacao({{ faturamento.id }})"
                         data-bs-toggle="tooltip" data-bs-placement="top" title="Visualizar Categorização">
@@ -183,7 +182,7 @@
                         </svg>
                       </button>
                       {% else %}
-                      <!-- Botão para categorizar (não categorizado) -->
+                      
                       <a href="{{ url_for('categorizar_fatura', id=faturamento.id) }}"
                         class="btn btn-icon btn-outline-orange" data-bs-toggle="tooltip" data-bs-placement="top"
                         title="Categorizar Fatura">
@@ -248,7 +247,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             <div class="modal-status bg-danger"></div>
                             <div class="modal-body text-center py-4">
-                              <!-- Download SVG icon from http://tabler.io/icons/icon/alert-triangle -->
+                              
                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon mb-2 text-danger icon-lg">
@@ -303,7 +302,6 @@
   </div>
 </div>
 
-<!-- Filtro -->
 <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-md modal-dialog-centered" role="document" style="display: grid;">
     <form action="" method="GET">
@@ -345,7 +343,7 @@
             Limpar Filtros
           </a>
           <button type="submit" class="btn btn-primary btn-5 ms-auto">
-            <!-- Download SVG icon from http://tabler.io/icons/icon/plus -->
+            
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
               <path d="M12 5l0 14" />
@@ -380,7 +378,7 @@
 
         <div id="conteudo-faturamento" style="display: none;">
           <div class="p-4">
-            <!-- Fornecedores -->
+            
             <div class="mb-5" id="secao-fornecedores">
               <div class="d-flex align-items-center justify-content-between mb-4">
                 <div class="d-flex align-items-center">
@@ -397,7 +395,6 @@
               <div id="lista-fornecedores"></div>
             </div>
 
-            <!-- Transportadoras  -->
             <div class="mb-5" id="secao-transportadoras">
               <div class="d-flex align-items-center justify-content-between mb-4">
                 <div class="d-flex align-items-center">
@@ -414,8 +411,6 @@
               <div id="lista-transportadoras"></div>
             </div>
 
-
-            <!-- Extratores  -->
             <div class="mb-5" id="secao-extratores">
               <div class="d-flex align-items-center justify-content-between mb-4">
                 <div class="d-flex align-items-center">
@@ -464,13 +459,12 @@
       });
     });
   });
-  // Variável global para o modal PDF
+  
   let faturamentoParaPDF = null;
   let faturamentoParaImagem = null;
 
-  // Inicialização quando DOM carregar
   document.addEventListener('DOMContentLoaded', function () {
-    // Event listeners para visualizar faturamentos
+    
     document.querySelectorAll('[data-faturamento-id]').forEach(button => {
       button.addEventListener('click', function () {
         const faturamentoId = this.getAttribute('data-faturamento-id');
@@ -479,8 +473,6 @@
     });
 
   });
-
-  // ===== FUNÇÕES PRINCIPAIS =====
 
   function visualizarFaturamento(id) {
     const modal = new bootstrap.Modal(document.getElementById('modal-faturamento'));
@@ -503,7 +495,6 @@
           modalTitle.textContent = data.faturamento.codigo_faturamento;
         }
 
-        // Processar dados de créditos com arrays seguros
         const creditosFornecedores = data.creditos_fornecedores || [];
         const creditosTransportadoras = data.creditos_transportadoras || [];
         const creditosExtratores = data.creditos_extratores || [];
@@ -512,17 +503,14 @@
         processarCreditosTransportadoras(creditosTransportadoras);
         processarCreditosExtratores(creditosExtratores);
 
-        // Verificar se não há dados para mostrar mensagem informativa
         verificarDadosVazios(creditosFornecedores, creditosTransportadoras, creditosExtratores);
 
-        // Contadores
         document.getElementById('total-fornecedores').textContent = data.faturamento.total_creditos_fornecedores;
 
         document.getElementById('total-transportadoras').textContent = data.faturamento.total_creditos_transportadoras;
 
         document.getElementById('total-extratores').textContent = data.faturamento.total_creditos_extratores;
 
-        // Esconder loading e mostrar conteúdo
         document.getElementById('loading-faturamento').style.display = 'none';
         document.getElementById('conteudo-faturamento').style.display = 'block';
       })
@@ -540,16 +528,14 @@
     container.innerHTML = '';
 
     if (!creditos.length) {
-      // Esconder a seção inteira quando não há créditos
+      
       secaoFornecedores.style.display = 'none';
       document.getElementById('total-valor-fornecedores').textContent = 'R$ 0,00';
       return;
     }
 
-    // Mostrar a seção quando há créditos
     secaoFornecedores.style.display = 'block';
 
-    // Agrupar e processar créditos de fornecedores
     const grupos = {};
     let totalGeral = 0;
 
@@ -559,7 +545,7 @@
         grupos[nome] = { registros: [], total: 0 };
       }
       grupos[nome].registros.push(item);
-      // Parse do valor do crédito
+      
       const valor = parseFloat(item.valor_credito_100.replace(/[R$\s.]/g, '').replace(',', '.'));
       grupos[nome].total += valor;
       totalGeral += valor;
@@ -568,7 +554,6 @@
     document.getElementById('total-valor-fornecedores').textContent =
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
 
-    // Criar grupos - layout para créditos de fornecedores
     Object.entries(grupos).forEach(([nome, grupo]) => {
       const card = document.createElement('div');
       card.className = 'card mb-4 shadow-sm';
@@ -618,23 +603,20 @@
   }
 
   function processarCreditosTransportadoras(creditos) {
-    console.log('Processando créditos de transportadoras:', creditos);
     const container = document.getElementById('lista-transportadoras');
     const secaoTransportadoras = document.getElementById('secao-transportadoras');
 
     container.innerHTML = '';
 
     if (!creditos.length) {
-      // Esconder a seção inteira quando não há créditos
+      
       secaoTransportadoras.style.display = 'none';
       document.getElementById('total-valor-transportadoras').textContent = 'R$ 0,00';
       return;
     }
 
-    // Mostrar a seção quando há créditos
     secaoTransportadoras.style.display = 'block';
 
-    // Agrupar e processar créditos de transportadoras
     const grupos = {};
     let totalGeral = 0;
 
@@ -644,7 +626,7 @@
         grupos[nome] = { registros: [], total: 0 };
       }
       grupos[nome].registros.push(item);
-      // Parse do valor do crédito
+      
       const valor = parseFloat(item.valor_credito_100.replace(/[R$\s.]/g, '').replace(',', '.'));
       grupos[nome].total += valor;
       totalGeral += valor;
@@ -653,7 +635,6 @@
     document.getElementById('total-valor-transportadoras').textContent =
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
 
-    // Criar grupos - layout para créditos de transportadoras
     Object.entries(grupos).forEach(([nome, grupo]) => {
       const card = document.createElement('div');
       card.className = 'card mb-4 shadow-sm';
@@ -703,23 +684,20 @@
   }
 
   function processarCreditosExtratores(creditos) {
-    console.log('Processando créditos de extratores:', creditos);
     const container = document.getElementById('lista-extratores');
     const secaoExtratores = document.getElementById('secao-extratores');
 
     container.innerHTML = '';
 
     if (!creditos.length) {
-      // Esconder a seção inteira quando não há créditos
+      
       secaoExtratores.style.display = 'none';
       document.getElementById('total-valor-extratores').textContent = 'R$ 0,00';
       return;
     }
 
-    // Mostrar a seção quando há créditos
     secaoExtratores.style.display = 'block';
 
-    // Agrupar e processar créditos de extratores
     const grupos = {};
     let totalGeral = 0;
 
@@ -729,7 +707,7 @@
         grupos[nome] = { registros: [], total: 0 };
       }
       grupos[nome].registros.push(item);
-      // Parse do valor do crédito
+      
       const valor = parseFloat(item.valor_credito_100.replace(/[R$\s.]/g, '').replace(',', '.'));
       grupos[nome].total += valor;
       totalGeral += valor;
@@ -738,7 +716,6 @@
     document.getElementById('total-valor-extratores').textContent =
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral);
 
-    // Criar grupos - layout para créditos de extratores
     Object.entries(grupos).forEach(([nome, grupo]) => {
       const card = document.createElement('div');
       card.className = 'card mb-4 shadow-sm';
@@ -787,8 +764,6 @@
     });
   }
 
-  // ===== FUNÇÕES DE EXPORTAR PDF =====
-
   function abrirModalExportarPDF(faturamentoId) {
     faturamentoParaPDF = faturamentoId;
     faturamentoParaImagem = null;
@@ -799,19 +774,16 @@
       return;
     }
 
-    // Restaurar título original do modal
     const modalTitle = modalElement.querySelector('.modal-title');
     modalTitle.innerHTML = `
     Exportar Faturamento para PDF
   `;
 
-    // Restaurar texto do botão e limpar event listeners
     const btnGerar = document.getElementById('btn-gerar-pdf');
     btnGerar.innerHTML = `
     Gerar PDF
   `;
 
-    // Limpar todos os event listeners e definir apenas um
     btnGerar.replaceWith(btnGerar.cloneNode(true));
     const newBtnGerar = document.getElementById('btn-gerar-pdf');
     newBtnGerar.onclick = function () {
@@ -823,12 +795,11 @@
         const modal = new bootstrap.Modal(modalElement);
         modal.show();
       } else {
-        // Fallback manual
+        
         modalElement.style.display = 'block';
         modalElement.classList.add('show');
         document.body.classList.add('modal-open');
 
-        // Criar backdrop
         if (!document.querySelector('.modal-backdrop')) {
           const backdrop = document.createElement('div');
           backdrop.className = 'modal-backdrop fade show';
@@ -836,8 +807,7 @@
         }
       }
     } catch (error) {
-      console.log('Erro ao abrir modal PDF:', error);
-      // Fallback final
+      
       modalElement.style.display = 'block';
       modalElement.classList.add('show');
       document.body.classList.add('modal-open');
@@ -850,7 +820,6 @@
       return;
     }
 
-    // Coletar opções do modal
     const opcoes = {
       ocultar_fornecedores: document.getElementById('ocultar-fornecedores')?.checked || false,
       ocultar_transportadoras: document.getElementById('ocultar-transportadoras')?.checked || false,
@@ -859,13 +828,11 @@
       ocultar_despesas_avulsas: document.getElementById('ocultar-despesas-avulsas')?.checked || false
     };
 
-    // Criar formulário para enviar via POST
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = `/financeiro/faturamentos/exportar-pdf/${faturamentoParaPDF}`;
-    form.target = '_blank'; // Abrir em nova aba
+    form.target = '_blank'; 
 
-    // Adicionar dados das opções
     Object.keys(opcoes).forEach(key => {
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -874,7 +841,6 @@
       form.appendChild(input);
     });
 
-    // Adicionar CSRF token se necessário
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
     if (csrfToken) {
       const input = document.createElement('input');
@@ -884,25 +850,21 @@
       form.appendChild(input);
     }
 
-    // Enviar formulário
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
 
-    // Fechar modal
     fecharModalSeguro('modal-exportar-pdf');
 
     mostrarNotificacao('PDF sendo gerado...', 'info');
   }
-
-  // ===== FUNÇÕES AUXILIARES =====
 
   function fecharModalSeguro(modalId) {
     const modalElement = document.getElementById(modalId);
     if (!modalElement) return;
 
     try {
-      // Tentar Bootstrap Modal
+      
       if (window.bootstrap && window.bootstrap.Modal) {
         const modalInstance = bootstrap.Modal.getInstance(modalElement);
         if (modalInstance) {
@@ -914,25 +876,21 @@
         return;
       }
 
-      // Fallback manual
       modalElement.style.display = 'none';
       modalElement.classList.remove('show');
       document.body.classList.remove('modal-open');
 
-      // Remover backdrop se existir
       const backdrop = document.querySelector('.modal-backdrop');
       if (backdrop) {
         backdrop.remove();
       }
 
     } catch (error) {
-      console.log('Erro ao fechar modal:', error);
-      // Fallback final
+      
       modalElement.style.display = 'none';
       modalElement.classList.remove('show');
       document.body.classList.remove('modal-open');
 
-      // Remover backdrop
       const backdrop = document.querySelector('.modal-backdrop');
       if (backdrop) {
         backdrop.remove();
@@ -941,14 +899,14 @@
   }
 
   function mostrarNotificacao(mensagem, tipo = 'info') {
-    // Toast simples do Tabler (se não tiver, usar fallback)
+    
     if (typeof window.Tabler !== 'undefined' && window.Tabler.toast) {
       window.Tabler.toast({
         message: mensagem,
         type: tipo
       });
     } else {
-      // Fallback: criar toast manual
+      
       const toast = document.createElement('div');
       toast.className = `bg-white alert alert-${tipo === 'success' ? 'success' : tipo === 'warning' ? 'warning' : tipo === 'error' ? 'danger' : 'info'} alert-dismissible`;
       toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
@@ -959,7 +917,6 @@
 
       document.body.appendChild(toast);
 
-      // Auto remover após 4 segundos
       setTimeout(() => {
         if (toast.parentElement) {
           toast.remove();
@@ -968,31 +925,26 @@
     }
   }
 
-  // ======== FUNÇÃO DE EXPORTAR IMG ======
-
   function abrirModalExportarImagem(faturamentoId) {
     faturamentoParaImagem = faturamentoId;
-    faturamentoParaPDF = null; // Limpar variável de PDF
+    faturamentoParaPDF = null; 
 
-    const modalElement = document.getElementById('modal-exportar-pdf'); // Reutilizar o mesmo modal
+    const modalElement = document.getElementById('modal-exportar-pdf'); 
     if (!modalElement) {
       console.error('Modal de exportar não encontrado');
       return;
     }
 
-    // Alterar título do modal para imagem
     const modalTitle = modalElement.querySelector('.modal-title');
     modalTitle.innerHTML = `
     Exportar Faturamento para Imagem
   `;
 
-    // Alterar texto do botão e limpar event listeners
     const btnGerar = document.getElementById('btn-gerar-pdf');
     btnGerar.innerHTML = `
     Gerar Imagem
   `;
 
-    // Limpar todos os event listeners e definir apenas um
     btnGerar.replaceWith(btnGerar.cloneNode(true));
     const newBtnGerar = document.getElementById('btn-gerar-pdf');
     newBtnGerar.onclick = function () {
@@ -1015,14 +967,11 @@
         }
       }
     } catch (error) {
-      console.log('Erro ao abrir modal imagem:', error);
       modalElement.style.display = 'block';
       modalElement.classList.add('show');
       document.body.classList.add('modal-open');
     }
   }
-
-  // Gerar imagem do faturamento
 
   function gerarImagemFaturamento() {
     if (!faturamentoParaImagem) {
@@ -1030,7 +979,6 @@
       return;
     }
 
-    // Coletar opções do modal (mesmo do PDF)
     const opcoes = {
       ocultar_fornecedores: document.getElementById('ocultar-fornecedores')?.checked || false,
       ocultar_transportadoras: document.getElementById('ocultar-transportadoras')?.checked || false,
@@ -1039,13 +987,11 @@
       ocultar_despesas_avulsas: document.getElementById('ocultar-despesas-avulsas')?.checked || false
     };
 
-    // Criar formulário para enviar via POST
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = `/financeiro/faturamentos/exportar-imagem/${faturamentoParaImagem}`; // Nova rota
+    form.action = `/financeiro/faturamentos/exportar-imagem/${faturamentoParaImagem}`; 
     form.target = '_blank';
 
-    // Adicionar dados das opções
     Object.keys(opcoes).forEach(key => {
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -1054,7 +1000,6 @@
       form.appendChild(input);
     });
 
-    // Adicionar CSRF token se necessário
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
     if (csrfToken) {
       const input = document.createElement('input');
@@ -1064,26 +1009,20 @@
       form.appendChild(input);
     }
 
-    // Enviar formulário
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
 
-    // Fechar modal
     fecharModalSeguro('modal-exportar-pdf');
 
     mostrarNotificacao('Imagem sendo gerada...', 'info');
   }
 
-  // ===== FUNÇÃO PARA VERIFICAR DADOS VAZIOS =====
-
-  // Função melhorada para verificar dados vazios
   function verificarDadosVazios(creditosFornecedores, creditosTransportadoras, creditosExtratores) {
     const temCreditosFornecedores = creditosFornecedores && creditosFornecedores.length > 0;
     const temCreditosTransportadoras = creditosTransportadoras && creditosTransportadoras.length > 0;
     const temCreditosExtratores = creditosExtratores && creditosExtratores.length > 0;
 
-    // Se não há nenhum tipo de crédito, criar mensagem informativa
     if (!temCreditosFornecedores && !temCreditosTransportadoras && !temCreditosExtratores) {
       const conteudoFaturamento = document.querySelector('#conteudo-faturamento .p-4');
       if (conteudoFaturamento) {
@@ -1107,7 +1046,6 @@
 
 </script>
 
-<!-- Modal de Categorização Simples -->
 <div class="modal modal-blur fade" id="modal-categorizacao" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -1128,7 +1066,7 @@
         </div>
 
         <div id="conteudo-categorizacao" style="display: none;">
-          <!-- O conteúdo será carregado via JavaScript -->
+          
         </div>
       </div>
 
@@ -1164,15 +1102,13 @@
   function carregarCategorizacao(faturamentoId) {
     faturamentoSelecionadoId = faturamentoId;
 
-    // Mostrar loading
     document.getElementById('loading-categorizacao').style.display = 'block';
     document.getElementById('conteudo-categorizacao').style.display = 'none';
 
-    // Fazer requisição para Adiantamentos de Créditos
     fetch(`/financeiro/operacional/categorizacao/controle-creditos/detalhes-json/${faturamentoId}`)
       .then(response => response.text())
       .then(text => {
-        // Esconder loading
+        
         document.getElementById('loading-categorizacao').style.display = 'none';
 
         try {
@@ -1186,7 +1122,7 @@
             `;
           } else {
             categoriaId = data.categorizacao_id
-            // Montar HTML com os dados
+            
             document.getElementById('conteudo-categorizacao').innerHTML = montarHtmlCategorizacao(data);
           }
         } catch (e) {
@@ -1214,15 +1150,14 @@
   }
 
   function montarHtmlCategorizacao(data) {
-    console.log(data)
-    // Usar valores vindos do backend - já convertidos para reais
+    
     const valorBrutoTotal = data.faturamento.valor_bruto_total || data.faturamento.valor_total || 0;
     const valorCreditoTotal = data.faturamento.valor_credito_total || 0;
     const valorFinalTotal = data.faturamento.valor_total || 0;
 
     let html = `
     <div class="p-4">
-      <!-- Informações do Pagamento -->
+      
       <div class="mb-4">
         <h4 class="mb-3" style="color: #277329;">
           Informações da Categorização
@@ -1243,7 +1178,6 @@
         </div>
       </div>`;
 
-    // Seção de Créditos de Fornecedores
     if (data.faturamento.creditos_fornecedores && data.faturamento.creditos_fornecedores.length > 0) {
       const totalCreditosFornecedores = data.faturamento.creditos_fornecedores.reduce((total, f) => total + (f.valor_credito || 0), 0);
 
@@ -1289,7 +1223,6 @@
       </div>`;
     }
 
-    // Seção de Créditos de Transportadoras
     if (data.faturamento.creditos_transportadoras && data.faturamento.creditos_transportadoras.length > 0) {
       const totalCreditosTransportadoras = data.faturamento.creditos_transportadoras.reduce((total, t) => total + (t.valor_credito || 0), 0);
 
@@ -1335,7 +1268,6 @@
       </div>`;
     }
 
-    // Seção de Créditos de Extratores
     if (data.faturamento.creditos_extratores && data.faturamento.creditos_extratores.length > 0) {
       const totalCreditosExtratores = data.faturamento.creditos_extratores.reduce((total, t) => total + (t.valor_credito || 0), 0);
 
@@ -1381,7 +1313,6 @@
       </div>`;
     }
 
-    // Seção de Comissionados
     if (data.faturamento.comissionados && data.faturamento.comissionados.length > 0) {
       const totalComissionados = data.faturamento.comissionados.reduce((total, t) => total + (t.valor || 0), 0) / 100;
 
@@ -1424,7 +1355,6 @@
       </div>`;
     }
 
-    // Seção de Receitas Avulsas
     if (data.receitas_avulsas && data.receitas_avulsas.length > 0) {
       const totalReceitas = data.receitas_avulsas.reduce((total, r) => {
         const valor = parseFloat(r.valor.replace(/[R$\s.]/g, '').replace(',', '.'));
@@ -1465,7 +1395,6 @@
       </div>`;
     }
 
-    // Seção de Despesas Avulsas
     if (data.despesas_avulsas && data.despesas_avulsas.length > 0) {
       const totalDespesas = data.despesas_avulsas.reduce((total, d) => {
         const valor = parseFloat(d.valor.replace(/[R$\s.]/g, '').replace(',', '.'));
@@ -1504,7 +1433,7 @@
           </table>
         </div>
       </div>`;
-    }    // Seção de Categorização por Conta
+    }    
     if (data.categorias && data.categorias.length > 0) {
       html += `
       <div class="mb-4">
@@ -1524,7 +1453,7 @@
 
       let totalCategorias = 0;
       data.categorias.forEach(categoria => {
-        const valorCategoria = categoria.valor / 100 || 0; // Valor já vem em reais do backend
+        const valorCategoria = categoria.valor / 100 || 0; 
         totalCategorias += valorCategoria;
         const nomeCategoria = categoria.nome || 'N/A';
 
@@ -1550,8 +1479,6 @@
       </div>`;
     }
 
-    // Seção de Centros de Custo (se houver)
-    console.log('Debug centros_custo:', data.centros_custo);
     if (data.centros_custo && data.centros_custo.length > 0) {
       html += `
       <div class="mb-4">
@@ -1570,9 +1497,7 @@
             <tbody>`;
 
       data.centros_custo.forEach(centro => {
-        console.log('Debug centro individual:', centro);
 
-        // Tratar valores que podem vir do backend de diferentes formas
         const valorCentro = centro.valor || 0;
         const nomeCentro = centro.nome || centro.descricao || centro.centro || 'Centro não informado';
         const percentualCentro = centro.percentual || 0;
@@ -1592,7 +1517,6 @@
       </div>`;
     }
 
-    // Seção de Parcelas
     if (data.parcelas && data.parcelas.length > 0) {
       html += `
       <div class="mb-4">
@@ -1641,7 +1565,6 @@
       return;
     }
 
-    // Fechar o modal atual
     const modal = document.getElementById('modal-categorizacao');
     if (modal) {
       const modalInstance = bootstrap.Modal.getInstance(modal);

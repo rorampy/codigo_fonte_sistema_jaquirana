@@ -32,23 +32,20 @@ def inject_relatorio_excel():
     semanas_disponiveis = []
     
     try:
-        # Capturar dados do formulário se existirem
         if request and hasattr(request, 'form'):
             dados_corretos = request.form.to_dict()
             
-        # Carregar dados apenas se o usuário estiver autenticado
         if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
             situacoes_pagamento = SituacaoPagamentoModel.listar_status()
             semanas_disponiveis = UtilitariosSemana.obter_semanas_do_mes_atual()
             
     except Exception as e:
-        # Em caso de erro, manter valores padrão vazios
         pass
         
     return {
         "dados_corretos": dados_corretos,
         "situacoes_pagamento": situacoes_pagamento,
-        "statusPagamentos": situacoes_pagamento,  # Alias para compatibilidade
+        "statusPagamentos": situacoes_pagamento,
         "semanas_disponiveis": semanas_disponiveis
     }
 
@@ -85,12 +82,10 @@ def filtro_excel_dashboard(
     Returns:
         list: Lista de dicionários com registros filtrados e unificados
     """
-    # Define período padrão caso não seja informado
     if not data_inicio or not data_fim:
         data_inicio = date.today() - timedelta(days=30)
         data_fim = date.today()
 
-    # Construção da query base com todos os JOINs necessários
     query = (
         db.session.query(
             RegistroOperacionalModel,
@@ -129,7 +124,6 @@ def filtro_excel_dashboard(
         )
     )
 
-    # Aplicação dos filtros de data
     if data_inicio and data_fim:
         query = query.filter(
             RegistroOperacionalModel.data_entrega_ticket.isnot(None),
@@ -146,7 +140,6 @@ def filtro_excel_dashboard(
             RegistroOperacionalModel.data_entrega_ticket <= data_fim,
         )
 
-    # Aplicação dos filtros específicos
     if cliente:
         query = query.filter(ClienteModel.identificacao.ilike(f"%{cliente}%"))
         
@@ -179,7 +172,6 @@ def filtro_excel_dashboard(
         query = query.join(SituacaoPagamentoModel, RegistroOperacionalModel.situacao)\
                     .filter(SituacaoPagamentoModel.id == statusPagamentoCarga)
 
-    # Processamento dos resultados
     registros = []
     registros_vistos = set()
 
@@ -187,20 +179,16 @@ def filtro_excel_dashboard(
          pag_extrator, pag_comissionado, cliente_obj, produto_obj, bitola_obj, veiculo_obj, 
          motorista_obj, nf_entrada) in query.all():
         
-        # Evita duplicatas baseado na combinação de registro, motorista e veículo
         chave_unica = (registro.id, motorista_obj.id, veiculo_obj.id)
         if chave_unica in registros_vistos:
             continue
         registros_vistos.add(chave_unica)
 
-        # Obtenção da informação da transportadora
         carga = registro.solicitacao
         
-        # Filtro adicional de transportadora (aplicado após a query)
         if transportadora and transportadora.lower() not in carga.transportadora_exibicao.lower():
             continue
 
-        # Cálculos dos valores
         origem_nome = (fornecedor_obj.identificacao if fornecedor_obj  else floresta_obj.identificacao if floresta_obj else "Indefinido")
         
         peso_liquido = registro.peso_liquido_ticket or 0
@@ -212,7 +200,6 @@ def filtro_excel_dashboard(
         total_receita = registro.valor_total_nota_100 or 0
         margem = total_receita - total_custos
 
-        # Montagem do registro final
         registro_formatado = {
             "registro_operacional": registro,
             "solicitacao": registro.solicitacao,
@@ -248,12 +235,10 @@ def relatorio_excel_dashboard():
             bitola = request.form.get("bitolaCarga")
             statusPagamentoCarga = request.form.get("statusPagamentoCarga")
             
-             # Determinar data_inicio e data_fim baseado no tipo de filtro
             if tipo_filtro == "data" and data_inicio_form and data_fim_form:
                 data_inicio = datetime.strptime(data_inicio_form, "%Y-%m-%d").date()
                 data_fim = datetime.strptime(data_fim_form, "%Y-%m-%d").date()
             else:
-                # Usar filtro semanal
                 data_inicio, data_fim = UtilitariosSemana.processar_semana_selecionada(semana_selecionada)
             
             registros = filtro_excel_dashboard(
@@ -281,34 +266,28 @@ def relatorio_excel_dashboard():
                 fat_comissionado = item["fat_comissionado"]
                 nf_entrada = item["nf_entrada"]
                 
-                # Cálculos básicos
                 peso_ticket = registro.peso_liquido_ticket or 0
                 peso_nf = registro.peso_ton_nf or 0
                 valor_total_nf = (registro.valor_total_nota_100 or 0) / 100
                 valor_unitario_nf = (registro.preco_un_nf or 0) / 100
                 
-                # Cálculos de valores a pagar
                 valor_fornecedor = (fat_fornecedor.valor_total_a_pagar_100 or 0) / 100 if fat_fornecedor else 0
                 valor_frete = (fat_frete.valor_total_a_pagar_100 or 0) / 100 if fat_frete else 0
                 valor_extrator = (fat_extrator.valor_total_a_pagar_100 or 0) / 100 if fat_extrator else 0
                 valor_comissionado = (fat_comissionado.valor_total_a_pagar_100 or 0) / 100 if fat_comissionado else 0
                 
-                # Cálculos de valores por tonelada
                 valor_ton_fornecedor = valor_fornecedor / peso_ticket if peso_ticket > 0 else 0
                 valor_ton_frete = valor_frete / peso_ticket if peso_ticket > 0 else 0
                 valor_ton_extracao = valor_extrator / peso_ticket if peso_ticket > 0 else 0
                 valor_ton_comissao = valor_comissionado / peso_ticket if peso_ticket > 0 else 0
                 
-                # Peso complementar e porcentagem
                 peso_complementar = peso_ticket - peso_nf
                 complementar_perc = (peso_complementar / peso_ticket * 100) if peso_ticket > 0 else 0
                 
-                # Tempo de entrega em dias
                 tempo_entrega_dias = 0
                 if registro.data_entrega_ticket and registro.destinatario_data_emissao:
                     tempo_entrega_dias = (registro.data_entrega_ticket - registro.destinatario_data_emissao).days
                 
-                # Classificação de carga
                 classe = "Sem classificação"
                 if valor_ton_fornecedor > 0 and valor_ton_frete > 0:
                     classe = "Fornecedor"
@@ -319,21 +298,17 @@ def relatorio_excel_dashboard():
                 elif valor_ton_fornecedor == 0 and valor_ton_frete == 0:
                     classe = "Cargas sem preço"
                 
-                # Classificação Incoterm
                 classe_inco = "N/A"
                 if classe in ["Fornecedor", "Floresta"]:
                     classe_inco = "CFR"
                 elif classe == "Madeira Posta":
                     classe_inco = "FOB"
                 
-                # Custos totais
                 custo_total_ton = valor_ton_fornecedor + valor_ton_frete + valor_ton_extracao + valor_ton_comissao
                 custo_total = valor_fornecedor + valor_frete + valor_extrator + valor_comissionado
                 
-                # Receita de venda
                 receita_venda = valor_unitario_nf * peso_ticket
                 
-                # Serviço por tonelada (regra específica)
                 servico_ton = 0
                 cliente_nome = solicitacao.cliente.identificacao if solicitacao.cliente else ""
                 produto_nome = solicitacao.produto.nome if solicitacao.produto else ""
@@ -351,19 +326,16 @@ def relatorio_excel_dashboard():
                 receita_total_bruta = receita_venda + receita_servico
                 receita_bruta_ton = receita_total_bruta / peso_ticket if peso_ticket > 0 else 0
                 
-                # Margem bruta
                 margem_bruta = receita_total_bruta - custo_total
                 margem_bruta_ton = receita_bruta_ton - custo_total_ton
                 
-                # Impostos
                 icms = receita_venda * 0.12
                 pis = receita_venda * 0.0165
                 cofins = receita_venda * 0.076
                 iss = receita_servico * 0.03
                 
-                # Funrural/Senar (precisa verificar configuração do fornecedor)
-                funrural_senar = ""  # Buscar do cadastro do fornecedor
-                funrural = 0  # 1.5% do valor NF entrada quando aplicável
+                funrural_senar = ""
+                funrural = 0
                 
                 total_impostos = icms + pis + cofins + iss + funrural
                 receita_liquida = receita_total_bruta - total_impostos
@@ -372,7 +344,6 @@ def relatorio_excel_dashboard():
                 participacao_impostos = (total_impostos / receita_total_bruta * 100) if receita_total_bruta > 0 else 0
                 impostos_ton = total_impostos / peso_ticket if peso_ticket > 0 else 0
                 
-                # Dados da NF de Entrada
                 status_entrada = "Pendente"
                 data_entrada = ""
                 peso_entrada = 0
@@ -381,7 +352,6 @@ def relatorio_excel_dashboard():
                 saldo_estoque = 0
                 
                 if nf_entrada:
-                    # Status baseado nos arquivos anexados
                     if nf_entrada.arquivo_nf_entrada_id and nf_entrada.arquivo_contra_nota_id:
                         status_entrada = "Lançado"
                     elif nf_entrada.arquivo_nf_entrada_id:
@@ -389,19 +359,14 @@ def relatorio_excel_dashboard():
                     else:
                         status_entrada = "Criado"
                     
-                    # Data de entrada (usar data de cadastro da NF entrada como referência)
                     if hasattr(nf_entrada, 'data_cadastro') and nf_entrada.data_cadastro:
                         data_entrada = formatar_data_para_brl(nf_entrada.data_cadastro)
                     
-                    # Peso da contra nota
                     if nf_entrada.peso_contra_nota:
                         peso_entrada = nf_entrada.peso_contra_nota
                         
-                    # Saldo estoque (peso entrada - peso ticket)
                     saldo_estoque = peso_entrada - peso_ticket
                     
-                    # Valor e descrição podem vir do arquivo da contra nota se existir
-                    # Por enquanto deixo em branco pois precisa extrair do PDF
                     valor_nf_entrada = ""
                     descricao_produto_entrada = ""
 
@@ -481,10 +446,8 @@ def relatorio_excel_dashboard():
             resposta = ManipulacaoArquivos.exportar_excel(dados_excel, nome_arquivo_saida)
             return resposta
         else:
-            # GET request - redireciona para o dashboard
             return redirect(url_for("principal"))
         
     except Exception as e:
-        print(e)
         flash(("Erro ao gerar o relatório Excel para o Dashboard.", "error"))
         return redirect(url_for("principal"))

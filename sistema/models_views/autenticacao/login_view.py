@@ -68,8 +68,6 @@ def principal():
         Template renderizado com todos os dados do dashboard
     """
     
-    # ========== COLETA DE DADOS BÁSICOS ==========
-    # Obtém dados padrão para o dashboard
     empresas_emissoras = EmpresaEmissoraModel.obter_empresas_emissoras_ativas()
     fornecedores = FornecedorCadastroModel.listar_fornecedores_ativos()
     florestas = FlorestaModel.listar_florestas_ativas()
@@ -80,11 +78,8 @@ def principal():
     tickets_nao_lancados = CargaModel.listar_tickets_nao_lancados()
     cargasOrigemNaoIdentificada = CargaModel.listar_cargas_com_origem_nao_identificada()
 
-    # ========== PARÂMETROS DE FILTRO ==========
-    # Empresa padrão 1 caso não informada
     empresa_selecionada_id = request.args.get("empresa_emissora_id", type=int) or 1
     
-    # Seletor de mês via query string (formato YYYY-MM)
     mesano = request.args.get("mesano")
     hoje = datetime.today()
     
@@ -92,21 +87,16 @@ def principal():
         try:
             ano, mes = map(int, mesano.split("-"))
         except ValueError:
-            # Em caso de formato inválido, usa mês atual
             ano, mes = hoje.year, hoje.month
     else:
         ano, mes = hoje.year, hoje.month
 
-    # ========== COLETA DE DADOS DO DASHBOARD ==========
-    # Utiliza a DashboardModel para obter todos os dados processados
     dados_dashboard = DashboardModel.obter_dados_completos_dashboard(
         empresa_selecionada_id, ano, mes
     )
 
-    # ========== RENDERIZAÇÃO DO TEMPLATE ==========
     return render_template(
         "estrutura/dashboard.html",
-        # Dados básicos
         fornecedores=fornecedores,
         empresas_emissoras=empresas_emissoras,
         florestas=florestas,
@@ -116,6 +106,5 @@ def principal():
         cargasOrigemNaoIdentificada=cargasOrigemNaoIdentificada,
         nfs_nao_emitidas=nfs_nao_emitidas,
         tickets_nao_lancados=tickets_nao_lancados,
-        # Dados dos gráficos e dashboard (vindos da DashboardModel)
         **dados_dashboard
     )

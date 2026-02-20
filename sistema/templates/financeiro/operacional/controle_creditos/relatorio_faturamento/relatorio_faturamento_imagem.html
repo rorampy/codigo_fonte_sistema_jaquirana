@@ -226,7 +226,7 @@
 </head>
 
 <body>
-  <!-- Header -->
+  
   <div class="header">
     <table>
       <tr>
@@ -243,7 +243,6 @@
 
   <div class="relatorio-title">Relatório de Adiantamentos de Créditos | {{ faturamento.codigo_faturamento }}</div>
 
-  <!-- Dados do Adiantamentos de Créditos -->
   <div class="section-title">DADOS DO Adiantamentos de Créditos</div>
   <div class="simple-info">
     <strong>Código:</strong> {{ faturamento.codigo_faturamento }}
@@ -258,11 +257,9 @@
     <strong>Situação:</strong> {{ faturamento.situacao if faturamento.situacao else 'Pendente' }}
   </div>
 
-  <!-- Créditos de Fornecedores -->
   {% if fornecedores %}
   <div class="section-title">CRÉDITOS DE FORNECEDORES ({{ total_fornecedores }} registros)</div>
 
-  <!-- Resumo por fornecedor -->
   <table>
     <thead>
       <tr>
@@ -290,7 +287,6 @@
     </tbody>
   </table>
 
-  <!-- Detalhes dos créditos de fornecedores -->
   {% for nome_fornecedor, grupo in fornecedores.items() %}
   <div class="section-title">DETALHES CRÉDITOS - {{ nome_fornecedor }}</div>
   <table>
@@ -320,11 +316,9 @@
   {% endfor %}
   {% endif %}
 
-  <!-- Créditos de Transportadoras -->
   {% if transportadoras %}
   <div class="section-title">CRÉDITOS DE TRANSPORTADORAS ({{ total_transportadoras }} registros)</div>
 
-  <!-- Resumo por transportadora -->
   <table>
     <thead>
       <tr>
@@ -351,7 +345,6 @@
     </tbody>
   </table>
 
-  <!-- Detalhes dos créditos de transportadoras -->
   {% for nome_transportadora, grupo in transportadoras.items() %}
   <div class="section-title">DETALHES CRÉDITOS - {{ nome_transportadora }}</div>
   <table>
@@ -383,11 +376,9 @@
   {% endfor %}
   {% endif %}
 
-  <!-- Créditos de Extratores -->
   {% if extratores %}
   <div class="section-title">CRÉDITOS DE EXTRATORES ({{ total_extratores }} registros)</div>
 
-  <!-- Resumo por extrator -->
   <table>
     <thead>
       <tr>
@@ -414,7 +405,6 @@
     </tbody>
   </table>
 
-  <!-- Detalhes dos créditos de extratores -->
   {% for nome_extrator, grupo in extratores.items() %}
   <div class="section-title">DETALHES CRÉDITOS - {{ nome_extrator }}</div>
   <table>
@@ -446,7 +436,6 @@
   {% endfor %}
   {% endif %}
 
-  <!-- Consolidado Final de Créditos -->
   <div class="section-title">CONSOLIDADO FINAL DE CRÉDITOS</div>
   <table>
     <thead>

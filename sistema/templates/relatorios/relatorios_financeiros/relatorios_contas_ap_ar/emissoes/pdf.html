@@ -10,7 +10,7 @@
       </div>
 
       <div class="content">
-        {# --- Cabeçalho --- #}
+        
         <div class="header no-break">
           <img src="{{logo_path}}" alt="Logo Jaquirana Extração" />
           <div class="system-info">
@@ -22,7 +22,6 @@
 
         <div class="relatorio-title">{{ titulo_relatorio }}</div>
 
-        {# --- Filtros aplicados --- #}
         {% if dados_corretos %}
         <div class="filtros-container no-break">
           <div class="filtros-title">Filtros Aplicados</div>
@@ -63,10 +62,8 @@
         </div>
         {% endif %}
 
-        {# --- Dados --- #}
         {% if registros %}
 
-        {# Cards resumo #}
         <div class="section-title no-break">Resumo</div>
         <div class="card-section no-break">
           <div class="card">
@@ -83,7 +80,6 @@
           </div>
         </div>
 
-        {# Tabela detalhada #}
         <div class="section-title no-break" style="margin-top: 20px;">Detalhamento</div>
         <table>
           <thead>
@@ -121,7 +117,6 @@
         </div>
         {% endif %}
 
-        {# --- Rodapé --- #}
         <div class="footer">
           <p><strong>Jaquirana Extração &copy; 2025</strong> - Todos os direitos reservados</p>
           <p><strong>Sistema de Gestão Jaquirana</strong></p>

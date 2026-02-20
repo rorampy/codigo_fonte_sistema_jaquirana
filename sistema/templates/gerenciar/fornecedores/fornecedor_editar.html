@@ -8,12 +8,12 @@
   }
 </style>
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             Fornecedor
           </div>
@@ -25,7 +25,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -34,8 +33,7 @@
       <div class="col-12">
         <form class="card" action="{{ url_for('editar_fornecedor', id=fornecedor.id) }}" method="POST" enctype="multipart/form-data">
           <div class="card-body">
-            <!-- Imposto Funrural ou Senar -->
-
+            
             <div class="row">
               <h3 class="text-primary">Informações Iniciais</h3>
               <div class="col-sm-2 col-md-2">
@@ -122,8 +120,6 @@
                 </div>
               </div>
 
-              <!--NOVO CAMPO: Estimativa Toneladas-->
-
               <div class="col-12 col-md-2 florestaSim">
                 <div class="mb-3">
                   <label class="form-label required">Estimativa Toneladas</label>
@@ -183,7 +179,6 @@
               </div>
             </div>
 
-            <!-- Cadastro Financeiro - Automático -->
             <div class="row mb-3">
               <div class="col-sm-6 col-md-6">
                 <div class="mb-3">
@@ -400,7 +395,7 @@
               <div class="row">
 
                 {% for produto_id, produto_data in produtos_bitolas.items() %}
-                <!-- {{ produto_data.nome }} -->
+                
                 <div class="col-md-12">
                   <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header text-dark">
@@ -421,7 +416,6 @@
                         {% set prefix = nome_produto_lower[:5] %}
                       {% endif %}
                       
-                      <!-- Bitola {{ loop_index + 1 }} {{ produto_data.nome }} -->
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">{% if produto_data.nome == 'Biomassa' %}Tipo{% else %}Bitola{% endif %}</label>
@@ -442,8 +436,6 @@
                 {% endfor %}
 
               </div>
-
-              <!-- Nova implementação adicionando custo de extração se houver -->
 
               <h3 class="text-primary mb-4">Custo de extração</h3>
               <div class="row">
@@ -490,7 +482,7 @@
                   </div>
 
                   {% for produto_id, produto_data in produtos_bitolas.items() %}
-                  <!-- {{ produto_data.nome }} -->
+                  
                   <div class="col-md-12 grupoPossuiExtracao">
                     <div class="card border-0 shadow-sm mb-4">
                       <div class="card-header text-dark">
@@ -511,7 +503,6 @@
                           {% set prefix = nome_produto_lower[:5] %}
                         {% endif %}
                         
-                        <!-- Bitola {{ loop_index + 1 }} {{ produto_data.nome }} -->
                         <div class="row mb-3">
                           <div class="col-md-4">
                             <label class="form-label">{% if produto_data.nome == 'Biomassa' %}Tipo{% else %}Bitola{% endif %}</label>
@@ -534,13 +525,10 @@
                 </div>
               </div>
 
-
-              <!-- Nova implementação adicionando madeira posta se houver -->
-
               <h3 class="text-primary mb-4">Madeira Posta</h3>
 
               <div class="mb-3">
-                <!-- Radio: Possui / Não possui madeira posta -->
+                
                 <div class="form-label required">Possui madeira posta?</div>
                 <label class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" name="madeiraPosta" value="possui" {% if
@@ -554,12 +542,10 @@
                 </label>
               </div>
 
-              <!-- Container principal que agrupa todos os blocos de “Madeira Posta” -->
               <div id="container-madeira-posta">
-                <!-- Bloco “modelo” (será clonado) -->
+                
                 <div class="row mb-3 madeira-item">
 
-                  <!-- SELECIONAR CLIENTE -->
                   <div class="col-md-6 mb-4 grupoPossuiMadeiraPosta">
                     <label class="form-label required">Selecione um
                       cliente</label>
@@ -582,7 +568,6 @@
                     </div>
                   </div>
 
-                  <!-- SELECIONAR TRANSPORTADORA -->
                   <div class="col-md-6 mb-4 grupoPossuiMadeiraPosta">
                     <label class="form-label">Vincular Transportadora</label>
                     <select name="transportadoraMadeiraPosta[]"
@@ -605,7 +590,7 @@
                   </div>
 
                   <div class="row">
-                    <!-- PRODUTOS MADEIRA POSTA - DINÂMICO -->
+                    
                     {% for produto_id, produto_data in produtos_bitolas.items() %}
                     <div class="col-md-12 grupoPossuiMadeiraPosta">
                       <div class="card border-0 shadow-sm mb-4">
@@ -636,10 +621,10 @@
                       </div>
                     </div>
                     {% endfor %}
-                    <!-- BOTÕES DE ADICIONAR / REMOVER (ao final do bloco) -->
+                    
                     <div class="col-md-12 d-flex justify-content-center mb-4">
                       <button type="button" class="btn btn-danger btn-remover me-2" disabled>
-                        <!-- ícone de lixeira -->
+                        
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                           class="icon icon-tabler icon-tabler-trash">
@@ -652,7 +637,7 @@
                         </svg>
                       </button>
                       <button type="button" class="btn btn-primary btn-adicionar">
-                        <!-- ícone de + -->
+                        
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                           class="icon icon-tabler icon-tabler-plus">
@@ -665,7 +650,6 @@
                   </div>
                 </div>
 
-                <!-- Mensagem de erro geral (opcional) -->
                 <div class="invalid-feedback d-block">
                   {% if 'madeiraPosta' in campos_obrigatorios %}
                   {{ campos_obrigatorios['madeiraPosta'] }}
@@ -676,7 +660,6 @@
 
               </div>
 
-              <!-- ========== SEÇÃO DE COMISSIONADOS ========== -->
               <h3 class="text-primary mb-3">Comissionados</h3>
 
               <div class="mb-3">
@@ -695,15 +678,14 @@
               </div>
 
               <div class="row">
-                <!-- Container principal que agrupa todos os blocos de "Comissionados" -->
+                
                 <div id="container-comissionados">
                   
                   {% if dados_corretos.get('comissionados') and dados_corretos['comissionados']|length > 0 %}
-                    <!-- Renderizar comissionados existentes -->
+                    
                     {% for comiss in dados_corretos['comissionados'] %}
                     <div class="row mb-3 comissionado-item grupoPossuiComissionado">
 
-                      <!-- SELECIONAR COMISSIONADO -->
                       <div class="col-md-4 mb-4">
                         <label class="form-label">Selecione um Comissionado</label>
                         <select name="comissionados[]" class="form-select">
@@ -714,7 +696,6 @@
                         </select>
                       </div>
 
-                      <!-- TIPO COMISSÃO -->
                       <div class="col-md-2 mb-4">
                         <label class="form-label">Tipo</label>
                         <select name="tipoComissao[]" class="form-select tipo-comissao-select">
@@ -723,7 +704,6 @@
                         </select>
                       </div>
 
-                      <!-- VALOR COMISSÃO -->
                       <div class="col-md-4 mb-4">
                         <label class="form-label valor-label">
                           {% if comiss.tipo == 'porcentagem' %}Porcentagem (%){% else %}Valor Comissão/Ton{% endif %}
@@ -734,7 +714,6 @@
                           placeholder="{% if comiss.tipo == 'porcentagem' %}0.00{% else %}R$ 0,00{% endif %}">
                       </div>
 
-                      <!-- BOTÕES -->
                       <div class="col-md-2 mb-4 d-flex align-items-end">
                         <button type="button" class="btn btn-danger btn-remover me-2" {% if loop.first and loop.length == 1 %}disabled{% endif %}>
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -762,10 +741,9 @@
                     </div>
                     {% endfor %}
                   {% else %}
-                    <!-- Bloco "modelo" (será clonado quando não há comissionados) -->
+                    
                     <div class="row mb-3 comissionado-item grupoPossuiComissionado">
 
-                      <!-- SELECIONAR COMISSIONADO -->
                       <div class="col-md-4 mb-4">
                         <label class="form-label">Selecione um Comissionado</label>
                         <select name="comissionados[]" class="form-select">
@@ -776,7 +754,6 @@
                         </select>
                       </div>
 
-                      <!-- TIPO COMISSÃO -->
                       <div class="col-md-2 mb-4">
                         <label class="form-label">Tipo</label>
                         <select name="tipoComissao[]" class="form-select tipo-comissao-select">
@@ -785,14 +762,12 @@
                         </select>
                       </div>
 
-                      <!-- VALOR COMISSÃO -->
                       <div class="col-md-4 mb-4">
                         <label class="form-label valor-label">Valor Comissão/Ton</label>
                         <input type="text" name="valorComissaoTon[]" class="form-control campo-moeda-brl valor-input"
                           placeholder="R$ 0,00">
                       </div>
 
-                      <!-- BOTÕES -->
                       <div class="col-md-2 mb-4 d-flex align-items-end">
                         <button type="button" class="btn btn-danger btn-remover me-2" disabled>
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -821,8 +796,7 @@
                   {% endif %}
                 </div>
               </div>
-              <!-- ========== /SEÇÃO DE COMISSIONADOS ========== -->
-
+              
             </div>
             <div class="card-footer text-center text-md-end">
               <a href="{{ url_for('listar_fornecedores') }}" class="btn btn-primary">
@@ -853,10 +827,8 @@
     </div>
   </div>
 
-  <!-- Oculta exibe campos a partir da radio e também limpa a tela não usada -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-
 
       function limparCampos(grupoClasse) {
         document.querySelectorAll('.' + grupoClasse + ' input[type="text"]').forEach(function (input) {
@@ -881,37 +853,33 @@
         radio.addEventListener('change', alternarCampos);
       });
 
-      alternarCampos(); // Configura o estado inicial dos campos
+      alternarCampos(); 
 
-      // Controle do campo Valor Contrato para Floresta
       function alternarCampoFloresta() {
         var radioFlorestaSimInput = document.querySelector('input[name="classeFornecedor"][value="sim"]');
         var campoValorContrato = document.querySelectorAll('.florestaSim');
 
         if (radioFlorestaSimInput && radioFlorestaSimInput.checked) {
-          // Mostra o campo Valor Contrato
+          
           campoValorContrato.forEach(el => el.style.display = 'block');
         } else {
-          // Esconde o campo Valor Contrato
+          
           campoValorContrato.forEach(el => el.style.display = 'none');
-          // Limpa o valor do campo quando oculto
+          
           document.querySelectorAll('.florestaSim input[type="text"]').forEach(function (input) {
             input.value = '';
           });
         }
       }
 
-      // Event listeners para os radio buttons de Floresta
       document.querySelectorAll('input[name="classeFornecedor"]').forEach(radio => {
         radio.addEventListener('change', alternarCampoFloresta);
       });
 
-      // Configura o estado inicial do campo Floresta
       alternarCampoFloresta();
     });
   </script>
 
-  <!-- Oculta exibe campos a partir da radio e também limpa a tela não usada -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       function limparCampos(grupoClasse) {
@@ -929,11 +897,11 @@
         if (radioCPF.checked) {
           grupoCPF.forEach(el => el.style.display = 'block');
           grupoCNPJ.forEach(el => el.style.display = 'none');
-          limparCampos('grupoCNPJ'); // Limpa campos do grupo CNPJ
+          limparCampos('grupoCNPJ'); 
         } else {
           grupoCPF.forEach(el => el.style.display = 'none');
           grupoCNPJ.forEach(el => el.style.display = 'block');
-          limparCampos('grupoCPF'); // Limpa campos do grupo CPF
+          limparCampos('grupoCPF'); 
         }
       }
 
@@ -941,16 +909,12 @@
         radio.addEventListener('change', alternarCampos);
       });
 
-      alternarCampos(); // Configura o estado inicial dos campos
+      alternarCampos(); 
     });
   </script>
 
-  <!-- GRUPO DE EXTRAÇÃO -->
-
-  <!-- Oculta exibe campos a partir da radio e também limpa a tela não usada -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-
 
       function alternarCampos() {
         var radioPossui = document.querySelector('input[name="custoExtracao"][value="possui"]');
@@ -963,7 +927,6 @@
         }
       }
 
-      // Verificação inicial baseada nos dados do backend
       setTimeout(() => {
         const valorCustoExtracao = '{{ dados_corretos.custoExtracao }}';
         if (valorCustoExtracao === 'possui') {
@@ -979,16 +942,14 @@
         radio.addEventListener('change', alternarCampos);
       });
 
-      alternarCampos(); // Configura o estado inicial dos campos
+      alternarCampos(); 
     });
   </script>
 
-  <!-- GRUPO DE MADEIRA POSTA -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const container = document.getElementById('container-madeira-posta');
 
-      // 1) alterna visibilidade dos blocos conforme radio “possui” / “não possui”
       function alternarCampos() {
         const radioPossui = document.querySelector('input[name="madeiraPosta"][value="possui"]');
         const blocos = container.querySelectorAll('.madeira-item');
@@ -997,14 +958,14 @@
         } else {
           blocos.forEach(el => el.style.display = 'none');
         }
-        // após mostrar / esconder, forçar atualização das options
+        
         atualizarTodosSelects();
       }
 
       document.querySelectorAll('input[name="madeiraPosta"]').forEach(radio => {
         radio.addEventListener('change', alternarCampos);
       });
-      alternarCampos(); // estado inicial
+      alternarCampos(); 
 
       function obterSelecionados() {
         return { clientesSelecionados: new Set(), transportadorasSelecionadas: new Set() };
@@ -1014,11 +975,11 @@
         const { clientesSelecionados, transportadorasSelecionadas } = obterSelecionados();
         container.querySelectorAll('select[name="clienteMadeiraPosta[]"]').forEach(select => {
           const atual = select.value;
-          // Para cada option neste select: se o value estiver em “selecionados” e for diferente do atual, esconder/desabilitar
+          
           Array.from(select.options).forEach(option => {
-            if (!option.value) return; // primeira opção “Selecione...”
+            if (!option.value) return; 
             if (option.value === atual) {
-              // mantém habilitado
+              
               option.disabled = false;
               option.hidden = false;
             } else if (clientesSelecionados.has(option.value)) {
@@ -1031,13 +992,12 @@
           });
         });
 
-        // Atualizar selects de transportadoras
         container.querySelectorAll('select[name="transportadoraMadeiraPosta[]"]').forEach(select => {
           const atual = select.value;
           Array.from(select.options).forEach(option => {
-            if (!option.value) return; // primeira opção "Selecione..."
+            if (!option.value) return; 
             if (option.value === atual) {
-              // mantém habilitado
+              
               option.disabled = false;
               option.hidden = false;
             } else if (transportadorasSelecionadas.has(option.value)) {
@@ -1051,37 +1011,32 @@
         });
       }
 
-      // 4) Função que adiciona um novo bloco clonando o primeiro e limpando campos
       function adicionarNovoBloco() {
         const blocoModelo = container.querySelector('.madeira-item');
         const novoBloco = blocoModelo.cloneNode(true);
 
-        // limpar select de cliente
         const selectCliente = novoBloco.querySelector('select[name="clienteMadeiraPosta[]"]');
         if (selectCliente) {
           selectCliente.selectedIndex = 0;
         }
 
-        // limpar select de transportadora
         const selectTransportadora = novoBloco.querySelector('select[name="transportadoraMadeiraPosta[]"]');
         if (selectTransportadora) {
           selectTransportadora.selectedIndex = 0;
         }
 
-        // limpar inputs de preço e mascara
         novoBloco.querySelectorAll('input.campo-moeda-brl').forEach(input => {
           input.value = '';
           input.removeAttribute('data-mascara-aplicada');
         });
 
-        // habilitar botão “remover”
         const btnRemover = novoBloco.querySelector('.btn-remover');
         if (btnRemover) {
           btnRemover.disabled = false;
         }
 
         container.appendChild(novoBloco);
-        // reaplicar máscara e atualizar selects
+        
         if (typeof aplicarMascaraMoeda === 'function') {
           aplicarMascaraMoeda();
         }
@@ -1089,7 +1044,6 @@
         vincularChangeSelect(novoBloco);
       }
 
-      // Vincula eventos de change nos selects
       function vincularChangeSelect(bloco) {
         const selectCliente = bloco.querySelector('select[name="clienteMadeiraPosta[]"]');
         if (selectCliente) selectCliente.addEventListener('change', atualizarTodosSelects);
@@ -1098,12 +1052,10 @@
         if (selectTransportadora) selectTransportadora.addEventListener('change', atualizarTodosSelects);
       }
 
-      // Vincular eventos nos blocos existentes
       container.querySelectorAll('.madeira-item').forEach(bloco => {
         vincularChangeSelect(bloco);
       });
 
-      // Gerencia clique em adicionar/remover blocos
       container.addEventListener('click', function (event) {
         if (event.target.closest('.btn-adicionar')) {
           adicionarNovoBloco();
@@ -1118,13 +1070,11 @@
         }
       });
 
-      // Inicializar máscaras e selects
       if (typeof aplicarMascaraMoeda === 'function') {
         aplicarMascaraMoeda();
       }
       atualizarTodosSelects();
       
-      // Carregar dados para edição de madeira posta
       setTimeout(() => {
         const valorMadeiraPosta = '{{ dados_corretos.madeiraPosta }}';
         if (valorMadeiraPosta === 'possui') {
@@ -1132,12 +1082,10 @@
         }
       }, 200);
       
-      // Cria blocos de madeira posta para edição baseado nos dados do banco
       function criarBlocosMadeiraPostaEdicao() {
         const clientesMP = {{ dados_corretos.clienteMadeiraPosta | tojson }};
         const transportadorasMP = {{ dados_corretos.transportadoraMadeiraPosta | tojson }};
         
-        // Obter estrutura dinâmica de produtos/bitolas do backend
         const produtosBitolas = {{ produtos_bitolas | tojson }};
         const dadosCorretos = {{ dados_corretos | tojson }};
         
@@ -1147,24 +1095,21 @@
         
         const primeiroBloco = container.querySelector('.madeira-item');
         
-        // Criar um bloco para cada cliente
         for (let i = 0; i < clientesMP.length; i++) {
           let bloco;
           
           if (i === 0) {
-            // Usar o primeiro bloco existente
+            
             bloco = primeiroBloco;
           } else {
-            // Clonar o primeiro bloco para os demais
+            
             bloco = primeiroBloco.cloneNode(true);
             container.appendChild(bloco);
             
-            // Habilitar botão remover para blocos adicionais
             const btnRemover = bloco.querySelector('.btn-remover');
             if (btnRemover) btnRemover.disabled = false;
           }
           
-          // Preencher dados do bloco
           const selectCliente = bloco.querySelector('select[name="clienteMadeiraPosta[]"]');
           if (selectCliente && clientesMP[i]) {
             selectCliente.value = clientesMP[i];
@@ -1175,7 +1120,6 @@
             selectTransportadora.value = transportadorasMP[i];
           }
           
-          // Preencher preços dinamicamente baseado nos produtos/bitolas
           const preencherPreco = (nome, valor) => {
             const input = bloco.querySelector(`input[name="${nome}"]`);
             if (input && valor && valor > 0) {
@@ -1184,7 +1128,6 @@
             }
           };
           
-          // Iterar por todos os produtos e suas bitolas
           Object.keys(produtosBitolas).forEach(produtoId => {
             const produto = produtosBitolas[produtoId];
             const produtoKey = produto.nome.toLowerCase();
@@ -1200,14 +1143,12 @@
           });
         }
         
-        // Reaplicar máscara após preencher valores
         if (typeof aplicarMascaraMoeda === 'function') {
           aplicarMascaraMoeda();
         }
         atualizarTodosSelects();
       }
       
-      // Função auxiliar para formatar valores monetários
       function formatarMoedaLocal(valor) {
         return 'R$ ' + valor.toLocaleString('pt-BR', {
           minimumFractionDigits: 2,
@@ -1217,13 +1158,11 @@
     });
   </script>
 
-  <!-- JavaScript para gestão dinâmica de comissionados -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const containerComissionados = document.getElementById('container-comissionados');
       if (!containerComissionados) return;
 
-      // 0) Controle de visibilidade baseado no radio button
       function alternarCamposComissionados() {
         const radioPossui = document.querySelector('input[name="possuiComissionado"][value="possui"]');
         const gruposComissionado = document.querySelectorAll('.grupoPossuiComissionado');
@@ -1237,9 +1176,8 @@
       document.querySelectorAll('input[name="possuiComissionado"]').forEach(radio => {
         radio.addEventListener('change', alternarCamposComissionados);
       });
-      alternarCamposComissionados(); // estado inicial
+      alternarCamposComissionados(); 
 
-      // 1) Função para atualizar os botões remover (habilitar/desabilitar conforme quantidade)
       function atualizarBotoesRemoverComissionados() {
         const blocosComissionados = containerComissionados.querySelectorAll('.comissionado-item');
         blocosComissionados.forEach((bloco, index) => {
@@ -1250,7 +1188,6 @@
         });
       }
 
-      // 2) Função para alternar entre valor e porcentagem
       function alternarTipoComissao(bloco) {
         const selectTipo = bloco.querySelector('.tipo-comissao-select');
         let inputValor = bloco.querySelector('.valor-input');
@@ -1258,26 +1195,24 @@
         
         if (selectTipo && inputValor && labelValor) {
           selectTipo.addEventListener('change', function() {
-            // Atualizar referência do input
+            
             inputValor = bloco.querySelector('.valor-input');
             
-            // Limpar completamente o input
             inputValor.value = '';
             inputValor.removeAttribute('data-mascara-aplicada');
             
-            // Remover evento de input antigo (máscara)
             const novoInput = inputValor.cloneNode(true);
             inputValor.parentNode.replaceChild(novoInput, inputValor);
             
             if (this.value === 'porcentagem') {
-              // Mudar para porcentagem
+              
               novoInput.classList.remove('campo-moeda-brl');
               novoInput.classList.add('campo-float');
               novoInput.placeholder = '0.00';
               novoInput.value = '';
               labelValor.textContent = 'Porcentagem (%)';
             } else {
-              // Mudar para valor
+              
               novoInput.classList.remove('campo-float');
               novoInput.classList.add('campo-moeda-brl');
               novoInput.placeholder = 'R$ 0,00';
@@ -1285,7 +1220,6 @@
               labelValor.textContent = 'Valor Comissão/Ton';
             }
             
-            // Reaplicar máscaras
             if (typeof aplicarMascaraMoeda === 'function') {
               aplicarMascaraMoeda();
             }
@@ -1296,12 +1230,10 @@
         }
       }
 
-      // 3) Função para adicionar novo bloco de comissionado
       function adicionarNovoBlocoComissionado() {
         const blocoModelo = containerComissionados.querySelector('.comissionado-item');
         const novoBloco = blocoModelo.cloneNode(true);
 
-        // Limpar valores dos campos
         const select = novoBloco.querySelector('select[name="comissionados[]"]');
         if (select) {
           select.selectedIndex = 0;
@@ -1326,7 +1258,6 @@
           label.textContent = 'Valor Comissão/Ton';
         }
 
-        // Habilitar botão "remover"
         const btnRemover = novoBloco.querySelector('.btn-remover');
         if (btnRemover) {
           btnRemover.disabled = false;
@@ -1334,17 +1265,14 @@
 
         containerComissionados.appendChild(novoBloco);
 
-        // Vincular evento de troca de tipo
         alternarTipoComissao(novoBloco);
 
-        // Reaplicar máscara e atualizar botões
         if (typeof aplicarMascaraMoeda === 'function') {
           aplicarMascaraMoeda();
         }
         atualizarBotoesRemoverComissionados();
       }
 
-      // 4) Gerencia clique em adicionar/remover blocos de comissionados
       containerComissionados.addEventListener('click', function (event) {
         if (event.target.closest('.btn-adicionar-comissionado')) {
           adicionarNovoBlocoComissionado();
@@ -1359,20 +1287,18 @@
         }
       });
 
-      // 5) Ao inicializar, vincular eventos nos blocos existentes
       containerComissionados.querySelectorAll('.comissionado-item').forEach(bloco => {
         alternarTipoComissao(bloco);
       });
 
-      // Estado inicial dos botões
       atualizarBotoesRemoverComissionados();
     });
   </script>
 
   <script>
-    // Cria o TOM Select nos selects para melhor UX
+    
     document.addEventListener('DOMContentLoaded', function () {
-      // Configuração padrão do TomSelect
+      
       const defaultConfig = {
         create: false,
         allowEmptyOption: true,
@@ -1387,7 +1313,6 @@
         'select[name="instituicao_financeira"]'
       ];
 
-      // Inicializa TomSelect em cada elemento encontrado
       selectors.forEach(selector => {
         const element = document.querySelector(selector);
         if (element) {
@@ -1395,7 +1320,6 @@
         }
       });
 
-      // Pré-carregar dados para edição se necessário
       preCarregarDadosEdicao();
     });
 
@@ -1403,9 +1327,8 @@
       const isEdicaoMode = window.location.pathname.includes('/editar/');
       if (!isEdicaoMode) return;
       
-      // Atualizar visibilidade dos grupos baseado nos valores carregados
       setTimeout(() => {
-        // Atualizar grupo de custo de extração
+        
         const radioCustoExtracao = document.querySelector('input[name="custoExtracao"]:checked');
         if (radioCustoExtracao) {
           const grupoPossuiExtracao = document.querySelectorAll('.grupoPossuiExtracao');
@@ -1416,7 +1339,6 @@
           }
         }
         
-        // Atualizar grupo de madeira posta
         const radioMadeiraPosta = document.querySelector('input[name="madeiraPosta"]:checked');
         if (radioMadeiraPosta) {
           const blocosMadeiraPosta = document.querySelectorAll('.madeira-item');
@@ -1427,7 +1349,6 @@
           }
         }
         
-        // Atualizar grupo de comissionados
         const radioComissionado = document.querySelector('input[name="possuiComissionado"]:checked');
         if (radioComissionado) {
           const gruposComissionado = document.querySelectorAll('.grupoPossuiComissionado');
@@ -1439,10 +1360,6 @@
         }
       }, 100);
       
-      // Aqui os dados são pré-carregados pelo backend através do dados_corretos
-      // O JavaScript apenas garante que os campos dinâmicos sejam exibidos corretamente
-      
-      // Reaplicar máscaras nos campos carregados
       if (typeof aplicarMascaraMoeda === 'function') {
         aplicarMascaraMoeda();
       }
@@ -1453,10 +1370,9 @@
   </script>
 
   <script>
-    // Script específico para corrigir problemas na edição
+    
     document.addEventListener('DOMContentLoaded', function () {
       
-      // Correção dos radio buttons para edição
       function corrigirRadioButtons() {
         const custoExtracaoValor = '{{ dados_corretos.custoExtracao }}';
         if (custoExtracaoValor === 'possui') {
@@ -1481,7 +1397,6 @@
         }
       }
       
-      // Executar correção com delay para garantir elementos prontos
       setTimeout(corrigirRadioButtons, 200);
       setTimeout(corrigirRadioButtons, 500);
     });

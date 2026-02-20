@@ -127,8 +127,7 @@
                                   Entrega</th>
                                 <th class="text-center">Placa/Motorista</th>
                                 <th class="text-center">Transportadora</th>
-                                <!-- <th class="text-center">Fornecedor</th>
-                                <th class="text-center">Cliente</th> -->
+                                
                                 <th class="text-center">Produto/Bitola</th>
                                 <th class="text-center">Peso Ticket</th>
                                 <th class="text-center">Número NF</th>
@@ -165,26 +164,7 @@
                                   item.registro.solicitacao.transportadora_exibicao
                                   else '-' }}
                                 </td>
-                                <!-- <td class="text-center">
-                                  {% if item.registro.solicitacao.floresta_id %}
-                                  {{
-                                  item.registro.solicitacao.floresta.identificacao
-                                  | truncate(12, true, '...') }}
-                                  {% elif
-                                  item.registro.solicitacao.fornecedor_id %}
-                                  {{
-                                  item.registro.solicitacao.fornecedor.identificacao
-                                  | truncate(12, true, '...') }}
-                                  {% else %}-{% endif %}
-                                </td> -->
-                                <!-- <td class="text-center">
-                                  {{
-                                  item.registro.solicitacao.cliente.identificacao
-                                  | truncate(12, true, '...') if
-                                  item.registro.solicitacao.cliente and
-                                  item.registro.solicitacao.cliente.identificacao
-                                  else '-' }}
-                                </td> -->
+                                
                                 <td class="text-center">
                                   {{ item.registro.solicitacao.produto.nome |
                                   truncate(10, True, '...') }} |

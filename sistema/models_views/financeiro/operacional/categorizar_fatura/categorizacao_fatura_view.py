@@ -28,7 +28,6 @@ import json
 def categorizar_fatura(id, tipo='despesa'):
     try:
         if tipo == 'receita_avulsa' or tipo == 'despesa_avulsa':
-            # Buscar lançamento avulso diretamente
             lancamento_avulso = LancamentoAvulsoModel.obter_lancamento_por_id(id)
             if not lancamento_avulso:
                 flash((f'Lançamento avulso não encontrado!', 'error'))
@@ -36,25 +35,21 @@ def categorizar_fatura(id, tipo='despesa'):
             
             valor_total = lancamento_avulso.valor_movimentacao_100
             objeto_principal = lancamento_avulso
-            faturamento = None  # Lançamentos avulsos NÃO TÊM faturamento
+            faturamento = None
         else:
-            # Buscar faturamento normal
             faturamento = FaturamentoModel.obter_faturamento_por_id(id)
             if not faturamento:
                 flash((f'Faturamento não encontrado!', 'error'))
                 return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
             valor_total = faturamento.valor_total
             objeto_principal = faturamento
-        # Determinar o tipo de plano de contas baseado no parâmetro
-        tipo_plano_conta = [1] if tipo == 'receita' or tipo == 'receita_avulsa' else [2]  # 1 = Receitas, 2 = Despesas
+        tipo_plano_conta = [1] if tipo == 'receita' or tipo == 'receita_avulsa' else [2]
         
         campos_obrigatorios = {}
         campos_erros = {}
         dados_corretos = {}
 
-        # Carregar dados para os selects
         pessoas_financeiro = PessoaFinanceiroModel.listar_pessoas_ativas()
-        # Processar documentos formatados para cada pessoa
         for p in pessoas_financeiro:
             if p.numero_documento and len(p.numero_documento.strip()) > 0:
                 p.documento_formatado = ValidaDocs.insere_pontuacao_cnpj(p.numero_documento) if len(p.numero_documento) == 14 else ValidaDocs.insere_pontuacao_cpf(p.numero_documento)
@@ -64,10 +59,8 @@ def categorizar_fatura(id, tipo='despesa'):
         centros_custo = CentroCustoModel.obter_centro_custos_ativos()
         contas_bancarias = ContaBancariaModel.obter_contas_bancarias_ativas()
         
-        # Inicializar e carregar plano de contas com o tipo correto (com marcação de folhas)
         estrutura_plano_contas = obter_estrutura_com_folhas(tipo_plano_conta)
 
-        # Inicializar e carregar categorização fiscal
         inicializar_categorias_padrao_categorizacao_fiscal()
         principais_fiscal = CategorizacaoFiscalModel.buscar_filhos(tipo_plano_conta)
         estrutura_fiscal = []
@@ -80,7 +73,7 @@ def categorizar_fatura(id, tipo='despesa'):
             return render_template(
                 "faturamento/categorizar_fatura/categorizar_fatura.html", 
                 faturamento=faturamento,
-                objeto_principal=objeto_principal,  # Passar o objeto principal (faturamento ou lançamento)
+                objeto_principal=objeto_principal,
                 pessoas_financeiro=pessoas_financeiro,
                 situacoes_pagamento=situacoes_pagamento,
                 estrutura_plano_contas=estrutura_plano_contas,
@@ -90,10 +83,9 @@ def categorizar_fatura(id, tipo='despesa'):
                 campos_erros=campos_erros,
                 dados_corretos=dados_corretos,
                 contas_bancarias=contas_bancarias,
-                tipo_categorização=tipo  # Passar o tipo para o template
+                tipo_categorização=tipo
             )
 
-        # POST - Processar formulário
         data_vencimento = request.form.get("data_vencimento", "")
         data_competencia = request.form.get("data_competencia", "")
         conta_bancaria_id = request.form.get("conta_bancaria_id", "")
@@ -109,7 +101,6 @@ def categorizar_fatura(id, tipo='despesa'):
         parcelas_json = request.form.get("parcelas_json", "")
         anexos_json = request.form.get("anexos_json", "[]")
 
-        # Preservar dados do formulário
         dados_corretos = {
             'data_vencimento': data_vencimento,
             'data_competencia': data_competencia,
@@ -127,7 +118,6 @@ def categorizar_fatura(id, tipo='despesa'):
             'anexos_json': anexos_json
         }
 
-        # Validações obrigatórias
         if not data_vencimento.strip():
             campos_obrigatorios['data_vencimento'] = 'Data de vencimento é obrigatória!'
         
@@ -140,7 +130,6 @@ def categorizar_fatura(id, tipo='despesa'):
         if not categorias_json.strip():
             campos_obrigatorios['categorias_json'] = 'Pelo menos uma categoria é obrigatória!'
 
-        # Validações de formato
         if data_vencimento:
             try:
                 data_vencimento_obj = datetime.strptime(data_vencimento, '%Y-%m-%d').date()
@@ -149,7 +138,6 @@ def categorizar_fatura(id, tipo='despesa'):
 
         if data_competencia:
             try:
-                # Formato MM/AAAA
                 datetime.strptime(data_competencia, '%m/%Y')
             except ValueError:
                 campos_erros['data_competencia'] = 'Data de competência deve estar no formato MM/AAAA!'
@@ -163,24 +151,21 @@ def categorizar_fatura(id, tipo='despesa'):
             except ValueError:
                 campos_erros['pessoa_financeiro_id'] = 'Beneficiário inválido!'
 
-        # Validar categorias JSON
         if categorias_json:
             try:
                 categorias = json.loads(categorias_json)
                 if not isinstance(categorias, list) or len(categorias) == 0:
                     campos_erros['categorias_json'] = 'Pelo menos uma categoria deve ser informada!'
                 else:
-                    # Verificar categorias duplicadas
                     categorias_usadas = []
                     for cat in categorias:
                         nome_categoria = cat.get('nome', '')
                         if nome_categoria in categorias_usadas:
                             campos_erros['categorias_json'] = f'A categoria "{nome_categoria}" foi selecionada mais de uma vez!'
                             break
-                        if nome_categoria:  # Só adiciona se não estiver vazia
+                        if nome_categoria:
                             categorias_usadas.append(nome_categoria)
                     
-                    # Validar total apenas se não há categorias duplicadas
                     if 'categorias_json' not in campos_erros:
                         total_categorias = sum(cat.get('valor', 0) for cat in categorias)
                         if total_categorias != valor_total:
@@ -188,7 +173,6 @@ def categorizar_fatura(id, tipo='despesa'):
             except json.JSONDecodeError:
                 campos_erros['categorias_json'] = 'Formato de categorias inválido!'
 
-        # Validar parcelamento
         if parcelamento_ativo:
             if not numero_parcelas.strip():
                 campos_obrigatorios['numero_parcelas'] = 'Número de parcelas é obrigatório quando parcelamento está ativo!'
@@ -200,7 +184,6 @@ def categorizar_fatura(id, tipo='despesa'):
                 except ValueError:
                     campos_erros['numero_parcelas'] = 'Número de parcelas inválido!'
             
-            # Validar dados das parcelas se parcelamento ativo
             if parcelas_json:
                 try:
                     parcelas = json.loads(parcelas_json)
@@ -217,7 +200,6 @@ def categorizar_fatura(id, tipo='despesa'):
                                 break
                             total_parcelas += parcela.get('valor', 0)
                         
-                        # Validar se a soma das parcelas é igual ao valor total
                         if 'parcelas_json' not in campos_erros and total_parcelas != valor_total:
                             campos_erros['parcelas_json'] = f'A soma das parcelas (R$ {total_parcelas/100:.2f}) deve ser igual ao valor total (R$ {valor_total/100:.2f})!'
                 except json.JSONDecodeError:
@@ -225,7 +207,6 @@ def categorizar_fatura(id, tipo='despesa'):
             else:
                 campos_erros['parcelas_json'] = 'Dados de parcelas são obrigatórios quando parcelamento está ativo!'
 
-        # Validar valores detalhados (centro de custo)
         if valores_detalhados_ativo:
             if centros_custo_json:
                 try:
@@ -237,7 +218,6 @@ def categorizar_fatura(id, tipo='despesa'):
                             if not centro.get('centro'):
                                 campos_erros['centros_custo_json'] = f'Centro de custo {i} deve ser selecionado!'
                                 break
-                            # Validar se tem valor ou percentual dependendo do tipo
                             if not centro.get('valor') and not centro.get('percentual'):
                                 campos_erros['centros_custo_json'] = f'Centro de custo {i} deve ter valor ou percentual informado!'
                                 break
@@ -246,7 +226,6 @@ def categorizar_fatura(id, tipo='despesa'):
             else:
                 campos_erros['centros_custo_json'] = 'Dados de centros de custo são obrigatórios quando valores detalhados está ativo!'
 
-        # Validar categorias - sempre obrigatórias
         if categorias_json:
             try:
                 categorias = json.loads(categorias_json)
@@ -261,7 +240,6 @@ def categorizar_fatura(id, tipo='despesa'):
                         if not categoria.get('valor') or categoria.get('valor') <= 0:
                             campos_erros['categorias_json'] = f'Valor da categoria {i} deve ser maior que zero!'
                             break
-                        # Verificar duplicatas
                         categoria_id = categoria.get('categoria')
                         if categoria_id in categorias_usadas:
                             campos_erros['categorias_json'] = f'A categoria não pode ser repetida!'
@@ -272,7 +250,6 @@ def categorizar_fatura(id, tipo='despesa'):
         else:
             campos_erros['categorias_json'] = 'Pelo menos uma categoria deve ser informada!'
 
-        # Se há erros, retornar formulário com erros
         if campos_obrigatorios or campos_erros:
             return render_template(
                 "faturamento/categorizar_fatura/categorizar_fatura.html", 
@@ -290,7 +267,6 @@ def categorizar_fatura(id, tipo='despesa'):
                 tipo_categorização=tipo
             )
 
-        # Processar e enriquecer centros de custo com nomes
         centros_custo_processados = centros_custo_json
         if centros_custo_json:
             try:
@@ -301,38 +277,32 @@ def categorizar_fatura(id, tipo='despesa'):
                     centro_id = cc.get('centro')
                     centro_nome = centro_id
                     
-                    # Se for ID numérico, buscar o nome do centro de custo
                     if str(centro_id).isdigit():
                         centro_custo_obj = CentroCustoModel.obter_centro_custo_por_id(int(centro_id))
                         if centro_custo_obj:
                             centro_nome = centro_custo_obj.nome
                     
-                    # Manter estrutura original mas com nome enriquecido
                     centro_enriquecido = {
-                        'centro': centro_id,  # Manter ID original
-                        'centro_nome': centro_nome,  # Adicionar nome
+                        'centro': centro_id,
+                        'centro_nome': centro_nome,
                         'percentual': cc.get('percentual', ''),
                         'valor': cc.get('valor', 0)
                     }
                     centros_custo_enriquecidos.append(centro_enriquecido)
                 
-                # Manter como objeto Python (não converter para JSON string)
                 centros_custo_processados = centros_custo_enriquecidos
                 
             except (json.JSONDecodeError, ValueError):
-                # Em caso de erro, tentar converter o original para objeto
                 try:
                     centros_custo_processados = json.loads(centros_custo_json) if centros_custo_json else []
                 except:
                     centros_custo_processados = []
 
-        # Salvar agendamento
         data_competencia_obj = None
         if data_competencia:
             mes, ano = data_competencia.split('/')
             data_competencia_obj = date(int(ano), int(mes), 1)
 
-        # Converter JSON string para objeto Python
         categorias_obj = None
         if categorias_json:
             try:
@@ -340,7 +310,6 @@ def categorizar_fatura(id, tipo='despesa'):
             except json.JSONDecodeError:
                 categorias_obj = None
 
-        # Converter centros de custo se ainda for string
         centros_custo_obj = []
         if centros_custo_processados:
             if isinstance(centros_custo_processados, str):
@@ -370,11 +339,10 @@ def categorizar_fatura(id, tipo='despesa'):
         )
 
         db.session.add(novo_agendamento)
-        db.session.flush()  # Para obter o ID
+        db.session.flush()
         
-        objeto_principal.situacao_pagamento_id = 6  # Categorizado
+        objeto_principal.situacao_pagamento_id = 6
 
-        # Salvar parcelas se parcelamento ativo
         if parcelamento_ativo and parcelas_json:
             try:
                 parcelas = json.loads(parcelas_json)
@@ -387,7 +355,7 @@ def categorizar_fatura(id, tipo='despesa'):
                         valor_parcela=parcela_data['valor'],
                         descricao=parcela_data.get('descricao', ''),
                         referencia=parcela_data.get('referencia', ''),
-                        situacao_pagamento_id=2  # A Pagar
+                        situacao_pagamento_id=2
                     )
                     db.session.add(nova_parcela)
             except (json.JSONDecodeError, KeyError, ValueError) as e:
@@ -404,17 +372,15 @@ def categorizar_fatura(id, tipo='despesa'):
                     campos_obrigatorios=campos_obrigatorios,
                     campos_erros=campos_erros,
                     dados_corretos=dados_corretos,
-                    tipo_categorização=tipo  # Passar o tipo para o template
+                    tipo_categorização=tipo
                 )
 
-        # Processar anexos se houver
         anexos = request.files.getlist('anexos')
         anexos_validos = [anexo for anexo in anexos if anexo and anexo.filename != '']
         
         if anexos_validos:
             for i, anexo in enumerate(anexos_validos):
                 try:
-                    # Nome do arquivo para upload
                     nome_arquivo = f"anexo_agend_{novo_agendamento.id}_{i+1}"
                     objeto_upload = upload_arquivo(
                         anexo,
@@ -422,7 +388,6 @@ def categorizar_fatura(id, tipo='despesa'):
                         nome_arquivo
                     )
                     
-                    # Criar registro de anexo
                     novo_anexo = AgendamentoAnexoPagamentoModel(
                         agendamento_id=novo_agendamento.id,
                         upload_arquivo_id=objeto_upload.id
@@ -430,18 +395,15 @@ def categorizar_fatura(id, tipo='despesa'):
                     db.session.add(novo_anexo)
                     
                 except Exception as e:
-                    print(f'Erro ao fazer upload do arquivo {anexo.filename}: {e}')
                     flash((f"Erro ao fazer upload do arquivo {anexo.filename}", "warning"))
                     continue
 
-        # Atualizar situação do lançamento/faturamento
         if tipo == 'receita_avulsa' or tipo == 'despesa_avulsa':
-            objeto_principal.situacao_pagamento_id = 6  # Categorizado
+            objeto_principal.situacao_pagamento_id = 6
             db.session.add(objeto_principal)
         
-        # Atualizar situação do faturamento apenas se existir
         if faturamento:
-            faturamento.situacao_id = 6  # Categorizado
+            faturamento.situacao_id = 6
             db.session.add(faturamento)
             
         PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
@@ -465,7 +427,6 @@ def categorizar_fatura(id, tipo='despesa'):
             return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
 
     except Exception as e:
-        print(f'Erro ao categorizar fatura: {e}')
         db.session.rollback()
         flash((f'Erro ao categorizar fatura! Entre em contato com o suporte.', 'error'))
         return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
@@ -476,60 +437,48 @@ def categorizar_fatura(id, tipo='despesa'):
 def detalhes_categorizacao_faturamento_json(id):
     """Retorna JSON com os detalhes da categorização de um faturamento"""
     try:
-        # Buscar o faturamento
         faturamento = FaturamentoModel.obter_faturamento_por_id(id)
         if not faturamento:
             return jsonify({'error': 'Faturamento não encontrado!'}), 404
             
-        # Buscar o agendamento de pagamento
         agendamento = db.session.query(AgendamentoPagamentoModel).filter_by(faturamento_id=id).first()
         if not agendamento:
             return jsonify({'error': 'Este faturamento ainda não foi categorizado.'}), 404
             
-        # Buscar dados relacionados
         pessoa = PessoaFinanceiroModel.obter_pessoa_por_id(agendamento.pessoa_financeiro_id)
         situacao = SituacaoPagamentoModel.obter_situacao_por_id(agendamento.situacao_pagamento_id)
         
-        # Obter detalhes dos fornecedores e transportadoras do faturamento
         detalhes = faturamento.obter_detalhes()
         fornecedores_lista = detalhes.get("fornecedores", [])
         transportadoras_lista = detalhes.get("transportadoras", [])
         extratores_lista = detalhes.get("extratores", [])
 
-        # Processar fornecedores para garantir campos corretos
         for fornecedor in fornecedores_lista:
             if not fornecedor.get('identificacao') and fornecedor.get('fornecedor_identificacao'):
                 fornecedor['identificacao'] = fornecedor['fornecedor_identificacao']
             if not fornecedor.get('numero_documento') and fornecedor.get('nota_fiscal'):
                 fornecedor['numero_documento'] = fornecedor['nota_fiscal']
-            # Garantir que os valores de crédito e valor bruto estejam corretos
             fornecedor['valor'] = fornecedor.get('valor_faturado', fornecedor.get('valor_bruto', 0))
             fornecedor['valor_bruto_total'] = fornecedor.get('valor_bruto', 0)
             fornecedor['valor_credito_aplicado'] = fornecedor.get('valor_credito', 0)
         
-        # Processar transportadoras para garantir campos corretos  
         for transportadora in transportadoras_lista:
             if not transportadora.get('identificacao') and transportadora.get('transportadora_identificacao'):
                 transportadora['identificacao'] = transportadora['transportadora_identificacao']
-            # Garantir que os valores de crédito e valor bruto estejam corretos
             transportadora['valor'] = transportadora.get('valor_faturado', transportadora.get('valor_bruto', 0))
             transportadora['valor_bruto_total'] = transportadora.get('valor_bruto', 0)
             transportadora['valor_credito_aplicado'] = transportadora.get('valor_credito', 0)
 
-        # Processar extratores para garantir campos corretos  
         for extrator in extratores_lista:
             if not extrator.get('identificacao') and extrator.get('extrator_identificacao'):
                 extrator['identificacao'] = extrator['extrator_identificacao']
-            # Garantir que os valores de crédito e valor bruto estejam corretos
             extrator['valor'] = extrator.get('valor_faturado', extrator.get('valor_bruto', 0))
             extrator['valor_bruto_total'] = extrator.get('valor_bruto', 0)
             extrator['valor_credito_aplicado'] = extrator.get('valor_credito', 0)
         
-        # Processar categorias
         categorias_processadas = []
         if agendamento.categorias_json:
             try:
-                # Verificar se é objeto JSON ou string e converter adequadamente
                 if isinstance(agendamento.categorias_json, (list, dict)):
                     categorias = agendamento.categorias_json
                 elif isinstance(agendamento.categorias_json, str) and agendamento.categorias_json.strip():
@@ -542,14 +491,12 @@ def detalhes_categorizacao_faturamento_json(id):
                     categoria_codigo = ''
                     categoria_detalhamento = cat.get('detalhamento', 'Não informado')
                     categoria_referencia = cat.get('referencia', 'Não informado')
-                    # Se for ID numérico, buscar dados completos da categoria
                     if str(categoria_nome).isdigit():
                         plano_conta = PlanoContaModel.buscar_por_id(int(categoria_nome))
                         if plano_conta:
                             categoria_nome = plano_conta.nome
                             categoria_codigo = plano_conta.codigo
                     
-                    # Conversões seguras para float
                     try:
                         valor_cat = float(cat.get('valor', 0))
                     except (ValueError, TypeError):
@@ -573,11 +520,9 @@ def detalhes_categorizacao_faturamento_json(id):
             except (json.JSONDecodeError, ValueError):
                 categorias_processadas = []
                 
-        # Processar centros de custo  
         centros_custo_processados = []
         if agendamento.centros_custo_json:
             try:
-                # Verificar se é objeto JSON ou string e converter adequadamente
                 if isinstance(agendamento.centros_custo_json, (list, dict)):
                     centros_custo = agendamento.centros_custo_json
                 elif isinstance(agendamento.centros_custo_json, str) and agendamento.centros_custo_json.strip():
@@ -587,13 +532,11 @@ def detalhes_categorizacao_faturamento_json(id):
                     
                 for cc in centros_custo:
                     centro_id = cc.get('centro', 'Não informado')
-                    centro_nome = cc.get('centro_nome')  # Tentar usar nome já salvo
+                    centro_nome = cc.get('centro_nome')
                     
-                    # Se não tiver nome salvo, buscar pelo ID
                     if not centro_nome:
                         centro_nome = 'Não informado'
                     
-                    # Conversões seguras para float
                     try:
                         valor_cc = float(cc.get('valor', 0))
                     except (ValueError, TypeError):
@@ -605,7 +548,7 @@ def detalhes_categorizacao_faturamento_json(id):
                         percentual_cc = 0.0
                     
                     centros_custo_processados.append({
-                        'id': centro_id,  # ID original do centro de custo
+                        'id': centro_id,
                         'nome': centro_nome,
                         'valor': valor_cc,
                         'percentual': percentual_cc
@@ -613,7 +556,6 @@ def detalhes_categorizacao_faturamento_json(id):
             except (json.JSONDecodeError, ValueError):
                 centros_custo_processados = []
                 
-        # Buscar parcelas se houver parcelamento
         parcelas = []
         if agendamento.parcelamento_ativo:
             parcelas_obj = ParcelaCategorizacaoModel.obter_parcelas_por_agendamento(agendamento.id)
@@ -629,7 +571,6 @@ def detalhes_categorizacao_faturamento_json(id):
                     'situacao_nome': situacao_parcela.situacao if situacao_parcela else 'N/A'
                 })
         
-        # Calcular totais corretos com tratamento seguro de conversão
         try:
             valor_bruto_total = float(faturamento.valor_bruto_total or faturamento.valor_total or 0)
         except (ValueError, TypeError):
@@ -645,7 +586,6 @@ def detalhes_categorizacao_faturamento_json(id):
         except (ValueError, TypeError):
             valor_final_total = 0.0
         
-        # Se não tiver valor_bruto_total, calcular dos fornecedores e transportadoras
         if not valor_bruto_total or valor_bruto_total == valor_final_total:
             valor_bruto_calculado = 0
             valor_credito_calculado = 0
@@ -663,7 +603,6 @@ def detalhes_categorizacao_faturamento_json(id):
             if valor_credito_calculado > 0:
                 valor_credito_total = valor_credito_calculado
 
-        # Montar resposta JSON
         dados = {
             'categorizacao_id': agendamento.id,
             'faturamento': {
@@ -699,13 +638,11 @@ def detalhes_categorizacao_faturamento_json(id):
 @requires_roles
 def editar_categorizacao(agendamento_id, tipo=None):
     try:
-        # Buscar o agendamento existente
         agendamento = AgendamentoPagamentoModel.query.get(agendamento_id)
         if not agendamento:
             flash((f'Agendamento não encontrado!', 'error'))
             return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
 
-        # Determinar o tipo se não foi passado na URL
         if not tipo:
             if agendamento.lancamento_avulso_id:
                 lancamento_avulso = LancamentoAvulsoModel.obter_lancamento_por_id(agendamento.lancamento_avulso_id)
@@ -714,9 +651,7 @@ def editar_categorizacao(agendamento_id, tipo=None):
                 faturamento = FaturamentoModel.obter_faturamento_por_id(agendamento.faturamento_id)
                 tipo = 'receita' if faturamento.direcao_financeira == 1 else 'despesa'
 
-        # Buscar objeto principal baseado no tipo
         if tipo == 'receita_avulsa' or tipo == 'despesa_avulsa':
-            # Buscar lançamento avulso diretamente
             if not agendamento.lancamento_avulso_id:
                 flash((f'Lançamento avulso não encontrado!', 'error'))
                 return redirect(url_for('listagem_despesas_avulsas' if tipo == 'despesa_avulsa' else 'listagem_receitas_avulsas'))
@@ -728,9 +663,8 @@ def editar_categorizacao(agendamento_id, tipo=None):
             
             valor_total = lancamento_avulso.valor_movimentacao_100
             objeto_principal = lancamento_avulso
-            faturamento = None  # Lançamentos avulsos NÃO TÊM faturamento
+            faturamento = None
         else:
-            # Buscar faturamento normal
             if not agendamento.faturamento_id:
                 flash((f'Faturamento não encontrado!', 'error'))
                 return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
@@ -742,16 +676,13 @@ def editar_categorizacao(agendamento_id, tipo=None):
             valor_total = faturamento.valor_total
             objeto_principal = faturamento
 
-        # Determinar o tipo de plano de contas baseado no parâmetro
-        tipo_plano_conta = [1] if tipo == 'receita' or tipo == 'receita_avulsa' else [2]  # 1 = Receitas, 2 = Despesas
+        tipo_plano_conta = [1] if tipo == 'receita' or tipo == 'receita_avulsa' else [2]
         
         campos_obrigatorios = {}
         campos_erros = {}
         dados_corretos = {}
 
-        # Carregar dados para os selects
         pessoas_financeiro = PessoaFinanceiroModel.listar_pessoas_ativas()
-        # Processar documentos formatados para cada pessoa
         for p in pessoas_financeiro:
             if p.numero_documento and len(p.numero_documento.strip()) > 0:
                 p.documento_formatado = ValidaDocs.insere_pontuacao_cnpj(p.numero_documento) if len(p.numero_documento) == 14 else ValidaDocs.insere_pontuacao_cpf(p.numero_documento)
@@ -762,19 +693,15 @@ def editar_categorizacao(agendamento_id, tipo=None):
         centros_custo = CentroCustoModel.obter_centro_custos_ativos()
         contas_bancarias = ContaBancariaModel.obter_contas_bancarias_ativas()
         
-        # Inicializar e carregar plano de contas com o tipo correto (com marcação de folhas)
         estrutura_plano_contas = obter_estrutura_com_folhas(tipo_plano_conta)
 
-        # Buscar parcelas existentes se houver
         parcelas_existentes = []
         if agendamento.parcelamento_ativo:
             parcelas_existentes = ParcelaCategorizacaoModel.query.filter_by(agendamento_id=agendamento_id).order_by(ParcelaCategorizacaoModel.numero_parcela).all()
 
-        # Buscar anexos existentes
         anexos_existentes = AgendamentoAnexoPagamentoModel.obter_todos_anexos_por_agendamento(agendamento_id)
 
         if request.method == "GET":
-            # Pré-popular dados do agendamento existente
             dados_corretos = {
                 'data_vencimento': agendamento.data_vencimento.strftime('%Y-%m-%d') if agendamento.data_vencimento else '',
                 'data_competencia': agendamento.data_competencia.strftime('%m/%Y') if agendamento.data_competencia else '',
@@ -810,12 +737,11 @@ def editar_categorizacao(agendamento_id, tipo=None):
                 campos_erros=campos_erros,
                 dados_corretos=dados_corretos,
                 contas_bancarias=contas_bancarias,
-                tipo_categorização=tipo,  # Passar o tipo para o template
+                tipo_categorização=tipo,
                 parcelas_existentes=parcelas_existentes,
                 anexos_existentes=anexos_existentes
             )
 
-        # POST - Processar formulário de edição
         data_vencimento = request.form.get("data_vencimento", "")
         data_competencia = request.form.get("data_competencia", "")
         conta_bancaria_id = request.form.get("conta_bancaria_id", "")
@@ -830,7 +756,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
         dias_entre_parcelas = request.form.get("dias_entre_parcelas", "30")
         parcelas_json = request.form.get("parcelas_json", "")
 
-        # Preservar dados do formulário
         dados_corretos = {
             'data_vencimento': data_vencimento,
             'data_competencia': data_competencia,
@@ -847,7 +772,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
             'parcelas_json': parcelas_json
         }
     
-        # Validações obrigatórias (mesmas do cadastro)
         if not data_vencimento.strip():
             campos_obrigatorios['data_vencimento'] = 'Data de vencimento é obrigatória!'
         
@@ -860,7 +784,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
         if not categorias_json.strip():
             campos_obrigatorios['categorias_json'] = 'Pelo menos uma categoria é obrigatória!'
 
-        # Validações de formato (mesmas do cadastro)
         if data_vencimento:
             try:
                 data_vencimento_obj = datetime.strptime(data_vencimento, '%Y-%m-%d').date()
@@ -869,7 +792,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
 
         if data_competencia:
             try:
-                # Formato MM/AAAA
                 datetime.strptime(data_competencia, '%m/%Y')
             except ValueError:
                 campos_erros['data_competencia'] = 'Data de competência deve estar no formato MM/AAAA!'
@@ -883,24 +805,21 @@ def editar_categorizacao(agendamento_id, tipo=None):
             except ValueError:
                 campos_erros['pessoa_financeiro_id'] = 'Beneficiário inválido!'
 
-        # Validar categorias JSON (mesma lógica do cadastro)
         if categorias_json:
             try:
                 categorias = json.loads(categorias_json)
                 if not isinstance(categorias, list) or len(categorias) == 0:
                     campos_erros['categorias_json'] = 'Pelo menos uma categoria deve ser informada!'
                 else:
-                    # Verificar categorias duplicadas
                     categorias_usadas = []
                     for cat in categorias:
                         nome_categoria = cat.get('nome', '')
                         if nome_categoria in categorias_usadas:
                             campos_erros['categorias_json'] = f'A categoria "{nome_categoria}" foi selecionada mais de uma vez!'
                             break
-                        if nome_categoria:  # Só adiciona se não estiver vazia
+                        if nome_categoria:
                             categorias_usadas.append(nome_categoria)
                     
-                    # Validar total apenas se não há categorias duplicadas
                     if 'categorias_json' not in campos_erros:
                         total_categorias = sum(cat.get('valor', 0) for cat in categorias)
                         if total_categorias != valor_total:
@@ -908,7 +827,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
             except json.JSONDecodeError:
                 campos_erros['categorias_json'] = 'Formato de categorias inválido!'
 
-        # Validar parcelamento (mesma lógica do cadastro)
         if parcelamento_ativo:
             if not numero_parcelas.strip():
                 campos_obrigatorios['numero_parcelas'] = 'Número de parcelas é obrigatório quando parcelamento está ativo!'
@@ -920,7 +838,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
                 except ValueError:
                     campos_erros['numero_parcelas'] = 'Número de parcelas inválido!'
             
-            # Validar dados das parcelas se parcelamento ativo
             if parcelas_json:
                 try:
                     parcelas = json.loads(parcelas_json)
@@ -937,7 +854,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
                                 break
                             total_parcelas += parcela.get('valor', 0)
                         
-                        # Validar se a soma das parcelas é igual ao valor total
                         if 'parcelas_json' not in campos_erros and total_parcelas != valor_total:
                             campos_erros['parcelas_json'] = f'A soma das parcelas (R$ {total_parcelas/100:.2f}) deve ser igual ao valor total (R$ {valor_total/100:.2f})!'
                 except json.JSONDecodeError:
@@ -945,7 +861,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
             else:
                 campos_erros['parcelas_json'] = 'Dados de parcelas são obrigatórios quando parcelamento está ativo!'
 
-        # Validar valores detalhados (centro de custo) - mesma lógica do cadastro
         if valores_detalhados_ativo:
             if centros_custo_json:
                 try:
@@ -957,7 +872,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
                             if not centro.get('centro'):
                                 campos_erros['centros_custo_json'] = f'Centro de custo {i} deve ser selecionado!'
                                 break
-                            # Validar se tem valor ou percentual dependendo do tipo
                             if not centro.get('valor') and not centro.get('percentual'):
                                 campos_erros['centros_custo_json'] = f'Centro de custo {i} deve ter valor ou percentual informado!'
                                 break
@@ -966,7 +880,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
             else:
                 campos_erros['centros_custo_json'] = 'Dados de centros de custo são obrigatórios quando valores detalhados está ativo!'
 
-        # Validar categorias - sempre obrigatórias (mesma lógica do cadastro)
         if categorias_json:
             try:
                 categorias = json.loads(categorias_json)
@@ -981,7 +894,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
                         if not categoria.get('valor') or categoria.get('valor') <= 0:
                             campos_erros['categorias_json'] = f'Valor da categoria {i} deve ser maior que zero!'
                             break
-                        # Verificar duplicatas
                         categoria_id = categoria.get('categoria')
                         if categoria_id in categorias_usadas:
                             campos_erros['categorias_json'] = f'A categoria não pode ser repetida!'
@@ -992,7 +904,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
         else:
             campos_erros['categorias_json'] = 'Pelo menos uma categoria deve ser informada!'
 
-        # Se há erros, retornar formulário com erros
         if campos_obrigatorios or campos_erros:
             return render_template(
                 "faturamento/categorizar_fatura/editar_categorizacao_fatura.html", 
@@ -1012,7 +923,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
                 anexos_existentes=anexos_existentes
             )
 
-        # Processar e enriquecer centros de custo com nomes (mesma lógica do cadastro)
         centros_custo_processados = centros_custo_json
         if centros_custo_json:
             try:
@@ -1023,38 +933,32 @@ def editar_categorizacao(agendamento_id, tipo=None):
                     centro_id = cc.get('centro')
                     centro_nome = centro_id
                     
-                    # Se for ID numérico, buscar o nome do centro de custo
                     if str(centro_id).isdigit():
                         centro_custo_obj = CentroCustoModel.obter_centro_custo_por_id(int(centro_id))
                         if centro_custo_obj:
                             centro_nome = centro_custo_obj.nome
                     
-                    # Manter estrutura original mas com nome enriquecido
                     centro_enriquecido = {
-                        'centro': centro_id,  # Manter ID original
-                        'centro_nome': centro_nome,  # Adicionar nome
+                        'centro': centro_id,
+                        'centro_nome': centro_nome,
                         'percentual': cc.get('percentual', ''),
                         'valor': cc.get('valor', 0)
                     }
                     centros_custo_enriquecidos.append(centro_enriquecido)
                 
-                # Manter como objeto Python (não converter para JSON string)
                 centros_custo_processados = centros_custo_enriquecidos
                 
             except (json.JSONDecodeError, ValueError):
-                # Em caso de erro, tentar converter o original para objeto
                 try:
                     centros_custo_processados = json.loads(centros_custo_json) if centros_custo_json else []
                 except:
                     centros_custo_processados = []
 
-        # Atualizar agendamento existente
         data_competencia_obj = None
         if data_competencia:
             mes, ano = data_competencia.split('/')
             data_competencia_obj = date(int(ano), int(mes), 1)
 
-        # Converter JSON string para objeto Python
         categorias_obj = None
         if categorias_json:
             try:
@@ -1062,7 +966,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
             except json.JSONDecodeError:
                 categorias_obj = None
 
-        # Converter centros de custo se ainda for string
         centros_custo_obj = []
         if centros_custo_processados:
             if isinstance(centros_custo_processados, str):
@@ -1073,7 +976,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
             else:
                 centros_custo_obj = centros_custo_processados
 
-        # Atualizar campos do agendamento
         agendamento.pessoa_financeiro_id = int(pessoa_financeiro_id)
         agendamento.data_vencimento = data_vencimento_obj
         agendamento.conta_bancaria_id = int(conta_bancaria_id)
@@ -1086,10 +988,8 @@ def editar_categorizacao(agendamento_id, tipo=None):
         agendamento.numero_parcelas = int(numero_parcelas) if numero_parcelas else None
         agendamento.dias_entre_parcelas = int(dias_entre_parcelas)
 
-        # Remover parcelas antigas se existirem
         ParcelaCategorizacaoModel.query.filter_by(agendamento_id=agendamento_id).delete()
 
-        # Salvar novas parcelas se parcelamento ativo
         if parcelamento_ativo and parcelas_json:
             try:
                 parcelas = json.loads(parcelas_json)
@@ -1102,7 +1002,7 @@ def editar_categorizacao(agendamento_id, tipo=None):
                         valor_parcela=parcela_data['valor'],
                         descricao=parcela_data.get('descricao', ''),
                         referencia=parcela_data.get('referencia', ''),
-                        situacao_pagamento_id=2  # A Pagar
+                        situacao_pagamento_id=2
                     )
                     db.session.add(nova_parcela)
             except (json.JSONDecodeError, KeyError, ValueError) as e:
@@ -1122,14 +1022,12 @@ def editar_categorizacao(agendamento_id, tipo=None):
                     tipo_categorização=tipo
                 )
         
-        # Processar anexos se houver novos arquivos
         anexos = request.files.getlist('anexos')
         anexos_validos = [anexo for anexo in anexos if anexo and anexo.filename != '']
         
         if anexos_validos:
             for i, anexo in enumerate(anexos_validos):
                 try:
-                    # Nome do arquivo para upload
                     nome_arquivo = f"anexo_agend_{agendamento.id}_{i+1}"
                     objeto_upload = upload_arquivo(
                         anexo,
@@ -1137,7 +1035,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
                         nome_arquivo
                     )
                     
-                    # Criar registro de anexo
                     novo_anexo = AgendamentoAnexoPagamentoModel(
                         agendamento_id=agendamento.id,
                         upload_arquivo_id=objeto_upload.id
@@ -1145,11 +1042,9 @@ def editar_categorizacao(agendamento_id, tipo=None):
                     db.session.add(novo_anexo)
                     
                 except Exception as e:
-                    print(f'Erro ao fazer upload do arquivo {anexo.filename}: {e}')
                     flash((f"Erro ao fazer upload do arquivo {anexo.filename}", "warning"))
                     continue
         
-        # Processar exclusão de anexos existentes
         anexos_excluir = request.form.get('anexos_excluir', '[]')
         try:
             anexos_ids_excluir = json.loads(anexos_excluir)
@@ -1160,7 +1055,7 @@ def editar_categorizacao(agendamento_id, tipo=None):
                         anexo.deletado = True
                         anexo.ativo = False
         except (json.JSONDecodeError, ValueError) as e:
-            print(f'Erro ao processar exclusão de anexos: {e}')
+            pass
         
         PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
             current_user.id,
@@ -1172,7 +1067,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
         db.session.commit()
         flash(('Categorização editada com sucesso!', 'success'))
         
-        # Redirecionar baseado no tipo (mesma lógica do cadastro)
         if tipo == 'receita':
             return redirect(url_for('listagem_faturamentos_cargas_a_receber'))
         elif tipo == 'receita_avulsa':
@@ -1183,7 +1077,6 @@ def editar_categorizacao(agendamento_id, tipo=None):
             return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
 
     except Exception as e:
-        print(e)
         db.session.rollback()
         flash((f'Erro ao editar categorização! Entre em contato com o suporte.', 'error'))
         return redirect(url_for('listagem_faturamentos_cargas_a_pagar'))
@@ -1194,25 +1087,20 @@ def editar_categorizacao(agendamento_id, tipo=None):
 def detalhes_categorizacao_lancamento_avulso(id):
     """Retorna JSON com os detalhes da categorização de um lançamento avulso"""
     try:
-        # Buscar o lançamento avulso
         lancamento_avulso = LancamentoAvulsoModel.obter_lancamento_por_id(id)
         if not lancamento_avulso:
             return jsonify({'error': 'Lançamento avulso não encontrado!'}), 404
             
-        # Buscar o agendamento de pagamento relacionado ao lançamento avulso
         agendamento = db.session.query(AgendamentoPagamentoModel).filter_by(lancamento_avulso_id=id).first()
         if not agendamento:
             return jsonify({'error': 'Este lançamento avulso ainda não foi categorizado.'}), 404
             
-        # Buscar dados relacionados
         pessoa = PessoaFinanceiroModel.obter_pessoa_por_id(agendamento.pessoa_financeiro_id)
         situacao = SituacaoPagamentoModel.obter_situacao_por_id(agendamento.situacao_pagamento_id)
         
-        # Processar categorias
         categorias_processadas = []
         if agendamento.categorias_json:
             try:
-                # Verificar se é objeto JSON ou string e converter adequadamente
                 if isinstance(agendamento.categorias_json, (list, dict)):
                     categorias = agendamento.categorias_json
                 elif isinstance(agendamento.categorias_json, str) and agendamento.categorias_json.strip():
@@ -1224,7 +1112,6 @@ def detalhes_categorizacao_lancamento_avulso(id):
                     categoria_nome = cat.get('categoria', 'Não informado')
                     categoria_codigo = ''
                     
-                    # Se for ID numérico, buscar dados completos da categoria
                     if str(categoria_nome).isdigit():
                         plano_conta = PlanoContaModel.buscar_por_id(int(categoria_nome))
                         if plano_conta:
@@ -1242,11 +1129,9 @@ def detalhes_categorizacao_lancamento_avulso(id):
             except (json.JSONDecodeError, ValueError):
                 categorias_processadas = []
                 
-        # Processar centros de custo  
         centros_custo_processados = []
         if agendamento.centros_custo_json:
             try:
-                # Verificar se é objeto JSON ou string e converter adequadamente
                 if isinstance(agendamento.centros_custo_json, (list, dict)):
                     centros_custo = agendamento.centros_custo_json
                 elif isinstance(agendamento.centros_custo_json, str) and agendamento.centros_custo_json.strip():
@@ -1256,9 +1141,8 @@ def detalhes_categorizacao_lancamento_avulso(id):
                     
                 for cc in centros_custo:
                     centro_id = cc.get('centro', 'Não informado')
-                    centro_nome = cc.get('centro_nome')  # Tentar usar nome já salvo
+                    centro_nome = cc.get('centro_nome')
                     
-                    # Se não tiver nome salvo, buscar pelo ID
                     if not centro_nome and str(centro_id).isdigit():
                         centro_custo_obj = CentroCustoModel.obter_centro_custo_por_id(int(centro_id))
                         if centro_custo_obj:
@@ -1267,7 +1151,6 @@ def detalhes_categorizacao_lancamento_avulso(id):
                     if not centro_nome:
                         centro_nome = 'Não informado'
                     
-                    # Tratar valores que podem estar vazios como string
                     percentual = cc.get('percentual', 0)
                     if percentual == "" or percentual is None:
                         percentual = 0
@@ -1281,7 +1164,7 @@ def detalhes_categorizacao_lancamento_avulso(id):
                         valor = float(valor)
                     
                     centro_processado = {
-                        'id': centro_id,  # ID original do centro de custo
+                        'id': centro_id,
                         'nome': centro_nome,
                         'valor': valor,
                         'percentual': percentual
@@ -1291,7 +1174,6 @@ def detalhes_categorizacao_lancamento_avulso(id):
             except (json.JSONDecodeError, ValueError) as e:
                 centros_custo_processados = []
                 
-        # Buscar parcelas se houver parcelamento
         parcelas = []
         if agendamento.parcelamento_ativo:
             parcelas_obj = ParcelaCategorizacaoModel.obter_parcelas_por_agendamento(agendamento.id)
@@ -1307,7 +1189,6 @@ def detalhes_categorizacao_lancamento_avulso(id):
                     'situacao_nome': situacao_parcela.situacao if situacao_parcela else 'N/A'
                 })
         
-        # Montar resposta JSON
         dados = {
             'categorizacao_id': agendamento.id,
             'lancamento': {

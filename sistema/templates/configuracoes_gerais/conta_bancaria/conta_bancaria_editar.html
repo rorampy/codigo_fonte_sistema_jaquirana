@@ -2,12 +2,12 @@
 {% block conteudo %}
 {% include 'estrutura/header.html' %}
 <div class="page-wrapper">
-  <!-- Page header -->
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
         <div class="col">
-          <!-- Page pre-title -->
+          
           <div class="page-pretitle">
             CONTA BANCARIA
           </div>
@@ -19,7 +19,6 @@
     </div>
   </div>
 
-  <!-- Page body -->
   <div class="page-body">
     <div class="container-xl">
 
@@ -29,7 +28,7 @@
         <form class="card" action="{{url_for('editar_conta_bancaria', id=conta.id)}}" method="POST">
           <div class="card-body">
             <div class="row">
-              <!-- Conta Principal -->
+              
               <div class="col-12">
                 <div class="mb-3">
                   <label class="form-label">Configurações da Conta</label>
@@ -49,7 +48,7 @@
                   </div>
                 </div>
               </div>
-              <!-- Identificação -->
+              
               <div class="col-sm-12 col-md-3">
                 <div class="mb-3">
                   <label class="form-label required">Identificação</label>
@@ -67,7 +66,6 @@
                 </div>
               </div>
 
-              <!-- Nome do Banco -->
               <div class="col-sm-12 col-md-3">
                 <div class="mb-3">
                   <label class="form-label required">Nome do Banco</label>
@@ -84,7 +82,7 @@
                   </div>
                 </div>
               </div>
-              <!-- Agência -->
+              
               <div class="col-sm-12 col-md-2">
                 <div class="mb-3">
                   <label class="form-label required">Agência</label>
@@ -102,7 +100,6 @@
                 </div>
               </div>
 
-              <!-- Conta -->
               <div class="col-sm-12 col-md-2">
                 <div class="mb-3">
                   <label class="form-label required">Conta</label>

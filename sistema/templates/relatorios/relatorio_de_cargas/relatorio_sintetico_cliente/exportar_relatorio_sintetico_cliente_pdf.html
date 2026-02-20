@@ -20,7 +20,6 @@
         <div class="relatorio-title">Relatório Sintético por
           Cliente</div>
 
-        <!-- Filtros aplicados se existirem -->
         {% if dados_corretos %}
         <div class="dados-registro no-break">
           <div class="filtros-title">Filtros Aplicados</div>
@@ -46,7 +45,6 @@
 
         {% if registros %}
 
-        <!-- Tabela de cargas para este produto -->
         <table class="table table-vcenter ">
           <thead class="bg-light">
             <tr>
@@ -90,7 +88,7 @@
               </td>
             </tr>
             {% endfor %}
-            <!-- Linha de totais -->
+            
             <tr style="font-weight: bold; background-color: #f8f9fa;">
               <td style="text-align: center;">TOTAIS GERAIS</td>
               <td style="text-align: center;">{{ total_cargas }}</td>
@@ -100,7 +98,7 @@
           </tbody>
         </table>
         {% else %}
-        <!-- Estado vazio -->
+        
         <div style="text-align: center; padding: 50px 0;">
           <h3 style="color: #666;">Nenhum registro encontrado</h3>
           <p style="color: #999;">Não há registros de cargas

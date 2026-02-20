@@ -27,14 +27,12 @@ class DFCModel:
             dict: Dicionário com valores por categoria
         """
         try:
-            # Query base para agendamentos ativos e com situação financeira 8 ou 9
             query = AgendamentoPagamentoModel.query.filter(
                 AgendamentoPagamentoModel.ativo == True,
                 AgendamentoPagamentoModel.deletado == False,
                 AgendamentoPagamentoModel.situacao_pagamento_id.in_([8, 9])
             )
             
-            # Aplicar filtros de data
             if data_inicio:
                 query = query.filter(AgendamentoPagamentoModel.data_vencimento >= data_inicio)
             if data_fim:
@@ -65,7 +63,6 @@ class DFCModel:
             return valores_categoria
             
         except Exception as e:
-            print(f"Erro ao calcular valores por categoria: {e}")
             return {}
     
     @staticmethod
@@ -83,7 +80,6 @@ class DFCModel:
         hierarquia = []
         categoria_atual = categoria
         
-        # Percorrer a hierarquia do filho para o pai
         while categoria_atual:
             hierarquia.append(categoria_atual.nome)
             if categoria_atual.parent_id and categoria_atual.parent_id in categorias_dict:
@@ -91,7 +87,6 @@ class DFCModel:
             else:
                 categoria_atual = None
         
-        # Inverter para mostrar do pai para o filho
         hierarquia.reverse()
         return " > ".join(hierarquia)
 
@@ -109,7 +104,6 @@ class DFCModel:
         if not codigo:
             return 'outros'
             
-        # Receitas (código 1.xx.xx)
         if codigo.startswith('1.01'):
             return 'receitas_operacionais'
         elif codigo.startswith('1.02'):
@@ -117,7 +111,6 @@ class DFCModel:
         elif codigo.startswith('1.'):
             return 'receitas_outras'
             
-        # Custos e Despesas (código 2.xx.xx)
         elif codigo.startswith('2.01'):
             return 'custos_operacionais'
         elif codigo.startswith('2.02'):
@@ -125,7 +118,6 @@ class DFCModel:
         elif codigo.startswith('2.'):
             return 'despesas_outras'
             
-        # Outros códigos
         else:
             return 'outros'
 
@@ -138,10 +130,8 @@ class DFCModel:
         Returns:
             dict: Estrutura hierárquica organizada por tipo DRE
         """
-        # Obter estrutura hierárquica completa do plano de contas
         estrutura_completa = PlanoContaModel.obter_estrutura_hierarquica_completa()
         
-        # Organizar por tipos DRE mantendo a ordem hierárquica
         estrutura_dre = {
             'receitas_operacionais': [],
             'receitas_nao_operacionais': [],
@@ -156,11 +146,9 @@ class DFCModel:
             codigo = categoria.get('codigo', '')
             tipo_dre = DFCModel.identificar_tipo_dre_por_codigo(codigo)
             
-            # Identificar se é categoria folha (sem filhos)
             tem_filhos = bool(categoria.get('children'))
             
             if not tem_filhos and tipo_dre in estrutura_dre:
-                # É categoria folha, adicionar à estrutura DRE
                 categoria_info = {
                     'categoria_obj': categoria,
                     'codigo': codigo,
@@ -172,11 +160,9 @@ class DFCModel:
                 }
                 estrutura_dre[tipo_dre].append(categoria_info)
             
-            # Processar subcategorias recursivamente
             for subcategoria in categoria.get('children', []):
                 processar_categoria_recursiva(subcategoria, nivel + 1)
         
-        # Processar toda a estrutura
         for categoria_principal in estrutura_completa:
             processar_categoria_recursiva(categoria_principal)
         
@@ -205,7 +191,6 @@ class DFCModel:
                 if categoria.get('id') == categoria_alvo.get('id'):
                     return ' > '.join(novo_caminho)
                 
-                # Buscar nas subcategorias
                 if categoria.get('children'):
                     resultado = buscar_na_estrutura(categoria['children'], novo_caminho)
                     if resultado:
@@ -226,11 +211,10 @@ class DFCModel:
         """
         estrutura_hierarquica = DFCModel.obter_estrutura_hierarquica_dre()
         
-        # Converter para o formato esperado pelo template
         classificacao = {}
         
         for tipo_dre, categorias in estrutura_hierarquica.items():
-            if categorias:  # Só incluir tipos que tenham categorias
+            if categorias:
                 classificacao[tipo_dre] = []
                 
                 for categoria_info in categorias:
@@ -258,13 +242,10 @@ class DFCModel:
         Returns:
             dict: DFC analítico estruturado
         """
-        # Obter categorias folha organizadas
         categorias_folha = DFCModel.obter_categorias_folha_por_tipo()
         
-        # Calcular valores por categoria com as datas fornecidas
         valores_categoria = DFCModel.calcular_valores_por_categoria(data_inicio, data_fim)
         
-        # Estrutura base do DFC (será expandida dinamicamente)
         dre = {
             'periodo': {
                 'data_inicio': data_inicio,
@@ -290,7 +271,6 @@ class DFCModel:
             }
         }
         
-        # Processar dinamicamente todas as categorias encontradas
         dre_secoes = {
             'receitas_operacionais': {'chave_dre': 'receitas.operacionais', 'nome': 'Receitas Operacionais'},
             'receitas_nao_operacionais': {'chave_dre': 'receitas.nao_operacionais', 'nome': 'Receitas Não-Operacionais'},
@@ -300,7 +280,6 @@ class DFCModel:
             'despesas_outras': {'chave_dre': 'despesas.outras', 'nome': 'Outras Despesas'}
         }
         
-        # Inicializar seções dinâmicas no DRE
         for tipo in categorias_folha.keys():
             if tipo not in dre_secoes:
                 continue
@@ -308,13 +287,11 @@ class DFCModel:
             secao_info = dre_secoes[tipo]
             chaves = secao_info['chave_dre'].split('.')
             
-            # Criar estrutura se não existir
             if chaves[0] not in dre:
                 dre[chaves[0]] = {'total': 0}
             if len(chaves) > 1 and chaves[1] not in dre[chaves[0]]:
                 dre[chaves[0]][chaves[1]] = {'total': 0, 'detalhes': []}
         
-        # Processar cada tipo dinamicamente
         for tipo, categorias_lista in categorias_folha.items():
             if tipo not in dre_secoes:
                 continue
@@ -326,7 +303,7 @@ class DFCModel:
             
             for categoria_info in categorias_lista:
                 valor = valores_categoria.get(categoria_info['id'], 0)
-                if valor != 0:  # Só incluir se tiver valor
+                if valor != 0:
                     detalhes_secao.append({
                         'codigo': categoria_info['codigo'],
                         'nome': categoria_info['nome'],
@@ -337,7 +314,6 @@ class DFCModel:
                     })
                     total_secao += valor
             
-            # Atualizar estrutura DRE
             if len(chaves) == 1:
                 dre[chaves[0]]['total'] += total_secao
                 if 'detalhes' not in dre[chaves[0]]:
@@ -348,16 +324,10 @@ class DFCModel:
                 dre[chaves[0]][chaves[1]]['detalhes'] = detalhes_secao
                 dre[chaves[0]]['total'] += total_secao
         
-        # Calcular resultados
         dre['resultado']['bruto'] = dre['receitas']['total'] - dre['custos']['total']
         
-        # Calcular Margem de Contribuição (A+B) onde:
-        # A = Receitas Operacionais
-        # B = Custos Operacionais (como valor negativo na fórmula, então é subtração)
-        # Margem de Contribuição = Receitas Operacionais - Custos Operacionais
         dre['resultado']['margem_contribuicao'] = dre['receitas']['operacionais']['total'] - dre['custos']['operacionais']['total']
         
-        # Calcular percentual da Margem de Contribuição em relação às receitas operacionais
         if dre['receitas']['operacionais']['total'] != 0:
             dre['resultado']['margem_contribuicao_percentual'] = (dre['resultado']['margem_contribuicao'] / dre['receitas']['operacionais']['total']) * 100
         else:
@@ -365,32 +335,26 @@ class DFCModel:
         
         dre['resultado']['operacional'] = dre['resultado']['bruto'] - dre['despesas']['total']
         
-        # Calcular Atividades de Investimento e Financiamento
-        # Atividades de Investimento (categorias 1.02.xx - aplicações financeiras)
         atividades_investimento = 0
         if 'receitas' in dre and 'nao_operacionais' in dre['receitas']:
             for item in dre['receitas']['nao_operacionais']['detalhes']:
-                if item['codigo'].startswith('1.02.01'):  # Aplicações financeiras
+                if item['codigo'].startswith('1.02.01'):
                     atividades_investimento += item['valor']
         
-        # Atividades de Financiamento (categorias 1.02.xx exceto 1.02.01)
         atividades_financiamento = 0
         if 'receitas' in dre and 'nao_operacionais' in dre['receitas']:
             for item in dre['receitas']['nao_operacionais']['detalhes']:
                 if item['codigo'].startswith('1.02') and not item['codigo'].startswith('1.02.01'):
                     atividades_financiamento += item['valor']
         
-        # Adicionar despesas de financiamento (categorias 2.02.05 - retirada de capital)
         if 'despesas' in dre and 'operacionais' in dre['despesas']:
             for item in dre['despesas']['operacionais']['detalhes']:
-                if item['codigo'].startswith('2.02.05'):  # Retirada de capital
+                if item['codigo'].startswith('2.02.05'):
                     atividades_financiamento -= item['valor']
         
-        # Armazenar os valores das atividades
         dre['resultado']['atividades_investimento'] = atividades_investimento
         dre['resultado']['atividades_financiamento'] = atividades_financiamento
         
-        # Calcular Variação de Caixa = Resultado Operacional + Atividades de Investimento + Atividades de Financiamento
         dre['resultado']['variacao_caixa'] = (dre['resultado']['operacional'] + 
                                              dre['resultado']['atividades_investimento'] + 
                                              dre['resultado']['atividades_financiamento'])
@@ -418,12 +382,10 @@ class DFCModel:
         """
         dre_analitico = DFCModel.gerar_dfc_analitico(data_inicio, data_fim)
         
-        # Separar itens filtrados para atividades de investimento e financiamento
-        aplicacoes_financeiras = []  # 1.02.01
-        compra_floresta = []         # 2.01.11
-        retirada_capital = []        # 2.02.05
+        aplicacoes_financeiras = []
+        compra_floresta = []
+        retirada_capital = []
         
-        # Calcular receitas não-operacionais sem aplicações financeiras (1.02.01)
         receitas_nao_op_filtradas = 0
         for item in dre_analitico['receitas']['nao_operacionais']['detalhes']:
             if item['codigo'].startswith('1.02.01'):
@@ -431,7 +393,6 @@ class DFCModel:
             else:
                 receitas_nao_op_filtradas += item['valor']
         
-        # Calcular custos operacionais sem compra de floresta (2.01.11) e sem retirada de capital (2.02.05)
         custos_op_filtrados = 0
         for item in dre_analitico['custos']['operacionais']['detalhes']:
             if item['codigo'].startswith('2.01.11'):
@@ -441,30 +402,22 @@ class DFCModel:
             else:
                 custos_op_filtrados += item['valor']
         
-        # Calcular despesas operacionais (sem exclusões específicas)
         despesas_op_filtradas = dre_analitico['despesas']['operacionais']['total']
         
-        # Total de receitas sem aplicações financeiras
         total_receitas_filtrado = dre_analitico['receitas']['operacionais']['total'] + receitas_nao_op_filtradas
         
-        # Total de custos sem compra de floresta
         total_custos_filtrado = custos_op_filtrados
         
-        # Resultado bruto = Receitas - Custos (ambos filtrados)
         resultado_bruto_filtrado = total_receitas_filtrado - total_custos_filtrado
         
-        # Resultado operacional = Resultado bruto - Despesas operacionais (filtradas)
         resultado_operacional_filtrado = resultado_bruto_filtrado - despesas_op_filtradas
         
-        # Calcular totais das atividades
-        total_atividades_investimento = sum(item['valor'] for item in compra_floresta) * -1  # Negativo pois é custo
+        total_atividades_investimento = sum(item['valor'] for item in compra_floresta) * -1
         total_atividades_financiamento = (sum(item['valor'] for item in aplicacoes_financeiras) - 
                                         sum(item['valor'] for item in retirada_capital))
         
-        # Calcular variação de caixa
         variacao_caixa = resultado_operacional_filtrado + total_atividades_investimento + total_atividades_financiamento
         
-        # Estrutura sintética com valores filtrados e atividades separadas
         dre_sintetico = {
             'periodo': dre_analitico['periodo'],
             'receitas_operacionais': dre_analitico['receitas']['operacionais']['total'],
@@ -475,28 +428,24 @@ class DFCModel:
             'resultado_bruto': resultado_bruto_filtrado,
             'despesas_operacionais': despesas_op_filtradas,
             'resultado_operacional': resultado_operacional_filtrado,
-            'resultado_liquido': resultado_operacional_filtrado,  # No sintético, resultado líquido = operacional
+            'resultado_liquido': resultado_operacional_filtrado,
             
-            # Campos específicos para o template sintético
             'receitas_aplicacoes_financeiras': sum(item['valor'] for item in aplicacoes_financeiras),
             'despesas_compra_floresta': sum(item['valor'] for item in compra_floresta),
             'despesas_retirada_capital': sum(item['valor'] for item in retirada_capital),
             'total_investimento_retirada': total_atividades_investimento + (sum(item['valor'] for item in retirada_capital) * -1),
             
-            # Atividades de Investimento (itens filtrados)
             'atividades_investimento': {
                 'compra_floresta': compra_floresta,
                 'total': total_atividades_investimento
             },
             
-            # Atividades de Financiamento (itens filtrados)  
             'atividades_financiamento': {
                 'aplicacoes_financeiras': aplicacoes_financeiras,
                 'retirada_capital': retirada_capital,
                 'total': total_atividades_financiamento
             },
             
-            # Variação de Caixa
             'variacao_caixa': variacao_caixa
         }
         

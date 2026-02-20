@@ -1,28 +1,3 @@
-/**
- * ============================================================================
- * SISTEMA DE FILTROS PARA CONCILIAÇÃO OFX - ES6
- * ============================================================================
- * 
- * Módulo responsável por gerenciar filtros de busca de agendamentos
- * na funcionalidade "Buscar Existente" da conciliação OFX.
- * 
- * FUNCIONALIDADES:
- * - Coleta de dados dos filtros (valor, data, categoria, beneficiário, descrição)
- * - Requisições AJAX para endpoint de busca
- * - Renderização dinâmica dos resultados na tabela
- * - Integração com sistema de loading e estados
- * - Conversão automática de valores monetários
- * - Tratamento de erros e feedback visual
- * 
- * ARQUITETURA ES6:
- * - Classe principal: ConciliacaoOfxFiltros
- * - Métodos privados com #
- * - Async/await para operações assíncronas
- * - Destructuring e arrow functions
- * - Template literals para strings
- * 
- * ============================================================================
- */
 
 class ConciliacaoOfxFiltros {
     constructor() {
@@ -50,30 +25,22 @@ class ConciliacaoOfxFiltros {
         this.#inicializar();
     }
 
-    /**
-     * Inicializa os event listeners
-     * @private
-     */
     #inicializar() {
-        // Inicializar imediatamente se DOM já estiver pronto
+        
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.#configurarEventos();
             });
         } else {
-            // DOM já carregado, configurar eventos diretamente
+            
             this.#configurarEventos();
         }
     }
 
-    /**
-     * Configura event listeners para todos os botões de busca
-     * @private
-     */
     #configurarEventos() {
-        // Usar delegação de eventos no document para capturar todos os cliques
+        
         document.addEventListener('click', (event) => {
-            // Verificar se o clique foi em um botão de busca ou seus elementos filhos
+            
             const btnBuscar = event.target.closest('[id^="btn-buscar-agendamentos-"]');
             
             if (btnBuscar) {
@@ -87,7 +54,6 @@ class ConciliacaoOfxFiltros {
                 return false;
             }
             
-            // Botões de conciliação individual
             const btnConciliacao = event.target.closest('.btn.conciliacao-btn[data-agendamento-id]');
             if (btnConciliacao) {
                 event.preventDefault();
@@ -98,23 +64,16 @@ class ConciliacaoOfxFiltros {
                     this.#processarConciliacao(agendamentoId, transacaoId);
                 }
             }
-        }, true); // Usar captura para garantir que pegamos o evento antes de outros handlers
+        }, true); 
     }
 
-    /**
-     * Executa a busca de agendamentos com filtros
-     * @param {string} transacaoId - ID da transação
-     * @public
-     */
     async buscarAgendamentos(transacaoId) {
         try {
-            // Mostrar loading
+            
             this.#exibirCarregando(transacaoId);
             
-            // Coletar filtros
             const filtros = this.#coletarFiltros(transacaoId);
             
-            // Fazer requisição AJAX
             const response = await fetch(this.endpoints.buscarAgendamentos, {
                 method: 'POST',
                 headers: {
@@ -142,16 +101,9 @@ class ConciliacaoOfxFiltros {
         }
     }
 
-    /**
-     * Coleta dados de todos os filtros de busca
-     * @param {string} transacaoId - ID da transação para identificar os filtros
-     * @returns {Object} Objeto com todos os filtros coletados
-     * @private
-     */
     #coletarFiltros(transacaoId) {
         const btnBuscar = document.querySelector(this.seletores.btnBuscar(transacaoId));
         
-        // Extrair conta_bancaria_id da URL atual (formato: /conciliacao-ofx/<conta_id>)
         const urlPath = window.location.pathname;
         const contaIdMatch = urlPath.match(/\/conciliacao-ofx\/(\d+)/);
         const contaBancariaId = contaIdMatch ? contaIdMatch[1] : null;
@@ -173,16 +125,9 @@ class ConciliacaoOfxFiltros {
         };
     }
 
-    /**
-     * Converte valor monetário para float
-     * @param {string} valorString - Valor no formato "R$ 1.234,56"
-     * @returns {number|null} Valor convertido ou null se inválido
-     * @private
-     */
     #converterMoedaParaFloat(valorString) {
         if (!valorString?.trim()) return null;
         
-        // Remover R$, espaços, pontos de milhares e converter vírgula para ponto decimal
         const cleanValue = valorString
             .replace(/R\$\s?/g, '')
             .replace(/\./g, '')
@@ -193,12 +138,6 @@ class ConciliacaoOfxFiltros {
         return isNaN(parsedValue) ? null : parsedValue;
     }
 
-    /**
-     * Renderiza os resultados na tabela
-     * @param {string} transacaoId - ID da transação
-     * @param {Array} agendamentos - Lista de agendamentos encontrados
-     * @private
-     */
     async #renderResults(transacaoId, agendamentos) {
         const tbody = document.querySelector(this.seletores.tabela.tbody(transacaoId));
         
@@ -206,7 +145,6 @@ class ConciliacaoOfxFiltros {
             return;
         }
 
-        // Limpar tabela
         tbody.innerHTML = '';
 
         if (agendamentos.length === 0) {
@@ -214,7 +152,6 @@ class ConciliacaoOfxFiltros {
             return;
         }
 
-        // Criar fragmento para melhor performance
         const fragment = document.createDocumentFragment();
         
         agendamentos.forEach((agendamento) => {
@@ -224,19 +161,11 @@ class ConciliacaoOfxFiltros {
 
         tbody.appendChild(fragment);
 
-        // Configurar eventos e mostrar tabela
         this.#setupTableEvents(transacaoId);
         this.#showTable(transacaoId);
         this.#updateInfo(transacaoId, agendamentos.length);
     }
 
-    /**
-     * Cria uma linha da tabela para um agendamento
-     * @param {Object} agendamento - Dados do agendamento
-     * @param {string} transacaoId - ID da transação
-     * @returns {HTMLTableRowElement} Elemento TR da tabela
-     * @private
-     */
     #createAgendamentoRow(agendamento, transacaoId) {
         const tr = document.createElement('tr');
         tr.dataset.agendamentoId = agendamento.id;
@@ -284,14 +213,8 @@ class ConciliacaoOfxFiltros {
         return tr;
     }
 
-    /**
-     * Prepara dados específicos para exibição na linha
-     * @param {Object} agendamento - Dados do agendamento
-     * @returns {Object} Dados formatados para a linha
-     * @private
-     */
     #prepareRowData(agendamento) {
-        // Preparar categorias
+        
         const categorias = agendamento.categorias || [];
         const categoriasHtml = categorias.length > 0 
             ? categorias
@@ -299,15 +222,12 @@ class ConciliacaoOfxFiltros {
                 .join('')
             : '<span class="text-muted">-</span>';
 
-        // Preparar descrição truncada
         const descricaoTruncada = agendamento.descricao && agendamento.descricao.length > 50 
             ? `${agendamento.descricao.substring(0, 50)}...` 
             : agendamento.descricao || 'Sem descrição';
 
-        // Determinar origem
         const origemDisplay = agendamento.faturamento_codigo || agendamento.origem || 'Sistema';
 
-        // Sistema de exibição de valor restante
         let valorDisplay = agendamento.valor_formatado || 'R$ 0,00';
         let valorTitulo = `Valor Total: ${agendamento.valor_formatado || 'R$ 0,00'}`;
         
@@ -335,26 +255,15 @@ class ConciliacaoOfxFiltros {
         };
     }
 
-    /**
-     * Configura eventos da tabela (checkboxes, etc.)
-     * @param {string} transacaoId - ID da transação
-     * @private
-     */
     #setupTableEvents(transacaoId) {
-        // Integrar com sistema existente se disponível
+        
         if (window.conciliacaoOfxBuscarExistente?.configurarEventosCheckbox) {
             window.conciliacaoOfxBuscarExistente.configurarEventosCheckbox(transacaoId);
         }
     }
 
-    /**
-     * Manipula clique em conciliação individual
-     * @param {string} agendamentoId - ID do agendamento
-     * @param {string} transacaoId - ID da transação
-     * @private
-     */
     #processarConciliacao(agendamentoId, transacaoId) {
-        // Integrar com sistema de conciliação existente
+        
         if (window.conciliacaoOfxBuscarExistente?.executarConciliacaoIndividual) {
             window.conciliacaoOfxBuscarExistente.executarConciliacaoIndividual(agendamentoId, transacaoId);
         } else {
@@ -362,82 +271,45 @@ class ConciliacaoOfxFiltros {
         }
     }
 
-    /**
-     * Mostra loading
-     * @param {string} transacaoId - ID da transação
-     * @private
-     */
     #exibirCarregando(transacaoId) {
         if (window.conciliacaoOfxBuscarExistente?.mostrarLoading) {
             window.conciliacaoOfxBuscarExistente.mostrarLoading(transacaoId);
         }
     }
 
-    /**
-     * Mostra estado de erro
-     * @param {string} transacaoId - ID da transação
-     * @private
-     */
     #showError(transacaoId) {
         if (window.conciliacaoOfxBuscarExistente?.mostrarEstadoErro) {
             window.conciliacaoOfxBuscarExistente.mostrarEstadoErro(transacaoId);
         }
     }
 
-    /**
-     * Mostra estado vazio
-     * @param {string} transacaoId - ID da transação
-     * @private
-     */
     #showEmptyState(transacaoId) {
         if (window.conciliacaoOfxBuscarExistente?.mostrarEstadoVazio) {
             window.conciliacaoOfxBuscarExistente.mostrarEstadoVazio(transacaoId);
         }
     }
 
-    /**
-     * Mostra tabela
-     * @param {string} transacaoId - ID da transação
-     * @private
-     */
     #showTable(transacaoId) {
         if (window.conciliacaoOfxBuscarExistente?.mostrarTabela) {
             window.conciliacaoOfxBuscarExistente.mostrarTabela(transacaoId);
         }
     }
 
-    /**
-     * Atualiza informações da tabela
-     * @param {string} transacaoId - ID da transação
-     * @param {number} count - Quantidade de agendamentos
-     * @private
-     */
     #updateInfo(transacaoId, count) {
         if (window.conciliacaoOfxBuscarExistente?.atualizarInfoAgendamentos) {
             window.conciliacaoOfxBuscarExistente.atualizarInfoAgendamentos(transacaoId, count);
         }
     }
 
-    /**
-     * Mostra toast de sucesso
-     * @param {number} count - Quantidade de agendamentos encontrados
-     * @private
-     */
     #showSuccessToast(count) {
         const message = `${count} agendamento${count !== 1 ? 's' : ''} encontrado${count !== 1 ? 's' : ''}`;
         
         if (typeof mostrarToast === 'function') {
             mostrarToast('success', message);
         } else {
-            console.log(`✅ ${message}`);
         }
     }
 
-    /**
-     * Mostra toast de erro
-     * @param {string} message - Mensagem de erro
-     * @private
-     */
     #showErrorToast(message) {
         const errorMessage = `Erro ao buscar agendamentos: ${message}`;
         
@@ -448,11 +320,6 @@ class ConciliacaoOfxFiltros {
         }
     }
 
-    /**
-     * Limpa filtros de uma transação específica
-     * @param {string} transacaoId - ID da transação
-     * @public
-     */
     clearFilters(transacaoId) {
         const filterElements = [
             this.seletores.filtros.valorMin(transacaoId),
@@ -468,30 +335,18 @@ class ConciliacaoOfxFiltros {
             const element = document.querySelector(selector);
             if (element) {
                 element.value = '';
-                // Trigger change event para Tom Select
+                
                 element.dispatchEvent(new Event('change', { bubbles: true }));
             }
         });
 
-        console.log(`🧹 Filtros limpos para transação ${transacaoId}`);
     }
 
-    /**
-     * Obtém filtros atuais de uma transação
-     * @param {string} transacaoId - ID da transação
-     * @returns {Object} Filtros atuais
-     * @public
-     */
     getCurrentFilters(transacaoId) {
         return this.#coletarFiltros(transacaoId);
     }
 }
 
-// ============================================================================
-// INICIALIZAÇÃO E EXPORTAÇÃO
-// ============================================================================
-
-// Inicialização automática
 let conciliacaoOfxFiltros;
 
 function inicializarConciliacaoOfxFiltros() {
@@ -506,6 +361,6 @@ function inicializarConciliacaoOfxFiltros() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', inicializarConciliacaoOfxFiltros);
 } else {
-    // DOM já carregado
+    
     inicializarConciliacaoOfxFiltros();
 }

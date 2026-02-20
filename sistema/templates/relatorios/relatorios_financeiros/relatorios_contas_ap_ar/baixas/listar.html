@@ -3,7 +3,7 @@
 {% include 'estrutura/header.html' %}
 
 <div class="page-wrapper">
-  {# ========== HEADER ========== #}
+  
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row g-2 align-items-center">
@@ -27,12 +27,10 @@
     </div>
   </div>
 
-  {# ========== BODY ========== #}
   <div class="page-body">
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
 
-      {# --- Totalizadores --- #}
       {% if grupos or registros %}
       <div class="row mb-3">
         <div class="col-md-4">
@@ -74,7 +72,6 @@
       </div>
       {% endif %}
 
-      {# --- Card de Filtros Ativos --- #}
       {% set filtros_ativos = [] %}
       {% if dados_corretos.get('dataInicio') %}
         {% set data_ini_raw = dados_corretos.get('dataInicio') %}
@@ -158,12 +155,11 @@
       </div>
       {% endif %}
 
-      {# --- Tabela de dados --- #}
       <div class="col-12">
         <div class="card">
           <div class="card-body p-0">
             {% if grupos %}
-            {# ========== ACCORDION AGRUPADO POR FATURAMENTO (AP e AR) ========== #}
+            
             <div class="accordion" id="pagamentosAccordion">
               {% for grupo in grupos %}
               <div class="accordion-item">
@@ -175,17 +171,15 @@
                           aria-expanded="{% if loop.first %}true{% else %}false{% endif %}"
                           style="padding: 0.75rem 1rem;">
                     <div class="d-flex align-items-center justify-content-between w-100">
-                      {# Lado Esquerdo - Informações principais #}
+                      
                       <div class="d-flex align-items-center gap-2 flex-wrap">
-                        {# Código do Faturamento #}
+                        
                         <span class="badge bg-azure-lt px-2 py-1" style="font-size: 0.8rem; font-weight: 600;">
                           {{ grupo.codigo_faturamento }}
                         </span>
                         
-                        {# Separador #}
                         <span class="text-muted" style="opacity: 0.3;">|</span>
                         
-                        {# Fornecedor/Pessoa #}
                         <span class="d-flex align-items-center gap-1" style="font-weight: 500; color: #333;">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted">
@@ -196,18 +190,14 @@
                           {{ grupo.pessoa_nome | truncate(30, True, '...') }}
                         </span>
                         
-                        {# Separador #}
                         <span class="text-muted" style="opacity: 0.3;">|</span>
                         
-                        {# Tipo Operação #}
                         <span class="badge" style="background: #f1f5f9; color: #64748b; font-weight: 500; font-size: 0.75rem;">
                           {{ grupo.tipo_operacao }}
                         </span>
                         
-                        {# Separador #}
                         <span class="text-muted" style="opacity: 0.3;">|</span>
                         
-                        {# Data Pagamento #}
                         {% if grupo.data_pagamento_mais_recente %}
                         <span class="d-flex align-items-center gap-1" style="font-size: 0.8rem; color: #666;">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -223,7 +213,6 @@
                         </span>
                         {% endif %}
                         
-                        {# Badge de Situação #}
                         {% if grupo.tem_parcial %}
                         <span class="badge bg-yellow-lt d-flex align-items-center gap-1" style="font-weight: 500; font-size: 0.75rem;">
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
@@ -247,7 +236,6 @@
                         {% endif %}
                       </div>
                       
-                      {# Lado Direito - Valor Pago #}
                       <div class="ms-3 me-2">
                         <span style="font-size: 0.95rem; font-weight: 600; color: {% if grupo.tem_parcial %}#d97706{% else %}#059669{% endif %}; white-space: nowrap;">
                           {{ grupo.total_pago_100 | formatar_float_para_brl }}
@@ -261,11 +249,9 @@
                   data-bs-parent="#pagamentosAccordion">
                   <div class="accordion-body p-3">
                     
-                    {# ========== DETALHES DAS CARGAS (FATURAMENTO) ========== #}
                     {% if grupo.detalhes_cargas %}
                       {% set detalhes = grupo.detalhes_cargas %}
                       
-                      {# Seção Fornecedores #}
                       {% if detalhes.fornecedores %}
                       {% set fornecedores_agrupados = {} %}
                       {% for fornecedor in detalhes.fornecedores %}
@@ -327,7 +313,6 @@
                       {% endfor %}
                       {% endif %}
                       
-                      {# Seção Transportadoras #}
                       {% if detalhes.transportadoras %}
                       {% set transportadoras_agrupadas = {} %}
                       {% for transportadora in detalhes.transportadoras %}
@@ -391,7 +376,6 @@
                       {% endfor %}
                       {% endif %}
                       
-                      {# Seção Extratores #}
                       {% if detalhes.extratores %}
                       {% set extratores_agrupados = {} %}
                       {% for extrator in detalhes.extratores %}
@@ -455,7 +439,6 @@
                       {% endfor %}
                       {% endif %}
                       
-                      {# Seção Comissionados #}
                       {% if detalhes.comissionados %}
                       {% set comissionados_agrupados = {} %}
                       {% for comissionado in detalhes.comissionados %}
@@ -518,7 +501,6 @@
                       {% endfor %}
                       {% endif %}
                       
-                      {# Seção Clientes (AR - Cargas a Receber) #}
                       {% if detalhes.cargas_a_receber %}
                       {% set clientes_agrupados = {} %}
                       {% for carga in detalhes.cargas_a_receber %}
@@ -579,7 +561,6 @@
                       {% endfor %}
                       {% endif %}
                       
-                      {# Rodapé com totais do faturamento #}
                       <div class="d-flex justify-content-around align-items-center p-3 bg-light rounded mt-3">
                         <div class="text-center">
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -628,7 +609,6 @@
                         </div>
                       </div>
                     
-                    {# ========== LANÇAMENTO AVULSO ========== #}
                     {% elif grupo.lancamento_descricao %}
                       <div class="card mb-3 shadow-sm" style="border-radius: 8px; border: 1px solid #e3e6f0;">
                         <div class="card-header py-2" style="background: #f8f9fa;">
@@ -652,7 +632,6 @@
                         </div>
                       </div>
                     
-                    {# ========== SEM DETALHES ========== #}
                     {% else %}
                       <div class="text-center text-muted p-4">
                         <p class="mb-0">Detalhes não disponíveis para este registro.</p>
@@ -665,7 +644,7 @@
               {% endfor %}
             </div>
             {% elif registros %}
-            {# ========== TABELA SIMPLES (AR ou fallback) ========== #}
+            
             <div class="table-responsive">
               <table class="table table-vcenter table-hover table-striped">
                 <thead class="bg-light">
@@ -729,7 +708,6 @@
     </div>
   </div>
 
-  {# ========== MODAL FILTROS ========== #}
   {% include 'relatorios/relatorios_financeiros/relatorios_contas_ap_ar/_filtros.html' with context %}
 
   {% include 'estrutura/footer.html' %}

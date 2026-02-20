@@ -51,14 +51,11 @@ def exportar_nf_complementar_listagem_excel():
     try:
         dataHoje = datetime.now().strftime('%d-%m-%Y')
         
-        # Obter filtros do formulário
         data_inicio = request.form.get('dataInicioExport')
         data_fim = request.form.get('dataFimExport')
         cliente_id = request.form.get('clienteExport')
         
-        # Aplicar filtros
         if data_inicio or data_fim or cliente_id:
-            # Buscar nome do cliente se ID foi fornecido
             cliente_nome = None
             if cliente_id:
                 cliente_obj = ClienteModel.query.get(int(cliente_id))
@@ -79,7 +76,6 @@ def exportar_nf_complementar_listagem_excel():
         for item in registros:
             registro = item['registro']
             
-            # Calcular diferença
             peso_nf = registro.peso_ton_nf if registro.peso_ton_nf else 0
             peso_ticket = registro.peso_liquido_ticket if registro.peso_liquido_ticket else 0
             diferenca = round(peso_nf - peso_ticket, 2)
@@ -99,7 +95,6 @@ def exportar_nf_complementar_listagem_excel():
         return ManipulacaoArquivos.exportar_excel(linhas, nome_arquivo_saida)
         
     except Exception as e:
-        print(f"[ERROR] Erro ao exportar NF Complementar para Excel: {e}")
         flash((f"Erro ao exportar relatório! Contate o suporte.", "error"))
         return redirect(url_for('listagem_nf_complementar'))
 
@@ -111,14 +106,11 @@ def exportar_nf_complementar_listagem_pdf():
     try:
         dataHoje = datetime.now().strftime('%d-%m-%Y')
         
-        # Obter filtros do formulário
         data_inicio = request.form.get('dataInicioExport')
         data_fim = request.form.get('dataFimExport')
         cliente_id = request.form.get('clienteExport')
         
-        # Aplicar filtros
         if data_inicio or data_fim or cliente_id:
-            # Buscar nome do cliente se ID foi fornecido
             cliente_nome = None
             if cliente_id:
                 cliente_obj = ClienteModel.query.get(int(cliente_id))
@@ -152,7 +144,6 @@ def exportar_nf_complementar_listagem_pdf():
         return ManipulacaoArquivos.gerar_pdf_from_html(html, nome_arquivo_saida)
         
     except Exception as e:
-        print(f"[ERROR] Erro ao exportar NF Complementar para PDF: {e}")
         flash((f"Erro ao exportar relatório! Contate o suporte.", "error"))
         return redirect(url_for('listagem_nf_complementar'))
     
@@ -164,10 +155,8 @@ def emitir_nfs_complementares_em_massa():
     """Processa formulário de criação de NF Complementar com upload de arquivo"""
     validacao_campos_obrigatorios = {}
     gravar_banco = True
-    # Verificar se é requisição de formulário (POST normal) ou AJAX (JSON)
     if request.method == "POST":
         try:
-            # Obter dados do formulário
             cliente_id = request.form.get('cliente_id')
             ids_registros = request.form.getlist('ids_registros')
             arquivo_nf = request.files.get('arquivo_nf_complementar')
@@ -194,7 +183,6 @@ def emitir_nfs_complementares_em_massa():
 
             if gravar_banco:
                 
-                # Obter registros operacionais
                 registros = RegistroOperacionalModel.query.filter(
                     RegistroOperacionalModel.id.in_(ids_registros)
                 ).all()
@@ -203,7 +191,6 @@ def emitir_nfs_complementares_em_massa():
                     flash('Nenhum registro operacional encontrado com os IDs fornecidos.', 'error')
                     return redirect(url_for('listagem_nf_complementar'))
                 
-                # Verificar se todos os registros são do mesmo cliente
                 clientes_registros = set(reg.solicitacao.cliente.id for reg in registros 
                     if reg.solicitacao and reg.solicitacao.cliente)
 
@@ -211,12 +198,10 @@ def emitir_nfs_complementares_em_massa():
                     flash(('Todos os registros devem ser do mesmo cliente selecionado.', 'error'))
                     return redirect(url_for('listagem_nf_complementar'))
                 
-                # Validar se é PDF
                 if arquivo_nf.mimetype != "application/pdf":
                     flash(('Arquivo deve ser um PDF válido.', 'error'))
                     return redirect(url_for('listagem_nf_complementar'))
                 
-                # Se chegou até aqui, todas as validações básicas passaram. Criar o registro.
                 detalhes_registros = []
                 for registro in registros:
                     detalhes_registros.append({
@@ -224,17 +209,15 @@ def emitir_nfs_complementares_em_massa():
                         'solicitacao_id': registro.solicitacao_nf_id
                     })
                 
-                # Salva as informações da NF Complementar
                 nf_complementar = NfComplementarModel(
                     cliente_id=int(cliente_id),
                     nf_complementar_detalhes={'registros_operacionais': detalhes_registros},
-                    situacao_financeira_id = 2, # Pendente de faturamento
+                    situacao_financeira_id = 2,
                 )
                 
                 db.session.add(nf_complementar)
-                db.session.flush()  # Garante que o ID seja gerado
+                db.session.flush()
                 
-                # Fazer upload do arquivo
                 objeto_nf = upload_arquivo(arquivo_nf, "UPLOAD_NOTA_COMPLEMENTAR", f"{nf_complementar.id}")
                 
                 dados_nota = ExtrairTextoNotaFiscal.nf_extrair_dados_nota(objeto_nf.caminho)
@@ -252,7 +235,6 @@ def emitir_nfs_complementares_em_massa():
                     db.session.rollback()
                     return redirect(url_for("listagem_nf_complementar"))
                 
-                # Processar dados da NF
                 destinatario_data_emissao = dados_nf["destinatario_data_emissao"]
                 if destinatario_data_emissao:
                     destinatario_data_emissao = DataHora.converter_data_str_br_em_objeto_date(destinatario_data_emissao)
@@ -281,10 +263,8 @@ def emitir_nfs_complementares_em_massa():
                 nf_complementar.arquivo_nota_id=objeto_nf.id
 
                 if nf_complementar and nf_complementar.arquivo_nota_id is not None:
-                    # Atualizar status dos registros operacionais
                     for registro in registros:
                         registro.status_emissao_nf_complementar_id = 1
-                        # Registrar pontuação
                         PontuacaoUsuarioModel.cadastrar_pontuacao_usuario(
                             current_user.id,
                             TipoAcaoEnum.CADASTRO,
@@ -299,6 +279,5 @@ def emitir_nfs_complementares_em_massa():
         except Exception as e:
             
             db.session.rollback()
-            print(f"Erro na emissão de NF Complementar: {str(e)}")
             flash(('Erro inesperado ao processar NF Complementar. Tente novamente.', 'error'))
         return redirect(url_for('listagem_nf_complementar'))

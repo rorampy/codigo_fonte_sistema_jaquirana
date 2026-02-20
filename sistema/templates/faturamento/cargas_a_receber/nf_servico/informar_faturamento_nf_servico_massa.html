@@ -19,7 +19,6 @@
     <div class="container-xl">
       {% include 'estrutura/mensagens_flash.html' %}
 
-      <!-- Cards de resumo -->
       <div class="row row-cards mb-4">
         <div class="col-md-6 col-lg-4">
           <div class="card border shadow-lg rounded-3">
@@ -91,11 +90,9 @@
         </div>
       </div>
 
-      <!-- Formulário de confirmação -->
       <form action="{{ url_for('informar_faturamento_nf_servico_massa') }}" method="POST" enctype="multipart/form-data" id="form-faturamento">
         <input type="hidden" name="ids_registros" value="{{ ids_selecionados }}">
 
-        <!-- Seção detalhada dos registros por cliente -->
         <div class="card shadow-sm border-0 rounded-3 mb-4">
           <div class="card-header bg-light fw-bold">
             NFs de Serviço Selecionadas para Faturamento
@@ -120,9 +117,9 @@
               </div>
 
               {% for registro in dados_cliente.registros %}
-              <!-- Informações da NF de Serviço -->
+              
               <div class="card mb-3 border-light">                
-                <!-- Detalhes da NF de Serviço -->
+                
                 <div class="card-body">
                   <div class="table-responsive">
                     <table class="table table-sm table-borderless align-middle mb-0">
@@ -228,7 +225,6 @@
         });
       }
 
-      console.log('NFs de Serviço carregadas para faturamento em massa');
     });
   </script>
 

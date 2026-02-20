@@ -379,7 +379,7 @@
         },
 
         init() {
-          // Carregar vínculos existentes da pessoa
+          
           const vinculosExistentes = {{ pessoa.vinculos_operacionais | safe }} || {};
           
           Object.keys(vinculosExistentes).forEach(tipo => {
@@ -391,7 +391,6 @@
             }
           });
 
-          // Se não há vínculos, manter lista com um item vazio
           Object.keys(this.vinculos).forEach(tipo => {
             if (this.vinculos[tipo].lista.length === 0) {
               this.vinculos[tipo].lista = [{ id: '', identificacao: '' }];

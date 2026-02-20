@@ -22,7 +22,6 @@
         <div class="relatorio-title">Relatório de Cargas por
           Fornecedor</div>
 
-        <!-- Filtros aplicados se existirem -->
         {% if dados_corretos %}
         <div class="dados-registro no-break">
           <div class="filtros-title">Filtros Aplicados</div>
@@ -82,7 +81,7 @@
         {% for origem_group in registros|groupby('origem') %}
         {% set origem = origem_group.grouper %}
         {% set registros_origem = origem_group.list %}
-        <!-- Seção da Origem (Fornecedor/Floresta) -->
+        
         <div class="no-break" style="margin-top: 20px;">
           <div class="filtros-title">Origem: {{ origem }}</div>
         </div>
@@ -90,7 +89,7 @@
         {% for produto_group in registros_origem|groupby('produto')%}
         {% set produto = produto_group.grouper %}
         {% set registros_produto = produto_group.list %}
-        <!-- Produto dentro da Origem -->
+        
         <div class="section-title no-break">
           Produto: {{ produto }}
           <span
@@ -99,7 +98,6 @@
           </span>
         </div>
 
-        <!-- Tabela de cargas para este produto -->
         <table style="page-break-before: auto;">
           <thead>
             <tr>
@@ -193,7 +191,7 @@
         {% endfor %}
 
         {% else %}
-        <!-- Estado vazio -->
+        
         <div style="text-align: center; padding: 50px 0;">
           <h3 style="color: #666;">Nenhum registro encontrado</h3>
           <p style="color: #999;">Não há registros de cargas

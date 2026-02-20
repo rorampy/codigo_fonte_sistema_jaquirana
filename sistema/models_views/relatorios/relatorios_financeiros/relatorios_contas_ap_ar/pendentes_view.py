@@ -27,9 +27,6 @@ from sistema.models_views.configuracoes_gerais.conta_bancaria.conta_bancaria_mod
 from .contas_ap_ar_service import ContasAPARService
 
 
-# =============================================================================
-# HELPERS
-# =============================================================================
 
 def _extrair_filtros():
     """Extrai filtros do request (GET ou POST)."""
@@ -41,7 +38,6 @@ def _extrair_filtros():
         'plano_contas_id': source.get('planoContasId') or None,
         'centro_custo_id': source.get('centroCustoId') or None,
         'situacao_id': source.get('situacaoId') or None,
-        # Filtros avançados
         'codigo_faturamento': source.get('codigoFaturamento') or None,
         'nota_fiscal': source.get('notaFiscal') or None,
         'descricao_avulso': source.get('descricaoAvulso') or None,
@@ -67,9 +63,6 @@ def _contexto_base(direcao='ap'):
     }
 
 
-# =============================================================================
-# AP — PENDENTES
-# =============================================================================
 
 @app.route('/relatorios/contas-a-pagar/pendentes', methods=['GET'])
 @login_required
@@ -139,9 +132,6 @@ def relatorio_ap_pendentes_excel():
     )
 
 
-# =============================================================================
-# AR — PENDENTES
-# =============================================================================
 
 @app.route('/relatorios/contas-a-receber/pendentes', methods=['GET'])
 @login_required
@@ -211,9 +201,6 @@ def relatorio_ar_pendentes_excel():
     )
 
 
-# =============================================================================
-# AJAX — DETALHES DO FATURAMENTO
-# =============================================================================
 
 @app.route('/relatorios/contas-a-pagar/pendentes/detalhes/<int:faturamento_id>', methods=['GET'])
 @login_required
